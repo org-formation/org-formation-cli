@@ -1,0 +1,187 @@
+{
+  "masterAccountId": "588583220729",
+  "bindings": {
+    "OC::ORG::MasterAccount": {
+      "Root": {
+        "type": "OC::ORG::MasterAccount",
+        "logicalId": "Root",
+        "physicalId": "588583220729",
+        "lastCommittedHash": "d14c52bed2205c2345ef78b09b48733f"
+      }
+    },
+    "OC::ORG::OrganizationalUnit": {
+      "ProductionOU": {
+        "type": "OC::ORG::OrganizationalUnit",
+        "logicalId": "ProductionOU",
+        "physicalId": "ou-yrz8-kgsvmb6h",
+        "lastCommittedHash": "7d0340b2feef00ea1be71435b233cbe5"
+      },
+      "DevelopmentOU": {
+        "type": "OC::ORG::OrganizationalUnit",
+        "logicalId": "DevelopmentOU",
+        "physicalId": "ou-yrz8-y2nwwybx",
+        "lastCommittedHash": "df9126ad2b9aba6e952738864b152116"
+      },
+      "SharedOU": {
+        "type": "OC::ORG::OrganizationalUnit",
+        "logicalId": "SharedOU",
+        "physicalId": "ou-yrz8-on8bbq1e",
+        "lastCommittedHash": "e8311c874b2eff69a8ca7d5bbf24b3d0"
+      }
+    },
+    "OC::ORG::Account": {
+      "MoneyouPlatformAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouPlatformAccount",
+        "physicalId": "614335828775",
+        "lastCommittedHash": "2db5e17703c6a3498122f19b35e13d9d"
+      },
+      "MoneyouSecurityAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouSecurityAccount",
+        "physicalId": "689483148385",
+        "lastCommittedHash": "7b286158d9ea6f2b636668f3dfec1d37"
+      },
+      "MoneyouComplianceAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouComplianceAccount",
+        "physicalId": "939464272238",
+        "lastCommittedHash": "1adfc94e0a820e7d1d87f19653e1df6c"
+      },
+      "MoneyouLoggingAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouLoggingAccount",
+        "physicalId": "276478869702",
+        "lastCommittedHash": "02d337a46788982cc65fd4313dcdd2a2"
+      },
+      "MoneyouUserAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouUserAccount",
+        "physicalId": "054949635754",
+        "lastCommittedHash": "a710536fa69aab6b4052c7e85d358bd1"
+      },
+      "MoneyouTeam3DevelopmentAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouTeam3DevelopmentAccount",
+        "physicalId": "836623306256",
+        "lastCommittedHash": "d1cbb41e4ddfa489921f384ddd96a8d2"
+      },
+      "MoneyouTaiichiDevAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouTaiichiDevAccount",
+        "physicalId": "756303989147",
+        "lastCommittedHash": "95a7c5379b13e28727683cb0550d6d75"
+      },
+      "MoneyouDataDevelopmentAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouDataDevelopmentAccount",
+        "physicalId": "855594205460",
+        "lastCommittedHash": "8c531b88528f857d2abec99cb5b15563"
+      },
+      "MoneyouSandboxDevAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouSandboxDevAccount",
+        "physicalId": "098773402887",
+        "lastCommittedHash": "3ea0c37343fa5c77f87aa5bb81410537"
+      },
+      "Moneyou403DevAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "Moneyou403DevAccount",
+        "physicalId": "419664325495",
+        "lastCommittedHash": "02266afd72edfddbd68e0b943680131a"
+      },
+      "MoneyouTeam2DevelopmentAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouTeam2DevelopmentAccount",
+        "physicalId": "912971329312",
+        "lastCommittedHash": "ca87d67d5a8c6af2caabff7558c12199"
+      },
+      "MoneyouTeam1DevelopmentAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouTeam1DevelopmentAccount",
+        "physicalId": "579001564730",
+        "lastCommittedHash": "fa2a1eef5537cce1d6093fba172e66aa"
+      },
+      "MoneyouFreshDevelopmentAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouFreshDevelopmentAccount",
+        "physicalId": "227947473878",
+        "lastCommittedHash": "ef90c7258c7485114dc7354d3f46feb1"
+      },
+      "MoneyouAddressbookProductionAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouAddressbookProductionAccount",
+        "physicalId": "339539146431",
+        "lastCommittedHash": "d6f733740d04bf57024d99a37e0edc04"
+      },
+      "MoneyouLimitsProductionAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouLimitsProductionAccount",
+        "physicalId": "395788528074",
+        "lastCommittedHash": "33c0fb81b731e5b9e734af3d563e8937"
+      },
+      "MoneyouXS2AProductionAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouXS2AProductionAccount",
+        "physicalId": "889444667844",
+        "lastCommittedHash": "0aeb4f73bc07f9583714282ed8b9f7ee"
+      },
+      "MoneyouDataProductionAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouDataProductionAccount",
+        "physicalId": "274775030939",
+        "lastCommittedHash": "5c337e73955611ffd7af15cbbc219137"
+      },
+      "MoneyouAuthproductionAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouAuthproductionAccount",
+        "physicalId": "030661853937",
+        "lastCommittedHash": "2c91132cb1cc288817e809e82ebd2ee6"
+      },
+      "MoneyouTransferBankProductionAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouTransferBankProductionAccount",
+        "physicalId": "419069893087",
+        "lastCommittedHash": "13e13778f12e7cc180f216d52c705f48"
+      },
+      "Xs2a-devportalAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "Xs2a-devportalAccount",
+        "physicalId": "451497838888",
+        "lastCommittedHash": "e4920b31ec9d8918b129edc722b4ab46"
+      },
+      "MoneyouOnboardingProductionAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouOnboardingProductionAccount",
+        "physicalId": "672947131878",
+        "lastCommittedHash": "32ce6d2e45e31f57a63b2dad600067a7"
+      },
+      "MoneyouSnowplowProductionAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouSnowplowProductionAccount",
+        "physicalId": "255743039977",
+        "lastCommittedHash": "f561e2d433c4e79356ec21ef32083402"
+      },
+      "MoneyouWalletsProductionAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "MoneyouWalletsProductionAccount",
+        "physicalId": "031417794674",
+        "lastCommittedHash": "758ccd8c84886ad2b00e50fdb679baf4"
+      }
+    },
+    "OC::ORG::ServiceControlPolicy": {
+      "RestrictUnusedRegionsSCP": {
+        "type": "OC::ORG::ServiceControlPolicy",
+        "logicalId": "RestrictUnusedRegionsSCP",
+        "physicalId": "p-12aq7yxa",
+        "lastCommittedHash": "15e8235fc1f6b8740fdb0cca4cdca8a8"
+      },
+      "DenyUnsupportedRegionsSCP": {
+        "type": "OC::ORG::ServiceControlPolicy",
+        "logicalId": "DenyUnsupportedRegionsSCP",
+        "physicalId": "p-siyt4vyx",
+        "lastCommittedHash": "d2017d377bdab6678fb17a7a6f7a7aa9"
+      }
+    }
+  }
+}

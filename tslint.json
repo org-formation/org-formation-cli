@@ -1,0 +1,39 @@
+{
+    "defaultSeverity": "error",
+    "extends": "./node_modules/tslint/lib/configs/recommended",
+    "jsRules": {},
+    "rules": {
+        "max-classes-per-file": false,
+        "max-line-length": [false, 120],
+        "object-literal-sort-keys": false,
+        "no-require-imports": false,
+        "no-var-requires": false,
+        "arrow-return-shorthand": false,
+        "no-unused-expression": false,
+        "quotemark": [true, "single"],
+        "forin": false,
+        "indent": [
+            "error",
+            4
+        ],
+        "strict": [
+            "error",
+            "global"
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "semi": [
+            "error",
+            "always"
+        ],
+        "no-console": false
+    },
+    "rulesDirectory": [],
+    "env" : {
+        "browser" : false,
+        "node" : true,
+        "es6" : true
+    }
+}

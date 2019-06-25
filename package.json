@@ -1,0 +1,30 @@
+{
+  "name": "aws-organization-formation",
+  "version": "1.0.0",
+  "description": "Infrastructure as code solution for AWS Organizations",
+  "main": "index.js",
+  "scripts": {
+    "test": "ts-mocha 'test/**/*.ts'"
+  },
+  "author": "Olaf Conijn",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.474.0",
+    "md5": "^2.2.1",
+    "yaml-cfn": "^0.2.1",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/md5": "^2.1.33",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.0.8",
+    "@types/yamljs": "^0.2.30",
+    "chai": "^4.2.0",
+    "mocha": "^6.1.4",
+    "ts-mocha": "^6.0.0",
+    "ts-node": "^8.2.0",
+    "tslint": "^5.17.0",
+    "typescript": "^3.5.1"
+  }
+}

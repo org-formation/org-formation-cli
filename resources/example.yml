@@ -1,0 +1,214 @@
+AWSTemplateFormatVersion: 2010-09-09-OC
+Description: Example Organization Formation Template
+
+Organization:
+  Root:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: My Organization Root
+      AccountId: '102625093955'
+
+  # DevelopmentOU:
+  #   Type: OC::ORG::OrganizationalUnit
+  #   Properties:
+  #     OrganizationalUnitName: Development
+  #     ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
+  #     Accounts:
+  #     - !Ref DevelopmentAccount1
+  #     - !Ref DevelopmentAccount2
+  #     - !Ref DevelopmentAccount3
+
+  # SharedOU:
+  #   Type: OC::ORG::OrganizationalUnit
+  #   Properties:
+  #     OrganizationalUnitName: Shared
+  #     ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
+  #     Accounts:
+  #     - !Ref LoggingAccount
+  #     - !Ref ServicesAccount
+  #     - !Ref UsersAccount
+
+  # ProductionOU:
+  #   Type: OC::ORG::OrganizationalUnit
+  #   Properties:
+  #     OrganizationalUnitName: Production
+  #     ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
+  #     Accounts:
+  #     - !Ref SystemAccount1
+  #     - !Ref SystemAccount2
+  #     - !Ref SystemAccount3
+
+  # DevelopmentAccount1:
+  #   Type: OC::ORG::Account
+  #   Properties:
+  #     RootEmail: dev-team1@my-email.com
+  #     AccountName: Development Team 1 Account
+
+  # DevelopmentAccount2:
+  #   Type: OC::ORG::Account
+  #   Properties:
+  #     RootEmail: dev-team2@my-email.com
+  #     AccountName: Development Team 2 Account
+
+  # DevelopmentAccount3:
+  #   Type: OC::ORG::Account
+  #   Properties:
+  #     RootEmail: dev-team3@my-email.com
+  #     AccountName: Development Team 3 Account
+
+  # LoggingAccount:
+  #   Type: OC::ORG::Account
+  #   Properties:
+  #     RootEmail: shared-logging@my-email.com
+  #     AccountName: Shared Logging Account
+
+  # ServicesAccount:
+  #   Type: OC::ORG::Account
+  #   Properties:
+  #     RootEmail: shared-services@my-email.com
+  #     AccountName: Shared Services Account
+
+  # UsersAccount:
+  #   Type: OC::ORG::Account
+  #   Properties:
+  #     RootEmail: users@my-email.com
+  #     AccountName: Shared Users Account
+  #     Metadata:
+  #       - AccountOwnerEmail: bill@@my-email.com
+  #       - AccountAlias: shared-account
+
+  # SystemAccount1:
+  #   Type: OC::ORG::Account
+  #   Properties:
+  #     RootEmail: system-1-account@my-email.com
+  #     AccountName: System 1 Production Account
+  #     Metadata:
+  #       - AccountOwnerEmail: bill@@my-email.com
+  #       - AccountAlias: system-1-account
+
+  # SystemAccount2:
+  #   Type: OC::ORG::Account
+  #   Properties:
+  #     RootEmail: system-2-account@my-email.com
+  #     AccountName: System 2 Production Account
+  #     Metadata:
+  #       - AccountOwnerEmail: bill@@my-email.com
+  #       - AccountAlias: system-2-account
+
+  # SystemAccount3:
+  #   Type: OC::ORG::Account
+  #   Properties:
+  #     RootEmail: system-3-account@my-email.com
+  #     AccountName: System 3 Production Account
+  #     Metadata:
+  #       - AccountOwnerEmail: bill@@my-email.com
+  #       - AccountAlias: system-3-account
+
+  RestrictUnusedRegionsSCP:
+    Type: OC::ORG::ServiceControlPolicy
+    Properties:
+      PolicyName: RestrictUnusedRegions
+      Description: Restrict Unused regions
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: DenyUnsupportedRegions
+          Effect: Deny
+          NotAction:
+          - cloudfront:*
+          - iam:*
+          - route53:*
+          - support:*
+          Resource: "*"
+          Condition:
+            StringNotEquals:
+              aws:RequestedRegion:
+              - eu-central-1
+              - eu-west-1
+              - us-east-1
+
+Metadata:
+
+Parameters:
+
+Mappings:
+
+Conditions:
+
+Resources:
+  IamBaseLine:
+    Type: AWS::CloudFormation::Stack
+    OrganizationBindings:
+      Regions: eu-central-1
+      Accounts: '*'
+      IncludeMasterAccount: true
+    Properties:
+      TemplateURL: ./example.iam.baseline.yml
+      Parameters:
+        UsersAccount: !Ref UsersAccount
+
+  SharedFunction:
+    Type: AWS::CloudFormation::Stack
+    OrganizationBindings:
+      Regions: eu-central-1
+      Accounts: !Ref ServicesAccount
+    Properties:
+      TemplateURL: ./example.iam.baseline.yml
+
+
+  SnsTopic:
+    Type: AWS::CloudFormation::Stack
+    OrganizationBindings:
+      Regions: eu-central-1
+      OrganizationalUnits:
+        - !Ref DevelopmentOU
+        - !Ref ProductionOU
+    Properties:
+      TemplateURL: ./example.iam.baseline.yml
+
+Outputs:
+
+CrossAccountPermissions:
+
+  InvokeSharedFunction:
+    Type: OC::PERMISSIONS::LAMBDA
+    OrganizationBindings:
+      Regions: eu-central-1
+      Accounts: !Ref ServicesAccount
+    PermissionGrantees:
+      Regions: eu-central-1
+      Accounts: '*'
+    Properties:
+        LambdaName: !GetAtt SharedFunction.Outputs.Lambda1Name
+        LambdaRegion: eu-central-1
+        PolicyStatement:
+          - Sid: !Sub 'allow-invoke-by-${Grantee::AccountId}'
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${Grantee::AccountId}:root'
+            Action: lambda:InvokeFunction
+            Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Self::LambdaName}'
+
+  InvokeSharedFunctionBySns:
+    Type: OC::PERMISSIONS::LAMBDA
+    OrganizationBindings:
+      Regions: eu-central-1
+      Accounts: !Ref ServicesAccount
+    PermissionGrantees:
+      Regions: eu-central-1
+      OrganizationalUnits:
+        - !Ref DevelopmentOU
+        - !Ref ProductionOU
+    Properties:
+        LambdaName: !GetAtt SharedFunction.Outputs.Lambda2Name
+        LambdaRegion: eu-central-1
+        PolicyStatement:
+          - Sid: !Sub 'allow-invoke-by-sns-${Grantee::AccountId}'
+            Effect: Allow
+            Principal:
+              Service: sns.amazonaws.com
+            Action: lambda:InvokeFunction
+            Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Self::LambdaName}'
+            Condition:
+              ArnLike:
+                AWS:SourceArn: arn:aws:sns:${Grantee::Region}:${Grantee::AccountId}:MySnsTopic
