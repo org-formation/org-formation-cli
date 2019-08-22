@@ -1,35 +1,44 @@
 import { IResource, IResourceRef, TemplateRoot } from '../parser';
-import { Resource } from './resource';
+import { Reference, Resource } from './resource';
+import { ServiceControlPolicyResource } from './service-control-policy-resource';
 
 export interface IAccountProperties {
     RootEmail: string;
     AccountName: string;
     AccountId: string;
-    ServiceControlPolicies: IResourceRef | IResourceRef[];
+    ServiceControlPolicies?: IResourceRef | IResourceRef[];
+    Tags?: Record<string, string>;
 }
 
 export class AccountResource extends Resource {
     public accountName: string;
     public rootEmail: string;
-    public serviceControlPolicies: IResourceRef[];
+    public accountId: string;
+    public tags: Record<string, string>;
+    public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>>;
+    public organizationalUnitName: string;
+    private props: IAccountProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
         super(root, id, resource);
 
-        const props = this.resource.Properties as IAccountProperties;
+        this.props = this.resource.Properties as IAccountProperties;
 
-        this.rootEmail = props.RootEmail;
-        this.accountName = props.AccountName;
-        this.serviceControlPolicies = ToArray(props.ServiceControlPolicies);
+        if (!this.props.AccountId && !this.props.RootEmail) {
+            throw new Error(`both AccountId and RootEmail are missing on Account ${id}`);
+        }
+        if (!this.props.AccountName) {
+            throw new Error(`AccountName is missing on Account ${id}`);
+        }
+        this.rootEmail = this.props.RootEmail;
+        this.accountName = this.props.AccountName;
+        this.accountId = this.props.AccountId;
+        this.tags = this.props.Tags;
+
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'ServiceControlPolicies', 'Tags');
     }
-}
 
-function ToArray(val: IResourceRef | IResourceRef[]): IResourceRef[] {
-    if (!val) {
-        return [];
-    } else if (!Array.isArray(val)) {
-        return [val];
-    } else {
-        return val;
+    public resolveRefs() {
+        this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
     }
 }

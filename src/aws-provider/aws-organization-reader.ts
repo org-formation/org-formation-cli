@@ -2,32 +2,32 @@ import { Organizations } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListAccountsResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
-interface ObjectWithParentId {
+interface IObjectWithParentId {
     ParentId: string;
 }
 
-export interface AWSObject {
+export interface IAWSObject {
     Type: AWSObjectType;
     Id: string;
     Name: string;
 }
 
-interface ObjectWithAccounts {
+interface IObjectWithAccounts {
     Accounts: AWSAccount[];
 }
 
-interface ObjectWithPolicies {
+interface IObjectWithPolicies {
     Policies: AWSPolicy[];
 }
 
-interface PolicyTargets {
+interface IPolicyTargets {
     Targets: PolicyTargetSummary[];
 }
 
-export type AWSPolicy = Policy & PolicyTargets & AWSObject;
-export type AWSAccount = Account & ObjectWithParentId & ObjectWithPolicies & AWSObject;
-export type AWSOrganizationalUnit = OrganizationalUnit & ObjectWithParentId & ObjectWithPolicies & ObjectWithAccounts & AWSObject;
-export type AWSRoot = Root & ObjectWithAccounts;
+export type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
+export type AWSAccount = Account & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
+export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject;
+export type AWSRoot = Root & IObjectWithAccounts;
 
 function GetPoliciesForTarget(list: AWSPolicy[], targetId: string, targetType: TargetType): AWSPolicy[] {
     return list.filter((x) => x.Targets.find((y) => y.TargetId === targetId && y.Type === targetType));
@@ -52,6 +52,7 @@ export class AwsOrganizationReader {
             for (const policy of resp.Policies) {
 
                 const describedPolicy = await that.organizationService.describePolicy({PolicyId: policy.Id}).promise();
+
                 const awsPolicy = {
                         ...describedPolicy.Policy,
                         Type: 'Policy',
@@ -99,7 +100,6 @@ export class AwsOrganizationReader {
         rootsIds.push(...roots.map((x) => x.Id));
 
         do {
-
             const req: ListOrganizationalUnitsForParentRequest = {
                 ParentId: rootsIds.pop(),
             };

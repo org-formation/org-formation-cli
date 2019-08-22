@@ -1,36 +1,39 @@
-import { AwsOrganizationReader, AWSAccount, AWSOrganizationalUnit, AWSPolicy } from "./aws-organization-reader";
-import { PolicySummary, Organization, Root } from "aws-sdk/clients/organizations";
+import { Organization, PolicySummary, Root } from 'aws-sdk/clients/organizations';
+import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy } from './aws-organization-reader';
 
 export class AwsOrganization {
+    public organization: Organization;
+    public roots: Root[];
+    public organizationalUnits: AWSOrganizationalUnit[];
+    public policies: AWSPolicy[];
+    public accounts: AWSAccount[];
+    public masterAccount: AWSAccount;
     private readonly reader: AwsOrganizationReader;
     private initializationPromise: Promise<void>;
-    organization: Organization;
-    roots: Root[];
-    organizationalUnits: AWSOrganizationalUnit[];
-    policies: AWSPolicy[];
-    accounts: AWSAccount[];
-    masterAccount: AWSAccount;
 
     constructor(reader: AwsOrganizationReader) {
         this.reader = reader;
     }
 
-    startInitialize() {
+    public startInitialize() {
         this.initializationPromise = this.initialize();
     }
 
-    async initialize() {
-        this.organization = await this.reader.organization.getValue();
-        this.roots = await this.reader.roots.getValue();
-        this.organizationalUnits = await this.reader.organizationalUnits.getValue();
-        this.policies = await this.reader.policies.getValue();
-        const accounts = await this.reader.accounts.getValue();
+    public async initialize() {
+        const setOrgPromise = async () => { this.organization = await this.reader.organization.getValue(); };
+        const setRootsPromise = async () => { this.roots = await this.reader.roots.getValue(); };
+        const setPolicies = async () => { this.policies = await this.reader.policies.getValue(); };
+        const setAccounts = async () => {
+            const accounts = await this.reader.accounts.getValue();
+            this.masterAccount = accounts.find((x) => x.Id === this.organization.MasterAccountId);
+            this.accounts = accounts.filter((x) => x.Id !== this.organization.MasterAccountId);
+            this.organizationalUnits = await this.reader.organizationalUnits.getValue();
+        };
 
-        this.masterAccount = accounts.find(x=>x.Id === this.organization.MasterAccountId);
-        this.accounts = accounts.filter(x=>x.Id !== this.organization.MasterAccountId);
+        await Promise.all([setOrgPromise(), setRootsPromise(), setPolicies(), setAccounts()]);
     }
 
-    async endInitialize() {
+    public async endInitialize() {
         await this.initializationPromise;
     }
 }

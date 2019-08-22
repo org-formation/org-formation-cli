@@ -1,0 +1,55 @@
+{
+  "masterAccountId": "102625093955",
+  "bindings": {
+    "OC::ORG::ServiceControlPolicy": {
+      "RestrictUnusedRegionsSCP": {
+        "type": "OC::ORG::ServiceControlPolicy",
+        "logicalId": "RestrictUnusedRegionsSCP",
+        "lastCommittedHash": "1901f68c177ded8d4dc193afb5bf6195",
+        "physicalId": "p-d6nie2u6"
+      }
+    },
+    "OC::ORG::Account": {
+      "SystemAccount1": {
+        "type": "OC::ORG::Account",
+        "logicalId": "SystemAccount1",
+        "lastCommittedHash": "8dc62e1f11d7aba1ad1fa9c1056a264c",
+        "physicalId": "088538185711"
+      },
+      "ServicesAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "ServicesAccount",
+        "lastCommittedHash": "a4ef960f99e2ad2ce47e59d644c6c064",
+        "physicalId": "862041870899"
+      },
+      "UsersAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "UsersAccount",
+        "lastCommittedHash": "30bbd9294b02f7b875ba2c9eff85a83b",
+        "physicalId": "233975951724"
+      }
+    },
+    "OC::ORG::OrganizationalUnit": {
+      "DevelopmentOU": {
+        "type": "OC::ORG::OrganizationalUnit",
+        "logicalId": "DevelopmentOU",
+        "lastCommittedHash": "a3a8db05811b04b826bb04f0c6ead2d7",
+        "physicalId": "ou-kvte-q58gm2rv"
+      },
+      "ProductionOU": {
+        "type": "OC::ORG::OrganizationalUnit",
+        "logicalId": "ProductionOU",
+        "lastCommittedHash": "38310290acb2128e0ca3f036c6d6160b",
+        "physicalId": "ou-kvte-ej8bnrax"
+      },
+      "SharedOU": {
+        "type": "OC::ORG::OrganizationalUnit",
+        "logicalId": "SharedOU",
+        "lastCommittedHash": "4bf00d8cd410f256e64e999384d36e5d",
+        "physicalId": "ou-kvte-7iwm13pz"
+      }
+    }
+  },
+  "previousTemplate": "AWSTemplateFormatVersion: 2010-09-09-OC\nDescription: Example Organization Formation Template\nStackName: organization-formation\n\nOrganization:\n  Root:\n    Type: OC::ORG::MasterAccount\n    Properties:\n      AccountName: My Organization Root\n      AccountId: '102625093955'\n\n  DevelopmentOU:\n    Type: OC::ORG::OrganizationalUnit\n    Properties:\n      OrganizationalUnitName: development\n      ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP\n  #     Accounts:\n  #     - !Ref DevelopmentAccount1\n  #     - !Ref DevelopmentAccount3\n  #     - !Ref DevelopmentAccount2\n\n  SharedOU:\n    Type: OC::ORG::OrganizationalUnit\n    Properties:\n      OrganizationalUnitName: shared\n      ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP\n      Accounts:\n       - !Ref ServicesAccount\n       - !Ref UsersAccount\n  #     - !Ref SystemAccount1\n  #     - !Ref LoggingAccount\n\n  ProductionOU:\n    Type: OC::ORG::OrganizationalUnit\n    Properties:\n      OrganizationalUnitName: production\n      ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP\n      Accounts:\n       - !Ref SystemAccount1\n  #     - !Ref SystemAccount2\n  #     - !Ref SystemAccount3\n\n  # DevelopmentAccount1:\n  #   Type: OC::ORG::Account\n  #   Properties:\n  #     RootEmail: dev-team1@my-email.com\n  #     AccountName: Development Team 1 Account\n\n  # DevelopmentAccount2:\n  #   Type: OC::ORG::Account\n  #   Properties:\n  #     RootEmail: dev-team2@my-email.com\n  #     AccountName: Development Team 2 Account\n\n  # DevelopmentAccount3:\n  #   Type: OC::ORG::Account\n  #   Properties:\n  #     RootEmail: dev-team3@my-email.com\n  #     AccountName: Development Team 3 Account\n\n  # LoggingAccount:\n  #   Type: OC::ORG::Account\n  #   Properties:\n  #     RootEmail: shared-logging@my-email.com\n  #     AccountName: Shared Logging Account\n\n  ServicesAccount:\n    Type: OC::ORG::Account\n    Properties:\n      RootEmail: shared-services@olafconijn.awsapps.com\n      AccountName: Shared Services Account\n\n  UsersAccount:\n    Type: OC::ORG::Account\n    Properties:\n      RootEmail: users@olafconijn.awsapps.com\n      AccountName: Shared Users Account\n  #     Metadata:\n  #       - AccountOwnerEmail: bill@@my-email.com\n  #       - AccountAlias: shared-account\n\n  SystemAccount1:\n    Type: OC::ORG::Account\n    Properties:\n      RootEmail: system1@olafconijn.awsapps.com\n      AccountName: System 1 Production Account\n\n  # SystemAccount2:\n  #   Type: OC::ORG::Account\n  #   Properties:\n  #     RootEmail: system-2-account@my-email.com\n  #     AccountName: System 2 Production Account\n  #     Metadata:\n  #       - AccountOwnerEmail: bill@@my-email.com\n  #       - AccountAlias: system-2-account\n\n  # SystemAccount3:\n  #   Type: OC::ORG::Account\n  #   Properties:\n  #     RootEmail: system-3-account@my-email.com\n  #     AccountName: System 3 Production Account\n  #     Metadata:\n  #       - AccountOwnerEmail: bill@@my-email.com\n  #       - AccountAlias: system-3-account\n\n  RestrictUnusedRegionsSCP:\n    Type: OC::ORG::ServiceControlPolicy\n    Properties:\n      PolicyName: RestrictUnusedRegions\n      Description: Restrict Unused regions\n      PolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n        - Sid: DenyUnsupportedRegions\n          Effect: Deny\n          NotAction:\n          - cloudfront:*\n          - iam:*\n          - route53:*\n          - support:*\n          Resource: \"*\"\n          Condition:\n            StringNotEquals:\n              aws:RequestedRegion:\n              - eu-west-1\n              - us-east-1\n              - eu-central-1\n\nMetadata:\n\nParameters:\n\nMappings:\n\nConditions:\n\nResources:\n  IamBaseLine:\n    Type: AWS::CloudFormation::Stack\n    OrganizationBindings:\n      Regions: eu-central-1\n      Accounts: '*'\n      IncludeMasterAccount: false\n    Properties:\n      TemplateURL: ./example.iam.baseline.yml\n      Parameters:\n        UsersAccount: !Ref UsersAccount\n\n  SharedFunction:\n    Type: AWS::CloudFormation::Stack\n    OrganizationBindings:\n      Regions: eu-central-1\n      Accounts: !Ref ServicesAccount\n    Properties:\n      TemplateURL: ./example.shared.functions.yml\n\nOutputs:\n\nCrossAccountPermissions:\n\n  InvokeSharedFunction:\n    Type: OC::PERMISSIONS::LAMBDA\n    OrganizationBindings:\n      Regions: eu-central-1\n      Accounts: !Ref ServicesAccount\n    PermissionGrantees:\n      Regions: eu-central-1\n      Accounts: '*'\n    Properties:\n        LambdaName: !GetAtt SharedFunction.Outputs.Lambda1Name\n        LambdaRegion: eu-central-1\n        PolicyStatement:\n          - Sid: !Sub 'allow-invoke-by-${Grantee::AccountId}'\n            Effect: Allow\n            Principal:\n              AWS: !Sub 'arn:aws:iam::${Grantee::AccountId}:root'\n            Action: lambda:InvokeFunction\n            Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Self::LambdaName}'\n\n  InvokeSharedFunctionBySns:\n    Type: OC::PERMISSIONS::LAMBDA\n    OrganizationBindings:\n      Regions: eu-central-1\n      Accounts: !Ref ServicesAccount\n    PermissionGrantees:\n      Regions: eu-central-1\n      OrganizationalUnits:\n        - !Ref DevelopmentOU\n        - !Ref ProductionOU\n    Properties:\n        LambdaName: !GetAtt SharedFunction.Outputs.Lambda2Name\n        LambdaRegion: eu-central-1\n        PolicyStatement:\n          - Sid: !Sub 'allow-invoke-by-sns-${Grantee::AccountId}'\n            Effect: Allow\n            Principal:\n              Service: sns.amazonaws.com\n            Action: lambda:InvokeFunction\n            Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Self::LambdaName}'\n            Condition:\n              ArnLike:\n                AWS:SourceArn: arn:aws:sns:${Grantee::Region}:${Grantee::AccountId}:MySnsTopic\n",
+  "targets": {}
+}

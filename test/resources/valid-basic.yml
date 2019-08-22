@@ -1,0 +1,7 @@
+AWSTemplateFormatVersion: 2010-09-09-OC
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: My Organization Root
+      AccountId: '123456789012'

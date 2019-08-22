@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: 2010-09-09-OC
+Organization:
+  Root:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: My Organization Root
+      AccountId: '123456789012'
+
+Resources:
+  MyDeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 'my-deployment-deployments'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+Outputs:
+  SlsDeploymentBucketExport:
+    Value: !Ref MyDeploymentBucket
+    Export:
+      Name: my-deployment-bucket

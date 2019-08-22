@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Example IAM baseline Template
+Parameters:
+  usersAccount:
+    Type: String
+    Description: The accountId of the users account
+    AllowedPattern: \d{12}
+Resources:
+  developerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: DeveloperRole
+      ManagedPolicyArns: 'arn:aws:iam::aws:policy/PowerUserAccess'
+      AssumeRolePolicyDocument:
+       Version: '2012-10-17'
+       Statement:
+         - Effect: 'Allow'
+           Action: 'sts:AssumeRole'
+           Condition:
+            Bool:
+              aws:MultiFactorAuthPresent: 'true'
+           Principal:
+            AWS: !Ref usersAccount

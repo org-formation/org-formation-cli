@@ -1,19 +1,20 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
+        "declaration": true,
         "noImplicitAny" : false,
-        "outDir" : "output",
+        "outDir" : "dist",
         "module": "commonjs",
         "target": "ES2017",
-        "rootDir": "src",
+        "esModuleInterop": true,
         "sourceMap": true
     },
     "plugins": [
       {
         "name": "typescript-tslint-plugin"
       }],
-    "include": ["src/**/*"],
-    "exclude": [ "node_modules"],
+    "include": [ "src/**/*", "index.ts", "cli.ts"],
+    "exclude": [ "node_modules", "dist"],
     "typeRoots": [
         "node_modules/@types"
       ],

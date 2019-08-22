@@ -6,10 +6,10 @@
     "configurations": [
 
         {
-            "name": "index.ts",
+            "name": "build.ts",
             "type": "node",
             "request": "launch",
-            "args": ["index.ts"],
+            "args": ["build.ts"],
             "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
@@ -32,7 +32,7 @@
             ]
         },
         {
-            "name": "curren ts",
+            "name": "current ts",
             "type": "node",
             "request": "launch",
             "args": ["${relativeFile}"],

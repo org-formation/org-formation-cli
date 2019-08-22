@@ -1,40 +1,42 @@
 AWSTemplateFormatVersion: 2010-09-09-OC
 Description: Example Organization Formation Template
+StackName: organization-formation
 
 Organization:
-  Root:
+  MasterAccount:
     Type: OC::ORG::MasterAccount
     Properties:
       AccountName: My Organization Root
       AccountId: '102625093955'
 
-  # DevelopmentOU:
-  #   Type: OC::ORG::OrganizationalUnit
-  #   Properties:
-  #     OrganizationalUnitName: Development
-  #     ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
+  DevelopmentOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: development
+      ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
   #     Accounts:
   #     - !Ref DevelopmentAccount1
-  #     - !Ref DevelopmentAccount2
   #     - !Ref DevelopmentAccount3
+  #     - !Ref DevelopmentAccount2
 
-  # SharedOU:
-  #   Type: OC::ORG::OrganizationalUnit
-  #   Properties:
-  #     OrganizationalUnitName: Shared
-  #     ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
-  #     Accounts:
-  #     - !Ref LoggingAccount
-  #     - !Ref ServicesAccount
-  #     - !Ref UsersAccount
-
-  # ProductionOU:
-  #   Type: OC::ORG::OrganizationalUnit
-  #   Properties:
-  #     OrganizationalUnitName: Production
-  #     ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
-  #     Accounts:
+  SharedOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: shared
+      ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
+      Accounts:
+       - !Ref ServicesAccount
+       - !Ref UsersAccount
   #     - !Ref SystemAccount1
+  #     - !Ref LoggingAccount
+
+  ProductionOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: production
+      ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
+      Accounts:
+       - !Ref SystemAccount1
   #     - !Ref SystemAccount2
   #     - !Ref SystemAccount3
 
@@ -62,29 +64,32 @@ Organization:
   #     RootEmail: shared-logging@my-email.com
   #     AccountName: Shared Logging Account
 
-  # ServicesAccount:
-  #   Type: OC::ORG::Account
-  #   Properties:
-  #     RootEmail: shared-services@my-email.com
-  #     AccountName: Shared Services Account
+  ComplianceAccount:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: shared-compliance@olafconijn.awsapps.com
+      AccountName: Shared Compliance Account
 
-  # UsersAccount:
-  #   Type: OC::ORG::Account
-  #   Properties:
-  #     RootEmail: users@my-email.com
-  #     AccountName: Shared Users Account
+  ServicesAccount:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: shared-services@olafconijn.awsapps.com
+      AccountName: Shared Services Account
+
+  UsersAccount:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: users@olafconijn.awsapps.com
+      AccountName: Shared Users Account
   #     Metadata:
   #       - AccountOwnerEmail: bill@@my-email.com
   #       - AccountAlias: shared-account
 
-  # SystemAccount1:
-  #   Type: OC::ORG::Account
-  #   Properties:
-  #     RootEmail: system-1-account@my-email.com
-  #     AccountName: System 1 Production Account
-  #     Metadata:
-  #       - AccountOwnerEmail: bill@@my-email.com
-  #       - AccountAlias: system-1-account
+  SystemAccount1:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: system1@olafconijn.awsapps.com
+      AccountName: System 1 Production Account
 
   # SystemAccount2:
   #   Type: OC::ORG::Account
@@ -123,9 +128,9 @@ Organization:
           Condition:
             StringNotEquals:
               aws:RequestedRegion:
-              - eu-central-1
               - eu-west-1
               - us-east-1
+              - eu-central-1
 
 Metadata:
 
@@ -136,8 +141,24 @@ Mappings:
 Conditions:
 
 Resources:
-  IamBaseLine:
-    Type: AWS::CloudFormation::Stack
+
+  CloudTrailBucket:
+    Type: OC::ORG::SharedBucket
+    OrganizationBindings:
+      Regions: eu-central-1
+      Accounts: !Ref ComplianceAccount
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketName: !Sub
+        - 'CloudTrail-${RootId}'
+        - RootId: !Ref Root
+
+  CloudTrail:
+    Type: OC::ORG::CloudTrail
     OrganizationBindings:
       Regions: eu-central-1
       Accounts: '*'
@@ -147,68 +168,39 @@ Resources:
       Parameters:
         UsersAccount: !Ref UsersAccount
 
-  SharedFunction:
+  IamBaseLine:
     Type: AWS::CloudFormation::Stack
     OrganizationBindings:
-      Regions: eu-central-1
-      Accounts: !Ref ServicesAccount
-    Properties:
-      TemplateURL: ./example.iam.baseline.yml
-
-
-  SnsTopic:
-    Type: AWS::CloudFormation::Stack
-    OrganizationBindings:
-      Regions: eu-central-1
-      OrganizationalUnits:
-        - !Ref DevelopmentOU
-        - !Ref ProductionOU
-    Properties:
-      TemplateURL: ./example.iam.baseline.yml
-
-Outputs:
-
-CrossAccountPermissions:
-
-  InvokeSharedFunction:
-    Type: OC::PERMISSIONS::LAMBDA
-    OrganizationBindings:
-      Regions: eu-central-1
-      Accounts: !Ref ServicesAccount
-    PermissionGrantees:
       Regions: eu-central-1
       Accounts: '*'
+      IncludeMasterAccount: false
     Properties:
-        LambdaName: !GetAtt SharedFunction.Outputs.Lambda1Name
-        LambdaRegion: eu-central-1
-        PolicyStatement:
-          - Sid: !Sub 'allow-invoke-by-${Grantee::AccountId}'
-            Effect: Allow
-            Principal:
-              AWS: !Sub 'arn:aws:iam::${Grantee::AccountId}:root'
-            Action: lambda:InvokeFunction
-            Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Self::LambdaName}'
+      TemplateURL: ./example.iam.baseline.yml
+      Parameters:
+        UsersAccount: !Ref UsersAccount
 
-  InvokeSharedFunctionBySns:
-    Type: OC::PERMISSIONS::LAMBDA
+  DeveloperRole:
+    Type: OC::ORG::SharedRole
     OrganizationBindings:
       Regions: eu-central-1
-      Accounts: !Ref ServicesAccount
-    PermissionGrantees:
+      OrganizationalUnits: !Ref DevelopmentOU
+    Properties:
+      UsersAccount: !Ref UsersAccount
+      RoleName: DeveloperRole
+      ManagedPolicyArns: arn:aws:iam::aws:policy/PowerUserAccess
+      MaxSessionDuration: 3600
+
+  DevOpsRole:
+    Type: OC::ORG::SharedRole
+    OrganizationBindings:
       Regions: eu-central-1
+      IncludeMasterAccount: true
       OrganizationalUnits:
-        - !Ref DevelopmentOU
+        - !Ref SharedOU
         - !Ref ProductionOU
     Properties:
-        LambdaName: !GetAtt SharedFunction.Outputs.Lambda2Name
-        LambdaRegion: eu-central-1
-        PolicyStatement:
-          - Sid: !Sub 'allow-invoke-by-sns-${Grantee::AccountId}'
-            Effect: Allow
-            Principal:
-              Service: sns.amazonaws.com
-            Action: lambda:InvokeFunction
-            Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Self::LambdaName}'
-            Condition:
-              ArnLike:
-                AWS:SourceArn: arn:aws:sns:${Grantee::Region}:${Grantee::AccountId}:MySnsTopic
+      UsersAccount: !Ref UsersAccount
+      RoleName: DevOpsRole
+      ManagedPolicyArns: arn:aws:iam::aws:policy/PowerUserAccess
+      MaxSessionDuration: 3600
+Outputs:
