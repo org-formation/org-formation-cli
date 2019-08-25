@@ -5,7 +5,6 @@ import { ServiceControlPolicyResource } from './service-control-policy-resource'
 
 export interface IOrganizationRootProperties {
     ServiceControlPolicies: IResourceRef | IResourceRef[];
-    Tags: Record<string, string>;
 }
 
 export class OrganizationRootResource extends Resource {
@@ -17,9 +16,8 @@ export class OrganizationRootResource extends Resource {
         super(root, id, resource);
 
         this.props = this.resource.Properties as IOrganizationRootProperties;
-        this.tags = this.props.Tags;
 
-        super.throwForUnknownAttributes(this.props, id, 'ServiceControlPolicies', 'Tags' );
+        super.throwForUnknownAttributes(this.props, id, 'ServiceControlPolicies');
     }
 
     public resolveRefs() {

@@ -4,6 +4,7 @@ import { OrganizationalUnitResource } from '../parser/model/organizational-unit-
 import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
 import { AwsOrganization } from './aws-organization';
 export declare class AwsOrganizationWriter {
+    async: any;
     private organization;
     private organizationService;
     constructor(organizationService: Organizations, organization: AwsOrganization);
@@ -18,4 +19,6 @@ export declare class AwsOrganizationWriter {
     updateOrganizationalUnit(resource: OrganizationalUnitResource, physicalId: string): Promise<void>;
     deleteOrganizationalUnit(physicalId: string): Promise<void>;
     createAccount(resource: AccountResource): Promise<string>;
+    updateAccount(resource: AccountResource, accountId: string): Promise<void>;
+    private _createAccount;
 }

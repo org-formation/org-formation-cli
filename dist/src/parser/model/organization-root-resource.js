@@ -5,8 +5,7 @@ class OrganizationRootResource extends resource_1.Resource {
     constructor(root, id, resource) {
         super(root, id, resource);
         this.props = this.resource.Properties;
-        this.tags = this.props.Tags;
-        super.throwForUnknownAttributes(this.props, id, 'ServiceControlPolicies', 'Tags');
+        super.throwForUnknownAttributes(this.props, id, 'ServiceControlPolicies');
     }
     resolveRefs() {
         this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);

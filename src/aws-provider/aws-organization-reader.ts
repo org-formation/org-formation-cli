@@ -1,7 +1,15 @@
 import { Organizations } from 'aws-sdk/clients/all';
-import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListAccountsResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
+import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListAccountsResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
+
+interface IAWSTags {
+    [key: string]: string;
+}
+interface IAWSAccountWithTags {
+    Tags?: IAWSTags;
+}
+
 interface IObjectWithParentId {
     ParentId: string;
 }
@@ -25,7 +33,7 @@ interface IPolicyTargets {
 }
 
 export type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
-export type AWSAccount = Account & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
+export type AWSAccount = Account & IAWSAccountWithTags & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
 export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject;
 export type AWSRoot = Root & IObjectWithAccounts;
 
@@ -36,7 +44,7 @@ function GetPoliciesForTarget(list: AWSPolicy[], targetId: string, targetType: T
 export class AwsOrganizationReader {
 
     private static async getOrganization(that: AwsOrganizationReader): Promise<Organization> {
-
+        that.organizationService.listTagsForResource();
         const resp = await that.organizationService.describeOrganization().promise();
         return resp.Organization;
     }
@@ -130,7 +138,6 @@ export class AwsOrganizationReader {
     }
 
     private static async listAccounts(that: AwsOrganizationReader): Promise<AWSAccount[]> {
-
         const result: AWSAccount[] = [];
         const organizationalUnits = await that.organizationalUnits.getValue();
         const policies = await that.policies.getValue();
@@ -156,6 +163,7 @@ export class AwsOrganizationReader {
                         Id: acc.Id,
                         ParentId: req.ParentId,
                         Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT'),
+                        Tags: await AwsOrganizationReader.getTagsForAccount(that, acc.Id),
                     };
 
                     const parentOU = organizationalUnits.find((x) => x.Id === req.ParentId);
@@ -171,6 +179,19 @@ export class AwsOrganizationReader {
 
         return result;
     }
+
+    private static async getTagsForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAWSTags> {
+        const request: ListTagsForResourceRequest = {
+            ResourceId : accountId,
+        };
+        const response = await that.organizationService.listTagsForResource(request).promise();
+        const tags: IAWSTags = {};
+        for (const tag of response.Tags) {
+            tags[tag.Key] = tag.Value;
+        }
+        return tags;
+    }
+
     public readonly policies: Lazy<AWSPolicy[]>;
     public readonly accounts: Lazy<AWSAccount[]>;
     public readonly organizationalUnits: Lazy<AWSOrganizationalUnit[]>;

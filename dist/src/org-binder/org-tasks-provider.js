@@ -7,7 +7,12 @@ class TaskProvider {
         this.writer = writer;
         this.state = persistedState;
         const previousTemplate = persistedState.getPreviousTemplate();
-        this.previousTemplate = parser_1.TemplateRoot.createFromContents(previousTemplate, currentTemplate.dirname);
+        if (previousTemplate) {
+            this.previousTemplate = parser_1.TemplateRoot.createFromContents(previousTemplate, currentTemplate.dirname);
+        }
+        else {
+            this.previousTemplate = parser_1.TemplateRoot.createEmpty();
+        }
     }
     createPolicyCreateTasks(resource, hash) {
         const that = this;

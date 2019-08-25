@@ -96,6 +96,13 @@ export class TemplateRoot {
 
     }
 
+    public static createEmpty() {
+        return new TemplateRoot({
+            AWSTemplateFormatVersion : '2010-09-09-OC',
+            Organization: {},
+        }, './');
+    }
+
     public readonly contents: ITemplate;
     public readonly dirname: string;
     public readonly organizationSection: OrganizationSection;

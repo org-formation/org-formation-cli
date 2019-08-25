@@ -21,7 +21,7 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
     }
 
     const template = TemplateRoot.create(templateFile);
-    const state = PersistedState.Load('./state.json');
+    const state = PersistedState.Load(templateFile + '.state');
 
     const organizations = new Organizations({region: 'us-east-1'});
     const awsReader = new AwsOrganizationReader(organizations);
@@ -56,8 +56,11 @@ export async function generateTemplate(filePath: string, command: ICommandArgs) 
     const awsOrganization = new AwsOrganization(awsReader);
     const writer = new DefaultTemplateWriter(awsOrganization);
     const template = await writer.generateDefaultTemplate();
-    const templateContents = template.template.replace(/( *)-\n\1 {2}/, '$1- ');
+    const templateContents = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
     writeFileSync(filePath, templateContents);
+
+    template.state.setPreviousTemplate(templateContents);
+    template.state.save(filePath + '.state');
 }
 
 interface ICommandArgs {

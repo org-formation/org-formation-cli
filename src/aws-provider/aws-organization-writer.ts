@@ -1,12 +1,14 @@
 import { Organizations } from 'aws-sdk/clients/all';
-import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
+import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { AccountResource } from '../parser/model/account-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
 import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
+import { Util } from '../util';
 import { AwsOrganization } from './aws-organization';
 
 export class AwsOrganizationWriter {
-    private organization: AwsOrganization;
+
+    public async;     private organization: AwsOrganization;
     private organizationService: Organizations;
 
     constructor(organizationService: Organizations, organization: AwsOrganization) {
@@ -32,14 +34,24 @@ export class AwsOrganizationWriter {
     }
 
     public async createPolicy(resource: ServiceControlPolicyResource): Promise<string> {
-        const createPolicyRequest: CreatePolicyRequest = {
-            Name: resource.policyName,
-            Description: resource.description,
-            Type: 'SERVICE_CONTROL_POLICY',
-            Content: JSON.stringify(resource.policyDocument, null, 2),
-        };
-        const response = await this.organizationService.createPolicy(createPolicyRequest).promise();
-        return response.Policy.PolicySummary.Id;
+        try {
+            const createPolicyRequest: CreatePolicyRequest = {
+                Name: resource.policyName,
+                Description: resource.description,
+                Type: 'SERVICE_CONTROL_POLICY',
+                Content: JSON.stringify(resource.policyDocument, null, 2),
+            };
+            const response = await this.organizationService.createPolicy(createPolicyRequest).promise();
+            return response.Policy.PolicySummary.Id;
+        } catch (err) {
+            if (err.code === 'DuplicatePolicyException') {
+                const existingPolicy = this.organization.policies.find((x) => x.Name === resource.policyName);
+                await this.updatePolicy(resource, existingPolicy.Id);
+                return existingPolicy.Id;
+            }
+
+            throw err;
+        }
     }
 
     public async attachPolicy(targetPhysicalId: string, policyPhysicalId: string) {
@@ -103,7 +115,6 @@ export class AwsOrganizationWriter {
         await this.organizationService.moveAccount(moveAccountRequest).promise();
 
         account.ParentId = parentPhysicalId;
-
     }
 
     public async createOrganizationalUnit(resource: OrganizationalUnitResource): Promise<string> {
@@ -113,6 +124,7 @@ export class AwsOrganizationWriter {
             Name: resource.organizationalUnitName,
             ParentId: roots[0].Id,
         };
+        // add catch and update instead of create
         const response = await this.organizationService.createOrganizationalUnit(createOrganizationalUnitRequest).promise();
         return response.OrganizationalUnit.Id;
     }
@@ -144,16 +156,62 @@ export class AwsOrganizationWriter {
 
     public async createAccount(resource: AccountResource): Promise<string> {
 
-        const account = this.organization.accounts.find((x) => x.Email === resource.rootEmail);
+        let accountId = resource.accountId;
+
+        // todo and check on accountId
+        const account = this.organization.accounts.find((x) => x.Id === resource.accountId || x.Email === resource.rootEmail);
         if (account !== undefined) {
+            await this.updateAccount(resource, account.Id);
             console.log(`SKIP: account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
             return account.Id;
         }
 
+        accountId = await this._createAccount(resource);
+
+        await this.updateAccount(resource, accountId);
+        return accountId;
+    }
+
+    public async updateAccount(resource: AccountResource, accountId: string) {
+        const account = this.organization.accounts.find((x) => x.Id === accountId);
+
+        if (account.Name !== resource.accountName) {
+            Util.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to ${resource.accountName}.\nPlease login with root on the specified account to change its name`);
+        }
+
+        const tagsOnResource = Object.entries(resource.tags);
+        const keysOnResource = tagsOnResource.map((x) => x[0]);
+        const tagsOnAccount = Object.entries(account.Tags);
+        const tagsToRemove = tagsOnAccount.map((x) => x[0]).filter((x) => keysOnResource.indexOf(x) === -1);
+        const tagsToUpdate = keysOnResource.filter((x) => resource.tags[x] !== account.Tags[x]);
+
+        if (tagsToRemove.length > 0) {
+            const request: UntagResourceRequest = {
+                ResourceId: accountId,
+                TagKeys: tagsToRemove,
+            };
+            await this.organizationService.untagResource(request).promise();
+        }
+
+        if (tagsToUpdate.length > 0) {
+            const tags: Tag[] = tagsOnResource.filter((x) => tagsToUpdate.indexOf(x[0]) >= 0).map((x) => ({Key: x[0], Value : x[1] }));
+
+            const request: TagResourceRequest = {
+                ResourceId: accountId,
+                Tags: tags,
+            };
+            await this.organizationService.tagResource(request).promise();
+        }
+
+        account.Tags = resource.tags;
+    }
+
+    private async _createAccount(resource: AccountResource): Promise<string> {
         const createAccountReq: CreateAccountRequest = {
             Email: resource.rootEmail,
             AccountName: resource.accountName,
         };
+
         const createAccountResponse = await this.organizationService.createAccount(createAccountReq).promise();
         let accountCreationStatus = createAccountResponse.CreateAccountStatus;
         while (accountCreationStatus.State !== 'SUCCEEDED') {
@@ -169,13 +227,16 @@ export class AwsOrganizationWriter {
         }
 
         this.organization.accounts.push({
-            Arn: `arn:aws:organizations::${this.organization.masterAccount}:account/${this.organization.organization.Id}/${accountCreationStatus.AccountId}`,
+            Arn: `arn:aws:organizations::${this.organization.masterAccount.Id}:account/${this.organization.organization.Id}/${accountCreationStatus.AccountId}`,
             Id: accountCreationStatus.AccountId,
             ParentId: this.organization.roots[0].Id,
             Policies: [],
             Name: resource.accountName,
+            Email: resource.rootEmail,
             Type: 'Account',
+            Tags: {},
         });
+
         return accountCreationStatus.AccountId;
     }
 }

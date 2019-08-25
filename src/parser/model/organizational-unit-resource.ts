@@ -7,14 +7,12 @@ export interface IOrganizationalUnitProperties {
     OrganizationalUnitName: string;
     Accounts?: string[] | IResourceRef | IResourceRef[];
     ServiceControlPolicies?: IResourceRef | IResourceRef[];
-    Tags?: Record<string, string>;
 }
 
 export class OrganizationalUnitResource extends Resource {
     public organizationalUnitName: string;
     public accounts: Array<Reference<AccountResource>>;
     public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>>;
-    public tags: Record<string, string>;
     private props: IOrganizationalUnitProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
@@ -26,10 +24,9 @@ export class OrganizationalUnitResource extends Resource {
             throw new Error(`OrganizationalUnitName is missing on Organizational Unit ${id}`);
         }
 
-        this.tags = this.props.Tags;
         this.organizationalUnitName = this.props.OrganizationalUnitName;
 
-        super.throwForUnknownAttributes(this.props, id, 'OrganizationalUnitName', 'Accounts', 'ServiceControlPolicies', 'Tags' );
+        super.throwForUnknownAttributes(this.props, id, 'OrganizationalUnitName', 'Accounts', 'ServiceControlPolicies');
     }
 
     public resolveRefs() {

@@ -10,7 +10,7 @@ class CloudFormationBinder {
         this.state = state;
         this.taskProvider = taskProvider;
         this.templateTransform = templateTransform;
-        if (this.state.masterAccount !== this.masterAccount) {
+        if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new Error('state and template do not belong to the same organization');
         }
     }

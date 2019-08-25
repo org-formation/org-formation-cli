@@ -19,7 +19,7 @@ export class OrganizationBinder {
         this.taskProvider = taskProvider;
         this.masterAccount = template.organizationSection.masterAccount.accountId;
         this.state = state;
-        if (this.state.masterAccount !== this.masterAccount) {
+        if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new Error('state and template do not belong to the same organization');
         }
     }
@@ -70,14 +70,8 @@ export class OrganizationBinder {
                     tasks.push(...t1);
                     break;
                 case 'Update':
-                    // console.log(`updating policy '${boundPolicy.template.logicalId}' (${boundPolicy.state.physicalId})`);
-                    // await writer.updateAccount(boundPolicy.template, boundPolicy.state.physicalId);
-                    // this.state.setBinding({
-                    //     type: boundPolicy.template.type,
-                    //     logicalId: boundPolicy.template.logicalId,
-                    //     lastCommittedHash: boundPolicy.templateHash,
-                    //     physicalId: boundPolicy.state.physicalId,
-                    // });
+                    const t2 = this.taskProvider.createAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.templateHash);
+                    tasks.push(...t2);
                     break;
                 case 'Delete':
                     // console.log(`deleting policy '${boundPolicy.state.physicalId}'`);

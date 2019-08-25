@@ -14,7 +14,6 @@ class ServiceControlPolicyResource extends resource_1.Resource {
         this.policyName = props.PolicyName;
         this.description = props.Description;
         this.policyDocument = props.PolicyDocument;
-        this.tags = props.Tags;
         super.throwForUnknownAttributes(props, id, 'PolicyName', 'Description', 'PolicyDocument', 'Tags');
     }
 }

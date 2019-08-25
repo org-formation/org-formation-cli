@@ -44,5 +44,31 @@
                 "<node_internals>/**"
             ]
         },
+        {
+            "name": "update-template",
+            "type": "node",
+            "request": "launch",
+            "args": ["cli.ts", "update-template", "./out.txt" ],
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "sourceMaps": true,
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "generate-template",
+            "type": "node",
+            "request": "launch",
+            "args": ["cli.ts", "generate-template", "./out2.txt", "--profile", "olafconijn" ],
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "sourceMaps": true,
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
     ]
 }

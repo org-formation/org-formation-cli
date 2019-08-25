@@ -28,14 +28,6 @@ describe('when creating service control policy resource', () => {
         expect(scp.policyName).to.eq(properties.PolicyName);
         expect(scp.policyDocument).to.eq(properties.PolicyDocument);
         expect(scp.description).to.eq(properties.Description);
-        expect(scp.tags).to.be.undefined;
-    });
-
-    it('copies tags from resource', () => {
-        properties.Tags = { key1: 'val1', key2: 'val2' };
-        const scp = new ServiceControlPolicyResource(template, 'logical-id', resource);
-        expect(scp.tags.key1).to.eq(properties.Tags.key1);
-        expect(scp.tags.key2).to.eq(properties.Tags.key2);
     });
 
     it('throws an error if properties are missing', () => {

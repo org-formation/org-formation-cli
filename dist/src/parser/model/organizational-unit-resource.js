@@ -8,9 +8,8 @@ class OrganizationalUnitResource extends resource_1.Resource {
         if (!this.props.OrganizationalUnitName) {
             throw new Error(`OrganizationalUnitName is missing on Organizational Unit ${id}`);
         }
-        this.tags = this.props.Tags;
         this.organizationalUnitName = this.props.OrganizationalUnitName;
-        super.throwForUnknownAttributes(this.props, id, 'OrganizationalUnitName', 'Accounts', 'ServiceControlPolicies', 'Tags');
+        super.throwForUnknownAttributes(this.props, id, 'OrganizationalUnitName', 'Accounts', 'ServiceControlPolicies');
     }
     resolveRefs() {
         this.accounts = super.resolve(this.props.Accounts, this.root.organizationSection.accounts);

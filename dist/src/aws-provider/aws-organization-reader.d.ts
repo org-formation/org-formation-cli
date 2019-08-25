@@ -1,6 +1,12 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { Account, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root } from 'aws-sdk/clients/organizations';
 export declare type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
+interface IAWSTags {
+    [key: string]: string;
+}
+interface IAWSAccountWithTags {
+    Tags: IAWSTags;
+}
 interface IObjectWithParentId {
     ParentId: string;
 }
@@ -19,7 +25,7 @@ interface IPolicyTargets {
     Targets: PolicyTargetSummary[];
 }
 export declare type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
-export declare type AWSAccount = Account & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
+export declare type AWSAccount = Account & IAWSAccountWithTags & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
 export declare type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject;
 export declare type AWSRoot = Root & IObjectWithAccounts;
 export declare class AwsOrganizationReader {
@@ -28,6 +34,7 @@ export declare class AwsOrganizationReader {
     private static listRoots;
     private static listOrganizationalUnits;
     private static listAccounts;
+    private static getTagsForAccount;
     readonly policies: Lazy<AWSPolicy[]>;
     readonly accounts: Lazy<AWSAccount[]>;
     readonly organizationalUnits: Lazy<AWSOrganizationalUnit[]>;

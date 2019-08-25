@@ -5,6 +5,7 @@ function GetPoliciesForTarget(list, targetId, targetType) {
 }
 class AwsOrganizationReader {
     static async getOrganization(that) {
+        that.organizationService.listTagsForResource();
         const resp = await that.organizationService.describeOrganization().promise();
         return resp.Organization;
     }
@@ -85,7 +86,7 @@ class AwsOrganizationReader {
                 resp = await that.organizationService.listAccountsForParent(req).promise();
                 req.NextToken = resp.NextToken;
                 for (const acc of resp.Accounts) {
-                    const account = Object.assign({}, acc, { Type: 'Account', Name: acc.Name, Id: acc.Id, ParentId: req.ParentId, Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT') });
+                    const account = Object.assign({}, acc, { Type: 'Account', Name: acc.Name, Id: acc.Id, ParentId: req.ParentId, Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT'), Tags: await AwsOrganizationReader.getTagsForAccount(that, acc.Id) });
                     const parentOU = organizationalUnits.find((x) => x.Id === req.ParentId);
                     if (parentOU) {
                         parentOU.Accounts.push(account);
@@ -95,6 +96,17 @@ class AwsOrganizationReader {
             } while (resp.NextToken);
         } while (parentIds.length > 0);
         return result;
+    }
+    static async getTagsForAccount(that, accountId) {
+        const request = {
+            ResourceId: accountId,
+        };
+        const response = await that.organizationService.listTagsForResource(request).promise();
+        const tags = {};
+        for (const tag of response.Tags) {
+            tags[tag.Key] = tag.Value;
+        }
+        return tags;
     }
     constructor(organizationService) {
         this.organizationService = organizationService;

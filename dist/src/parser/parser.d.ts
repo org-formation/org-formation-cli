@@ -40,6 +40,7 @@ export interface IOrganizationBindings {
 export declare class TemplateRoot {
     static create(path: string): TemplateRoot;
     static createFromContents(contents: string, dirname?: string): TemplateRoot;
+    static createEmpty(): TemplateRoot;
     readonly contents: ITemplate;
     readonly dirname: string;
     readonly organizationSection: OrganizationSection;

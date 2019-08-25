@@ -2,6 +2,7 @@ import { Organization, PolicySummary, Root } from 'aws-sdk/clients/organizations
 import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy } from './aws-organization-reader';
 
 export class AwsOrganization {
+
     public organization: Organization;
     public roots: Root[];
     public organizationalUnits: AWSOrganizationalUnit[];

@@ -54,6 +54,12 @@ class TemplateRoot {
         }
         return new TemplateRoot(obj, dirname);
     }
+    static createEmpty() {
+        return new TemplateRoot({
+            AWSTemplateFormatVersion: '2010-09-09-OC',
+            Organization: {},
+        }, './');
+    }
     constructor(contents, dirname) {
         if (!contents.AWSTemplateFormatVersion) {
             throw new Error('AWSTemplateFormatVersion is missing');

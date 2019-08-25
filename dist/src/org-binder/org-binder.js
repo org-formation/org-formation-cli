@@ -7,7 +7,7 @@ class OrganizationBinder {
         this.taskProvider = taskProvider;
         this.masterAccount = template.organizationSection.masterAccount.accountId;
         this.state = state;
-        if (this.state.masterAccount !== this.masterAccount) {
+        if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new Error('state and template do not belong to the same organization');
         }
     }

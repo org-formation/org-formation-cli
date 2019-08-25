@@ -146,7 +146,18 @@ export class DefaultTemplateWriter {
         lines.push(new Line('AccountName', account.Name, 6));
         lines.push(new Line('AccountId', account.Id, 6));
         lines.push(new Line('RootEmail', account.Email, 6));
+        if (account.Tags) {
+            const tags = Object.entries(account.Tags);
+            if (tags.length > 0) {
+                lines.push(new Line('Tags', '', 6));
+                for (const tag of tags) {
+                    lines.push(new Line(tag[0], tag[1], 8));
+                }
+            }
+        }
+
         lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
+
         lines.push(new EmptyLine());
 
         return {

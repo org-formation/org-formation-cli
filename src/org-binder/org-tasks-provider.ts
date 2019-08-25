@@ -16,7 +16,11 @@ export class TaskProvider {
         this.writer = writer;
         this.state = persistedState;
         const previousTemplate = persistedState.getPreviousTemplate();
-        this.previousTemplate = TemplateRoot.createFromContents(previousTemplate, currentTemplate.dirname);
+        if (previousTemplate) {
+            this.previousTemplate = TemplateRoot.createFromContents(previousTemplate, currentTemplate.dirname);
+        } else {
+            this.previousTemplate = TemplateRoot.createEmpty();
+        }
     }
 
     public createPolicyCreateTasks(resource: ServiceControlPolicyResource, hash: string): IBuildTask[] {
@@ -204,6 +208,56 @@ export class TaskProvider {
         }];
     }
 
+    public createAccountUpdateTasks(resource: AccountResource, physicalId: string, hash: string): IBuildTask[] {
+        const that = this;
+        const tasks: IBuildTask[] = [];
+        const previousResource = this.previousTemplate.organizationSection.accounts.find((x) => x.logicalId === resource.logicalId);
+
+        if (previousResource === undefined || previousResource.accountName !== resource.accountName || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)) {
+            const updateAccountTask: IBuildTask = {
+                type: resource.type,
+                logicalId: resource.logicalId,
+                action:  'Update',
+                perform: async (task) => {
+                    task.result = await that.writer.updateAccount(resource, physicalId);
+                },
+            };
+
+            tasks.push(updateAccountTask);
+        }
+
+        const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
+        const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
+        for (const attachedSCP of currentSCPS.physicalIds.filter((x) => !previousSCPs.physicalIds.includes(x))) {
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { PhysicalId: attachedSCP }, that, () => physicalId);
+            tasks.push(attachSCPTask);
+        }
+        for (const attachedSCP of currentSCPS.unresolvedResources) {
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => physicalId);
+            tasks.push(attachSCPTask);
+        }
+        for (const detachedSCP of previousSCPs.physicalIds.filter((x) => !currentSCPS.physicalIds.includes(x))) {
+            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, detachedSCP, that, physicalId);
+            tasks.push(detachSCPTask);
+        }
+        const createAccountCommitHashTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'CommitHash',
+            dependentTasks: tasks,
+            perform: async (task) => {
+                that.state.setBinding({
+                    type: resource.type,
+                    logicalId: resource.logicalId,
+                    lastCommittedHash: hash,
+                    physicalId,
+                });
+            },
+        };
+
+        return [...tasks, createAccountCommitHashTask];
+    }
+
     public createAccountCreateTasks(resource: AccountResource, hash: string): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
@@ -241,7 +295,7 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
-    private createDetachSCPTask(resource: OrganizationalUnitResource, physicalId: string, that: this, targetId: string): IBuildTask {
+    private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource, physicalId: string, that: this, targetId: string): IBuildTask {
         return {
             type: resource.type,
             logicalId: resource.logicalId,

@@ -25,14 +25,6 @@ describe('when creating organizational unit resource', () => {
     it('copies properties from resource', () => {
         const ou = new OrganizationalUnitResource(template, 'logical-id', resource);
         expect(ou.organizationalUnitName).to.eq(properties.OrganizationalUnitName);
-        expect(ou.tags).to.be.undefined;
-    });
-
-    it('copies tags from resource', () => {
-        properties.Tags = { key1: 'val1', key2: 'val2' };
-        const ou = new OrganizationalUnitResource(template, 'logical-id', resource);
-        expect(ou.tags.key1).to.eq(properties.Tags.key1);
-        expect(ou.tags.key2).to.eq(properties.Tags.key2);
     });
 
     it('throws an error if properties are missing', () => {
