@@ -1,26 +1,31 @@
+import { S3 } from 'aws-sdk';
+import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
 import { readFileSync, stat, writeFileSync } from 'fs';
+import {IStorageProvider} from './storage-provider';
 
 export class PersistedState {
 
-    public static Load(path: string): PersistedState {
-        let json = '';
+    public static async Load(provider: IStorageProvider): Promise<PersistedState> {
+
         try {
-            json = readFileSync(path).toString('utf8');
-        } catch (err) {
-            if (err.code === 'ENOENT') {
-                json = '{}';
-            } else {
-                throw err;
+            const contents = await provider.get();
+            let object = {} as IState;
+            if (contents && contents.trim().length > 0) {
+                object = JSON.parse(contents);
             }
+
+            if (object.stacks === undefined) {
+                object.stacks = {};
+            }
+            if (object.bindings === undefined) {
+                object.bindings = {};
+            }
+            return new PersistedState(object, provider);
+        } catch (err) {
+            console.log(err);
+            throw err;
         }
-        const state = JSON.parse(json) as IState;
-        if (state.stacks === undefined) {
-            state.stacks = {};
-        }
-        if (state.bindings === undefined) {
-            state.bindings = {};
-        }
-        return new PersistedState(state, path);
+
     }
 
     public static CreateEmpty(masterAccountId: string) {
@@ -29,16 +34,16 @@ export class PersistedState {
             bindings: {},
             stacks: {},
             previousTemplate: '',
-        });
+        }, null);
     }
 
     public readonly masterAccount: string;
-    private filename: string;
+    private provider: IStorageProvider;
     private state: IState;
-    private dirty: boolean;
+    private dirty: boolean = false;
 
-    constructor(state: IState, filename: string = 'state.json') {
-        this.filename = filename;
+    constructor(state: IState, provider: IStorageProvider) {
+        this.provider = provider;
         this.state = state;
         this.masterAccount = state.masterAccountId;
     }
@@ -133,10 +138,14 @@ export class PersistedState {
     public getPreviousTemplate(): string {
         return this.state.previousTemplate;
     }
-    public save(filename: string = this.filename) {
+
+    public async save(storageProvider: IStorageProvider = this.provider) {
         if (!this.dirty) { return; }
+
         const json = JSON.stringify(this.state, null, 2);
-        writeFileSync(filename, json, {encoding: 'utf8'});
+        await storageProvider.put(json);
+
+        this.dirty = false;
     }
 }
 

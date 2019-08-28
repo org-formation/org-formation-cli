@@ -1,5 +1,6 @@
 import { AwsOrganizationWriter } from '../aws-provider/aws-organization-writer';
 import { AccountResource } from '../parser/model/account-resource';
+import { OrganizationRootResource } from '../parser/model/organization-root-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
 import { Reference, Resource } from '../parser/model/resource';
 import { OrgResourceTypes } from '../parser/model/resource-types';
@@ -21,6 +22,82 @@ export class TaskProvider {
         } else {
             this.previousTemplate = TemplateRoot.createEmpty();
         }
+    }
+
+    public createRootCreateTasks(resource: OrganizationRootResource, hash: string): IBuildTask[] {
+        const that = this;
+        const tasks: IBuildTask[] = [];
+        const createOrganizationRootTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'Create',
+            perform: async (task) => {
+                task.result = await that.writer.ensureRoot();
+            },
+        };
+
+        tasks.push(createOrganizationRootTask);
+
+        for (const attachedSCP of resource.serviceControlPolicies) {
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createOrganizationRootTask.result);
+            attachSCPTask.dependentTasks = [createOrganizationRootTask];
+            tasks.push(attachSCPTask);
+        }
+
+        const createOrganizationRootCommitHashTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'CommitHash',
+            dependentTasks: tasks,
+            perform: async (task) => {
+                that.state.setBinding({
+                    type: resource.type,
+                    logicalId: resource.logicalId,
+                    lastCommittedHash: hash,
+                    physicalId: createOrganizationRootTask.result,
+                });
+            },
+        };
+
+        return [...tasks, createOrganizationRootCommitHashTask];
+    }
+
+    public createRootUpdateTasks(resource: OrganizationRootResource, physicalId: string, hash: string): IBuildTask[] {
+        const that = this;
+        const tasks: IBuildTask[] = [];
+        const previousResource = this.previousTemplate.organizationSection.organizationRoot;
+
+        const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
+        const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
+        for (const attachedSCP of currentSCPS.physicalIds.filter((x) => !previousSCPs.physicalIds.includes(x))) {
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { PhysicalId: attachedSCP }, that, () => physicalId);
+            tasks.push(attachSCPTask);
+        }
+        for (const attachedSCP of currentSCPS.unresolvedResources) {
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => physicalId);
+            tasks.push(attachSCPTask);
+        }
+        for (const detachedSCP of previousSCPs.physicalIds.filter((x) => !currentSCPS.physicalIds.includes(x))) {
+            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, detachedSCP, that, physicalId);
+            tasks.push(detachSCPTask);
+        }
+
+        const createOrganizationalUnitCommitHashTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'CommitHash',
+            dependentTasks: tasks,
+            perform: async (task) => {
+                that.state.setBinding({
+                    type: resource.type,
+                    logicalId: resource.logicalId,
+                    lastCommittedHash: hash,
+                    physicalId,
+                });
+            },
+        };
+
+        return [...tasks, createOrganizationalUnitCommitHashTask];
     }
 
     public createPolicyCreateTasks(resource: ServiceControlPolicyResource, hash: string): IBuildTask[] {
@@ -294,8 +371,18 @@ export class TaskProvider {
         };
         return [...tasks, createAccountCommitHashTask];
     }
-
-    private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource, physicalId: string, that: this, targetId: string): IBuildTask {
+    public createForgetResourceTasks(binding: IBinding): IBuildTask[] {
+        const that = this;
+        return [{
+            type: binding.type,
+            logicalId: binding.logicalId,
+            action: 'Forget',
+            perform: async () => {
+                this.state.removeBinding(binding);
+            },
+        }];
+    }
+    private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource | OrganizationRootResource, physicalId: string, that: this, targetId: string): IBuildTask {
         return {
             type: resource.type,
             logicalId: resource.logicalId,
@@ -377,4 +464,4 @@ export interface IBuildTask {
     perform: (task: IBuildTask) => Promise<void>;
 }
 
-type BuildTaskAction = 'Create' | 'Update' | 'Delete' | 'Relate' | 'CommitHash';
+type BuildTaskAction = 'Create' | 'Update' | 'Delete' | 'Relate' | 'Forget' | 'CommitHash';

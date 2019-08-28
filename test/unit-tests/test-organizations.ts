@@ -7,7 +7,7 @@ export class TestOrganizations {
         organizationModel.roots = [{Id: 'org-root-id'}];
         organizationModel.masterAccount = { Id : '00000000000000', ParentId: 'org-root-id', Policies: [], Type : 'Account', Name: 'Organizational Master Account' };
         organizationModel.organization = {Id: 'org-id'};
-
+        organizationModel.organizationalUnits = [];
         return organizationModel;
     }
 }

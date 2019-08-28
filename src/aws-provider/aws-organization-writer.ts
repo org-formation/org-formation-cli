@@ -1,6 +1,7 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { AccountResource } from '../parser/model/account-resource';
+import { OrganizationRootResource } from '../parser/model/organization-root-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
 import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
 import { Util } from '../util';
@@ -8,7 +9,7 @@ import { AwsOrganization } from './aws-organization';
 
 export class AwsOrganizationWriter {
 
-    public async;     private organization: AwsOrganization;
+    private organization: AwsOrganization;
     private organizationService: Organizations;
 
     constructor(organizationService: Organizations, organization: AwsOrganization) {
@@ -59,19 +60,23 @@ export class AwsOrganizationWriter {
             PolicyId: policyPhysicalId,
             TargetId: targetPhysicalId,
         };
-
         try {
-            await this.ensureSCPEnabled();
-            await this.organizationService.attachPolicy(attachPolicyRequest).promise();
-        } catch (err) {
-            if (err && err.code === 'PolicyTypeNotEnabledException') {
+            try {
                 await this.ensureSCPEnabled();
                 await this.organizationService.attachPolicy(attachPolicyRequest).promise();
-            } else {
+            } catch (err) {
+                if (err && err.code === 'PolicyTypeNotEnabledException') {
+                    await this.ensureSCPEnabled();
+                    await this.organizationService.attachPolicy(attachPolicyRequest).promise();
+                } else {
+                   throw err;
+                }
+            }
+        } catch (err) {
+            if (err && err.code !== 'DuplicatePolicyAttachmentException') {
                 throw err;
             }
         }
-
     }
 
     public async detachPolicy(targetPhysicalId: string, policyPhysicalId: string) {
@@ -79,8 +84,13 @@ export class AwsOrganizationWriter {
             PolicyId: policyPhysicalId,
             TargetId: targetPhysicalId,
         };
-
-        await this.organizationService.detachPolicy(detachPolicyRequest).promise();
+        try {
+            await this.organizationService.detachPolicy(detachPolicyRequest).promise();
+        } catch (err) {
+            if (err && err.code !== 'PolicyNotAttachedException') {
+                throw err;
+            }
+        }
     }
 
     public async updatePolicy(resource: ServiceControlPolicyResource, physicalId: string) {
@@ -117,16 +127,21 @@ export class AwsOrganizationWriter {
         account.ParentId = parentPhysicalId;
     }
 
-    public async createOrganizationalUnit(resource: OrganizationalUnitResource): Promise<string> {
+    public async ensureRoot(): Promise<string> {
         const roots = this.organization.roots;
+        return roots[0].Id;
+    }
 
-        const createOrganizationalUnitRequest: CreateOrganizationalUnitRequest = {
-            Name: resource.organizationalUnitName,
-            ParentId: roots[0].Id,
-        };
-        // add catch and update instead of create
-        const response = await this.organizationService.createOrganizationalUnit(createOrganizationalUnitRequest).promise();
-        return response.OrganizationalUnit.Id;
+    public async createOrganizationalUnit(resource: OrganizationalUnitResource): Promise<string> {
+        const organizationalUnit = this.organization.organizationalUnits.find((x) => x.Name === resource.organizationalUnitName);
+        if (organizationalUnit) {
+            console.log(`SKIP: ou with name ${resource.organizationalUnitName} already exists`);
+            return organizationalUnit.Id;
+        }
+        const roots = this.organization.roots;
+        const organizationalUnitId = await this._createOrganizationalUnit(resource, roots[0].Id);
+
+        return organizationalUnitId;
     }
 
     public async updateOrganizationalUnit(resource: OrganizationalUnitResource, physicalId: string) {
@@ -204,6 +219,27 @@ export class AwsOrganizationWriter {
         }
 
         account.Tags = resource.tags;
+    }
+
+    private async _createOrganizationalUnit(resource: OrganizationalUnitResource, parentId: string): Promise<string> {
+        const createOrganizationalUnitRequest: CreateOrganizationalUnitRequest = {
+            Name: resource.organizationalUnitName,
+            ParentId: parentId,
+        };
+
+        const response = await this.organizationService.createOrganizationalUnit(createOrganizationalUnitRequest).promise();
+
+        this.organization.organizationalUnits.push({
+            Arn: `arn:aws:organizations::${this.organization.masterAccount.Id}:ou/${this.organization.organization.Id}/${response.OrganizationalUnit.Id}`,
+            Id: response.OrganizationalUnit.Id,
+            ParentId: this.organization.roots[0].Id,
+            Policies: [],
+            Name: resource.organizationalUnitName,
+            Type: 'OrganizationalUnit',
+            Accounts: [],
+        });
+
+        return response.OrganizationalUnit.Id;
     }
 
     private async _createAccount(resource: AccountResource): Promise<string> {

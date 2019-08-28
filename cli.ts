@@ -11,12 +11,16 @@ program
 program
   .command('generate-template <outFile>')
   .option('--profile <profile>', 'aws profile')
+  .option('--state-bucket-name <state-bucket-name>', 'bucket name that contains state file')
+  .option('--state-object <state-object>', 'key for object used to store state')
   .description('generate template')
   .action(async (outFile, cmd) => await generateTemplate(outFile, cmd));
 
 program
   .command('update-template <templateFile>')
   .option('--profile <profile>', 'aws profile')
+  .option('--state-bucket-name <state-bucket-name>', 'bucket name that contains state file')
+  .option('--state-object <state-object>', 'key for object used to store state')
   .description('update organization')
   .action(async (templateFile, cmd) => await updateTemplate(templateFile, cmd));
 

@@ -17,6 +17,7 @@ describe('when enumerating bindings for empty state', () => {
         templateProvider.createAccountCreateTasks.returns([]);
         templateProvider.createOrganizationalUnitCreateTasks.returns([]);
         templateProvider.createPolicyCreateTasks.returns([]);
+        templateProvider.createRootCreateTasks.returns([]);
 
         sut = new OrganizationBinder(template, state, templateProvider as any);
         sut.enumBuildTasks();
@@ -24,11 +25,12 @@ describe('when enumerating bindings for empty state', () => {
 
     it('no accounts/policies/OU\'s are updated', () => {
         expect(templateProvider.createOrganizationalUnitUpdateTasks.callCount).to.eq(0);
+        expect(templateProvider.createAccountUpdateTasks.callCount).to.eq(0);
         expect(templateProvider.createPolicyUpdateTasks.callCount).to.eq(0);
     });
 
     it('creates create tasks for all accounts', () => {
-        const accounts = template.organizationSection.accounts;
+        const accounts = [template.organizationSection.masterAccount, ...template.organizationSection.accounts];
         expect(templateProvider.createAccountCreateTasks.callCount).to.eq(accounts.length);
         for (const account of accounts) {
             expect(templateProvider.createAccountCreateTasks.calledWith(account, account.calculateHash())).to.be.true;

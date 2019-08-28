@@ -7,10 +7,10 @@ import { TaskProvider } from '../../src/org-binder/org-tasks-provider';
 import { IOrganizationalUnitProperties, OrganizationalUnitResource } from '../../src/parser/model/organizational-unit-resource';
 import { TemplateRoot } from '../../src/parser/parser';
 import { PersistedState } from '../../src/state/persisted-state';
+import { FileStorageProvider } from '../../src/state/storage-provider';
 const sampleOrg = JSON.parse(fs.readFileSync('./test/mny/sample-org.mock.json').toString()) as AwsOrganization;
 const sampleTemplate = TemplateRoot.create('./test/mny/sample-org.template.yml');
 const emptyState = PersistedState.CreateEmpty(sampleOrg.masterAccount.Id);
-const defaultState = PersistedState.Load('./test/mny/sample-org.state.json');
 
 sampleOrg.initialize = async () => { };
 
@@ -28,7 +28,6 @@ describe('when binding template with empty state', () => {
     afterEach(() => {
         sandbox.restore();
     });
-
 
     it('then all bindings are set to create', async () => {
         const accountNotCreate = organizationalBindings.accounts.find((x) => x.action !== 'Create');
@@ -51,6 +50,10 @@ describe('when removing ou to account reference in template', () => {
     const sandbox = Sinon.createSandbox();
 
     beforeEach(async () => {
+
+        const storageProvider = new FileStorageProvider('./test/mny/sample-org.state.json');
+        const defaultState = await PersistedState.Load(storageProvider);
+
         const taskProvider = sandbox.createStubInstance(TaskProvider);
         template = sampleTemplate.clone();
         developmentOUResource = template.organizationSection.organizationalUnits.find((x) => x.organizationalUnitName === 'development');

@@ -22,7 +22,7 @@
             "name": "Current TS Tests File",
             "type": "node",
             "request": "launch",
-            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+            "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
             "args": ["-r", "ts-node/register", "${relativeFile}", "-timeout", "99999999"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
@@ -30,7 +30,20 @@
             "skipFiles": [
                 "<node_internals>/**"
             ]
-        },
+        },,
+        {
+            "name": "all TS Tests File",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
+            "args": ["-r", "ts-node/register", "test/**/*.ts", "-timeout", "99999999"],
+            "sourceMaps": true,
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
         {
             "name": "current ts",
             "type": "node",
@@ -48,7 +61,7 @@
             "name": "update-template",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "update-template", "./out.txt" ],
+            "args": ["cli.ts", "update-template", "./out.yml", "--profile", "olafconijn"],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
@@ -61,7 +74,7 @@
             "name": "generate-template",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "generate-template", "./out2.txt", "--profile", "olafconijn" ],
+            "args": ["cli.ts", "generate-template", "./out.yml", "--profile", "olafconijn" ],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",

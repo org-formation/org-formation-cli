@@ -12,6 +12,7 @@ import { TaskRunner } from './src/org-binder/org-task-runner';
 import { TaskProvider } from './src/org-binder/org-tasks-provider';
 import { TemplateRoot } from './src/parser/parser';
 import { PersistedState } from './src/state/persisted-state';
+import { S3StorageProvider } from './src/state/storage-provider';
 import { DefaultTemplateWriter } from './src/writer/default-template-writer';
 
 export async function updateTemplate(templateFile: string, command: ICommandArgs) {
@@ -20,8 +21,11 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
         AWS.config.credentials = credentials;
     }
 
+    const stateBucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
+    const stateObject = command.stateObject || 'state.json';
+    const storageProvider = await S3StorageProvider.Create(stateBucketName, stateObject);
+    const state = await PersistedState.Load(storageProvider);
     const template = TemplateRoot.create(templateFile);
-    const state = PersistedState.Load(templateFile + '.state');
 
     const organizations = new Organizations({region: 'us-east-1'});
     const awsReader = new AwsOrganizationReader(organizations);
@@ -41,7 +45,7 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
         await CfnTaskRunner.RunTasks(cfnTasks);
 
         state.setPreviousTemplate(template.source);
-        state.save();
+        await state.save();
     });
 
 }
@@ -51,6 +55,11 @@ export async function generateTemplate(filePath: string, command: ICommandArgs) 
         const credentials = new AWS.SharedIniFileCredentials({profile: command.profile});
         AWS.config.credentials = credentials;
     }
+
+    const stateBucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
+    const stateObject = command.stateObject || 'state.json';
+    const storageProvider = await S3StorageProvider.Create(stateBucketName, stateObject);
+
     const organizations = new Organizations({region: 'us-east-1'});
     const awsReader = new AwsOrganizationReader(organizations);
     const awsOrganization = new AwsOrganization(awsReader);
@@ -60,9 +69,11 @@ export async function generateTemplate(filePath: string, command: ICommandArgs) 
     writeFileSync(filePath, templateContents);
 
     template.state.setPreviousTemplate(templateContents);
-    template.state.save(filePath + '.state');
+    await template.state.save(storageProvider);
 }
 
 interface ICommandArgs {
     profile: string;
+    stateBucketName: string;
+    stateObject: string;
 }

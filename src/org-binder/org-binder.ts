@@ -1,5 +1,6 @@
 import { AccountResource } from '../parser/model/account-resource';
 import { MasterAccountResource } from '../parser/model/master-account-resource';
+import { OrganizationRootResource } from '../parser/model/organization-root-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
 import { Resource } from '../parser/model/resource';
 import { OrgResourceTypes } from '../parser/model/resource-types';
@@ -35,12 +36,14 @@ export class OrganizationBinder {
         const organizationalUnits = Array.from(OrganizationalUnitBinding.enumerateOrganizationalUnitBindings(this.template, this.state));
         const accounts = Array.from(AccountBinding.enumerateAccountBindings(this.template, this.state));
         const masterAccount = Binding.getBinding<MasterAccountResource>(this.state, this.template.organizationSection.masterAccount);
+        const organizationRoot = Binding.getBinding<OrganizationRootResource>(this.state, this.template.organizationSection.organizationRoot);
 
         return {
             policies,
             organizationalUnits,
             accounts,
             masterAccount,
+            organizationRoot,
         };
     }
 
@@ -74,9 +77,8 @@ export class OrganizationBinder {
                     tasks.push(...t2);
                     break;
                 case 'Delete':
-                    // console.log(`deleting policy '${boundPolicy.state.physicalId}'`);
-                    // await writer.deleteAccount(boundPolicy.state.physicalId);
-                    // this.state.removeBinding(boundPolicy.state);
+                    const t3 = this.taskProvider.createForgetResourceTasks(boundPolicy.state);
+                    tasks.push(...t3);
                     break;
             }
         }
@@ -97,6 +99,39 @@ export class OrganizationBinder {
             }
         }
 
+        if (org.masterAccount) {
+            switch (org.masterAccount.action) {
+                case 'Create':
+                    const t1 = this.taskProvider.createAccountCreateTasks(org.masterAccount.template, org.masterAccount.templateHash);
+                    tasks.push(...t1);
+                    break;
+                case 'Update':
+                    const t2 = this.taskProvider.createAccountUpdateTasks(org.masterAccount.template, org.masterAccount.state.physicalId, org.masterAccount.templateHash);
+                    tasks.push(...t2);
+                    break;
+                case 'Delete':
+                    const t3 = this.taskProvider.createForgetResourceTasks(org.masterAccount.state);
+                    tasks.push(...t3);
+                    break;
+            }
+        }
+
+        if (org.organizationRoot) {
+            switch (org.organizationRoot.action) {
+                case 'Create':
+                    const t1 = this.taskProvider.createRootCreateTasks(org.organizationRoot.template, org.organizationRoot.templateHash);
+                    tasks.push(...t1);
+                    break;
+                case 'Update':
+                    const t2 = this.taskProvider.createRootUpdateTasks(org.organizationRoot.template, org.organizationRoot.state.physicalId, org.organizationRoot.templateHash);
+                    tasks.push(...t2);
+                    break;
+                case 'Delete':
+                    const t3 = this.taskProvider.createForgetResourceTasks(org.organizationRoot.state);
+                    tasks.push(...t3);
+                    break;
+            }
+        }
         return tasks;
     }
 }
@@ -110,6 +145,7 @@ export class OrganizationBinding {
     public organizationalUnits: OrganizationalUnitBinding[];
     public accounts: AccountBinding[];
     public masterAccount: Binding<MasterAccountResource>;
+    public organizationRoot: Binding<OrganizationRootResource>;
 }
 
 type BindingAction = 'Create' | 'Update' | 'Delete' | 'None';
@@ -117,6 +153,7 @@ type BindingAction = 'Create' | 'Update' | 'Delete' | 'None';
 class Binding<TResource extends Resource> {
 
     public static getBinding<TResource extends Resource>(state: PersistedState, templateResource: TResource): Binding<TResource> {
+        if (!templateResource) { return undefined; }
         const savedBinding = state.getBinding(templateResource.type, templateResource.logicalId);
         const hash = templateResource.calculateHash();
         if (savedBinding === undefined) {

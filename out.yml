@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: default template generated for organization with master account 102625093955
+
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: Olaf Conijn
+      AccountId: '102625093955'
+
+  Root:
+    Type: OC::ORG::OrganizationRoot
+    Properties:
+      ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
+
+  ProductionOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: production
+      Accounts: !Ref System1ProductionAccount
+
+  DevelopmentOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: development
+
+  SharedOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: shared
+      Accounts:
+        - !Ref SharedServicesAccount
+        - !Ref SharedUsersAccount
+
+  SharedComplianceAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Compliance Account
+      AccountId: '792673152903'
+      RootEmail: shared-compliance@olafconijn.awsapps.com
+
+  SharedUsersAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Users Account
+      AccountId: '233975951724'
+      RootEmail: users@olafconijn.awsapps.com
+
+  SharedServicesAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Services Account
+      AccountId: '862041870899'
+      RootEmail: shared-services@olafconijn.awsapps.com
+
+  System1ProductionAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: System 1 Production Account
+      AccountId: '088538185711'
+      RootEmail: system1@olafconijn.awsapps.com
+      Tags:
+        console1: val2
+
+  RestrictUnusedRegionsSCP:
+    Type: OC::ORG::ServiceControlPolicy
+    Properties:
+      PolicyName: RestrictUnusedRegions
+      Description: Restrict Unused regions
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyUnsupportedRegions
+            Effect: Deny
+            NotAction:
+              - 'cloudfront:*'
+              - 'iam:*'
+              - 'route53:*'
+              - 'support:*'
+            Resource: '*'
+            Condition:
+              StringNotEquals:
+                'aws:RequestedRegion':
+                  - eu-west-1
+                  - us-east-1
+                  - eu-central-1
+
+

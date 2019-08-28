@@ -5,6 +5,7 @@ import { AwsOrganization } from '../../src/aws-provider/aws-organization';
 import { OrganizationBinder } from '../../src/org-binder/org-binder';
 import { TaskProvider } from '../../src/org-binder/org-tasks-provider';
 import { TemplateRoot } from '../../src/parser/parser';
+import { FileStorageProvider } from '../../src/state/storage-provider';
 import { DefaultTemplate, DefaultTemplateWriter } from '../../src/writer/default-template-writer';
 
 const sampleOrg = JSON.parse(fs.readFileSync('./test/mny/sample-org.mock.json').toString()) as AwsOrganization;
@@ -20,7 +21,7 @@ describe('when writing default template', () => {
         const writer = new DefaultTemplateWriter(sampleOrg);
         template = await writer.generateDefaultTemplate();
         fs.writeFileSync('./test/mny/sample-org.default-template.yml', template.template);
-        template.state.save('./test/mny/sample-org.default-state.json');
+        template.state.save( new FileStorageProvider('./test/mny/sample-org.default-state.json'));
     });
 
     afterEach(() => {

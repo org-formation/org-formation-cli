@@ -8,8 +8,6 @@ import { AwsOrganizationWriter } from '../../../src/aws-provider/aws-organizatio
 import { Resource } from '../../../src/parser/model/resource';
 import { Util } from '../../../src/util';
 import { TestOrganizations } from '../test-organizations';
-AWSMock.setSDKInstance(AWS);
-
 describe('when creating a new account using writer', () => {
     let organizationService: AWS.Organizations;
     let organizationModel: AwsOrganization;
@@ -19,7 +17,9 @@ describe('when creating a new account using writer', () => {
     let untagResourceSpy: Sinon.SinonSpy;
     const account = { rootEmail: 'new-email@org.com', accountName: 'Account Name', tags: {tag1: 'val1', tag2: 'val2'} };
     const accountId = '123456789011';
+
     beforeEach(async () => {
+        AWSMock.setSDKInstance(AWS);
 
         AWSMock.mock('Organizations', 'createAccount', (params: any, callback: any) => { callback(null, {CreateAccountStatus: {State: 'SUCCEEDED', AccountId: accountId} }); });
         AWSMock.mock('Organizations', 'describeCreateAccountStatus', (params: any, callback: any) => { callback(null, {CreateAccountStatus: {State: 'SUCCEEDED', AccountId: accountId }}); });
@@ -32,9 +32,14 @@ describe('when creating a new account using writer', () => {
         createAccountSpy = organizationService.createAccount as Sinon.SinonSpy;
         tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
         untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
+        expect(createAccountSpy.callCount).to.eq(0);
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.createAccount(account as any);
+    });
+
+    afterEach(() => {
+        AWSMock.restore();
     });
 
     it('organization create account is called', () => {
@@ -100,6 +105,10 @@ describe('when creating an account that already existed', () => {
         await writer.createAccount(account as any);
      } );
 
+    afterEach(() => {
+        AWSMock.restore();
+    });
+
     it('organization create account is not called', () => {
         expect(createAccountSpy.callCount).to.eq(0);
     });
@@ -156,6 +165,7 @@ describe('when updating account', () => {
      } );
 
     afterEach(() => {
+        AWSMock.restore();
         sandbox.restore();
      });
 
