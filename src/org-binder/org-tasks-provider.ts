@@ -173,7 +173,7 @@ export class TaskProvider {
             const attachAccountTask: IBuildTask = {
                 type: resource.type,
                 logicalId: resource.logicalId,
-                action:  'Relate',
+                action: `Attach Account (${attachedAccount.PhysicalId || attachedAccount.TemplateResource.logicalId})`,
                 dependentTasks: [createOrganizationalUnitTask],
                 perform: async (task) => {
                     let accountId = attachedAccount.PhysicalId;
@@ -386,7 +386,7 @@ export class TaskProvider {
         return {
             type: resource.type,
             logicalId: resource.logicalId,
-            action: 'Relate',
+            action: `Detach Policy (${physicalId})`,
             perform: async (task) => {
                 task.result = await that.writer.detachPolicy(targetId, physicalId);
             },
@@ -397,7 +397,7 @@ export class TaskProvider {
         const attachSCPTask: IBuildTask = {
             type: resource.type,
             logicalId: resource.logicalId,
-            action: 'Relate',
+            action: `Attach Policy (${policy.PhysicalId || policy.TemplateResource.logicalId})`,
             perform: async (task) => {
                 let policyId = policy.PhysicalId;
                 if (policyId === undefined) {
@@ -420,7 +420,7 @@ export class TaskProvider {
         const attachAccountTask: IBuildTask = {
             type: resource.type,
             logicalId: resource.logicalId,
-            action: 'Relate',
+            action: `Attach Account (${account.PhysicalId || account.TemplateResource.logicalId})`,
             perform: async (task) => {
                 let accountId = account.PhysicalId;
                 if (accountId === undefined) {
@@ -464,4 +464,4 @@ export interface IBuildTask {
     perform: (task: IBuildTask) => Promise<void>;
 }
 
-type BuildTaskAction = 'Create' | 'Update' | 'Delete' | 'Relate' | 'Forget' | 'CommitHash';
+type BuildTaskAction = 'Create' | 'Update' | 'Delete' | 'Relate' | 'Forget' | 'CommitHash' | string;

@@ -21,6 +21,10 @@ export class OrganizationRootResource extends Resource {
     }
 
     public resolveRefs() {
-        this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
+        if (this.props) {
+            this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
+        } else  {
+            this.serviceControlPolicies = [];
+        }
     }
 }

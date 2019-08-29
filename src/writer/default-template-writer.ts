@@ -2,7 +2,7 @@ import { Organizations } from 'aws-sdk/clients/all';
 import { Organization } from 'aws-sdk/clients/organizations';
 import * as Yaml from 'yamljs';
 import { AwsOrganization } from '../aws-provider/aws-organization';
-import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, IAWSObject } from '../aws-provider/aws-organization-reader';
+import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot, IAWSObject } from '../aws-provider/aws-organization-reader';
 import { Resource } from '../parser/model/resource';
 import { OrgResourceTypes } from '../parser/model/resource-types';
 import { TemplateRoot } from '../parser/parser';
@@ -39,6 +39,16 @@ export class DefaultTemplateWriter {
             lastCommittedHash: '',
         });
 
+        for (const root of this.organizationModel.roots) {
+            const result = this.generateRoot(lines, root);
+
+            bindings.push({
+                type: result.type,
+                logicalId: result.logicalName,
+                physicalId: root.Id,
+                lastCommittedHash: '',
+            });
+        }
         for (const organizationalUnit of this.organizationModel.organizationalUnits) {
             const result = this.generateOrganizationalUnit(lines, organizationalUnit);
 
@@ -81,6 +91,9 @@ export class DefaultTemplateWriter {
             switch (binding.type) {
                 case OrgResourceTypes.MasterAccount:
                     foundResource = templateRoot.organizationSection.masterAccount;
+                    break;
+                case OrgResourceTypes.OrganizationRoot:
+                    foundResource = templateRoot.organizationSection.organizationRoot;
                     break;
                 case OrgResourceTypes.Account:
                     foundResource = templateRoot.organizationSection.accounts.find((x) => x.logicalId === binding.logicalId);
@@ -162,6 +175,22 @@ export class DefaultTemplateWriter {
 
         return {
             type: OrgResourceTypes.Account,
+            logicalName,
+        };
+    }
+
+    private generateRoot(lines: YamlLine[], root: AWSRoot) {
+        const logicalName = 'OrganizationRoot';
+        const policiesList = root.Policies.filter((x) => !x.PolicySummary.AwsManaged).map((x) => '!Ref ' + this.logicalNames.getName(x));
+
+        lines.push(new Line(logicalName, '', 2));
+        lines.push(new Line('Type', OrgResourceTypes.OrganizationRoot, 4));
+        lines.push(new Line('Properties', '', 4));
+        lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
+        lines.push(new EmptyLine());
+
+        return {
+            type: OrgResourceTypes.OrganizationRoot,
             logicalName,
         };
     }

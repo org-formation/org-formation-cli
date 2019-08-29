@@ -35,7 +35,7 @@ interface IPolicyTargets {
 export type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
 export type AWSAccount = Account & IAWSAccountWithTags & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
 export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject;
-export type AWSRoot = Root & IObjectWithAccounts;
+export type AWSRoot = Root & IObjectWithPolicies;
 
 function GetPoliciesForTarget(list: AWSPolicy[], targetId: string, targetType: TargetType): AWSPolicy[] {
     return list.filter((x) => x.Targets.find((y) => y.TargetId === targetId && y.Type === targetType));
@@ -86,14 +86,21 @@ export class AwsOrganizationReader {
         return result;
     }
 
-    private static async listRoots(that: AwsOrganizationReader): Promise<Root[]> {
-        const result: Root[] = [];
+    private static async listRoots(that: AwsOrganizationReader): Promise<AWSRoot[]> {
+        const result: AWSRoot[] = [];
+        const policies = await that.policies.getValue();
         let resp: ListRootsResponse;
         const req: ListRootsRequest = {};
         do {
             resp = await that.organizationService.listRoots(req).promise();
-            result.push(...resp.Roots);
             req.NextToken = resp.NextToken;
+            for (const root of resp.Roots) {
+                const item = {
+                    ...root,
+                    Policies: GetPoliciesForTarget(policies, root.Id, 'ROOT'),
+                };
+                result.push(item);
+            }
         } while (resp.NextToken);
 
         return result;
@@ -196,7 +203,7 @@ export class AwsOrganizationReader {
     public readonly accounts: Lazy<AWSAccount[]>;
     public readonly organizationalUnits: Lazy<AWSOrganizationalUnit[]>;
     public readonly organization: Lazy<Organization>;
-    public readonly roots: Lazy<Root[]>;
+    public readonly roots: Lazy<AWSRoot[]>;
     private readonly organizationService: Organizations;
 
     constructor(organizationService: Organizations) {

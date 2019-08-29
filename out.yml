@@ -8,10 +8,10 @@ Organization:
       AccountName: Olaf Conijn
       AccountId: '102625093955'
 
-  Root:
+  OrganizationRoot:
     Type: OC::ORG::OrganizationRoot
     Properties:
-      ServiceControlPolicies: !Ref RestrictUnusedRegionsSCP
+      ServiceControlPolicies:
 
   ProductionOU:
     Type: OC::ORG::OrganizationalUnit
@@ -29,8 +29,8 @@ Organization:
     Properties:
       OrganizationalUnitName: shared
       Accounts:
-        - !Ref SharedServicesAccount
         - !Ref SharedUsersAccount
+        - !Ref SharedServicesAccount
 
   SharedComplianceAccount:
     Type: OC::ORG::Account

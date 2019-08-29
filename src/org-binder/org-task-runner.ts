@@ -14,4 +14,29 @@ export class TaskRunner {
             }
         }
     }
+
+    public static CreateChangeSet(tasks: IBuildTask[], changeSetName: string): IOrganizationChangeSet {
+        const includedChangeActions = ['CommitHash'];
+
+        return {
+            changeSetName,
+            changes: tasks.filter((x) => includedChangeActions.indexOf(x.action) === -1)
+                          .map((x) => ({
+                            logicalId: x.logicalId,
+                            type: x.type,
+                            action: x.action,
+                           })),
+        };
+    }
+}
+
+export interface IOrganizationChangeSet {
+    changeSetName: string;
+    changes: IOrganizationChange[];
+}
+
+export interface IOrganizationChange {
+    logicalId: string;
+    action: string;
+    type: string;
 }
