@@ -41,18 +41,6 @@ Organization:
     Properties:
       RootEmail: development@myorg.com
       AccountName: Development Account
-
-Resources:
-  # Topic will be created in all accounts (ProductionAccount & DevelopmentAccount)
-
-  Topic:
-    Type: AWS::CloudFormation::Topic
-    OrganizationBindings:
-      Regions: eu-central-1
-      Accounts: '*'
-    Properties:
-      TopicName: MyTopic
-
 ```
 
 ## Reference

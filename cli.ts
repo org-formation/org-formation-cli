@@ -3,21 +3,18 @@
 import { createChangeSet, executeChangeSet, generateTemplate, updateTemplate } from './index';
 
 const program = require('commander');
+const knownCommands = ['init', 'update', 'create-change-set', 'execute-change-set'];
 
 program
   .version('0.0.1')
   .description('aws organization formation');
-  // .option('--profile [profile]', 'aws profile to use')
-  // .option('--change-set-name [change-set-name]', 'change set name', 'uuid()')
-  // .option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}')
-  // .option('--state-object [state-object]', 'key for object used to store state', 'state.json');
 
 program
-  .command('initialize <outFile>')
+  .command('init <outFile>')
   .option('--profile [profile]', 'aws profile to use')
   .option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}')
   .option('--state-object [state-object]', 'key for object used to store state', 'state.json')
-  .description('generate template')
+  .description('generate template & initialize organization')
   .action(async (outFile, cmd) => await generateTemplate(outFile, cmd));
 
 program
@@ -48,6 +45,8 @@ program
 let args = process.argv;
 if (args.length === 2) {
   args = args.concat('--help');
+} else if (knownCommands.indexOf(args[2]) === -1) {
+  args = [args[0], args[1], '--help'];
 }
 
 program.parse(args);

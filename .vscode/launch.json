@@ -62,7 +62,7 @@
             "name": "update",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "update", "./out1.yml", "--profile", "octest1"],
+            "args": ["cli.ts", "asdasdasd", "./out1.yml", "--profile", "octest1"],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
@@ -72,10 +72,10 @@
             ]
         },
         {
-            "name": "initialize",
+            "name": "init",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "initialize", "./out.yml", "--profile", "octest1" ],
+            "args": ["cli.ts", "init", "./out.yml", "--profile", "octest1" ],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
