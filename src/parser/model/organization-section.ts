@@ -6,6 +6,7 @@ import { OrganizationalUnitResource } from './organizational-unit-resource';
 import { Resource } from './resource';
 import { OrgResourceTypes } from './resource-types';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
+import { OrgFormationError } from '../../org-formation-error';
 
 export class OrganizationSection {
     public readonly root: TemplateRoot;
@@ -33,12 +34,12 @@ export class OrganizationSection {
         for (const resource of this.resources) {
             if (resource instanceof MasterAccountResource) {
                 if (this.masterAccount) {
-                    throw new Error(`organization section cannot have multiple master account resources`);
+                    throw new OrgFormationError(`organization section cannot have multiple master account resources`);
                 }
                 this.masterAccount = resource;
             } else if (resource instanceof OrganizationRootResource) {
                 if (this.organizationRoot) {
-                    throw new Error(`organization section cannot have multiple organization roots`);
+                    throw new OrgFormationError(`organization section cannot have multiple organization roots`);
                 }
                 this.organizationRoot = resource;
             } else if (resource instanceof AccountResource) {
@@ -84,7 +85,7 @@ export class OrganizationSection {
                 if (err && err.message) {
                     reason = err.message;
                 }
-                throw new Error(`unable to load references for organizational resource ${resource.logicalId}, reason: ${reason}`);
+                throw new OrgFormationError(`unable to load references for organizational resource ${resource.logicalId}, reason: ${reason}`);
             }
         }
     }
@@ -108,9 +109,9 @@ export class OrganizationSection {
 
             default:
                 if (resource.Type === undefined) {
-                    throw new Error(`unexpected attribute ${id} found in Organization section`);
+                    throw new OrgFormationError(`unexpected attribute ${id} found in Organization section`);
                 }
-                throw new Error(`attribute ${id} has unknown type ${resource.Type}`);
+                throw new OrgFormationError(`attribute ${id} has unknown type ${resource.Type}`);
         }
     }
 

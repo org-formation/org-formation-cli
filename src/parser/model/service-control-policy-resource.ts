@@ -1,3 +1,4 @@
+import { OrgFormationError } from '../../org-formation-error';
 import { IResource, TemplateRoot } from '../parser';
 import { Resource } from './resource';
 
@@ -13,14 +14,18 @@ export class ServiceControlPolicyResource extends Resource {
     constructor(root: TemplateRoot, id: string, resource: IResource) {
         super(root, id, resource);
 
+        if (resource.Properties === undefined) {
+            throw new OrgFormationError(`Properties are missing for resource ${id}`);
+        }
+
         const props = this.resource.Properties as IServiceControlPolicyProperties;
 
         if (!props.PolicyName) {
-            throw new Error(`PolicyName is missing on Service Control Policy ${id}`);
+            throw new OrgFormationError(`PolicyName is missing on Service Control Policy ${id}`);
         }
 
         if (!props.PolicyDocument) {
-            throw new Error(`PolicyDocument is missing on Service Control Policy ${id}`);
+            throw new OrgFormationError(`PolicyDocument is missing on Service Control Policy ${id}`);
         }
 
         this.policyName = props.PolicyName;

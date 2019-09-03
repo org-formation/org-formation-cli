@@ -142,6 +142,7 @@ export class TaskProvider {
             type: binding.type,
             logicalId: binding.logicalId,
             action: 'Delete',
+            dependentTaskFilter: (task) => task.action.indexOf('Detach Policy') > -1,
             perform: async () => {
                 await that.writer.deletePolicy(binding.physicalId);
                 this.state.removeBinding(binding);
@@ -170,25 +171,9 @@ export class TaskProvider {
         }
 
         for (const attachedAccount of resource.accounts) {
-            const attachAccountTask: IBuildTask = {
-                type: resource.type,
-                logicalId: resource.logicalId,
-                action: `Attach Account (${attachedAccount.PhysicalId || attachedAccount.TemplateResource.logicalId})`,
-                dependentTasks: [createOrganizationalUnitTask],
-                perform: async (task) => {
-                    let accountId = attachedAccount.PhysicalId;
-                    if (accountId === undefined) {
-                        const binding  = that.state.getBinding(OrgResourceTypes.Account, attachedAccount.TemplateResource.logicalId);
-                        accountId = binding.physicalId;
-                    }
-                    task.result = await that.writer.attachAccount(createOrganizationalUnitTask.result, accountId);
-                },
-            };
-            if (attachedAccount.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.Account, attachedAccount.TemplateResource.logicalId)) {
-                attachAccountTask.dependentTaskFilter = (task) => task.logicalId === attachedAccount.TemplateResource.logicalId &&
-                                                            task.action === 'Create' &&
-                                                            task.type === OrgResourceTypes.Account;
-            }
+
+            const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, () => createOrganizationalUnitTask.result);
+            attachAccountTask.dependentTasks = [createOrganizationalUnitTask];
             tasks.push(attachAccountTask);
         }
 
@@ -253,6 +238,10 @@ export class TaskProvider {
             const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, { TemplateResource: attachAccount as AccountResource }, that, () => physicalId);
             tasks.push(attachAccountTask);
         }
+        for (const detachedAccount of previousAccounts.physicalIds.filter((x) => !currentAccounts.physicalIds.includes(x))) {
+            const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, { PhysicalId: detachedAccount }, that, () => physicalId);
+            tasks.push(detachAccountTask);
+        }
 
         const createOrganizationalUnitCommitHashTask: IBuildTask = {
             type: resource.type,
@@ -288,7 +277,10 @@ export class TaskProvider {
     public createAccountUpdateTasks(resource: AccountResource, physicalId: string, hash: string): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
-        const previousResource = this.previousTemplate.organizationSection.accounts.find((x) => x.logicalId === resource.logicalId);
+        let previousResource = [...this.previousTemplate.organizationSection.accounts].find((x) => x.logicalId === resource.logicalId);
+        if (!previousResource && resource.type === OrgResourceTypes.MasterAccount) {
+            previousResource = this.previousTemplate.organizationSection.masterAccount;
+        }
 
         if (previousResource === undefined || previousResource.accountName !== resource.accountName || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)) {
             const updateAccountTask: IBuildTask = {
@@ -409,11 +401,35 @@ export class TaskProvider {
             },
         };
         if (policy.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId)) {
-            attachSCPTask.dependentTaskFilter = (task) => task.logicalId === policy.TemplateResource.logicalId &&
-                task.action === 'Create' &&
-                task.type === OrgResourceTypes.ServiceControlPolicy;
+            attachSCPTask.dependentTaskFilter = (task) => {
+                return (task.logicalId === policy.TemplateResource.logicalId && task.action === 'Create' && task.type === OrgResourceTypes.ServiceControlPolicy)
+                || (task.action.indexOf('Detach Policy') >= 0);
+            };
         }
         return attachSCPTask;
+    }
+
+    private createDetachAccountTask(resource: OrganizationalUnitResource, account: Reference<AccountResource>, that: this, getTargetId: () => string) {
+        const detachAccountTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action: `Detach Account (${account.PhysicalId || account.TemplateResource.logicalId})`,
+            perform: async (task) => {
+                let accountId = account.PhysicalId;
+                if (accountId === undefined) {
+                    const binding = that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId);
+                    accountId = binding.physicalId;
+                }
+                const targetId = getTargetId();
+                task.result = await that.writer.detachAccount(targetId, accountId);
+            },
+        };
+        if (account.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId)) {
+            detachAccountTask.dependentTaskFilter = (task) => task.logicalId === account.TemplateResource.logicalId &&
+                task.action === 'Create' &&
+                task.type === OrgResourceTypes.Account;
+        }
+        return detachAccountTask;
     }
 
     private createAttachAccountTask(resource: OrganizationalUnitResource, account: Reference<AccountResource>, that: this, getTargetId: () => string) {
@@ -459,6 +475,7 @@ export interface IBuildTask {
     logicalId: string;
     action: BuildTaskAction;
     result?: any;
+    done?: boolean;
     dependentTasks?: IBuildTask[];
     dependentTaskFilter?: (task: IBuildTask) => boolean;
     perform: (task: IBuildTask) => Promise<void>;

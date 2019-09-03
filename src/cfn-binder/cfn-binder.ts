@@ -1,3 +1,4 @@
+import { OrgFormationError } from '../org-formation-error';
 import { OrgResourceTypes } from '../parser/model/resource-types';
 import { IResourceTarget } from '../parser/model/resources-section';
 import { TemplateRoot } from '../parser/parser';
@@ -19,7 +20,7 @@ export class CloudFormationBinder {
         this.taskProvider = taskProvider;
         this.templateTransform = templateTransform;
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
-            throw new Error('state and template do not belong to the same organization');
+            throw new OrgFormationError('state and template do not belong to the same organization');
         }
     }
 

@@ -1,6 +1,7 @@
 import { S3 } from 'aws-sdk';
 import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
 import { readFileSync, stat, writeFileSync } from 'fs';
+import { OrgFormationError } from '../org-formation-error';
 import {IStorageProvider} from './storage-provider';
 
 export class PersistedState {
@@ -22,7 +23,9 @@ export class PersistedState {
             }
             return new PersistedState(object, provider);
         } catch (err) {
-            console.log(err);
+            if (err instanceof SyntaxError) {
+                throw new OrgFormationError(`unable to parse state file ${err}`);
+            }
             throw err;
         }
 
@@ -89,7 +92,7 @@ export class PersistedState {
         return result;
     }
     public removeTarget(stackName: string, accountId: string, region: string) {
-        throw new Error('Method not implemented.');
+        throw new OrgFormationError('Method not implemented.');
     }
 
     public getBinding(type: string, logicalId: string): IBinding {

@@ -1,4 +1,5 @@
 import { Organization, PolicySummary, Root } from 'aws-sdk/clients/organizations';
+import { OrgFormationError } from '../org-formation-error';
 import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot } from './aws-organization-reader';
 
 export class AwsOrganization {
@@ -30,8 +31,11 @@ export class AwsOrganization {
             this.accounts = accounts.filter((x) => x.Id !== this.organization.MasterAccountId);
             this.organizationalUnits = await this.reader.organizationalUnits.getValue();
         };
-
-        await Promise.all([setOrgPromise(), setRootsPromise(), setPolicies(), setAccounts()]);
+        try {
+            await Promise.all([setOrgPromise(), setRootsPromise(), setPolicies(), setAccounts()]);
+        } catch (err) {
+            throw err;
+        }
     }
 
     public async endInitialize() {

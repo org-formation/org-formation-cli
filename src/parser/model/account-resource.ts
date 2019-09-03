@@ -1,3 +1,4 @@
+import { OrgFormationError } from '../../org-formation-error';
 import { IResource, IResourceRef, TemplateRoot } from '../parser';
 import { Reference, Resource } from './resource';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
@@ -22,13 +23,17 @@ export class AccountResource extends Resource {
     constructor(root: TemplateRoot, id: string, resource: IResource) {
         super(root, id, resource);
 
+        if (resource.Properties === undefined) {
+            throw new OrgFormationError(`Properties are missing for resource ${id}`);
+        }
+
         this.props = this.resource.Properties as IAccountProperties;
 
         if (!this.props.AccountId && !this.props.RootEmail) {
-            throw new Error(`both AccountId and RootEmail are missing on Account ${id}`);
+            throw new OrgFormationError(`both AccountId and RootEmail are missing on Account ${id}`);
         }
         if (!this.props.AccountName) {
-            throw new Error(`AccountName is missing on Account ${id}`);
+            throw new OrgFormationError(`AccountName is missing on Account ${id}`);
         }
         this.rootEmail = this.props.RootEmail;
         this.accountName = this.props.AccountName;

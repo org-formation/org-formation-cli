@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "configurations": [
 
+
         {
             "name": "build.ts",
             "type": "node",
@@ -58,10 +59,10 @@
             ]
         },
         {
-            "name": "update-template",
+            "name": "update",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "update-template", "./out.yml", "--profile", "olafconijn"],
+            "args": ["cli.ts", "update", "./out1.yml", "--profile", "octest1"],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
@@ -71,10 +72,10 @@
             ]
         },
         {
-            "name": "generate-template",
+            "name": "initialize",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "generate-template", "./out.yml", "--profile", "olafconijn" ],
+            "args": ["cli.ts", "initialize", "./out.yml", "--profile", "octest1" ],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
@@ -88,6 +89,19 @@
             "type": "node",
             "request": "launch",
             "args": ["cli.ts", "create-change-set", "./out.yml", "--profile", "olafconijn" ],
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "sourceMaps": true,
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "execute-change-set",
+            "type": "node",
+            "request": "launch",
+            "args": ["cli.ts", "execute-change-set", "56f2e472-159d-41c9-915d-329aae6c987f", "--profile", "olafconijn" ],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",

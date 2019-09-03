@@ -5,6 +5,7 @@ import { OrganizationSection } from './model/organization-section';
 import { OrgResourceTypes, ResourceTypes } from './model/resource-types';
 import { ResourcesSection } from './model/resources-section';
 import { Validator } from './validator';
+import { OrgFormationError } from '../org-formation-error';
 
 type TemplateVersion  = '2010-09-09-OC';
 
@@ -68,13 +69,13 @@ export class TemplateRoot {
             if (err && err.message) {
                 reason = err.message;
             }
-            throw new Error(`unable to load file ${path}, reason: ${reason}`);
+            throw new OrgFormationError(`unable to load file ${path}, reason: ${reason}`);
         }
     }
 
     public static createFromContents(contents: string, dirname: string = './'): TemplateRoot {
-        if (contents === undefined) { throw new Error('contents is undefined'); }
-        if (contents.trim().length === 0) { throw new Error('contents is empty'); }
+        if (contents === undefined) { throw new OrgFormationError('contents is undefined'); }
+        if (contents.trim().length === 0) { throw new OrgFormationError('contents is empty'); }
         const organizationInclude = /Organization:\s*!Include\s*(\S*)/.exec(contents);
         let includedOrganization;
         let normalizedContentsForParser = contents;
@@ -85,7 +86,7 @@ export class TemplateRoot {
             const includedTemplate = yamlParse(includeContents) as ITemplate;
             includedOrganization = includedTemplate.Organization;
             if (!includedOrganization) {
-                throw new Error(`Organization include file (${includePath}) does not contain top level Organization.`);
+                throw new OrgFormationError(`Organization include file (${includePath}) does not contain top level Organization.`);
             }
         }
         const obj = yamlParse(normalizedContentsForParser) as ITemplate;
@@ -112,13 +113,13 @@ export class TemplateRoot {
 
     constructor(contents: ITemplate, dirname: string) {
         if (!contents.AWSTemplateFormatVersion) {
-            throw new Error('AWSTemplateFormatVersion is missing');
+            throw new OrgFormationError('AWSTemplateFormatVersion is missing');
         }
         if (contents.AWSTemplateFormatVersion !== '2010-09-09-OC') {
-            throw new Error(`Unexpected AWSTemplateFormatVersion version ${contents.AWSTemplateFormatVersion}, expected '2010-09-09-OC'`);
+            throw new OrgFormationError(`Unexpected AWSTemplateFormatVersion version ${contents.AWSTemplateFormatVersion}, expected '2010-09-09-OC'`);
         }
         if (!contents.Organization) {
-            throw new Error('Top level Organization attribute is missing');
+            throw new OrgFormationError('Top level Organization attribute is missing');
         }
 
         Validator.ThrowForUnknownAttribute(contents, 'template root',

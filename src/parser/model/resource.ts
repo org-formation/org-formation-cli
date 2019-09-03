@@ -1,6 +1,8 @@
 import md5 = require('md5');
+import { OrgFormationError } from '../../org-formation-error';
 import { IResource, IResourceRef, IResourceRefExpression, TemplateRoot } from '../parser';
 import { Validator } from '../validator';
+import { OrgResourceTypes, ResourceTypes } from './resource-types';
 
 export interface Reference<TResource extends Resource> {
    PhysicalId?: string;
@@ -9,15 +11,11 @@ export interface Reference<TResource extends Resource> {
 
 export abstract class Resource {
     public readonly logicalId: string;
-    public readonly type: string;
+    public readonly type: OrgResourceTypes | ResourceTypes;
     protected readonly root: TemplateRoot;
     protected readonly resource: IResource;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
-
-        if (resource.Properties === undefined) {
-            throw new Error(`Properties are missing for resource ${id}`);
-        }
 
         this.root = root;
         this.logicalId = id;
@@ -58,7 +56,7 @@ export abstract class Resource {
                 const ref = (elm as IResourceRefExpression).Ref;
                 const foundElm = list.find((x) => x.logicalId === ref);
                 if (foundElm === undefined) {
-                    throw new Error(`unable to find resource named ${ref}`);
+                    throw new OrgFormationError(`unable to find resource named ${ref}`);
                 }
                 results.push({TemplateResource: foundElm});
             }

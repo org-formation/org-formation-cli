@@ -1,5 +1,6 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
+import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
 import { OrganizationRootResource } from '../parser/model/organization-root-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
@@ -56,6 +57,9 @@ export class AwsOrganizationWriter {
     }
 
     public async attachPolicy(targetPhysicalId: string, policyPhysicalId: string) {
+
+        // TODO: add retry on ConcurrentModificationException
+
         const attachPolicyRequest: AttachPolicyRequest = {
             PolicyId: policyPhysicalId,
             TargetId: targetPhysicalId,
@@ -80,6 +84,9 @@ export class AwsOrganizationWriter {
     }
 
     public async detachPolicy(targetPhysicalId: string, policyPhysicalId: string) {
+
+        // TODO: add retry on
+
         const detachPolicyRequest: DetachPolicyRequest = {
             PolicyId: policyPhysicalId,
             TargetId: targetPhysicalId,
@@ -87,7 +94,8 @@ export class AwsOrganizationWriter {
         try {
             await this.organizationService.detachPolicy(detachPolicyRequest).promise();
         } catch (err) {
-            if (err && err.code !== 'PolicyNotAttachedException') {
+            if (err && err.code !== 'PolicyNotAttachedException' && err.code !== 'PolicyNotFoundException') {
+                // 'ConcurrentModificationException' ??
                 throw err;
             }
         }
@@ -107,7 +115,18 @@ export class AwsOrganizationWriter {
         const deletePolicyRequest: DeletePolicyRequest = {
             PolicyId: physicalId,
         };
-        await this.organizationService.deletePolicy(deletePolicyRequest).promise();
+        try {
+            await this.organizationService.deletePolicy(deletePolicyRequest).promise();
+        } catch (err) {
+            if (err && err.code !== 'PolicyNotFoundException') {
+                // 'ConcurrentModificationException' ??
+                throw err;
+            }
+        }
+    }
+
+    public async detachAccount(targetId: string, accountId: string) {
+        await this.attachAccount(this.organization.roots[0].Id, accountId);
     }
 
     public async attachAccount(parentPhysicalId: string, accountPhysicalId: string) {
@@ -174,7 +193,7 @@ export class AwsOrganizationWriter {
         let accountId = resource.accountId;
 
         // todo and check on accountId
-        const account = this.organization.accounts.find((x) => x.Id === resource.accountId || x.Email === resource.rootEmail);
+        const account = [...this.organization.accounts, this.organization.masterAccount].find((x) => x.Id === resource.accountId || x.Email === resource.rootEmail);
         if (account !== undefined) {
             await this.updateAccount(resource, account.Id);
             console.log(`SKIP: account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
@@ -188,13 +207,13 @@ export class AwsOrganizationWriter {
     }
 
     public async updateAccount(resource: AccountResource, accountId: string) {
-        const account = this.organization.accounts.find((x) => x.Id === accountId);
+        const account = [...this.organization.accounts, this.organization.masterAccount].find((x) => x.Id === accountId);
 
         if (account.Name !== resource.accountName) {
-            Util.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to ${resource.accountName}.\nPlease login with root on the specified account to change its name`);
+            Util.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. \nInstead: login with root on the specified account to change its name`);
         }
 
-        const tagsOnResource = Object.entries(resource.tags);
+        const tagsOnResource = Object.entries(resource.tags || {});
         const keysOnResource = tagsOnResource.map((x) => x[0]);
         const tagsOnAccount = Object.entries(account.Tags);
         const tagsToRemove = tagsOnAccount.map((x) => x[0]).filter((x) => keysOnResource.indexOf(x) === -1);
@@ -209,7 +228,7 @@ export class AwsOrganizationWriter {
         }
 
         if (tagsToUpdate.length > 0) {
-            const tags: Tag[] = tagsOnResource.filter((x) => tagsToUpdate.indexOf(x[0]) >= 0).map((x) => ({Key: x[0], Value : x[1] }));
+            const tags: Tag[] = tagsOnResource.filter((x) => tagsToUpdate.indexOf(x[0]) >= 0).map((x) => ({Key: x[0], Value : (x[1] || '').toString() }));
 
             const request: TagResourceRequest = {
                 ResourceId: accountId,
@@ -252,7 +271,7 @@ export class AwsOrganizationWriter {
         let accountCreationStatus = createAccountResponse.CreateAccountStatus;
         while (accountCreationStatus.State !== 'SUCCEEDED') {
             if (accountCreationStatus.State === 'FAILED') {
-                throw new Error('creating account failed, reason: ' + accountCreationStatus.FailureReason);
+                throw new OrgFormationError('creating account failed, reason: ' + accountCreationStatus.FailureReason);
             }
             const describeAccountStatusReq: DescribeCreateAccountStatusRequest = {
                 CreateAccountRequestId: createAccountResponse.CreateAccountStatus.Id,

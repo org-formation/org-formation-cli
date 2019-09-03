@@ -1,3 +1,4 @@
+import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
 import { MasterAccountResource } from '../parser/model/master-account-resource';
 import { OrganizationRootResource } from '../parser/model/organization-root-resource';
@@ -21,7 +22,7 @@ export class OrganizationBinder {
         this.masterAccount = template.organizationSection.masterAccount.accountId;
         this.state = state;
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
-            throw new Error('state and template do not belong to the same organization');
+            throw new OrgFormationError('state and template do not belong to the same organization');
         }
     }
 
@@ -35,8 +36,8 @@ export class OrganizationBinder {
         const policies = Array.from(ServiceControlPolicyBinding.enumerateServiceControlBindings(this.template, this.state));
         const organizationalUnits = Array.from(OrganizationalUnitBinding.enumerateOrganizationalUnitBindings(this.template, this.state));
         const accounts = Array.from(AccountBinding.enumerateAccountBindings(this.template, this.state));
-        const masterAccount = Binding.getBinding<MasterAccountResource>(this.state, this.template.organizationSection.masterAccount);
-        const organizationRoot = Binding.getBinding<OrganizationRootResource>(this.state, this.template.organizationSection.organizationRoot);
+        const masterAccount = Binding.getBindingOnType<MasterAccountResource>(this.state, this.template.organizationSection.masterAccount);
+        const organizationRoot = Binding.getBindingOnType<OrganizationRootResource>(this.state, this.template.organizationSection.organizationRoot);
 
         return {
             policies,
@@ -151,6 +152,34 @@ export class OrganizationBinding {
 type BindingAction = 'Create' | 'Update' | 'Delete' | 'None';
 
 class Binding<TResource extends Resource> {
+
+    public static getBindingOnType<TResource extends Resource>(state: PersistedState, templateResource: TResource): Binding<TResource> {
+        if (!templateResource) { return undefined; }
+        const storedBindings = state.enumBindings(templateResource.type);
+        const savedBinding = storedBindings.length > 0 ? storedBindings[0] : undefined;
+        const hash = templateResource.calculateHash();
+        if (savedBinding === undefined) {
+            return {
+                action: 'Create',
+                template: templateResource,
+                templateHash: hash,
+            };
+        } else if (hash !== savedBinding.lastCommittedHash) {
+            return {
+                action: 'Update',
+                template: templateResource,
+                state: savedBinding,
+                templateHash: hash,
+            };
+        } else {
+            return {
+                action: 'None',
+                template: templateResource,
+                state: savedBinding,
+                templateHash: hash,
+            };
+        }
+    }
 
     public static getBinding<TResource extends Resource>(state: PersistedState, templateResource: TResource): Binding<TResource> {
         if (!templateResource) { return undefined; }

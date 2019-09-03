@@ -9,30 +9,29 @@ export interface IStorageProvider {
 
 export class S3StorageProvider implements IStorageProvider {
 
-    public static async Create(bucketName: string, objectKey: string, createIfBucketDoesntExist: boolean = false): Promise<S3StorageProvider> {
-        let processedBucketName = bucketName;
-        if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
-            const accountId = await S3StorageProvider.getCurrentAccountId();
-            processedBucketName = bucketName.replace('${AWS::AccountId}', accountId );
-        }
-
-        return new S3StorageProvider(processedBucketName, objectKey, createIfBucketDoesntExist);
+    public static Create(bucketName: string, objectKey: string, createIfBucketDoesntExist: boolean = false): S3StorageProvider {
+        return new S3StorageProvider(bucketName, objectKey, createIfBucketDoesntExist);
     }
 
-    private static async getCurrentAccountId(): Promise<string> {
-        const stsClient = new STS();
-        const caller = await stsClient.getCallerIdentity().promise();
-        return caller.Account;
-    }
-
-    private readonly bucketName: string;
-    private readonly objectKey: string;
+    public readonly bucketName: string;
+    public readonly objectKey: string;
     private readonly createIfBucketDoesntExist: boolean;
 
     private constructor(stateBucketName: string, stateObject: string, createIfBucketDoesntExist: boolean = false) {
         this.bucketName = stateBucketName;
         this.objectKey = stateObject;
         this.createIfBucketDoesntExist = createIfBucketDoesntExist;
+    }
+
+    public async getObject<T>(): Promise<T> {
+        const serialized = await this.get();
+        if (!serialized) { return undefined; }
+        try {
+            const obj = JSON.parse(serialized);
+            return obj as T;
+        } catch (err) {
+            return undefined;
+        }
     }
 
     public async get(): Promise<string> {
@@ -47,9 +46,16 @@ export class S3StorageProvider implements IStorageProvider {
             const contents = response.Body.toString();
             return contents;
         } catch (err) {
-            console.log(err);
+            if (err && err.code === 'NoSuchKey') {
+                return undefined;
+            }
             throw err;
         }
+    }
+
+    public async putObject<T>(object: T) {
+        const contents = JSON.stringify(object, null, 2);
+        await this.put(contents);
     }
 
     public async put(contents: string) {
