@@ -7,7 +7,7 @@ AWS OrganizationFormation adds 2 distinct features to CloudFormation:
 
 ## Installation
 ```
-> npm i aws-oranization-formation
+> npm i aws-organization-formation
 ```
 
 ## Getting started
