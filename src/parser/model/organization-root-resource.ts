@@ -17,6 +17,7 @@ export class OrganizationRootResource extends Resource {
 
         this.props = this.resource.Properties as IOrganizationRootProperties;
 
+        super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
         super.throwForUnknownAttributes(this.props, id, 'ServiceControlPolicies');
     }
 

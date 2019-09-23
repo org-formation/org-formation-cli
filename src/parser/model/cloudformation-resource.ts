@@ -1,4 +1,5 @@
 import md5 = require('md5');
+import { OrgFormationError } from '../../org-formation-error';
 import { IResource, IResourceRef, TemplateRoot } from '../parser';
 import { AccountResource } from './account-resource';
 import { OrganizationalUnitResource } from './organizational-unit-resource';
@@ -31,6 +32,7 @@ export class CloudFormationResource extends Resource {
             } else {
                 this.regions = this.bindings.Regions;
             }
+
         } else {
             this.accounts = [];
             this.organizationalUnits = [];
@@ -61,10 +63,12 @@ export class CloudFormationResource extends Resource {
             result.push(...accountsForUnit);
         }
         if (this.includeMasterAccount) {
-            //todo: get real master account ref
-            //todo: validate whether master account is in template
-            result.push('MasterAccount');
+            if (this.root.organizationSection.masterAccount) {
+                result.push(this.root.organizationSection.masterAccount.logicalId);
+            } else {
+                new OrgFormationError('unable to include master account if master account is not part of the template');
+            }
         }
-        return result;
+        return [...new Set<string>(result)];
     }
 }

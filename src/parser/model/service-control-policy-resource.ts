@@ -32,6 +32,7 @@ export class ServiceControlPolicyResource extends Resource {
         this.description = props.Description;
         this.policyDocument = props.PolicyDocument;
 
+        super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
         super.throwForUnknownAttributes(props, id, 'PolicyName', 'Description', 'PolicyDocument', 'Tags' );
     }
 }

@@ -1,4 +1,5 @@
 import md5 = require('md5');
+import { CfnTransform } from '../../cfn-binder/cfn-transform';
 import { IResource, IResources, TemplateRoot } from '../parser';
 import { CloudFormationResource } from './cloudformation-resource';
 import { CloudFormationStackResource } from './cloudformation-stack-resource';
@@ -37,7 +38,7 @@ export class ResourcesSection {
         }
     }
 
-    public enumTemplateTargets(): IResourceTarget[] {
+    public enumTemplateTargets(templateTransform: CfnTransform): IResourceTarget[] {
         const map = new Map<string, IResourceTarget>();
         for (const resource of this.resources) {
             for (const account of resource.getNormalizedBoundAccounts()) {
@@ -46,7 +47,6 @@ export class ResourcesSection {
                     const current = map.get(key);
                     if (current === undefined) {
                         map.set(key, {
-                            hash: 'TO_BE_CALCULATED',
                             accountLogicalId: account,
                             region,
                             resources: [resource],
@@ -56,11 +56,6 @@ export class ResourcesSection {
                     }
                 }
             }
-        }
-        for (const resourceTarget of map.values()) {
-            const sortedResourceHashes = resourceTarget.resources.map((x) => x.calculateHash()).sort();
-            const resources = JSON.stringify(sortedResourceHashes);
-            resourceTarget.hash =  md5(resources) ;
         }
         return Array.from(map.values());
     }
@@ -80,5 +75,13 @@ export interface IResourceTarget {
     region: string;
     accountLogicalId: string;
     resources: CloudFormationResource[];
-    hash: string;
+    hash?: string;
+    template?: any;
+    dependencies?: ICrossAccountResourceDependencies[];
+    dependents?: ICrossAccountResourceDependencies[];
+}
+
+export interface ICrossAccountResourceDependencies {
+    Account: string;
+    Ref: string;
 }

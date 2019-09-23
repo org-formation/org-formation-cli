@@ -6,7 +6,9 @@ import { AwsOrganization } from './src/aws-provider/aws-organization';
 import { AwsOrganizationReader } from './src/aws-provider/aws-organization-reader';
 import { AwsOrganizationWriter } from './src/aws-provider/aws-organization-writer';
 import { CloudFormationBinder } from './src/cfn-binder/cfn-binder';
+import { CfnTaskProvider } from './src/cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from './src/cfn-binder/cfn-task-runner';
+import { CfnTransform } from './src/cfn-binder/cfn-transform';
 import { ChangeSetProvider } from './src/change-set/change-set-provider';
 import { BindingRoot, OrganizationBinder } from './src/org-binder/org-binder';
 import { TaskRunner } from './src/org-binder/org-task-runner';
@@ -29,7 +31,6 @@ async function HandleErrors(fn: () => {} ) {
             if (err.code && err.requestId) {
                 Util.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
                 Util.LogError(err.message);
-
             } else {
                 Util.LogError(`unexpected error occurred...`, err);
             }
@@ -43,7 +44,6 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
 
         const state = await getState(command);
         const binder = await getOrganizationBinder(template, state);
-        const cfnBinder = new CloudFormationBinder(template, state);
 
         const tasks = binder.enumBuildTasks();
         if (tasks.length === 0) {
@@ -55,6 +55,26 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
         // const cfnTasks = cfnBinder.enumTasks();
         // console.log(cfnTasks);
         // await CfnTaskRunner.RunTasks(cfnTasks);
+
+        state.setPreviousTemplate(template.source);
+        await state.save();
+    });
+}
+
+export async function updateAccountResources(templateFile: string, command: ICommandArgs) {
+    await HandleErrors(async () => {
+        const template = TemplateRoot.create(templateFile);
+
+        const state = await getState(command);
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state);
+
+        const cfnTasks = cfnBinder.enumTasks();
+        if (cfnTasks.length === 0) {
+            Util.LogInfo('accounts up to date, no work to be done.');
+        } else {
+            console.log(cfnTasks);
+            await CfnTaskRunner.RunTasks(cfnTasks);
+        }
 
         state.setPreviousTemplate(template.source);
         await state.save();
@@ -126,6 +146,7 @@ interface ICommandArgs {
     stateBucketName: string;
     stateObject: string;
     changeSetName: string;
+    stackName: string;
 }
 
 async function getOrganizationBinder(template: TemplateRoot, state: PersistedState) {

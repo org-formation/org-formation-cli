@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import * as Path from 'path';
 import { yamlParse } from 'yaml-cfn';
+import { OrgFormationError } from '../org-formation-error';
 import { OrganizationSection } from './model/organization-section';
 import { OrgResourceTypes, ResourceTypes } from './model/resource-types';
 import { ResourcesSection } from './model/resources-section';
 import { Validator } from './validator';
-import { OrgFormationError } from '../org-formation-error';
 
 type TemplateVersion  = '2010-09-09-OC';
 
@@ -108,7 +108,6 @@ export class TemplateRoot {
     public readonly dirname: string;
     public readonly organizationSection: OrganizationSection;
     public readonly resourcesSection: ResourcesSection;
-    public readonly stackName: string;
     public readonly source: string;
 
     constructor(contents: ITemplate, dirname: string) {
@@ -123,7 +122,7 @@ export class TemplateRoot {
         }
 
         Validator.ThrowForUnknownAttribute(contents, 'template root',
-                'AWSTemplateFormatVersion', 'StackName', 'Description', 'Organization',
+                'AWSTemplateFormatVersion', 'Description', 'Organization',
                 'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs');
 
         this.contents = contents;
@@ -131,7 +130,6 @@ export class TemplateRoot {
         this.source = JSON.stringify(contents);
         this.organizationSection = new OrganizationSection(this, contents.Organization);
         this.resourcesSection = new ResourcesSection(this, contents.Resources);
-        this.stackName = (contents.StackName) ? contents.StackName : 'organization-formation';
 
         this.organizationSection.resolveRefs();
         this.resourcesSection.resolveRefs();

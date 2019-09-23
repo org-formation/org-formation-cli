@@ -40,6 +40,7 @@ export class AccountResource extends Resource {
         this.accountId = this.props.AccountId;
         this.tags = this.props.Tags;
 
+        super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
         super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'ServiceControlPolicies', 'Tags');
     }
 

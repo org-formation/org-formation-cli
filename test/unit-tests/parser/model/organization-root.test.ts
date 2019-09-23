@@ -27,10 +27,9 @@ describe('when organization root resource', () => {
         expect((root as any).props.ServiceControlPolicies).to.eq('*');
     });
 
-    it('throws an error if properties are missing', () => {
+    it('does not throw wnen properties are missing', () => {
         resource.Properties = undefined;
-        expect(() => { new OrganizationRootResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new OrganizationRootResource(template, 'logical-id', resource); }).to.throw(/Properties/);
+        new OrganizationRootResource(template, 'logical-id', resource);
     });
 
 });

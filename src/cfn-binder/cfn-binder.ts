@@ -5,20 +5,23 @@ import { TemplateRoot } from '../parser/parser';
 import { ICfnTarget, PersistedState } from '../state/persisted-state';
 import { CfnTaskProvider, ICfnTask } from './cfn-task-provider';
 import { CfnTransform } from './cfn-transform';
+import md5 = require('md5');
 
 export class CloudFormationBinder {
     private template: TemplateRoot;
+    private stackName: string;
     private state: PersistedState;
     private taskProvider: CfnTaskProvider;
     private templateTransform: CfnTransform;
     private masterAccount: string;
 
-    constructor(template: TemplateRoot, state: PersistedState, taskProvider: CfnTaskProvider = new CfnTaskProvider(state), templateTransform: CfnTransform = new CfnTransform(template, state)) {
+    constructor(stackName: string, template: TemplateRoot, state: PersistedState, taskProvider: CfnTaskProvider = new CfnTaskProvider(state), templateTransform: CfnTransform = new CfnTransform(template, state)) {
         this.template = template;
         this.masterAccount = template.organizationSection.masterAccount.accountId;
         this.state = state;
         this.taskProvider = taskProvider;
         this.templateTransform = templateTransform;
+        this.stackName = stackName;
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new OrgFormationError('state and template do not belong to the same organization');
         }
@@ -26,14 +29,26 @@ export class CloudFormationBinder {
 
     public enumBindings(): ICfnBinding[] {
         const result: ICfnBinding[] = [];
-        const targetsInTemplate = new Set<{accountId: string, region: string, stackName: string}>();
-        const targets = this.template.resourcesSection.enumTemplateTargets();
+        const targetsInTemplate = [];
+        const targets = this.template.resourcesSection.enumTemplateTargets(this.templateTransform);
+
+        for (const resourceTarget of targets) {
+            const templateForTarget = this.templateTransform.createTemplateForBinding(resourceTarget);
+            resourceTarget.hash = md5(templateForTarget);
+            resourceTarget.template = templateForTarget;
+        }
+
         for (const target of targets) {
-            const accountId = this.state.getBinding(OrgResourceTypes.Account, target.accountLogicalId).physicalId;
+            let accountId = '';
+            if (this.template.organizationSection.masterAccount && this.template.organizationSection.masterAccount.logicalId === target.accountLogicalId) {
+                accountId = this.state.masterAccount;
+            } else  {
+                accountId = this.state.getBinding(OrgResourceTypes.Account, target.accountLogicalId).physicalId;
+            }
             const region = target.region;
-            const stackName = this.template.stackName;
+            const stackName = this.stackName;
             const key = {accountId, region, stackName};
-            targetsInTemplate.add(key);
+            targetsInTemplate.push(key);
             const cfnTarget = this.state.getTarget(stackName, accountId, region);
             if (cfnTarget === undefined) {
                 result.push({
@@ -55,11 +70,11 @@ export class CloudFormationBinder {
                 }
             }
         }
-        for (const storedTargets of this.state.enumTargets()) {
+        for (const storedTargets of this.state.enumTargets(this.stackName)) {
             const accountId = storedTargets.accountId;
             const region = storedTargets.region;
             const stackName = storedTargets.stackName;
-            if (!targetsInTemplate.has({accountId, region, stackName})) {
+            if (!targetsInTemplate.find((element) => element.accountId === accountId && element.region === region && element.stackName === stackName)) {
                 result.push({
                     accountId,
                     region,
@@ -72,12 +87,11 @@ export class CloudFormationBinder {
         return result;
     }
 
-    public enumTasks(): ICfnTask[] {
+    public enumTasks() {
         const result: ICfnTask[] = [];
         for (const binding of this.enumBindings()) {
             if (binding.action === 'UpdateOrCreate') {
-                const template = this.templateTransform.createTemplateForBinding(binding.template);
-                const task = this.taskProvider.createUpdateTemplateTask(binding, template, binding.template.hash);
+                const task = this.taskProvider.createUpdateTemplateTask(binding, binding.template.template, binding.template.hash);
                 result.push(...task);
             } else if (binding.action === 'Delete') {
                 const task = this.taskProvider.createDeleteTemplateTask(binding);

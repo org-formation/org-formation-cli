@@ -22,7 +22,6 @@ export abstract class Resource {
         this.resource = resource;
         this.type = resource.Type;
 
-        this.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
     }
 
     public calculateHash(): string {

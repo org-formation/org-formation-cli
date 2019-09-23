@@ -75,12 +75,13 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public enumTargets(): ICfnTarget[] {
+    public enumTargets(stackName: string): ICfnTarget[] {
         const stacks = this.state.stacks;
         if (!stacks) { return []; }
 
         const result: ICfnTarget[] = [];
         for (const stack in stacks) {
+            if (stack !== stackName) { continue; }
             const accounts = stacks[stack];
             for (const account in accounts) {
                 const regions = accounts[account];
@@ -92,7 +93,25 @@ export class PersistedState {
         return result;
     }
     public removeTarget(stackName: string, accountId: string, region: string) {
-        throw new OrgFormationError('Method not implemented.');
+        const accounts = this.state.stacks[stackName];
+        if (!accounts) {
+            return;
+        }
+        const regions: Record<string, ICfnTarget> = accounts[accountId];
+        if (!regions) {
+            return;
+        }
+
+        delete regions[region];
+
+        if (Object.keys(regions).length === 0) {
+            delete accounts[accountId];
+
+            if (Object.keys(accounts).length === 0) {
+                delete this.state.stacks[stackName];
+            }
+        }
+
     }
 
     public getBinding(type: string, logicalId: string): IBinding {

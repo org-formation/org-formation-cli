@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { createChangeSet, executeChangeSet, generateTemplate, updateTemplate } from './index';
+import { createChangeSet, executeChangeSet, generateTemplate, updateAccountResources, updateTemplate } from './index';
 
-const program = require('commander');
-const knownCommands = ['init', 'update', 'create-change-set', 'execute-change-set'];
+import program from 'commander';
+const knownCommands = ['init', 'update', 'update-accounts', 'create-change-set', 'execute-change-set'];
 
 program
   .version('0.0.1')
@@ -24,6 +24,15 @@ program
   .option('--state-object [state-object]', 'key for object used to store state', 'state.json')
   .description('update organization')
   .action(async (templateFile, cmd) => await updateTemplate(templateFile, cmd));
+
+program
+  .command('update-accounts <templateFile>')
+  .option('--stack-name <stack-name>', 'name of the cloudformation stack used to update resources')
+  .option('--profile [profile]', 'aws profile to use')
+  .option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}')
+  .option('--state-object [state-object]', 'key for object used to store state', 'state.json')
+  .description('update cloudformation resources in accounts')
+  .action(async (templateFile, cmd) => await updateAccountResources(templateFile, cmd));
 
 program
   .command('create-change-set <templateFile>')

@@ -1,3 +1,5 @@
+import { bool } from 'aws-sdk/clients/signer';
+import { OrgFormationError } from '../../org-formation-error';
 import { IOrganization, IResource, TemplateRoot } from '../parser';
 import { AccountResource } from './account-resource';
 import { MasterAccountResource } from './master-account-resource';
@@ -6,7 +8,6 @@ import { OrganizationalUnitResource } from './organizational-unit-resource';
 import { Resource } from './resource';
 import { OrgResourceTypes } from './resource-types';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
-import { OrgFormationError } from '../../org-formation-error';
 
 export class OrganizationSection {
     public readonly root: TemplateRoot;
@@ -115,6 +116,14 @@ export class OrganizationSection {
         }
     }
 
+    public findAccount(fn: (x: AccountResource) => bool) {
+        if (fn(this.masterAccount)) {
+            return this.masterAccount;
+        }
+
+        return this.accounts.find(fn);
+    }
+
     private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error) {
         const sortedArr = arr.sort();
         for (let i = 0; i < sortedArr.length - 1; i++) {
@@ -124,5 +133,4 @@ export class OrganizationSection {
             }
         }
     }
-
 }

@@ -1,6 +1,6 @@
 {
   "name": "aws-organization-formation",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "Infrastructure as code solution for AWS Organizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,7 +29,7 @@
     "@types/commander": "^2.12.2",
     "@types/md5": "^2.1.33",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^12.7.2",
+    "@types/node": "^12.7.4",
     "@types/sinon": "^7.0.13",
     "@types/uuid": "^3.4.5",
     "@types/yamljs": "^0.2.30",

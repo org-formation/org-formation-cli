@@ -163,6 +163,9 @@ export class AwsOrganizationReader {
                 req.NextToken = resp.NextToken;
 
                 for (const acc of resp.Accounts) {
+                    if (acc.Status === 'SUSPENDED') {
+                        continue;
+                    }
                     const account = {
                         ...acc,
                         Type: 'Account',

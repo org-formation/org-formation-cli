@@ -85,10 +85,23 @@
             ]
         },
         {
+            "name": "update-accounts",
+            "type": "node",
+            "request": "launch",
+            "args": ["cli.ts", "update-accounts", "temp/cloudtrail-remote-bucket.yml", "--stack-name", "org-formation-cloudtrail", "--profile", "octest1" ],
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "sourceMaps": true,
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
             "name": "create-change-set",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "create-change-set", "./out.yml", "--profile", "olafconijn" ],
+            "args": ["cli.ts", "create-change-set", "temp/test.yml", "--profile", "octest1" ],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",

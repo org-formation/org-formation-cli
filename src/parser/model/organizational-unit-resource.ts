@@ -31,6 +31,7 @@ export class OrganizationalUnitResource extends Resource {
 
         this.organizationalUnitName = this.props.OrganizationalUnitName;
 
+        super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
         super.throwForUnknownAttributes(this.props, id, 'OrganizationalUnitName', 'Accounts', 'ServiceControlPolicies');
     }
 
