@@ -1,11 +1,8 @@
-import md5 = require('md5');
-import { CfnTransform } from '../../cfn-binder/cfn-transform';
 import { IResource, IResources, TemplateRoot } from '../parser';
 import { CloudFormationResource } from './cloudformation-resource';
 import { CloudFormationStackResource } from './cloudformation-stack-resource';
 import { MasterAccountResource } from './master-account-resource';
-import { Resource } from './resource';
-import { OrgResourceTypes, ResourceTypes } from './resource-types';
+import { ResourceTypes } from './resource-types';
 
 export class ResourcesSection {
     public rootAccount: MasterAccountResource;
@@ -38,7 +35,7 @@ export class ResourcesSection {
         }
     }
 
-    public enumTemplateTargets(templateTransform: CfnTransform): IResourceTarget[] {
+    public enumTemplateTargets(): IResourceTarget[] {
         const map = new Map<string, IResourceTarget>();
         for (const resource of this.resources) {
             for (const account of resource.getNormalizedBoundAccounts()) {
@@ -75,10 +72,6 @@ export interface IResourceTarget {
     region: string;
     accountLogicalId: string;
     resources: CloudFormationResource[];
-    hash?: string;
-    template?: any;
-    dependencies?: ICrossAccountResourceDependencies[];
-    dependents?: ICrossAccountResourceDependencies[];
 }
 
 export interface ICrossAccountResourceDependencies {

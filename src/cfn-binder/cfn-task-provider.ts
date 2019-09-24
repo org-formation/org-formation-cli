@@ -2,6 +2,8 @@ import { CloudFormation, STS } from 'aws-sdk/clients/all';
 import { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import { Bool } from 'aws-sdk/clients/inspector';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import md5 = require('md5');
+import { stringify } from 'querystring';
 import { PersistedState } from '../state/persisted-state';
 import { Util } from '../util';
 import { ICfnBinding } from './cfn-binder';
@@ -13,18 +15,33 @@ export class CfnTaskProvider {
         this.state = state;
     }
 
-    public createUpdateTemplateTask(binding: ICfnBinding, template: any, hash: string): ICfnTask[] {
+    public createUpdateTemplateTask(binding: ICfnBinding): ICfnTask {
         const that = this;
-        return [{
+        return {
             accountId: binding.accountId,
             region: binding.region,
             stackName: binding.stackName,
             action: 'UpdateOrCreate',
             perform: async () => {
+                const outputs = {};
+                for (const dependent of binding.dependents) {
+                    const cfnFriendlyName = dependent.outputName.replace(/-/g, '');
+                    outputs[cfnFriendlyName] = {
+                        Value : dependent.valueExpression,
+                        Description: 'Cross Account dependency',
+                        Export : {
+                            Name: dependent.outputName,
+                        },
+                    };
+                }
+
+                binding.template.addOutputs(outputs);
+                const templateBody = binding.template.createTemplateBody();
+                const hash = md5(templateBody); // TODO: check?
                 const cfn = await that.createCreateCloudFormationFn(binding);
                 const stackInput: CreateStackInput | UpdateStackInput = {
                     StackName: binding.stackName,
-                    TemplateBody: JSON.stringify(template, null, 2),
+                    TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
                 };
                 try {
@@ -54,12 +71,20 @@ export class CfnTaskProvider {
                         }
                     }
 
+                    if (binding.dependents.length > 0) {
+                        const exports = await cfn.listExports({}).promise();
+                        for (const dependent of binding.dependents) {
+                            const val = exports.Exports.find((x) => x.Name === dependent.outputName);
+                            dependent.resolve(val.Value);
+                        }
+                    }
+
                     that.state.setTarget({
                         accountId: binding.accountId,
                         region: binding.region,
                         stackName: binding.stackName,
                         lastCommittedHash: hash,
-                        logicalAccountId: binding.template.accountLogicalId,
+                        logicalAccountId: binding.target.accountLogicalId,
                     });
                 } catch (err) {
                     Util.LogError(`error updating cloudformation stack ${binding.stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
@@ -76,12 +101,12 @@ export class CfnTaskProvider {
                     throw err;
                 }
             },
-        }];
+        };
     }
 
-    public createDeleteTemplateTask(binding: ICfnBinding): ICfnTask[] {
+    public createDeleteTemplateTask(binding: ICfnBinding): ICfnTask {
         const that = this;
-        return [{
+        return {
             accountId: binding.accountId,
             region: binding.region,
             stackName: binding.stackName,
@@ -98,7 +123,7 @@ export class CfnTaskProvider {
                     binding.accountId,
                     binding.region);
             },
-        }];
+        };
     }
 
     private async createCreateCloudFormationFn(binding: ICfnBinding): Promise<CloudFormation> {
@@ -127,8 +152,9 @@ export interface ICfnTask {
     accountId: string;
     region: string;
     stackName: string;
+    done?: boolean;
     perform: (task: ICfnTask) => Promise<void>;
-    dependentTaskFilter?: (task: ICfnTask) => Bool;
+    dependentTaskFilter?: (task: ICfnTask) => boolean;
 
 }
 type CfnBuildTaskAction = 'UpdateOrCreate' | 'Delete';

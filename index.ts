@@ -8,7 +8,6 @@ import { AwsOrganizationWriter } from './src/aws-provider/aws-organization-write
 import { CloudFormationBinder } from './src/cfn-binder/cfn-binder';
 import { CfnTaskProvider } from './src/cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from './src/cfn-binder/cfn-task-runner';
-import { CfnTransform } from './src/cfn-binder/cfn-transform';
 import { ChangeSetProvider } from './src/change-set/change-set-provider';
 import { BindingRoot, OrganizationBinder } from './src/org-binder/org-binder';
 import { TaskRunner } from './src/org-binder/org-task-runner';
