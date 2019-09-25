@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: default template generated for organization with master account 507468909204
+
+Organization: !Include ./organization.yml
+
+Resources:
+
+  DeveloperGroup:
+    OrganizationBindings:
+      Regions: eu-central-1
+      Accounts:
+        - !Ref SharedUsersAccount
+    Type: 'AWS::IAM::Group'
+    Properties:
+      GroupName: DevelopersGroup
+      Policies:
+        - PolicyName: 'assume-roles'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'sts:AssumeRole'
+                Resource: 'arn:aws:iam::*:role/CloudWatcherRole'
+
+  CloudWatcherRole:
+    OrganizationBindings:
+      Regions: eu-central-1
+      OrganizationalUnits:
+        - !Ref ProductionOU
+        - !Ref SharedOU
+    Type: 'AWS::IAM::Role'
+    Properties:
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess'
+      RoleName: CloudWatcherRole
+      AssumeRolePolicyDocument:
+       Version: '2012-10-17'
+       Statement:
+         - Effect: 'Allow'
+           Action: 'sts:AssumeRole'
+           Condition:
+            Bool:
+              aws:MultiFactorAuthPresent: 'true'
+           Principal:
+            AWS: !Ref SharedUsersAccount

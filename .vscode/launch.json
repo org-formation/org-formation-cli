@@ -88,7 +88,7 @@
             "name": "update-accounts",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "update-accounts", "temp/cloudtrail-remote-bucket.yml", "--stack-name", "org-formation-cloudtrail", "--profile", "octest1" ],
+            "args": ["cli.ts", "update-accounts", "./temp/roles.yml", "--stack-name", "org-formation-roles", "--profile", "octest1" ],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",

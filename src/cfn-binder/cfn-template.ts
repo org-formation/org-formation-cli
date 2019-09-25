@@ -93,7 +93,7 @@ export class CfnTemplate {
                 const [key, val]: [string, unknown] = entries[0];
                 if (key === 'Ref') {
                     if (!this.resources['' + val]) {
-                        const other = others.find((x) => x.region === this.target.region && x.target.resources.find((x) => x.logicalId === val));
+                        const other = others.find((x) => x.region === this.target.region && undefined !== x.target.resources.find((x) => x.logicalId === val));
                         if (other) {
                             result.push({
                                 dependencyAccountId: other.accountId,
@@ -113,7 +113,7 @@ export class CfnTemplate {
                         const resourceId: string = val[0];
                         const path: string = val[1];
                         if (!this.resources[resourceId]) {
-                            const other = others.find((x) => x.region === this.target.region && x.target.resources.find((x) => x.logicalId === resourceId));
+                            const other = others.find((x) => x.region === this.target.region && undefined !== x.target.resources.find((x) => x.logicalId === resourceId));
                             if (other) {
                                 result.push({
                                     dependencyAccountId: other.accountId,
@@ -152,7 +152,7 @@ export class CfnTemplate {
                         const binding = this.state.getBinding(orgResource.type, orgResource.logicalId);
                         return binding.physicalId;
                     }
-                } else if (key === 'Fn::GetAtt') {
+               } else if (key === 'Fn::GetAtt') {
                     if (Array.isArray(val)) {
                         if (val && val.length === 2 && val[0] === 'AWSAccount') {
                             if (val[1].indexOf('Tags.') === 0) {

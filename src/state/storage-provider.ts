@@ -71,8 +71,14 @@ export class S3StorageProvider implements IStorageProvider {
             if (this.createIfBucketDoesntExist && err.code === 'NoSuchBucket') {
                 const request: CreateBucketRequest = {
                     Bucket: this.bucketName,
+                    // TODO
+                    // CreateBucketConfiguration: {
+                    //     LocationConstraint: '', // TODO: get region from profile
+                    // },
                 };
                 await s3client.createBucket(request).promise();
+                // TODO: await s3client.putPublicAccessBlock({})
+                // TODO: await s3client.putBucketEncryption({})
                 await s3client.putObject(putObjectRequest).promise();
             }
         }

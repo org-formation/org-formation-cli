@@ -4,6 +4,7 @@ import { Bool } from 'aws-sdk/clients/inspector';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import md5 = require('md5');
 import { stringify } from 'querystring';
+import uuid = require('uuid');
 import { PersistedState } from '../state/persisted-state';
 import { Util } from '../util';
 import { ICfnBinding } from './cfn-binder';
@@ -39,10 +40,12 @@ export class CfnTaskProvider {
                 const templateBody = binding.template.createTemplateBody();
                 const hash = md5(templateBody); // TODO: check?
                 const cfn = await that.createCreateCloudFormationFn(binding);
+                const clientToken = uuid();
                 const stackInput: CreateStackInput | UpdateStackInput = {
                     StackName: binding.stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
+                    ClientRequestToken: clientToken,
                 };
                 try {
                     try {
@@ -92,8 +95,10 @@ export class CfnTaskProvider {
                         const stackEvents = await cfn.describeStackEvents({StackName: binding.stackName }).promise();
                         for (const event of stackEvents.StackEvents) {
                             const failureStates = ['CREATE_FAILED', 'DELETE_FAILED', 'UPDATE_FAILED'];
-                            if (failureStates.indexOf(event.ResourceStatus) >= 0) {
-                                Util.LogError(`Resource ${event.LogicalResourceId} failed because ${event.ResourceStatusReason}.`);
+                            if (event.ClientRequestToken === clientToken) {
+                                if (failureStates.indexOf(event.ResourceStatus) >= 0) {
+                                    Util.LogError(`Resource ${event.LogicalResourceId} failed because ${event.ResourceStatusReason}.`);
+                                }
                             }
                         }
                     } catch {/*hide*/}

@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: default template generated for organization with master account 507468909204
+
+Organization: !Include ./organization.yml
+
+Resources:
+
+  Budget:
+    OrganizationBindings:
+      Regions: eu-central-1
+      Accounts: '*'
+      IncludeMasterAccount: true
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetLimit:
+          Amount: !GetAtt AWSAccount.Tags.budget-alarm-threshold
+          Unit: USD
+        TimeUnit: MONTHLY
+        BudgetType: COST
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+          Subscribers:
+          - SubscriptionType: EMAIL
+            Address: !GetAtt AWSAccount.Tags.account-owner-email
+
