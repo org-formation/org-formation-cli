@@ -123,5 +123,18 @@
                 "<node_internals>/**"
             ]
         },
+        {
+            "name": "get-version",
+            "type": "node",
+            "request": "launch",
+            "args": ["cli.ts", "--version" ],
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "sourceMaps": true,
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
     ]
 }

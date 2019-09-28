@@ -4,10 +4,10 @@ import { createChangeSet, executeChangeSet, generateTemplate, updateAccountResou
 
 import * as AWS from 'aws-sdk';
 import program from 'commander';
-const knownCommands = ['init', 'update', 'update-accounts', 'create-change-set', 'execute-change-set'];
+const knownCommands = ['init', 'update', 'update-accounts', 'create-change-set', 'execute-change-set', '--version', '-V'];
 
 program
-  .version('0.0.1')
+  .version('0.0.6')
   .description('aws organization formation');
 
 program
