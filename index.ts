@@ -1,6 +1,7 @@
 
 import * as AWS from 'aws-sdk';
 import { Organizations, STS } from 'aws-sdk';
+import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
 import { writeFileSync } from 'fs';
 import { AwsOrganization } from './src/aws-provider/aws-organization';
 import { AwsOrganizationReader } from './src/aws-provider/aws-organization-reader';
@@ -144,6 +145,7 @@ interface ICommandArgs {
     profile: string;
     stateBucketName: string;
     stateObject: string;
+    stateBucketRegion: string;
     changeSetName: string;
     stackName: string;
 }
@@ -177,15 +179,21 @@ async function initializeAndGetStorageProvider(command: ICommandArgs) {
 }
 
 function initialize(command: ICommandArgs) {
+    const options: SharedIniFileCredentialsOptions = {};
     if (command.profile) {
-        const credentials = new AWS.SharedIniFileCredentials({ profile: command.profile });
-        AWS.config.credentials = credentials;
+        options.profile = command.profile;
     }
+    // options.tokenCodeFn = (mfaSerial: string, callback: (err?: Error, token?: string) => void)  => {
+    //                        console.log('enter mfa code:');
+    //                        callback(null, '123123');
+    // };
+    const credentials = new AWS.SharedIniFileCredentials(options);
+    AWS.config.credentials = credentials;
 }
 
 async function GetStorageProvider(objectKey: string, command: ICommandArgs) {
     const stateBucketName = await GetStateBucketName(command);
-    const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, true);
+    const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, true, command.stateBucketRegion);
     return storageProvider;
 }
 

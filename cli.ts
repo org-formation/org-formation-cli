@@ -7,7 +7,7 @@ import program from 'commander';
 const knownCommands = ['init', 'update', 'update-accounts', 'create-change-set', 'execute-change-set', '--version', '-V'];
 
 program
-  .version('0.0.6')
+  .version('0.0.7')
   .description('aws organization formation');
 
 program
@@ -15,6 +15,7 @@ program
   .option('--profile [profile]', 'aws profile to use')
   .option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}')
   .option('--state-object [state-object]', 'key for object used to store state', 'state.json')
+  .option('--state-bucket-region [state-bucket-region]', 'region used to created state-bucket in', 'us-east-1')
   .description('generate template & initialize organization')
   .action(async (outFile, cmd) => await generateTemplate(outFile, cmd));
 

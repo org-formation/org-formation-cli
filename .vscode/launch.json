@@ -75,7 +75,7 @@
             "name": "init",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "init", "./out.yml", "--profile", "octest1" ],
+            "args": ["cli.ts", "init", "./out.yml", "--profile", "octest1", "--state-bucket-region", "eu-central-1" ],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",

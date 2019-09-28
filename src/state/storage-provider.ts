@@ -9,18 +9,20 @@ export interface IStorageProvider {
 
 export class S3StorageProvider implements IStorageProvider {
 
-    public static Create(bucketName: string, objectKey: string, createIfBucketDoesntExist: boolean = false): S3StorageProvider {
-        return new S3StorageProvider(bucketName, objectKey, createIfBucketDoesntExist);
+    public static Create(bucketName: string, objectKey: string, createIfBucketDoesntExist: boolean = false, region: string  = 'us-east-1'): S3StorageProvider {
+        return new S3StorageProvider(bucketName, objectKey, createIfBucketDoesntExist, region);
     }
 
     public readonly bucketName: string;
     public readonly objectKey: string;
+    private readonly region: string;
     private readonly createIfBucketDoesntExist: boolean;
 
-    private constructor(stateBucketName: string, stateObject: string, createIfBucketDoesntExist: boolean = false) {
+    private constructor(stateBucketName: string, stateObject: string, createIfBucketDoesntExist: boolean = false, region: string  = 'us-east-1') {
         this.bucketName = stateBucketName;
         this.objectKey = stateObject;
         this.createIfBucketDoesntExist = createIfBucketDoesntExist;
+        this.region = region;
     }
 
     public async getObject<T>(): Promise<T> {
@@ -71,14 +73,23 @@ export class S3StorageProvider implements IStorageProvider {
             if (this.createIfBucketDoesntExist && err.code === 'NoSuchBucket') {
                 const request: CreateBucketRequest = {
                     Bucket: this.bucketName,
-                    // TODO
-                    // CreateBucketConfiguration: {
-                    //     LocationConstraint: '', // TODO: get region from profile
-                    // },
                 };
+
+                if (this.region.toLocaleLowerCase() !== 'us-east-1') {
+                    request.CreateBucketConfiguration = {
+                         LocationConstraint: this.region,
+                    };
+                }
                 await s3client.createBucket(request).promise();
-                // TODO: await s3client.putPublicAccessBlock({})
-                // TODO: await s3client.putBucketEncryption({})
+                await s3client.putPublicAccessBlock( {Bucket: this.bucketName, PublicAccessBlockConfiguration: {
+                                                                                    BlockPublicAcls: true,
+                                                                                    IgnorePublicAcls: true,
+                                                                                    BlockPublicPolicy: true,
+                                                                                    RestrictPublicBuckets: true},
+                                                                                }).promise();
+                await s3client.putBucketEncryption({Bucket: this.bucketName, ServerSideEncryptionConfiguration: {
+                    Rules: [{ApplyServerSideEncryptionByDefault: {SSEAlgorithm: 'AES256'} }],
+                }}).promise();
                 await s3client.putObject(putObjectRequest).promise();
             }
         }
