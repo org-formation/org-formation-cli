@@ -54,6 +54,7 @@ export interface IResourceRefExpression {
 export interface IOrganizationBindings {
     IncludeMasterAccount: boolean;
     Accounts: IResourceRef | IResourceRef[];
+    ExcludeAccounts: IResourceRef | IResourceRef[];
     OrganizationalUnits: IResourceRef | IResourceRef[];
     Regions: string | string[];
 }

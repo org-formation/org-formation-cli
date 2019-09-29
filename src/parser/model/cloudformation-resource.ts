@@ -8,12 +8,14 @@ import { Reference, Resource } from './resource';
 export interface IOrganizationBindings {
     OrganizationalUnits: IResourceRef | IResourceRef[];
     Accounts: IResourceRef | IResourceRef[];
+    ExcludeAccounts: IResourceRef | IResourceRef[];
     Regions: string | string[];
     IncludeMasterAccount: boolean;
 }
 
 export class CloudFormationResource extends Resource {
     public accounts: Array<Reference<AccountResource>>;
+    public excludeAccounts: Array<Reference<AccountResource>>;
     public organizationalUnits: Array<Reference<OrganizationalUnitResource>>;
     public includeMasterAccount: boolean;
     public regions: string[];
@@ -35,6 +37,7 @@ export class CloudFormationResource extends Resource {
 
         } else {
             this.accounts = [];
+            this.excludeAccounts = [];
             this.organizationalUnits = [];
             this.regions = [];
         }
@@ -52,6 +55,7 @@ export class CloudFormationResource extends Resource {
     public resolveRefs() {
         if (this.bindings) {
             this.accounts = super.resolve(this.bindings.Accounts, this.root.organizationSection.accounts);
+            this.excludeAccounts = super.resolve(this.bindings.ExcludeAccounts, []);
             this.organizationalUnits = super.resolve(this.bindings.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
         }
     }
@@ -69,6 +73,10 @@ export class CloudFormationResource extends Resource {
                 new OrgFormationError('unable to include master account if master account is not part of the template');
             }
         }
-        return [...new Set<string>(result)];
+        const resultSet = new Set<string>(result);
+        for (const account of this.excludeAccounts) {
+            resultSet.delete(account.PhysicalId);
+        }
+        return [...resultSet];
     }
 }
