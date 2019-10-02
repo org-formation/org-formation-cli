@@ -14,8 +14,10 @@ describe('when creating service control policy resource', () => {
 
         properties = {
             PolicyName: 'policy1',
-            PolicyDocument: 'some document',
-            Description: 'description',
+            PolicyDocument: {
+                Version: new Date(2012, 10, 17),
+                Statement: []
+            }
         };
         resource = {
             Type : OrgResourceTypes.ServiceControlPolicy,
@@ -28,6 +30,11 @@ describe('when creating service control policy resource', () => {
         expect(scp.policyName).to.eq(properties.PolicyName);
         expect(scp.policyDocument).to.eq(properties.PolicyDocument);
         expect(scp.description).to.eq(properties.Description);
+    });
+
+    it('policy version attribute is converted to string', () => {
+        const scp = new ServiceControlPolicyResource(template, 'logical-id', resource);
+        expect(scp.policyDocument.Version).to.eq('2012-10-17');
     });
 
     it('throws an error if properties are missing', () => {

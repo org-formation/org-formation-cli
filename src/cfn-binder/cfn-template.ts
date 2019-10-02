@@ -5,6 +5,7 @@ import { ICrossAccountResourceDependencies, IResourceTarget } from '../parser/mo
 import { TemplateRoot } from '../parser/parser';
 import { PersistedState } from '../state/persisted-state';
 import { ICfnBinding, ICfnCrossAccountDependency } from './cfn-binder';
+import { ResourceUtil } from '../resource-util';
 
 export class CfnTemplate {
 
@@ -28,6 +29,7 @@ export class CfnTemplate {
 
         for (const resource of target.resources) {
             const clonedResource = JSON.parse(JSON.stringify(resource.resourceForTemplate));
+            ResourceUtil.FixVersions(clonedResource);
             this.resources[resource.logicalId] = clonedResource;
         }
 

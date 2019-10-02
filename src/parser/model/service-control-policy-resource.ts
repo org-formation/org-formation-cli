@@ -1,6 +1,7 @@
 import { OrgFormationError } from '../../org-formation-error';
 import { IResource, TemplateRoot } from '../parser';
 import { Resource } from './resource';
+import { ResourceUtil } from '../../resource-util';
 
 export interface IServiceControlPolicyProperties {
     PolicyName: string;
@@ -31,7 +32,7 @@ export class ServiceControlPolicyResource extends Resource {
         this.policyName = props.PolicyName;
         this.description = props.Description;
         this.policyDocument = props.PolicyDocument;
-
+        ResourceUtil.FixVersions(this.policyDocument);
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
         super.throwForUnknownAttributes(props, id, 'PolicyName', 'Description', 'PolicyDocument', 'Tags' );
     }
