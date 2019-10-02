@@ -61,22 +61,26 @@ export class CloudFormationResource extends Resource {
     }
 
     public getNormalizedBoundAccounts(): string[] {
-        const result = this.accounts.map((x) => x.TemplateResource.logicalId);
+        const accountLogicalIds = this.accounts.map((x) => x.TemplateResource.logicalId);
+        const result = new Set<string>(accountLogicalIds);
         for (const unit of this.organizationalUnits) {
             const accountsForUnit = unit.TemplateResource.accounts.map((x) => x.TemplateResource.logicalId);
-            result.push(...accountsForUnit);
+            for(const logicalId of accountsForUnit){ 
+                result.add(logicalId);
+            }
         }
         if (this.includeMasterAccount) {
             if (this.root.organizationSection.masterAccount) {
-                result.push(this.root.organizationSection.masterAccount.logicalId);
+                result.add(this.root.organizationSection.masterAccount.logicalId);
             } else {
                 new OrgFormationError('unable to include master account if master account is not part of the template');
             }
         }
-        const resultSet = new Set<string>(result);
-        for (const account of this.excludeAccounts) {
-            resultSet.delete(account.PhysicalId);
+        
+        for (const account of this.excludeAccounts.map(x=>x.TemplateResource.logicalId)) {
+            result.delete(account);
         }
-        return [...resultSet];
+
+        return [...result];
     }
 }
