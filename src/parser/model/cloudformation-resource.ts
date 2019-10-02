@@ -8,12 +8,14 @@ import { Reference, Resource } from './resource';
 export interface IOrganizationBindings {
     OrganizationalUnits: IResourceRef | IResourceRef[];
     Accounts: IResourceRef | IResourceRef[];
+    ExcludeAccounts: IResourceRef | IResourceRef[];
     Regions: string | string[];
     IncludeMasterAccount: boolean;
 }
 
 export class CloudFormationResource extends Resource {
     public accounts: Array<Reference<AccountResource>>;
+    public excludeAccounts: Array<Reference<AccountResource>>;
     public organizationalUnits: Array<Reference<OrganizationalUnitResource>>;
     public includeMasterAccount: boolean;
     public regions: string[];
@@ -35,6 +37,7 @@ export class CloudFormationResource extends Resource {
 
         } else {
             this.accounts = [];
+            this.excludeAccounts = [];
             this.organizationalUnits = [];
             this.regions = [];
         }
@@ -52,23 +55,32 @@ export class CloudFormationResource extends Resource {
     public resolveRefs() {
         if (this.bindings) {
             this.accounts = super.resolve(this.bindings.Accounts, this.root.organizationSection.accounts);
+            this.excludeAccounts = super.resolve(this.bindings.ExcludeAccounts, []);
             this.organizationalUnits = super.resolve(this.bindings.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
         }
     }
 
     public getNormalizedBoundAccounts(): string[] {
-        const result = this.accounts.map((x) => x.TemplateResource.logicalId);
+        const accountLogicalIds = this.accounts.map((x) => x.TemplateResource.logicalId);
+        const result = new Set<string>(accountLogicalIds);
         for (const unit of this.organizationalUnits) {
             const accountsForUnit = unit.TemplateResource.accounts.map((x) => x.TemplateResource.logicalId);
-            result.push(...accountsForUnit);
+            for(const logicalId of accountsForUnit){ 
+                result.add(logicalId);
+            }
         }
         if (this.includeMasterAccount) {
             if (this.root.organizationSection.masterAccount) {
-                result.push(this.root.organizationSection.masterAccount.logicalId);
+                result.add(this.root.organizationSection.masterAccount.logicalId);
             } else {
                 new OrgFormationError('unable to include master account if master account is not part of the template');
             }
         }
-        return [...new Set<string>(result)];
+        
+        for (const account of this.excludeAccounts.map(x=>x.TemplateResource.logicalId)) {
+            result.delete(account);
+        }
+
+        return [...result];
     }
 }
