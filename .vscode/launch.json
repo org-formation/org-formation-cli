@@ -88,7 +88,7 @@
             "name": "update-accounts",
             "type": "node",
             "request": "launch",
-            "args": ["cli.ts", "update-accounts", "./temp/roles.yml", "--stack-name", "org-formation-roles", "--profile", "octest1" ],
+            "args": ["cli.ts", "update-accounts", "./examples/roles.yml", "--stack-name", "org-formation-roles", "--profile", "org-formation" ],
             "runtimeArgs": ["-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",

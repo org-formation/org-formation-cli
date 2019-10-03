@@ -36,7 +36,7 @@ export interface IResourcesMap extends Record<string, IResource> {
 }
 
 export interface IResource {
-    Type: OrgResourceTypes | ResourceTypes;
+    Type: OrgResourceTypes | ResourceTypes | string;
     Properties?: IPropertiesMap;
     OrganizationBindings?: IPropertiesMap;
 }

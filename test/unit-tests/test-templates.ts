@@ -16,6 +16,9 @@ export class TestTemplates {
                         AccountId: '1232342341234',
                         AccountName: 'My Master Account',
                         RootEmail: 'master-account@myorg.com',
+                        Tags: {
+                            key: 'Value 123',
+                        }
                     } as IAccountProperties,
                 },
                 Account: {
@@ -23,6 +26,10 @@ export class TestTemplates {
                     Properties: {
                         AccountName: 'My Account 1',
                         RootEmail: 'account-1@myorg.com',
+                        AccountId: '1232342341235',
+                        Tags: {
+                            key: 'Value 234',
+                        }
                     } as IAccountProperties,
                 },
                 Account2: {
@@ -30,6 +37,10 @@ export class TestTemplates {
                     Properties: {
                         AccountName: 'My Account 2',
                         RootEmail: 'account-2@myorg.com',
+                        AccountId: '1232342341236',
+                        Tags: {
+                            key: 'Value 567',
+                        }
                     } as IAccountProperties,
                 },
                 Root: {

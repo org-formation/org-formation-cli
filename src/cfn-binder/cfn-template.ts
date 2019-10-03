@@ -1,11 +1,11 @@
 import md5 = require('md5');
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
-import { ICrossAccountResourceDependencies, IResourceTarget } from '../parser/model/resources-section';
+import { IResourceTarget } from '../parser/model/resources-section';
 import { TemplateRoot } from '../parser/parser';
+import { ResourceUtil } from '../resource-util';
 import { PersistedState } from '../state/persisted-state';
 import { ICfnBinding, ICfnCrossAccountDependency } from './cfn-binder';
-import { ResourceUtil } from '../resource-util';
 
 export class CfnTemplate {
 
@@ -38,6 +38,10 @@ export class CfnTemplate {
                 delete this.resultingTemplate[prop];
             }
         }
+
+        const accountResource = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
+
+        this.resolveOrganizationFunctions(accountResource);
     }
 
     public listDependencies(binding: ICfnBinding, others: ICfnBinding[]): ICfnCrossAccountDependency[] {
@@ -149,30 +153,43 @@ export class CfnTemplate {
             if (entries.length === 1) {
                 const [key, val]: [string, unknown] = entries[0];
                 if (key === 'Ref') {
-                    const orgResource = this.templateRoot.organizationSection.resources.find((x) => x.logicalId === val);
-                    if (orgResource) {
-                        const binding = this.state.getBinding(orgResource.type, orgResource.logicalId);
-                        return binding.physicalId;
+                    const physicalId = this.getOrgResourceRef(val);
+                    if (physicalId) {
+                        return physicalId;
                     }
-               } else if (key === 'Fn::GetAtt') {
-                    if (Array.isArray(val)) {
-                        if (val && val.length === 2 && val[0] === 'AWSAccount') {
-                            if (val[1].indexOf('Tags.') === 0) {
-                                const tagName = val[1].substr(5); // Tags.
-                                if (!accountResource.tags) {
-                                    return '';
+                } else if (key === 'Fn::GetAtt') {
+                    if (Array.isArray(val) && val.length === 2) {
+                        const att = this.getOrgResourceAtt(val[0], val[1], accountResource);
+                        if (att) {
+                            return att;
+                        }
+                    }
+                } else if (key === 'Fn::Sub') {
+                    if (typeof val === 'string') {
+                        let result = val;
+                        const matches = val.match(/\${([\w\.]*)}/g);
+                        for(const match of matches) {
+                            const expresion = match.substr(2, match.length - 3); //${xxx}
+                            if (!expresion.includes('.')) {
+                                const physicalId = this.getOrgResourceRef(expresion);
+                                if (physicalId) {
+                                    result = result.replace(match, physicalId);
                                 }
-                                const tagValue = accountResource.tags[tagName];
-                                if (!tagValue) { return ''; }
-                                return tagValue;
-                            } else if (val[1] === 'AccountName') {
-                                return accountResource.accountName;
-                            } else if (val[1] === 'AccountId') {
-                                return accountResource.accountId;
-                            } else if (val[1] === 'RootEmail') {
-                                return accountResource.rootEmail;
+                            } else {
+                                const firstIndexOfDot = expresion.indexOf('.');
+                                const logicalId = expresion.substr(0, firstIndexOfDot);
+                                const path = expresion.substr(firstIndexOfDot + 1);
+                                const att = this.getOrgResourceAtt(logicalId, path, accountResource);
+                                if (att) {
+                                    result = result.replace(match, att);
+                                }
                             }
                         }
+
+                        if (result.includes('$')) {
+                            return {'Fn::Sub': result};
+                        }
+                        return result;
                     }
                 }
             }
@@ -184,5 +201,41 @@ export class CfnTemplate {
 
         }
         return resource;
+    }
+
+    private getOrgResourceRef(logicalId: any): string {
+        const orgResource = this.templateRoot.organizationSection.resources.find((x) => x.logicalId === logicalId);
+        if (orgResource) {
+            const binding = this.state.getBinding(orgResource.type, orgResource.logicalId);
+            return binding.physicalId;
+        }
+        return undefined;
+    }
+
+    private getOrgResourceAtt(logicalId: string, path: string, accountResource: AccountResource): string {
+        let account = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === logicalId);
+        if (!account && logicalId === 'AWSAccount') {
+            account = accountResource;
+        }
+        if (account) {
+            if (path.indexOf('Tags.') === 0) {
+                const tagName = path.substr(5); // Tags.
+                if (!account.tags) {
+                    return '';
+                }
+                const tagValue = account.tags[tagName];
+                if (!tagValue) { return ''; }
+                return tagValue;
+            } else if (path === 'AccountName') {
+                return account.accountName;
+            } else if (path === 'AccountId') {
+                const binding = this.state.getBinding(account.type, account.logicalId);
+                return binding.physicalId;
+            } else if (path === 'RootEmail') {
+                return account.rootEmail;
+            }
+        }
+
+        return undefined;
     }
 }

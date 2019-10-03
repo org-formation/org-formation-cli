@@ -11,7 +11,7 @@ export interface Reference<TResource extends Resource> {
 
 export abstract class Resource {
     public readonly logicalId: string;
-    public readonly type: OrgResourceTypes | ResourceTypes;
+    public readonly type: OrgResourceTypes | ResourceTypes | string;
     protected readonly root: TemplateRoot;
     protected readonly resource: IResource;
 

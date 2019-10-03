@@ -45,8 +45,6 @@ export class CloudFormationBinder {
             const cfnTarget = this.state.getTarget(stackName, accountId, region);
 
             const cfnTemplate = new CfnTemplate(target, this.template, this.state);
-            const accountResource = this.template.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
-            cfnTemplate.resolveOrganizationFunctions(accountResource);
 
             result.push({
                 ...key,
