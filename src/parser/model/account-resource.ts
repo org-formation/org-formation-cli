@@ -4,10 +4,11 @@ import { Reference, Resource } from './resource';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
 
 export interface IAccountProperties {
-    RootEmail: string;
+    RootEmail?: string;
     AccountName: string;
-    AccountId: string;
+    AccountId?: string;
     ServiceControlPolicies?: IResourceRef | IResourceRef[];
+    Alias?: string;
     Tags?: Record<string, string>;
 }
 
@@ -15,6 +16,7 @@ export class AccountResource extends Resource {
     public accountName: string;
     public rootEmail: string;
     public accountId: string;
+    public alias: string;
     public tags: Record<string, string>;
     public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>>;
     public organizationalUnitName: string;
@@ -39,9 +41,10 @@ export class AccountResource extends Resource {
         this.accountName = this.props.AccountName;
         this.accountId = this.props.AccountId;
         this.tags = this.props.Tags;
+        this.alias = this.props.Alias;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'ServiceControlPolicies', 'Tags');
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags');
     }
 
     public resolveRefs() {

@@ -1,5 +1,7 @@
-import { Organizations } from 'aws-sdk/clients/all';
+import { IAM, Organizations, STS } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListAccountsResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
+import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { AwsUtil } from '../aws-util';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
@@ -8,6 +10,9 @@ interface IAWSTags {
 }
 interface IAWSAccountWithTags {
     Tags?: IAWSTags;
+}
+interface IAWSAccountWithAlias {
+    Alias?: string;
 }
 
 interface IObjectWithParentId {
@@ -33,7 +38,7 @@ interface IPolicyTargets {
 }
 
 export type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
-export type AWSAccount = Account & IAWSAccountWithTags & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
+export type AWSAccount = Account & IAWSAccountWithTags & IAWSAccountWithAlias & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
 export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject;
 export type AWSRoot = Root & IObjectWithPolicies;
 
@@ -59,14 +64,15 @@ export class AwsOrganizationReader {
             resp = await that.organizationService.listPolicies(req).promise();
             for (const policy of resp.Policies) {
 
-                const describedPolicy = await that.organizationService.describePolicy({PolicyId: policy.Id}).promise();
+                const describedPolicy = await that.organizationService.describePolicy({ PolicyId: policy.Id }).promise();
 
                 const awsPolicy = {
-                        ...describedPolicy.Policy,
-                        Type: 'Policy',
-                        Name: policy.Name,
-                        Id: policy.Id,
-                        Targets: []};
+                    ...describedPolicy.Policy,
+                    Type: 'Policy',
+                    Name: policy.Name,
+                    Id: policy.Id,
+                    Targets: [],
+                };
 
                 result.push(awsPolicy);
 
@@ -125,13 +131,14 @@ export class AwsOrganizationReader {
 
                 for (const ou of resp.OrganizationalUnits) {
                     const organization = {
-                            ...ou,
-                            Type: 'OrganizationalUnit',
-                            Name: ou.Name,
-                            Id: ou.Id,
-                            ParentId: req.ParentId,
-                            Accounts: [],
-                            Policies: GetPoliciesForTarget(policies, ou.Id, 'ORGANIZATIONAL_UNIT')};
+                        ...ou,
+                        Type: 'OrganizationalUnit',
+                        Name: ou.Name,
+                        Id: ou.Id,
+                        ParentId: req.ParentId,
+                        Accounts: [],
+                        Policies: GetPoliciesForTarget(policies, ou.Id, 'ORGANIZATIONAL_UNIT'),
+                    };
 
                     result.push(organization);
                     rootsIds.push(ou.Id);
@@ -166,6 +173,12 @@ export class AwsOrganizationReader {
                     if (acc.Status === 'SUSPENDED') {
                         continue;
                     }
+
+                    const [tags, alias] = await Promise.all([
+                        AwsOrganizationReader.getTagsForAccount(that, acc.Id),
+                        AwsOrganizationReader.getIamAliasForAccount(that, acc.Id),
+                    ]);
+
                     const account = {
                         ...acc,
                         Type: 'Account',
@@ -173,7 +186,8 @@ export class AwsOrganizationReader {
                         Id: acc.Id,
                         ParentId: req.ParentId,
                         Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT'),
-                        Tags: await AwsOrganizationReader.getTagsForAccount(that, acc.Id),
+                        Tags: tags,
+                        Alias: alias,
                     };
 
                     const parentOU = organizationalUnits.find((x) => x.Id === req.ParentId);
@@ -190,9 +204,20 @@ export class AwsOrganizationReader {
         return result;
     }
 
+    private static async getIamAliasForAccount(that: AwsOrganizationReader, accountId: string): Promise<string> {
+        const org = await that.organization.getValue();
+        const iamService = await AwsUtil.GetIamService(org, accountId);
+        const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
+        if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
+            return response.AccountAliases[0];
+        } else {
+            return undefined;
+        }
+    }
+
     private static async getTagsForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAWSTags> {
         const request: ListTagsForResourceRequest = {
-            ResourceId : accountId,
+            ResourceId: accountId,
         };
         const response = await that.organizationService.listTagsForResource(request).promise();
         const tags: IAWSTags = {};

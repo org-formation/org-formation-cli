@@ -1,4 +1,5 @@
 import { IBuildTask } from './org-tasks-provider';
+import { Util } from '../util';
 
 export class TaskRunner {
 
@@ -21,15 +22,15 @@ export class TaskRunner {
 
             try {
 
-                console.log(`executing task: ${task.action} ${task.type} ${task.logicalId}`);
+                Util.LogInfo(`executing task: ${task.action} ${task.type} ${task.logicalId}`);
 
                 await task.perform(task);
                 task.done = true;
                 if (task.result) {
-                    console.log(`result = ${task.result}`);
+                    Util.LogInfo(`result = ${task.result}`);
                 }
             } catch (err) {
-                console.log(`failed executing task: ${task.action} ${task.type} ${task.logicalId} ${err}`);
+                Util.LogError(`failed executing task: ${task.action} ${task.type} ${task.logicalId} ${err}`);
                 throw err;
             }
         }

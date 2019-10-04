@@ -13,7 +13,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub
-      - 'cloudtrailx-${SharedComplianceAccountId}'
+      - 'cloudtrail-${SharedComplianceAccountId}'
       - { SharedComplianceAccountId: !Ref SharedComplianceAccount }
 
   CloudTrailS3BucketPolicy:

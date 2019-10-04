@@ -1,13 +1,13 @@
 import * as chai from 'chai';
 import { expect } from 'chai';
 import { CfnTemplate } from '../../../src/cfn-binder/cfn-template';
+import { AccountResource } from '../../../src/parser/model/account-resource';
 import { CloudFormationResource } from '../../../src/parser/model/cloudformation-resource';
+import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { IResourceTarget } from '../../../src/parser/model/resources-section';
 import { TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
-import { TestTemplates } from '../test-templates'
-import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
-import { AccountResource } from '../../../src/parser/model/account-resource';
+import { TestTemplates } from '../test-templates';
 
 chai.use(require('chai-as-promised'));
 
@@ -44,7 +44,7 @@ describe('when using Ref on account', () => {
                             OtherAccountRef: { Ref : otherAccountLogicalId },
                             NonAccountRef: { Ref : 'something' },
                         },
-                    })
+                    }),
             ],
         };
 
@@ -69,7 +69,6 @@ describe('when using Ref on account', () => {
         expect(templateResource.Properties.NonAccountRef.Ref).to.eq('something');
     });
 });
-
 
 describe('when using GetAtt on account', () => {
     let template: CfnTemplate;
@@ -120,6 +119,7 @@ describe('when using GetAtt on account', () => {
                             OtherAccountName: { 'Fn::GetAtt' : [otherAccountLogicalId, 'AccountName'] },
                             OtherAccountId: { 'Fn::GetAtt' : [otherAccountLogicalId, 'AccountId'] },
                             OtherRootEmail: { 'Fn::GetAtt' : [otherAccountLogicalId, 'RootEmail'] },
+                            OtherAlias: { 'Fn::GetAtt' : [otherAccountLogicalId, 'Alias'] },
                             OtherTag: { 'Fn::GetAtt' : [otherAccountLogicalId, 'Tags.key'] },
                         },
                     }),
@@ -149,7 +149,6 @@ describe('when using GetAtt on account', () => {
         expect(templateResource).to.not.be.undefined;
         expect(templateResource.Properties.CurrentTag).to.eq(targetAccount.tags.key);
     });
-
 
     it('GetAtt can resolve account name of master account', () => {
         expect(templateResource).to.not.be.undefined;
@@ -190,8 +189,12 @@ describe('when using GetAtt on account', () => {
         expect(templateResource).to.not.be.undefined;
         expect(templateResource.Properties.OtherTag).to.eq(otherAccount.tags.key);
     });
-});
 
+    it('GetAtt can resolve alias of other account', () => {
+        expect(templateResource).to.not.be.undefined;
+        expect(templateResource.Properties.OtherAlias).to.eq(otherAccount.alias);
+    });
+});
 
 describe('when using Sub on account', () => {
     let template: CfnTemplate;
@@ -231,9 +234,10 @@ describe('when using Sub on account', () => {
                             OtherAccountName: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.AccountName' + '}' },
                             OtherAccountId: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.AccountId' + '}' },
                             OtherRootEmail: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.RootEmail' + '}' },
+                            OtherRootAlias: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.Alias' + '}' },
                             OtherTag: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.Tags.key' + '}' },
                         },
-                    })
+                    }),
             ],
         };
 

@@ -1,5 +1,6 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
+import { AwsUtil } from '../aws-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
 import { OrganizationRootResource } from '../parser/model/organization-root-resource';
@@ -211,6 +212,17 @@ export class AwsOrganizationWriter {
 
         if (account.Name !== resource.accountName) {
             Util.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. \nInstead: login with root on the specified account to change its name`);
+        }
+
+        if (account.Alias !== resource.alias) {
+            const iam = await AwsUtil.GetIamService(this.organization.organization, accountId);
+            if (account.Alias) {
+                await iam.deleteAccountAlias({AccountAlias: account.Alias}).promise();
+            }
+            if (resource.alias) {
+                await iam.createAccountAlias({AccountAlias: resource.alias}).promise();
+            }
+
         }
 
         const tagsOnResource = Object.entries(resource.tags || {});

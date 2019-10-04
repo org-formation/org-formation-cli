@@ -168,8 +168,8 @@ export class CfnTemplate {
                     if (typeof val === 'string') {
                         let result = val;
                         const matches = val.match(/\${([\w\.]*)}/g);
-                        for(const match of matches) {
-                            const expresion = match.substr(2, match.length - 3); //${xxx}
+                        for (const match of matches) {
+                            const expresion = match.substr(2, match.length - 3); // ${xxx}
                             if (!expresion.includes('.')) {
                                 const physicalId = this.getOrgResourceRef(expresion);
                                 if (physicalId) {
@@ -228,6 +228,8 @@ export class CfnTemplate {
                 return tagValue;
             } else if (path === 'AccountName') {
                 return account.accountName;
+            } else if (path === 'Alias') {
+                return account.alias;
             } else if (path === 'AccountId') {
                 const binding = this.state.getBinding(account.type, account.logicalId);
                 return binding.physicalId;

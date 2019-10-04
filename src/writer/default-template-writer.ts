@@ -129,7 +129,6 @@ export class DefaultTemplateWriter {
         // lines.push(new CommentedLine('Parameters', '', 6));
         // lines.push(new CommentedLine('UsersAccount', '!Ref UsersAccount', 8));
         lines.push(new EmptyLine());
-
     }
 
     private generateSCP(lines: YamlLine[], policy: AWSPolicy) {
@@ -159,6 +158,9 @@ export class DefaultTemplateWriter {
         lines.push(new Line('AccountName', account.Name, 6));
         lines.push(new Line('AccountId', account.Id, 6));
         lines.push(new Line('RootEmail', account.Email, 6));
+        if (account.Alias) {
+            lines.push(new Line('Alias', account.Alias, 6));
+        }
         if (account.Tags) {
             const tags = Object.entries(account.Tags);
             if (tags.length > 0) {
@@ -223,6 +225,9 @@ export class DefaultTemplateWriter {
         lines.push(new Line('Properties', '', 4));
         lines.push(new Line('AccountName', masterAccount.Name, 6));
         lines.push(new Line('AccountId', masterAccount.Id, 6));
+        if (masterAccount.Alias) {
+            lines.push(new Line('Alias', masterAccount.Alias, 6));
+        }
         lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
         lines.push(new EmptyLine());
 

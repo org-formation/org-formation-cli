@@ -16,6 +16,7 @@ describe('when creating account resource', () => {
             RootEmail: 'email@email.com',
             AccountId: '123123123123',
             AccountName: 'Account name',
+            Alias: 'account-alias',
         };
         resource = {
             Type : OrgResourceTypes.Account,
@@ -28,6 +29,7 @@ describe('when creating account resource', () => {
         expect(account.accountName).to.eq(accountProperties.AccountName);
         expect(account.accountId).to.eq(accountProperties.AccountId);
         expect(account.rootEmail).to.eq(accountProperties.RootEmail);
+        expect(account.alias).to.eq(accountProperties.Alias);
         expect(account.tags).to.be.undefined;
     });
 
