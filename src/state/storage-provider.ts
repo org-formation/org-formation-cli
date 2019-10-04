@@ -1,6 +1,7 @@
 import { S3, STS } from 'aws-sdk';
 import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
 import { readFileSync, writeFileSync } from 'fs';
+import { OrgFormationError } from '../org-formation-error';
 
 export interface IStorageProvider {
     get(): Promise<string>;
@@ -9,20 +10,20 @@ export interface IStorageProvider {
 
 export class S3StorageProvider implements IStorageProvider {
 
-    public static Create(bucketName: string, objectKey: string, createIfBucketDoesntExist: boolean = false, region: string  = 'us-east-1'): S3StorageProvider {
-        return new S3StorageProvider(bucketName, objectKey, createIfBucketDoesntExist, region);
+    public static Create(bucketName: string, objectKey: string, createIfBucketDoesntExist: boolean = false, getRegionfn: () => Promise<string> = () => undefined): S3StorageProvider {
+        return new S3StorageProvider(bucketName, objectKey, createIfBucketDoesntExist, getRegionfn);
     }
 
     public readonly bucketName: string;
     public readonly objectKey: string;
-    private readonly region: string;
+    private readonly getRegionfn: () => Promise<string>;
     private readonly createIfBucketDoesntExist: boolean;
 
-    private constructor(stateBucketName: string, stateObject: string, createIfBucketDoesntExist: boolean = false, region: string  = 'us-east-1') {
+    private constructor(stateBucketName: string, stateObject: string, createIfBucketDoesntExist: boolean = false, getRegionfn: () => Promise<string>) {
         this.bucketName = stateBucketName;
         this.objectKey = stateObject;
         this.createIfBucketDoesntExist = createIfBucketDoesntExist;
-        this.region = region;
+        this.getRegionfn = getRegionfn;
     }
 
     public async getObject<T>(): Promise<T> {
@@ -39,7 +40,7 @@ export class S3StorageProvider implements IStorageProvider {
     public async get(): Promise<string> {
 
         const s3client = new S3();
-        const request: GetObjectRequest =  {
+        const request: GetObjectRequest = {
             Bucket: this.bucketName,
             Key: this.objectKey,
         };
@@ -61,8 +62,8 @@ export class S3StorageProvider implements IStorageProvider {
     }
 
     public async put(contents: string) {
-        const s3client = new S3();
-        const putObjectRequest: PutObjectRequest =  {
+        let s3client = new S3();
+        const putObjectRequest: PutObjectRequest = {
             Bucket: this.bucketName,
             Key: this.objectKey,
             Body: contents,
@@ -74,23 +75,33 @@ export class S3StorageProvider implements IStorageProvider {
                 const request: CreateBucketRequest = {
                     Bucket: this.bucketName,
                 };
-
-                if (this.region.toLocaleLowerCase() !== 'us-east-1') {
-                    request.CreateBucketConfiguration = {
-                         LocationConstraint: this.region,
-                    };
+                let region = await this.getRegionfn();
+                if (!region) {
+                    region = 'us-east-1';
                 }
-                await s3client.createBucket(request).promise();
-                await s3client.putPublicAccessBlock( {Bucket: this.bucketName, PublicAccessBlockConfiguration: {
-                                                                                    BlockPublicAcls: true,
-                                                                                    IgnorePublicAcls: true,
-                                                                                    BlockPublicPolicy: true,
-                                                                                    RestrictPublicBuckets: true},
-                                                                                }).promise();
-                await s3client.putBucketEncryption({Bucket: this.bucketName, ServerSideEncryptionConfiguration: {
-                    Rules: [{ApplyServerSideEncryptionByDefault: {SSEAlgorithm: 'AES256'} }],
-                }}).promise();
-                await s3client.putObject(putObjectRequest).promise();
+                s3client = new S3({ region });
+                try {
+                    await s3client.createBucket(request).promise();
+                    await s3client.putPublicAccessBlock({
+                        Bucket: this.bucketName, PublicAccessBlockConfiguration: {
+                            BlockPublicAcls: true,
+                            IgnorePublicAcls: true,
+                            BlockPublicPolicy: true,
+                            RestrictPublicBuckets: true,
+                        },
+                    }).promise();
+                    await s3client.putBucketEncryption({
+                        Bucket: this.bucketName, ServerSideEncryptionConfiguration: {
+                            Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }],
+                        },
+                    }).promise();
+                    await s3client.putObject(putObjectRequest).promise();
+                } catch (err) {
+                    if (err && err.code === 'IllegalLocationConstraintException') {
+                        throw new OrgFormationError(`unable to create bucket in region ${region}. If a bucket with the same name was recently deleted from a different region it could take up to a couple of hours for you to be able to create the same bucket in a different region.`);
+                    }
+                    throw err;
+                }
             }
         }
     }
@@ -115,6 +126,6 @@ export class FileStorageProvider implements IStorageProvider {
         }
     }
     public async put(contents: string) {
-        writeFileSync(this.filePath, contents, {encoding: 'utf8'});
+        writeFileSync(this.filePath, contents, { encoding: 'utf8' });
     }
 }

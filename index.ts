@@ -2,7 +2,8 @@
 import * as AWS from 'aws-sdk';
 import { Organizations, STS } from 'aws-sdk';
 import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
-import { writeFileSync } from 'fs';
+import { read, writeFileSync } from 'fs';
+import  * as readline from 'readline';
 import { AwsOrganization } from './src/aws-provider/aws-organization';
 import { AwsOrganizationReader } from './src/aws-provider/aws-organization-reader';
 import { AwsOrganizationWriter } from './src/aws-provider/aws-organization-writer';
@@ -193,8 +194,28 @@ function initialize(command: ICommandArgs) {
 
 async function GetStorageProvider(objectKey: string, command: ICommandArgs) {
     const stateBucketName = await GetStateBucketName(command);
-    const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, true, command.stateBucketRegion);
+    const getBucketRegionFn = async () => await GetBucketRegion(command.stateBucketRegion);
+    const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, true, getBucketRegionFn);
     return storageProvider;
+}
+
+async function GetBucketRegion(region: string) {
+    if (region) { return region; }
+
+    const rl = readline.createInterface({ input: process.stdin , output: process.stdout });
+
+    const getLine = () => {
+        return new Promise<string>((resolve) => {
+            rl.on('line', (input) => {
+                resolve(input);
+            });
+        });
+    };
+
+    console.log('Enter the region for the state bucket (us-east-1):');
+    const readRegion = await getLine();
+    if (readRegion === '') {return undefined; }
+    return readRegion;
 }
 
 async function GetStateBucketName(command: ICommandArgs): Promise<string> {
