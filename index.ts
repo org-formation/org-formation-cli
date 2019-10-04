@@ -208,11 +208,12 @@ async function GetBucketRegion(region: string) {
         return new Promise<string>((resolve) => {
             rl.on('line', (input) => {
                 resolve(input);
+                rl.close();
             });
         });
     };
 
-    console.log('Enter the region for the state bucket (us-east-1):');
+    console.log('👋 Enter the region for the state bucket (us-east-1):');
     const readRegion = await getLine();
     if (readRegion === '') {return undefined; }
     return readRegion;
