@@ -7,7 +7,6 @@ import { ResourceTypes } from './resource-types';
 export class ResourcesSection {
     public rootAccount: MasterAccountResource;
     public readonly resources: CloudFormationResource[] = [];
-    public readonly stacks: CloudFormationStackResource[] = [];
     private readonly root: TemplateRoot;
     private readonly contents: IResources;
 
@@ -20,12 +19,6 @@ export class ResourcesSection {
         for (const id in this.contents) {
             const resource = this.createResource(id, this.contents[id]);
             this.resources.push(resource);
-        }
-
-        for (const resource of this.resources) {
-            if (resource instanceof CloudFormationStackResource) {
-                this.stacks.push(resource);
-            }
         }
     }
 

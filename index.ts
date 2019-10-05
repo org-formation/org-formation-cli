@@ -15,8 +15,8 @@ import { BindingRoot, OrganizationBinder } from './src/org-binder/org-binder';
 import { TaskRunner } from './src/org-binder/org-task-runner';
 import { TaskProvider } from './src/org-binder/org-tasks-provider';
 import { OrgFormationError} from './src/org-formation-error';
-import { TemplateRoot } from './src/parser/parser';
-import { PersistedState } from './src/state/persisted-state';
+import { ITemplate, TemplateRoot } from './src/parser/parser';
+import { ICfnTarget, PersistedState } from './src/state/persisted-state';
 import { S3StorageProvider } from './src/state/storage-provider';
 import { Util } from './src/util';
 import { DefaultTemplateWriter } from './src/writer/default-template-writer';
@@ -79,6 +79,46 @@ export async function updateAccountResources(templateFile: string, command: ICom
 
         state.setPreviousTemplate(template.source);
         await state.save();
+    });
+}
+
+export async function deleteAccountStacks(stackName: string, command: ICommandArgs) {
+    await HandleErrors(async () => {
+        const state = await getState(command);
+        const orgTemplate = JSON.parse(state.getPreviousTemplate()) as ITemplate;
+        delete orgTemplate.Resources;
+        const emptyTemplate = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
+
+        const cfnBinder = new CloudFormationBinder(stackName, emptyTemplate, state);
+
+        const cfnTasks = cfnBinder.enumTasks();
+        if (cfnTasks.length === 0) {
+            Util.LogInfo('accounts up to date, no work to be done.');
+        } else {
+            console.log(cfnTasks);
+            await CfnTaskRunner.RunTasks(cfnTasks);
+        }
+
+        state.setPreviousTemplate(emptyTemplate.source);
+        await state.save();
+    });
+}
+
+export async function describeAccountStacks(command: ICommandArgs) {
+    await HandleErrors(async () => {
+        const state = await getState(command);
+        const record: Record<string, ICfnTarget[]> = {};
+        for (const stackName of state.listStacks()) {
+            if (command.stackName && stackName !== command.stackName) {
+                continue;
+            }
+            record[stackName] = [];
+            for (const target of state.enumTargets(stackName)) {
+                record[stackName].push(target);
+            }
+
+        }
+        console.log(JSON.stringify(record, null, 2));
     });
 }
 

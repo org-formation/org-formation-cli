@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 
-import { createChangeSet, executeChangeSet, generateTemplate, updateAccountResources, updateTemplate } from './index';
+import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, updateAccountResources, updateTemplate } from './index';
 
 import * as AWS from 'aws-sdk';
 import program from 'commander';
-const knownCommands = ['init', 'update', 'update-accounts', 'create-change-set', 'execute-change-set', '--version', '-V'];
+const knownCommands = ['init', 'update', 'update-accounts', 'delete-stacks', 'describe-stacks', 'execute-change-set', '--version', '-V'];
 
-const pjson = require('../package.json') || require('./package.json');
-
+let pjson;
+try {
+  pjson = require('../package.json');
+ } catch (err) {
+  pjson = require('./package.json');
+ }
 program
   .version(pjson.version)
   .description('aws organization formation');
@@ -37,6 +41,23 @@ program
   .option('--state-object [state-object]', 'key for object used to store state', 'state.json')
   .description('update cloudformation resources in accounts')
   .action(async (templateFile, cmd) => await updateAccountResources(templateFile, cmd));
+
+program
+  .command('delete-stacks <stack-name>')
+  .option('--profile [profile]', 'aws profile to use')
+  .option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}')
+  .option('--state-object [state-object]', 'key for object used to store state', 'state.json')
+  .description('removes all stacks deployed to accounts using org-formation')
+  .action(async (stackName, cmd) => await deleteAccountStacks(stackName, cmd));
+
+program
+  .command('describe-stacks')
+  .option('--stack-name [stack-name]', 'if specified only returns stacks of stack-name')
+  .option('--profile [profile]', 'aws profile to use')
+  .option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}')
+  .option('--state-object [state-object]', 'key for object used to store state', 'state.json')
+  .description('list all stacks deployed to accounts using org-formation')
+  .action(async (cmd) => await describeAccountStacks(cmd));
 
 program
   .command('create-change-set <templateFile>')

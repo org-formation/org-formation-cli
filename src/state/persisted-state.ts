@@ -75,6 +75,10 @@ export class PersistedState {
         this.dirty = true;
     }
 
+    public listStacks(): string[] {
+        return Object.entries(this.state.stacks).map((x) => x[0]);
+    }
+
     public enumTargets(stackName: string): ICfnTarget[] {
         const stacks = this.state.stacks;
         if (!stacks) { return []; }
