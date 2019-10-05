@@ -15,6 +15,10 @@
   "bin": {
     "org-formation": "dist/cli.js"
   },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/OlafConijn/AwsOrganizationFormation.git"
+  },
   "author": "Olaf Conijn",
   "license": "MIT",
   "dependencies": {
