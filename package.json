@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "ts-mocha 'test/**/*.ts'"
+    "test": "ts-mocha 'test/**/*.ts'",
+    "prepack": "tsc"
   },
   "files": [
     "dist/*"
