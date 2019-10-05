@@ -6,8 +6,10 @@ import * as AWS from 'aws-sdk';
 import program from 'commander';
 const knownCommands = ['init', 'update', 'update-accounts', 'create-change-set', 'execute-change-set', '--version', '-V'];
 
+const pjson = require('../package.json') || require('./package.json');
+
 program
-  .version('0.0.7')
+  .version(pjson.version)
   .description('aws organization formation');
 
 program
