@@ -6,6 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "ts-mocha 'test/**/*.ts'",
+    "prepack": "touch 'dist/cli.js'",
     "install": "tsc"
   },
   "files": [

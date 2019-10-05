@@ -3,7 +3,7 @@ import * as AWS from 'aws-sdk';
 import { Organizations, STS } from 'aws-sdk';
 import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
 import { read, writeFileSync } from 'fs';
-import  * as readline from 'readline';
+import * as readline from 'readline';
 import { AwsOrganization } from './src/aws-provider/aws-organization';
 import { AwsOrganizationReader } from './src/aws-provider/aws-organization-reader';
 import { AwsOrganizationWriter } from './src/aws-provider/aws-organization-writer';
