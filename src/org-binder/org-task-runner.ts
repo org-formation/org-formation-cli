@@ -1,5 +1,5 @@
+import { ConsoleUtil } from '../console-util';
 import { IBuildTask } from './org-tasks-provider';
-import { Util } from '../util';
 
 export class TaskRunner {
 
@@ -22,15 +22,15 @@ export class TaskRunner {
 
             try {
 
-                Util.LogInfo(`executing task: ${task.action} ${task.type} ${task.logicalId}`);
+                ConsoleUtil.LogInfo(`executing task: ${task.action} ${task.type} ${task.logicalId}`);
 
                 await task.perform(task);
                 task.done = true;
                 if (task.result) {
-                    Util.LogInfo(`result = ${task.result}`);
+                    ConsoleUtil.LogInfo(`result = ${task.result}`);
                 }
             } catch (err) {
-                Util.LogError(`failed executing task: ${task.action} ${task.type} ${task.logicalId} ${err}`);
+                ConsoleUtil.LogError(`failed executing task: ${task.action} ${task.type} ${task.logicalId} ${err}`);
                 throw err;
             }
         }

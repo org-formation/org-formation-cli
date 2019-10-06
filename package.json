@@ -1,6 +1,6 @@
 {
   "name": "aws-organization-formation",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Infrastructure as code solution for AWS Organizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,14 +15,16 @@
     "org-formation": "dist/cli.js"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/OlafConijn/AwsOrganizationFormation.git"
+    "type": "git",
+    "url": "https://github.com/OlafConijn/AwsOrganizationFormation.git"
   },
   "author": "Olaf Conijn",
   "license": "MIT",
   "dependencies": {
+    "@types/ini": "^1.3.30",
     "aws-sdk": "^2.519.0",
     "commander": "^2.20.0",
+    "ini": "^1.3.5",
     "md5": "^2.2.1",
     "uuid": "^3.3.3",
     "yaml-cfn": "^0.2.1",

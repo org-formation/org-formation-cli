@@ -2,7 +2,6 @@
 
 import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, updateAccountResources, updateTemplate } from './index';
 
-import * as AWS from 'aws-sdk';
 import program from 'commander';
 const knownCommands = ['init', 'update', 'update-accounts', 'delete-stacks', 'describe-stacks', 'execute-change-set', '--version', '-V'];
 

@@ -5,8 +5,8 @@ import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import md5 = require('md5');
 import { stringify } from 'querystring';
 import uuid = require('uuid');
+import { ConsoleUtil } from '../console-util';
 import { PersistedState } from '../state/persisted-state';
-import { Util } from '../util';
 import { ICfnBinding } from './cfn-binder';
 
 export class CfnTaskProvider {
@@ -65,7 +65,7 @@ export class CfnTaskProvider {
                             } else if (-1 !== message.indexOf('No updates are to be performed.')) {
                                 // ignore;
                             } else if (err.code === 'ResourceNotReady') {
-                                Util.LogError('error when executing cloudformation');
+                                ConsoleUtil.LogError('error when executing cloudformation');
                             } else {
                                 throw err;
                             }
@@ -90,14 +90,14 @@ export class CfnTaskProvider {
                         logicalAccountId: binding.target.accountLogicalId,
                     });
                 } catch (err) {
-                    Util.LogError(`error updating cloudformation stack ${binding.stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
+                    ConsoleUtil.LogError(`error updating cloudformation stack ${binding.stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
                     try {
                         const stackEvents = await cfn.describeStackEvents({StackName: binding.stackName }).promise();
                         for (const event of stackEvents.StackEvents) {
                             const failureStates = ['CREATE_FAILED', 'DELETE_FAILED', 'UPDATE_FAILED'];
                             if (event.ClientRequestToken === clientToken) {
                                 if (failureStates.indexOf(event.ResourceStatus) >= 0) {
-                                    Util.LogError(`Resource ${event.LogicalResourceId} failed because ${event.ResourceStatusReason}.`);
+                                    ConsoleUtil.LogError(`Resource ${event.LogicalResourceId} failed because ${event.ResourceStatusReason}.`);
                                 }
                             }
                         }

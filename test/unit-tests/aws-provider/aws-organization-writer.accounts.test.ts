@@ -5,8 +5,8 @@ import { expect } from 'chai';
 import * as Sinon from 'sinon';
 import { AwsOrganization } from '../../../src/aws-provider/aws-organization';
 import { AwsOrganizationWriter } from '../../../src/aws-provider/aws-organization-writer';
+import { ConsoleUtil } from '../../../src/console-util';
 import { Resource } from '../../../src/parser/model/resource';
-import { Util } from '../../../src/util';
 import { TestOrganizations } from '../test-organizations';
 describe('when creating a new account using writer', () => {
     let organizationService: AWS.Organizations;
@@ -158,7 +158,7 @@ describe('when updating account', () => {
         tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
         untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
 
-        logWarningSpy = sandbox.spy(Util, 'LogWarning');
+        logWarningSpy = sandbox.spy(ConsoleUtil, 'LogWarning');
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.updateAccount(account as any, accountId);

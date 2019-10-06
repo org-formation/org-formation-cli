@@ -1,12 +1,12 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../aws-util';
+import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
 import { OrganizationRootResource } from '../parser/model/organization-root-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
 import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
-import { Util } from '../util';
 import { AwsOrganization } from './aws-organization';
 
 export class AwsOrganizationWriter {
@@ -211,7 +211,7 @@ export class AwsOrganizationWriter {
         const account = [...this.organization.accounts, this.organization.masterAccount].find((x) => x.Id === accountId);
 
         if (account.Name !== resource.accountName) {
-            Util.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. \nInstead: login with root on the specified account to change its name`);
+            ConsoleUtil.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. \nInstead: login with root on the specified account to change its name`);
         }
 
         if (account.Alias !== resource.alias) {

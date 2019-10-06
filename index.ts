@@ -1,9 +1,11 @@
 
 import * as AWS from 'aws-sdk';
 import { Organizations, STS } from 'aws-sdk';
+import { bool } from 'aws-sdk/clients/signer';
+import { AssumeRoleRequest, GetSessionTokenRequest } from 'aws-sdk/clients/sts';
 import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
-import { read, writeFileSync } from 'fs';
-import * as readline from 'readline';
+import { read, readFileSync, writeFileSync } from 'fs';
+import * as ini from 'ini';
 import { AwsOrganization } from './src/aws-provider/aws-organization';
 import { AwsOrganizationReader } from './src/aws-provider/aws-organization-reader';
 import { AwsOrganizationWriter } from './src/aws-provider/aws-organization-writer';
@@ -11,29 +13,29 @@ import { CloudFormationBinder } from './src/cfn-binder/cfn-binder';
 import { CfnTaskProvider } from './src/cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from './src/cfn-binder/cfn-task-runner';
 import { ChangeSetProvider } from './src/change-set/change-set-provider';
+import { ConsoleUtil } from './src/console-util';
 import { BindingRoot, OrganizationBinder } from './src/org-binder/org-binder';
 import { TaskRunner } from './src/org-binder/org-task-runner';
 import { TaskProvider } from './src/org-binder/org-tasks-provider';
-import { OrgFormationError} from './src/org-formation-error';
+import { OrgFormationError } from './src/org-formation-error';
 import { ITemplate, TemplateRoot } from './src/parser/parser';
 import { ICfnTarget, PersistedState } from './src/state/persisted-state';
 import { S3StorageProvider } from './src/state/storage-provider';
-import { Util } from './src/util';
 import { DefaultTemplateWriter } from './src/writer/default-template-writer';
 
-async function HandleErrors(fn: () => {} ) {
+async function HandleErrors(fn: () => {}) {
     try {
         await fn();
     } catch (err) {
         if (err instanceof OrgFormationError) {
-            Util.LogError(err.message);
+            ConsoleUtil.LogError(err.message);
             return;
         } else {
             if (err.code && err.requestId) {
-                Util.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
-                Util.LogError(err.message);
+                ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
+                ConsoleUtil.LogError(err.message);
             } else {
-                Util.LogError(`unexpected error occurred...`, err);
+                ConsoleUtil.LogError(`unexpected error occurred...`, err);
             }
         }
     }
@@ -48,8 +50,8 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
 
         const tasks = binder.enumBuildTasks();
         if (tasks.length === 0) {
-            Util.LogInfo('organization up to date, no work to be done.');
-        } else  {
+            ConsoleUtil.LogInfo('organization up to date, no work to be done.');
+        } else {
             await TaskRunner.RunTasks(tasks);
         }
 
@@ -71,7 +73,7 @@ export async function updateAccountResources(templateFile: string, command: ICom
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
-            Util.LogInfo('accounts up to date, no work to be done.');
+            ConsoleUtil.LogInfo('accounts up to date, no work to be done.');
         } else {
             console.log(cfnTasks);
             await CfnTaskRunner.RunTasks(cfnTasks);
@@ -93,7 +95,7 @@ export async function deleteAccountStacks(stackName: string, command: ICommandAr
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
-            Util.LogInfo('accounts up to date, no work to be done.');
+            ConsoleUtil.LogInfo('accounts up to date, no work to be done.');
         } else {
             console.log(cfnTasks);
             await CfnTaskRunner.RunTasks(cfnTasks);
@@ -126,7 +128,7 @@ export async function generateTemplate(filePath: string, command: ICommandArgs) 
     await HandleErrors(async () => {
         const storageProvider = await initializeAndGetStorageProvider(command);
 
-        const organizations = new Organizations({region: 'us-east-1'});
+        const organizations = new Organizations({ region: 'us-east-1' });
         const awsReader = new AwsOrganizationReader(organizations);
         const awsOrganization = new AwsOrganization(awsReader);
         const writer = new DefaultTemplateWriter(awsOrganization);
@@ -146,7 +148,7 @@ export async function createChangeSet(templateFile: string, command: ICommandArg
         const state = await getState(command);
         const binder = await getOrganizationBinder(template, state);
 
-        const stateBucketName =  await GetStateBucketName(command);
+        const stateBucketName = await GetStateBucketName(command);
         const provider = new ChangeSetProvider(stateBucketName);
         const tasks = binder.enumBuildTasks();
 
@@ -164,7 +166,7 @@ export async function executeChangeSet(changeSetName: string, command: ICommandA
         const provider = new ChangeSetProvider(stateBucketName);
         const changeSetObj = await provider.getChangeSet(changeSetName);
         if (!changeSetObj) {
-            Util.LogError(`change set '${changeSetName}' not found.`);
+            ConsoleUtil.LogError(`change set '${changeSetName}' not found.`);
             return;
         }
         const template = new TemplateRoot(changeSetObj.template, './');
@@ -173,7 +175,7 @@ export async function executeChangeSet(changeSetName: string, command: ICommandA
         const tasks = binder.enumBuildTasks();
         const changeSet = ChangeSetProvider.CreateChangeSet(tasks, changeSetName);
         if (JSON.stringify(changeSet) !== JSON.stringify(changeSetObj.changeSet)) {
-            Util.LogError(`AWS organization state has changed since creating change set.`);
+            ConsoleUtil.LogError(`AWS organization state has changed since creating change set.`);
             return;
         }
         await TaskRunner.RunTasks(tasks);
@@ -210,26 +212,66 @@ async function getState(command: ICommandArgs) {
     } catch (err) {
         if (err && err.code === 'NoSuchBucket') {
             throw new OrgFormationError(`unable to load previously committed state, reason: bucket '${storageProvider.bucketName}' does not exist in current account.`);
-         }
+        }
     }
 }
 
 async function initializeAndGetStorageProvider(command: ICommandArgs) {
-    initialize(command);
+    await initialize(command);
     return GetStorageProvider(command.stateObject, command);
 }
 
-function initialize(command: ICommandArgs) {
+async function initialize(command: ICommandArgs) {
+    try {
+        if (await customInitializationIncludingMFASupport(command)) {
+            return;
+        }
+    } catch (err) {
+        if (err instanceof OrgFormationError) {
+            throw err;
+        }
+        ConsoleUtil.LogInfo(`custom initialization failed, not support for MFA token\n${err}`);
+    }
+
     const options: SharedIniFileCredentialsOptions = {};
     if (command.profile) {
         options.profile = command.profile;
     }
-    // options.tokenCodeFn = (mfaSerial: string, callback: (err?: Error, token?: string) => void)  => {
-    //                        console.log('enter mfa code:');
-    //                        callback(null, '123123');
-    // };
+
     const credentials = new AWS.SharedIniFileCredentials(options);
     AWS.config.credentials = credentials;
+}
+
+async function  customInitializationIncludingMFASupport(command: ICommandArgs): Promise<boolean> {
+    const profileName = command.profile ? command.profile : 'default' ;
+    const homeDir = require('os').homedir();
+    // todo: add support for windows?
+    const awsconfig = readFileSync(homeDir + '/.aws/config').toString('utf8');
+    const contents = ini.parse(awsconfig);
+    const profile = contents['profile ' + profileName];
+    if (profile && profile.source_profile) {
+        const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
+        const secrets = ini.parse(awssecrets);
+        const creds = secrets[profile.source_profile];
+        const sts = new STS({credentials: {accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key} });
+
+        const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profile.mfa_serial}`);
+        const assumeRoleReq: AssumeRoleRequest = {
+            RoleArn: profile.role_arn,
+            RoleSessionName: 'organization-build',
+            SerialNumber: profile.mfa_serial,
+            TokenCode : token,
+          };
+
+        try {
+            const tokens = await sts.assumeRole(assumeRoleReq).promise();
+            AWS.config.credentials = { accessKeyId: tokens.Credentials.AccessKeyId, secretAccessKey: tokens.Credentials.SecretAccessKey, sessionToken: tokens.Credentials.SessionToken};
+        } catch (err) {
+            throw new OrgFormationError(`unable to assume role, error: \n${err}`);
+        }
+
+    }
+    return false;
 }
 
 async function GetStorageProvider(objectKey: string, command: ICommandArgs) {
@@ -242,20 +284,8 @@ async function GetStorageProvider(objectKey: string, command: ICommandArgs) {
 async function GetBucketRegion(region: string) {
     if (region) { return region; }
 
-    const rl = readline.createInterface({ input: process.stdin , output: process.stdout });
-
-    const getLine = () => {
-        return new Promise<string>((resolve) => {
-            rl.on('line', (input) => {
-                resolve(input);
-                rl.close();
-            });
-        });
-    };
-
-    console.log('👋 Enter the region for the state bucket (us-east-1):');
-    const readRegion = await getLine();
-    if (readRegion === '') {return undefined; }
+    const readRegion = await ConsoleUtil.Readline('👋 Enter the region for the state bucket (us-east-1)');
+    if (readRegion === '') { return undefined; }
     return readRegion;
 }
 
@@ -263,7 +293,7 @@ async function GetStateBucketName(command: ICommandArgs): Promise<string> {
     const bucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
     if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
         const accountId = await getCurrentAccountId();
-        return bucketName.replace('${AWS::AccountId}', accountId );
+        return bucketName.replace('${AWS::AccountId}', accountId);
     }
     return bucketName;
 }
