@@ -1,5 +1,5 @@
 node_modules
 output
-test/mny
+test/integration-tests/temp
 dist
 .vscode

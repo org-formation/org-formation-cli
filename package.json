@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "prepublishOnly": "tsc",
-    "test": "ts-mocha 'test/**/*.ts'"
+    "test": "ts-mocha 'test/unit-tests/**/*.ts'",
+    "itests": "ts-mocha 'test/integration-tests/*.ts' --timeout 99999999999"
   },
   "files": [
     "dist/*"

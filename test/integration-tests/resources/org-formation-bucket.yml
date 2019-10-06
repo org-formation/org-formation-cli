@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization: !Include ./organization.yml
+
+Resources:
+  Bucket:
+    OrganizationBindings:
+      Regions: eu-west-1
+      Accounts: '*'
+      IncludeMasterAccount: true
+    Type: AWS::S3::Bucket
