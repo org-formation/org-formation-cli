@@ -3,6 +3,7 @@
 import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, updateAccountResources, updateTemplate } from './index';
 
 import program from 'commander';
+import { ConsoleUtil } from './src/console-util';
 const knownCommands = ['init', 'update', 'update-accounts', 'delete-stacks', 'describe-stacks', 'execute-change-set', '--version', '-V'];
 
 let pjson;
@@ -81,5 +82,7 @@ if (args.length === 2) {
 } else if (knownCommands.indexOf(args[2]) === -1) {
   args = [args[0], args[1], '--help'];
 }
+
+//ConsoleUtil.LogDebug(`args: ${args}`);
 
 program.parse(args);

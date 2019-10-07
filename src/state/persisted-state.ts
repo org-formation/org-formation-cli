@@ -14,7 +14,6 @@ export class PersistedState {
             if (contents && contents.trim().length > 0) {
                 object = JSON.parse(contents);
             }
-
             if (object.stacks === undefined) {
                 object.stacks = {};
             }

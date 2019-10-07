@@ -61,7 +61,7 @@ describe('when calling org-formation init', () => {
     describe('when calling update account resources', () => {
         const stackName = 'a' + v4().replace(/-/g, '');
         let updateResponse: SpawnSyncReturns<string>;
-        //let describeStacksResponse: SpawnSyncReturns<string>;
+        let describeStacksResponse: SpawnSyncReturns<string>;
 
         before(() => {
             const templateResourcesFile = readFileSync('./test/integration-tests/resources/org-formation-bucket.yml').toString('utf8');
@@ -74,9 +74,10 @@ describe('when calling org-formation init', () => {
                                                 '--profile', 'org-formation-test',
                                                 '--state-bucket-name', bucketName]);
 
-            // describeStacksResponse = spawnSync('ts-node', ['cli.ts', 'describe-stacks', stackName,
-            //                                     '--profile', 'org-formation-test',
-            //                                     '--state-bucket-name', bucketName]);
+            describeStacksResponse = spawnSync('ts-node', ['cli.ts', 'describe-stacks',
+                                                '--stack-name', stackName,
+                                                '--profile', 'org-formation-test',
+                                                '--state-bucket-name', bucketName]);
         });
 
         after(() => {
@@ -97,10 +98,10 @@ describe('when calling org-formation init', () => {
             expect(updateResponse.stderr.toString()).eq('');
         });
 
-        // it('describe-stacks does not return error', () => {
-        //     expect(describeStacksResponse).to.not.be.undefined;
-        //     expect(describeStacksResponse.status).to.eq(0);
-        //     expect(describeStacksResponse.stderr.toString()).eq('');
-        // });
+        it('describe-stacks does not return error', () => {
+            expect(describeStacksResponse).to.not.be.undefined;
+            expect(describeStacksResponse.status).to.eq(0);
+            expect(describeStacksResponse.stderr.toString()).eq('');
+        });
     });
 });

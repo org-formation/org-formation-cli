@@ -55,10 +55,6 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
             await TaskRunner.RunTasks(tasks);
         }
 
-        // const cfnTasks = cfnBinder.enumTasks();
-        // console.log(cfnTasks);
-        // await CfnTaskRunner.RunTasks(cfnTasks);
-
         state.setPreviousTemplate(template.source);
         await state.save();
     });
@@ -213,6 +209,7 @@ async function getState(command: ICommandArgs) {
         if (err && err.code === 'NoSuchBucket') {
             throw new OrgFormationError(`unable to load previously committed state, reason: bucket '${storageProvider.bucketName}' does not exist in current account.`);
         }
+        throw err;
     }
 }
 
@@ -276,6 +273,7 @@ async function  customInitializationIncludingMFASupport(command: ICommandArgs): 
 
 async function GetStorageProvider(objectKey: string, command: ICommandArgs) {
     const stateBucketName = await GetStateBucketName(command);
+    //ConsoleUtil.LogDebug(`getting state from s3://${stateBucketName}/${objectKey}`);
     const getBucketRegionFn = async () => await GetBucketRegion(command.stateBucketRegion);
     const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, true, getBucketRegionFn);
     return storageProvider;
