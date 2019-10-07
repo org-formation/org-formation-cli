@@ -6,6 +6,8 @@ import * as path from 'path';
 import { v4 } from 'uuid';
 import {TemplateRoot} from '../../src/parser/parser';
 
+const awsProfileForTests = 'org-formation-test';
+
 describe('when calling org-formation init', () => {
     const creds = new SharedIniFileCredentials({profile: 'org-formation-test'});
     const s3client = new S3({credentials: creds});
@@ -18,7 +20,7 @@ describe('when calling org-formation init', () => {
     before(async () => {
 
         initResponse = spawnSync('ts-node', ['cli.ts', 'init', templateFileName,
-                                            '--profile', 'org-formation-test',
+                                            '--profile', awsProfileForTests,
                                             '--state-bucket-name', bucketName,
                                             '--state-bucket-region', 'eu-west-1']);
 
@@ -71,12 +73,12 @@ describe('when calling org-formation init', () => {
 
             updateResponse = spawnSync('ts-node', ['cli.ts', 'update-accounts', templatePath.dir + '/' + 'bucket.yml',
                                                 '--stack-name', stackName,
-                                                '--profile', 'org-formation-test',
+                                                '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
 
             describeStacksResponse = spawnSync('ts-node', ['cli.ts', 'describe-stacks',
                                                 '--stack-name', stackName,
-                                                '--profile', 'org-formation-test',
+                                                '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
         });
 
@@ -84,7 +86,7 @@ describe('when calling org-formation init', () => {
             unlinkSync(templatePath.dir + '/' + 'bucket.yml');
 
             const deleteResponse = spawnSync('ts-node', ['cli.ts', 'delete-stacks', stackName,
-                                                '--profile', 'org-formation-test',
+                                                '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
 
             expect(deleteResponse).to.not.be.undefined;

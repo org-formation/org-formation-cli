@@ -2,17 +2,19 @@
 import * as readline from 'readline';
 
 export class ConsoleUtil {
-
-    public static LogSilly(message: string) {
-        console.debug(`SILLY: ${message}`);
-    }
+    public static verbose = false;
 
     public static LogDebug(message: string) {
-        console.debug(`DEBUG: ${message}`);
+        if (!ConsoleUtil.verbose) { return; }
+        console.debug(`DEBG: ${message}`);
+    }
+
+    public static Out(message: string) {
+        console.log(message);
     }
 
     public static LogInfo(message: string) {
-        console.warn(`INFO: ${message}`);
+        console.log(`INFO: ${message}`);
     }
 
     public static LogWarning(message: string) {

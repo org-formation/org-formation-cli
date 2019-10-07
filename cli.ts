@@ -4,7 +4,7 @@ import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeCha
 
 import program from 'commander';
 import { ConsoleUtil } from './src/console-util';
-const knownCommands = ['init', 'update', 'update-accounts', 'delete-stacks', 'describe-stacks', 'execute-change-set', '--version', '-V'];
+const knownCommands = ['init', 'update', 'update-accounts', 'delete-stacks', 'describe-stacks', 'create-change-set', 'execute-change-set', '--version', '-V'];
 
 let pjson;
 try {
@@ -83,6 +83,6 @@ if (args.length === 2) {
   args = [args[0], args[1], '--help'];
 }
 
-//ConsoleUtil.LogDebug(`args: ${args}`);
+// ConsoleUtil.LogDebug(`args: ${args}`);
 
 program.parse(args);

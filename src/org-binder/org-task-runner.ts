@@ -12,7 +12,7 @@ export class TaskRunner {
             if (task.dependentTaskFilter) {
                 dependentTasks.push(...tasks.filter(task.dependentTaskFilter));
             }
-            const needToRunFirst = dependentTasks.filter((x) => !x.done);
+            const needToRunFirst = dependentTasks.filter((x) => task !== x && !x.done);
             if (needToRunFirst.length > 0) {
                 await TaskRunner.RunTasks(needToRunFirst);
             }
@@ -21,14 +21,15 @@ export class TaskRunner {
             }
 
             try {
-
-                ConsoleUtil.LogInfo(`executing task: ${task.action} ${task.type} ${task.logicalId}`);
-
+                let line = `${task.type.padEnd(29, ' ')} | ${task.logicalId.padEnd(29, ' ')} | ${task.action}`;
                 await task.perform(task);
                 task.done = true;
                 if (task.result) {
-                    ConsoleUtil.LogInfo(`result = ${task.result}`);
+                    line += ` (${task.result})`;
                 }
+
+                ConsoleUtil.Out(line);
+
             } catch (err) {
                 ConsoleUtil.LogError(`failed executing task: ${task.action} ${task.type} ${task.logicalId} ${err}`);
                 throw err;

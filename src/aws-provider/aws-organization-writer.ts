@@ -133,7 +133,7 @@ export class AwsOrganizationWriter {
     public async attachAccount(parentPhysicalId: string, accountPhysicalId: string) {
         const account = this.organization.accounts.find((x) => x.Id === accountPhysicalId);
         if (account.ParentId === parentPhysicalId) {
-            console.log(`SKIP: account ${accountPhysicalId} already has parent ${parentPhysicalId}`);
+            ConsoleUtil.LogDebug(`account ${accountPhysicalId} already has parent ${parentPhysicalId}`);
             return;
         }
         const moveAccountRequest: MoveAccountRequest = {
@@ -155,7 +155,7 @@ export class AwsOrganizationWriter {
     public async createOrganizationalUnit(resource: OrganizationalUnitResource): Promise<string> {
         const organizationalUnit = this.organization.organizationalUnits.find((x) => x.Name === resource.organizationalUnitName);
         if (organizationalUnit) {
-            console.log(`SKIP: ou with name ${resource.organizationalUnitName} already exists`);
+            ConsoleUtil.LogDebug(`ou with name ${resource.organizationalUnitName} already exists`);
             return organizationalUnit.Id;
         }
         const roots = this.organization.roots;
@@ -175,7 +175,7 @@ export class AwsOrganizationWriter {
     public async deleteOrganizationalUnit(physicalId: string) {
         const existingOU = this.organization.organizationalUnits.find((x) => x.Id === physicalId);
         if (existingOU === undefined) {
-            console.log(`SKIP: organizational unit ${physicalId} not found.`);
+            ConsoleUtil.LogDebug(`organizational unit ${physicalId} not found.`);
             return;
         }
         const root = this.organization.roots[0];
@@ -197,7 +197,7 @@ export class AwsOrganizationWriter {
         const account = [...this.organization.accounts, this.organization.masterAccount].find((x) => x.Id === resource.accountId || x.Email === resource.rootEmail);
         if (account !== undefined) {
             await this.updateAccount(resource, account.Id);
-            console.log(`SKIP: account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
+            ConsoleUtil.LogDebug(`account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
             return account.Id;
         }
 
