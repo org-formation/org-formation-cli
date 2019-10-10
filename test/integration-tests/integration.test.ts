@@ -71,7 +71,7 @@ describe('when calling org-formation init', () => {
             const contents = templateResourcesFile.replace('./organization.yml', './' + templatePath.base);
             writeFileSync(templatePath.dir + '/' + 'bucket.yml', contents);
 
-            updateResponse = spawnSync('ts-node', ['cli.ts', 'update-accounts', templatePath.dir + '/' + 'bucket.yml',
+            updateResponse = spawnSync('ts-node', ['cli.ts', 'update-stacks', templatePath.dir + '/' + 'bucket.yml',
                                                 '--stack-name', stackName,
                                                 '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
