@@ -236,6 +236,7 @@ describe('when using Sub on account', () => {
                             OtherRootEmail: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.RootEmail' + '}' },
                             OtherRootAlias: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.Alias' + '}' },
                             OtherTag: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.Tags.key' + '}' },
+                            AccountIdTag: {'Fn::Sub' : 'arn:aws:iam::${AWS::AccountId}:root'},
                         },
                     }),
             ],
