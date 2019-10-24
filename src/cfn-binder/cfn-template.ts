@@ -169,7 +169,7 @@ export class CfnTemplate {
                         let result = val;
                         const matches = val.match(/\${([\w\.]*)}/g);
                         if (!matches) {
-                            return result;
+                            return { 'Fn::Sub': result };
                         }
                         for (const match of matches) {
                             const expresion = match.substr(2, match.length - 3); // ${xxx}
