@@ -237,6 +237,7 @@ describe('when using Sub on account', () => {
                             OtherRootAlias: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.Alias' + '}' },
                             OtherTag: { 'Fn::Sub' : '${' + otherAccountLogicalId + '.Tags.key' + '}' },
                             AccountIdTag: {'Fn::Sub' : 'arn:aws:iam::${AWS::AccountId}:root'},
+                            SubWithoutExpressionTag: {'Fn::Sub' : 'something'},
                         },
                     }),
             ],
@@ -289,5 +290,15 @@ describe('when using Sub on account', () => {
     it('Sub can resolve account tags of other account', () => {
         expect(templateResource).to.not.be.undefined;
         expect(templateResource.Properties.OtherTag).to.eq(otherAccount.tags.key);
+    });
+
+    it('Sub wont resolve AWS expressions', () => {
+        expect(templateResource).to.not.be.undefined;
+        expect(templateResource.Properties.AccountIdTag).to.eq('arn:aws:iam::${AWS::AccountId}:root');
+    });
+
+    it('Sub wont resolve string without expression', () => {
+        expect(templateResource).to.not.be.undefined;
+        expect(templateResource.Properties.SubWithoutExpressionTag).to.eq('something');
     });
 });

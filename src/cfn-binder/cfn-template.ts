@@ -167,7 +167,10 @@ export class CfnTemplate {
                 } else if (key === 'Fn::Sub') {
                     if (typeof val === 'string') {
                         let result = val;
-                        const matches = val.match(/\${([\w\:\.]*)}/g);
+                        const matches = val.match(/\${([\w\.]*)}/g);
+                        if (!matches) {
+                            return result;
+                        }
                         for (const match of matches) {
                             const expresion = match.substr(2, match.length - 3); // ${xxx}
                             if (!expresion.includes('.')) {
