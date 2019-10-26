@@ -30,10 +30,10 @@ export class CloudFormationResource extends Resource {
         if (this.bindings) {
             this.includeMasterAccount = this.bindings.IncludeMasterAccount;
 
-            if (typeof this.bindings.ExcludeAccounts === 'string') {
-                this.excludeAccounts = [this.bindings.ExcludeAccounts];
+            if (Array.isArray(this.bindings.ExcludeAccounts)) {
+                this.excludeAccounts = this.bindings.ExcludeAccounts as Array<Reference<AccountResource>>;
             } else {
-                this.excludeAccounts = this.bindings.ExcludeAccounts;
+                this.excludeAccounts = [ this.bindings.ExcludeAccounts as Reference<AccountResource> ];
             }
 
             if (typeof this.bindings.Regions === 'string') {
