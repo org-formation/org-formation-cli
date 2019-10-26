@@ -29,6 +29,13 @@ export class CloudFormationResource extends Resource {
         this.bindings = this.resource.OrganizationBindings as IOrganizationBindings;
         if (this.bindings) {
             this.includeMasterAccount = this.bindings.IncludeMasterAccount;
+
+            if (typeof this.bindings.ExcludeAccounts === 'string') {
+                this.excludeAccounts = [this.bindings.ExcludeAccounts];
+            } else {
+                this.excludeAccounts = this.bindings.ExcludeAccounts;
+            }
+
             if (typeof this.bindings.Regions === 'string') {
                 this.regions = [this.bindings.Regions];
             } else {
