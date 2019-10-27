@@ -29,6 +29,7 @@ export class CloudFormationResource extends Resource {
         this.bindings = this.resource.OrganizationBindings as IOrganizationBindings;
         if (this.bindings) {
             this.includeMasterAccount = this.bindings.IncludeMasterAccount;
+
             if (typeof this.bindings.Regions === 'string') {
                 this.regions = [this.bindings.Regions];
             } else {
@@ -55,7 +56,7 @@ export class CloudFormationResource extends Resource {
     public resolveRefs() {
         if (this.bindings) {
             this.accounts = super.resolve(this.bindings.Accounts, this.root.organizationSection.accounts);
-            this.excludeAccounts = super.resolve(this.bindings.ExcludeAccounts, []);
+            this.excludeAccounts = super.resolve(this.bindings.ExcludeAccounts, this.root.organizationSection.accounts);
             this.organizationalUnits = super.resolve(this.bindings.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
         }
     }
@@ -65,7 +66,7 @@ export class CloudFormationResource extends Resource {
         const result = new Set<string>(accountLogicalIds);
         for (const unit of this.organizationalUnits) {
             const accountsForUnit = unit.TemplateResource.accounts.map((x) => x.TemplateResource.logicalId);
-            for(const logicalId of accountsForUnit){ 
+            for (const logicalId of accountsForUnit) {
                 result.add(logicalId);
             }
         }
@@ -76,8 +77,8 @@ export class CloudFormationResource extends Resource {
                 new OrgFormationError('unable to include master account if master account is not part of the template');
             }
         }
-        
-        for (const account of this.excludeAccounts.map(x=>x.TemplateResource.logicalId)) {
+
+        for (const account of this.excludeAccounts.map((x) => x.TemplateResource.logicalId)) {
             result.delete(account);
         }
 

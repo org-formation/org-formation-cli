@@ -38,7 +38,7 @@ export interface IResourcesMap extends Record<string, IResource> {
 export interface IResource {
     Type: OrgResourceTypes | ResourceTypes | string;
     Properties?: IPropertiesMap;
-    OrganizationBindings?: IPropertiesMap;
+    OrganizationBindings?: IOrganizationBindings & IPropertiesMap;
 }
 
 export interface IPropertiesMap extends Record<string, any> {
@@ -52,11 +52,11 @@ export interface IResourceRefExpression {
 }
 
 export interface IOrganizationBindings {
-    IncludeMasterAccount: boolean;
-    Accounts: IResourceRef | IResourceRef[];
-    ExcludeAccounts: IResourceRef | IResourceRef[];
-    OrganizationalUnits: IResourceRef | IResourceRef[];
-    Regions: string | string[];
+    IncludeMasterAccount?: boolean;
+    Accounts?: IResourceRef | IResourceRef[];
+    ExcludeAccounts?: IResourceRef | IResourceRef[];
+    OrganizationalUnits?: IResourceRef | IResourceRef[];
+    Regions?: string | string[];
 }
 
 export class TemplateRoot {
