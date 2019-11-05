@@ -59,9 +59,11 @@ export class CloudFormationBinder {
         for (const binding of result) {
             for (const dependency of binding.template.listDependencies(binding, result)) {
                 binding.dependencies.push(dependency);
+                binding.template.addParameter(dependency);
 
-                const other = result.find((x) => x.accountId === dependency.dependencyAccountId && x.region === dependency.dependencyRegion && x.stackName === dependency.dependencyStackName);
+                const other = result.find((x) => x.accountId === dependency.outputAccountId && x.region === dependency.outputRegion && x.stackName === dependency.outputStackName);
                 other.dependents.push(dependency);
+                other.template.addOutput(dependency);
             }
         }
 
@@ -87,7 +89,7 @@ export class CloudFormationBinder {
         for (const binding of this.enumBindings()) {
             if (binding.action === 'UpdateOrCreate') {
                 const task = this.taskProvider.createUpdateTemplateTask(binding);
-                task.dependentTaskFilter = (other) => binding.dependencies.findIndex((x) => x.dependencyAccountId === other.accountId && x.dependencyRegion === other.region && x.dependencyStackName === other.stackName) > -1;
+                task.dependentTaskFilter = (other) => binding.dependencies.findIndex((x) => x.outputAccountId === other.accountId && x.outputRegion === other.region && x.outputStackName === other.stackName) > -1;
                 result.push(task);
             } else if (binding.action === 'Delete') {
                 const task = this.taskProvider.createDeleteTemplateTask(binding);
@@ -111,15 +113,15 @@ export interface ICfnBinding {
 }
 
 export interface ICfnCrossAccountDependency {
-    dependencyAccountId: string;
-    dependencyRegion: string;
-    dependencyStackName: string;
-    dependentAccountId: string;
-    dependentRegion: string;
-    dependentStackName: string;
+    outputAccountId: string;
+    outputRegion: string;
+    outputStackName: string;
+    parameterAccountId: string;
+    parameterRegion: string;
+    parameterStackName: string;
     valueExpression: any;
+    parameterName: string;
     outputName: string;
-    resolve(val: any);
 }
 
 type CfnBindingAction = 'UpdateOrCreate' | 'Delete' | 'None';

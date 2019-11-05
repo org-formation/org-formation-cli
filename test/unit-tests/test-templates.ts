@@ -3,10 +3,10 @@ import { IOrganizationRootProperties } from '../../src/parser/model/organization
 import { IOrganizationalUnitProperties } from '../../src/parser/model/organizational-unit-resource';
 import { OrgResourceTypes } from '../../src/parser/model/resource-types';
 import { IServiceControlPolicyProperties } from '../../src/parser/model/service-control-policy-resource';
-import { ITemplate, TemplateRoot } from '../../src/parser/parser';
+import { IResource, IResources, ITemplate, TemplateRoot } from '../../src/parser/parser';
 
 export class TestTemplates {
-    public static createBasicTemplate(): TemplateRoot {
+    public static createBasicTemplate(resources?: IResources): TemplateRoot {
         const template: ITemplate  = {
             AWSTemplateFormatVersion: '2010-09-09-OC',
             Organization: {
@@ -81,6 +81,7 @@ export class TestTemplates {
                     } as IServiceControlPolicyProperties,
                 },
             },
+            Resources: resources,
         };
 
         return new TemplateRoot(template, './');

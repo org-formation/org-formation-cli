@@ -1,5 +1,5 @@
 import { CloudFormation, STS } from 'aws-sdk/clients/all';
-import { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
+import { CreateStackInput, DeleteStackInput, ListExportsInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import { Bool } from 'aws-sdk/clients/inspector';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import md5 = require('md5');
@@ -24,30 +24,37 @@ export class CfnTaskProvider {
             stackName: binding.stackName,
             action: 'UpdateOrCreate',
             perform: async () => {
-                const outputs = {};
-                for (const dependent of binding.dependents) {
-                    const cfnFriendlyName = dependent.outputName.replace(/-/g, '');
-                    outputs[cfnFriendlyName] = {
-                        Value : dependent.valueExpression,
-                        Description: 'Cross Account dependency',
-                        Export : {
-                            Name: dependent.outputName,
-                        },
-                    };
-                }
-
-                binding.template.addOutputs(outputs);
-                const templateBody = binding.template.createTemplateBody();
-                const hash = md5(templateBody); // TODO: check?
-                const cfn = await that.createCreateCloudFormationFn(binding);
-                const clientToken = uuid();
-                const stackInput: CreateStackInput | UpdateStackInput = {
+                 const boundParameters = binding.template.enumBoundParameters();
+                 for (const param of boundParameters) {
+                    const site: ICfnSite = {accountId: binding.accountId, region: binding.region};
+                    if (param.ExportAccountId) { site.accountId = param.ExportAccountId; }
+                    if (param.ExportRegion) {site.region = param.ExportRegion; }
+                    const cfnRetrieveExport = await that.createCreateCloudFormationFn(site);
+                    const listExportsRequest: ListExportsInput = {};
+                    const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
+                    do {
+                        listExportsRequest.NextToken = listExportsResponse.NextToken;
+                        const foundExport = listExportsResponse.Exports.find((x) => x.Name === param.ExportName);
+                        if (foundExport) {
+                            param.Default = foundExport.Value;
+                            delete param.ExportAccountId;
+                            delete param.ExportRegion;
+                            delete param.ExportName;
+                            break;
+                        }
+                    } while (listExportsRequest.NextToken);
+                 }
+                 const templateBody = binding.template.createTemplateBody();
+                 const hash = md5(templateBody); // TODO: check?
+                 const cfn = await that.createCreateCloudFormationFn(binding);
+                 const clientToken = uuid();
+                 const stackInput: CreateStackInput | UpdateStackInput = {
                     StackName: binding.stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
                     ClientRequestToken: clientToken,
                 };
-                try {
+                 try {
                     try {
                         await cfn.updateStack(stackInput).promise();
                         await cfn.waitFor('stackUpdateComplete', { StackName: binding.stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
@@ -71,14 +78,6 @@ export class CfnTaskProvider {
                             }
                         } else {
                             throw err;
-                        }
-                    }
-
-                    if (binding.dependents.length > 0) {
-                        const exports = await cfn.listExports({}).promise();
-                        for (const dependent of binding.dependents) {
-                            const val = exports.Exports.find((x) => x.Name === dependent.outputName);
-                            dependent.resolve(val.Value);
                         }
                     }
 
@@ -131,10 +130,10 @@ export class CfnTaskProvider {
         };
     }
 
-    private async createCreateCloudFormationFn(binding: ICfnBinding): Promise<CloudFormation> {
-        if (binding.accountId !== this.state.masterAccount) {
+    private async createCreateCloudFormationFn(site: ICfnSite): Promise<CloudFormation> {
+        if (site.accountId !== this.state.masterAccount) {
             const sts = new STS();
-            const roleArn = 'arn:aws:iam::' + binding.accountId + ':role/OrganizationAccountAccessRole';
+            const roleArn = 'arn:aws:iam::' + site.accountId + ':role/OrganizationAccountAccessRole';
             const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
 
             const credentialOptions: CredentialsOptions = {
@@ -143,13 +142,18 @@ export class CfnTaskProvider {
                 sessionToken: response.Credentials.SessionToken,
             };
 
-            return new CloudFormation({ credentials: credentialOptions, region: binding.region });
+            return new CloudFormation({ credentials: credentialOptions, region: site.region });
         } else {
-            return new CloudFormation({ region: binding.region });
+            return new CloudFormation({ region: site.region });
         }
 
     }
 
+}
+
+interface ICfnSite {
+    accountId: string;
+    region: string;
 }
 
 export interface ICfnTask {

@@ -11,26 +11,51 @@ export class CfnTemplate {
 
     private resultingTemplate: any;
     private resources: Record<string, any>;
+    private outputs: Record<string, ICfnOutput>;
+    private parameters: Record<string, ICfnParameter>;
     private resourceIdsForTarget: string[];
+    private allResourceIds: string[];
 
     constructor(private target: IResourceTarget, private templateRoot: TemplateRoot, private state: PersistedState) {
         this.resourceIdsForTarget = target.resources.map((x) => x.logicalId);
+        this.allResourceIds = this.templateRoot.resourcesSection.resources.map((x) => x.logicalId);
+
         this.resources = {};
+        this.outputs = {};
+        this.parameters = {};
+
         this.resultingTemplate = {
             AWSTemplateFormatVersion: '2010-09-09',
             Description: this.templateRoot.contents.Description,
-            Parameters: this.templateRoot.contents.Parameters,
+            Parameters: this.parameters,
             Metadata: this.templateRoot.contents.Metadata,
             Resources: this.resources,
             Mappings: this.templateRoot.contents.Mappings,
             Conditions: this.templateRoot.contents.Conditions,
-            Outputs: this.templateRoot.contents.Outputs,
+            Outputs: this.outputs,
         };
+
+        const accountResource = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
 
         for (const resource of target.resources) {
             const clonedResource = JSON.parse(JSON.stringify(resource.resourceForTemplate));
             ResourceUtil.FixVersions(clonedResource);
-            this.resources[resource.logicalId] = clonedResource;
+            this._removeCrossAccountDependsOn(clonedResource, this.resourceIdsForTarget, this.allResourceIds);
+
+            this.resources[resource.logicalId] = this._resolveOrganizationFunctions(clonedResource, accountResource);
+        }
+
+        for (const outputName in this.templateRoot.contents.Outputs) {
+            const output = this.templateRoot.contents.Outputs[outputName];
+            if (!this._containsRefToOtherTarget(output, this.resourceIdsForTarget, this.allResourceIds)) {
+                const clonedOutput = JSON.parse(JSON.stringify(output));
+                this.outputs[outputName] = this._resolveOrganizationFunctions(clonedOutput, accountResource);
+            }
+        }
+
+        for (const paramName in this.templateRoot.contents.Parameters) {
+            const param = this.templateRoot.contents.Parameters[paramName];
+            this.parameters[paramName] = param;
         }
 
         for (const prop in this.resultingTemplate) {
@@ -38,10 +63,6 @@ export class CfnTemplate {
                 delete this.resultingTemplate[prop];
             }
         }
-
-        const accountResource = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
-
-        this.resolveOrganizationFunctions(accountResource);
     }
 
     public listDependencies(binding: ICfnBinding, others: ICfnBinding[]): ICfnCrossAccountDependency[] {
@@ -56,25 +77,45 @@ export class CfnTemplate {
         return result;
     }
 
-    public addOutputs(outputs: any) {
-        if (this.resultingTemplate.Outputs) {
-            this.resultingTemplate.Outputs = { ...this.resultingTemplate.Outputs, outputs };
-        } else {
-            this.resultingTemplate.Outputs = outputs;
+    public addOutput(dependency: ICfnCrossAccountDependency) {
+        const cfnFriendlyName = dependency.outputName.replace(/-/g, 'Dash');
+
+        if (!this.outputs[cfnFriendlyName]) {
+            this.outputs[cfnFriendlyName] =  {
+                Value: dependency.valueExpression,
+                Description: 'Cross Account dependency',
+                Export: {
+                    Name: dependency.outputName,
+                },
+            };
         }
+    }
+
+    public addParameter(dependency: ICfnCrossAccountDependency) {
+        if (!this.parameters[dependency.parameterName]) {
+            this.parameters[dependency.parameterName] =  {
+                Description: 'Cross Account dependency',
+                Type: 'String',
+                ExportAccountId: dependency.outputAccountId,
+                ExportRegion: dependency.outputRegion,
+                ExportName: dependency.outputName,
+            };
+        }
+    }
+
+    public enumBoundParameters(): ICfnParameter[] {
+        const parameters: ICfnParameter[] = [];
+        for (const paramName in this.parameters) {
+            const parameter = this.parameters[paramName];
+            if (parameter.ExportName) {
+                parameters.push(parameter);
+             }
+        }
+        return parameters;
     }
 
     public createTemplateBody(): string {
         return JSON.stringify(this.resultingTemplate, null, 2);
-    }
-
-    public resolveOrganizationFunctions(accountResource: AccountResource) {
-        const allResourceIds = this.templateRoot.resourcesSection.resources.map((x) => x.logicalId);
-        for (const logicalId in this.resources) {
-            const resource = this.resources[logicalId];
-            this._removeCrossAccountDependsOn(resource, this.resourceIdsForTarget, allResourceIds);
-            this.resources[logicalId] = this._resolveOrganizationFunctions(resource, accountResource);
-        }
     }
 
     private _removeCrossAccountDependsOn(resource: any, resourceIdsForTarget: string[], allResourceIds: string[]) {
@@ -91,6 +132,37 @@ export class CfnTemplate {
         }
     }
 
+    private _containsRefToOtherTarget(resource: any, resourceIdsForTarget: string[], allResourceIds: string[]) {
+        if (resource !== null && typeof resource === 'object') {
+
+            const entries = Object.entries(resource);
+            if (entries.length === 1) {
+                const [key, val]: [string, unknown] = entries[0];
+                if (key === 'Ref') {
+                    const resourceId = '' + val;
+                    if (allResourceIds.includes(resourceId) && !resourceIdsForTarget.includes(resourceId)) {
+                        return true;
+                    }
+                } else if (key === 'Fn::GetAtt') {
+                    if (Array.isArray(val)) {
+                        const resourceId: string = val[0];
+                        if (allResourceIds.includes(resourceId) && !resourceIdsForTarget.includes(resourceId)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            for (const [key, val] of entries) {
+                if (val !== null && typeof val === 'object') {
+                    if (this._containsRefToOtherTarget(val, resourceIdsForTarget, allResourceIds)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private _listDependencies(resource: any, binding: ICfnBinding, others: ICfnBinding[], parent: any, parentKey: string): ICfnCrossAccountDependency[] {
         const result: ICfnCrossAccountDependency[] = [];
         if (resource !== null && typeof resource === 'object') {
@@ -98,20 +170,23 @@ export class CfnTemplate {
             if (entries.length === 1) {
                 const [key, val]: [string, unknown] = entries[0];
                 if (key === 'Ref') {
-                    if (!this.resources['' + val]) {
-                        const other = others.find((x) => x.region === this.target.region && undefined !== x.target.resources.find((x) => x.logicalId === val));
+                    const resourceId: string = '' + val;
+                    if (!this.resources[resourceId]) {
+                        const other = others.find((o) => undefined !== o.template.resources[resourceId]);
                         if (other) {
-                            result.push({
-                                dependencyAccountId: other.accountId,
-                                dependencyRegion: other.region,
-                                dependencyStackName: other.stackName,
-                                dependentAccountId: binding.accountId,
-                                dependentRegion: binding.region,
-                                dependentStackName: binding.stackName,
+                            const dependency = {
+                                outputAccountId: other.accountId,
+                                outputRegion: other.region,
+                                outputStackName: other.stackName,
+                                parameterAccountId: binding.accountId,
+                                parameterRegion: binding.region,
+                                parameterStackName: binding.stackName,
                                 valueExpression: { Ref: val },
-                                outputName: `${binding.stackName}-${val}`,
-                                resolve: (x) => { parent[parentKey] = x; },
-                            });
+                                parameterName: `${val}`,
+                                outputName: `${other.stackName}-${val}`,
+                            };
+                            result.push(dependency);
+                            parent[parentKey] = { Ref : dependency.parameterName};
                         }
                     }
                 } else if (key === 'Fn::GetAtt') {
@@ -119,19 +194,21 @@ export class CfnTemplate {
                         const resourceId: string = val[0];
                         const path: string = val[1];
                         if (!this.resources[resourceId]) {
-                            const other = others.find((x) => x.region === this.target.region && undefined !== x.target.resources.find((x) => x.logicalId === resourceId));
+                            const other = others.find((o) => undefined !== o.target.resources[resourceId]);
                             if (other) {
-                                result.push({
-                                    dependencyAccountId: other.accountId,
-                                    dependencyRegion: other.region,
-                                    dependencyStackName: other.stackName,
-                                    dependentAccountId: binding.accountId,
-                                    dependentRegion: binding.region,
-                                    dependentStackName: binding.stackName,
+                                const dependency = {
+                                    outputAccountId: other.accountId,
+                                    outputRegion: other.region,
+                                    outputStackName: other.stackName,
+                                    parameterAccountId: binding.accountId,
+                                    parameterRegion: binding.region,
+                                    parameterStackName: binding.stackName,
                                     valueExpression: { GetAtt: [resourceId, path] },
-                                    outputName: `${binding.stackName}-${resourceId}-${path}`,
-                                    resolve: (x) => { parent[parentKey] = x; },
-                                });
+                                    parameterName: `${resourceId}Dot${path}`,
+                                    outputName: `${other.stackName}-${resourceId}-${path}`,
+                                };
+                                result.push(dependency);
+                                parent[parentKey] = { Ref : dependency.parameterName};
                             }
                         }
                     }
@@ -243,4 +320,21 @@ export class CfnTemplate {
 
         return undefined;
     }
+}
+
+export interface ICfnParameter {
+    Description: string;
+    Type: string;
+    Default?: string;
+    ExportName?: string;
+    ExportAccountId?: string;
+    ExportRegion?: string;
+}
+export interface ICfnExport {
+    Name: string;
+}
+export interface ICfnOutput {
+    Export: ICfnExport;
+    Value: string;
+    Description: string;
 }
