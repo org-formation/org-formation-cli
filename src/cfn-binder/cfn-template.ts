@@ -95,7 +95,7 @@ export class CfnTemplate {
         if (!this.parameters[dependency.parameterName]) {
             this.parameters[dependency.parameterName] =  {
                 Description: 'Cross Account dependency',
-                Type: 'String',
+                Type: dependency.parameterType,
                 ExportAccountId: dependency.outputAccountId,
                 ExportRegion: dependency.outputRegion,
                 ExportName: dependency.outputName,
@@ -181,6 +181,7 @@ export class CfnTemplate {
                                 parameterAccountId: binding.accountId,
                                 parameterRegion: binding.region,
                                 parameterStackName: binding.stackName,
+                                parameterType: 'string',
                                 valueExpression: { Ref: val },
                                 parameterName: `${val}`,
                                 outputName: `${other.stackName}-${val}`,
@@ -194,8 +195,15 @@ export class CfnTemplate {
                         const resourceId: string = val[0];
                         const path: string = val[1];
                         if (!this.resources[resourceId]) {
-                            const other = others.find((o) => undefined !== o.target.resources[resourceId]);
+                            const other = others.find((o) => undefined !== o.template.resources[resourceId]);
                             if (other) {
+                                let parameterType = 'string';
+                                let valueExpression: any = { 'Fn::GetAtt': [resourceId, path] };
+                                if (path.endsWith('NameServers')) { //todo: add more comma delimeted list attribute names that can be used in GetAtt
+                                    parameterType = 'CommaDelimitedList';
+                                    valueExpression = {'Fn::Join' : [', ', { 'Fn::GetAtt': [resourceId, path] }]};
+                                }
+
                                 const dependency = {
                                     outputAccountId: other.accountId,
                                     outputRegion: other.region,
@@ -203,7 +211,8 @@ export class CfnTemplate {
                                     parameterAccountId: binding.accountId,
                                     parameterRegion: binding.region,
                                     parameterStackName: binding.stackName,
-                                    valueExpression: { GetAtt: [resourceId, path] },
+                                    parameterType,
+                                    valueExpression,
                                     parameterName: `${resourceId}Dot${path}`,
                                     outputName: `${other.stackName}-${resourceId}-${path}`,
                                 };

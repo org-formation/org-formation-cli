@@ -119,6 +119,7 @@ export interface ICfnCrossAccountDependency {
     parameterAccountId: string;
     parameterRegion: string;
     parameterStackName: string;
+    parameterType: string;
     valueExpression: any;
     parameterName: string;
     outputName: string;

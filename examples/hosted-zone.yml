@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: Chain Slayer Org - Root Domain
+
+Parameters:
+
+  hostedZoneName:
+    Type: String
+    Default: testdomain-123.com.ar
+    Description: The hosted zone name
+
+Organization: !Include ./organization.yml
+
+Resources:
+
+  #=========================================#
+  # Root zone
+  #=========================================#
+
+  RootHostedZone:
+    Type: AWS::Route53::HostedZone
+    OrganizationBindings:
+      Regions: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      HostedZoneConfig:
+        Comment: Root domain
+      Name: !Ref hostedZoneName
+      HostedZoneTags:
+        - Key: Application
+          Value: cso
+        - Key: Component
+          Value: domains
+        - Key: Aspect
+          Value: addressing
+
+  MxRecord:
+    Type: AWS::Route53::RecordSet
+    OrganizationBindings:
+      Regions: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      Type: MX
+      HostedZoneId: !Ref RootHostedZone
+      Name: !Sub '${hostedZoneName}.'
+      TTL: 86400
+      ResourceRecords:
+        - '1 aspmx.l.google.com.'
+        - '5 alt1.aspmx.l.google.com.'
+        - '5 alt2.aspmx.l.google.com.'
+        - '10 alt3.aspmx.l.google.com.'
+        - '10 alt4.aspmx.l.google.com.'
+
+  TxtRecord:
+    Type: AWS::Route53::RecordSet
+    OrganizationBindings:
+      Regions: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      Type: TXT
+      HostedZoneId: !Ref RootHostedZone
+      Name: !Sub '${hostedZoneName}.'
+      TTL: 86400
+      ResourceRecords:
+        - '"google-site-verification=YEuUVzYyLcsurxJx9AwRaFSZRf1xBDLhfT8cM9tUiuo"'
+        - '"v=spf1 include:_spf.google.com ~all"'
+
+  RootRecord:
+    Type: AWS::Route53::RecordSet
+    OrganizationBindings:
+      Regions: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      Type: A
+      HostedZoneId: !Ref RootHostedZone
+      Name: !Sub '${hostedZoneName}.'
+      TTL: 1800
+      ResourceRecords:
+        - '174.129.25.170'
+
+  WildcardRecord:
+    Type: AWS::Route53::RecordSet
+    OrganizationBindings:
+      Regions: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      Type: A
+      HostedZoneId: !Ref RootHostedZone
+      Name: !Sub '*.${hostedZoneName}.'
+      TTL: 1800
+      ResourceRecords:
+        - '149.210.195.15'
+
+  WildcardIpv6Record:
+    Type: AWS::Route53::RecordSet
+    OrganizationBindings:
+      Regions: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      Type: AAAA
+      HostedZoneId: !Ref RootHostedZone
+      Name: !Sub '*.${hostedZoneName}.'
+      TTL: 299
+      ResourceRecords:
+        - '2a01:7c8:ec:0:149:210:195:15'
+
+  OtherHostedZone:
+    Type: AWS::Route53::HostedZone
+    OrganizationBindings:
+      Regions: eu-west-1
+      Accounts: !Ref SharedServicesAccount
+    Properties:
+      HostedZoneConfig:
+        Comment: Shared Services domain
+      Name: !Sub 'services.${hostedZoneName}'
+      HostedZoneTags:
+        - Key: Application
+          Value: cso
+        - Key: Component
+          Value: domains
+        - Key: Aspect
+          Value: addressing
+
+  DataDevNsRecord:
+    Type: AWS::Route53::RecordSet
+    OrganizationBindings:
+      Regions: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      Type: NS
+      HostedZoneId: !Ref RootHostedZone
+      Name: !Sub 'data-dev.${hostedZoneName}.'
+      TTL: 86400
+      ResourceRecords: !GetAtt OtherHostedZone.NameServers
+
+Outputs:
+
+
