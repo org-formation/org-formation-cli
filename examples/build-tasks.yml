@@ -1,0 +1,27 @@
+CloudformationStacksets:
+  Type: update-stacks
+  Template: ./cloudformation-stacksets.yml
+  StackName: cloudformation-stacksets
+
+Budget-alarms:
+  Type: update-stacks
+  Template: ./budget-alarms.yml
+  StackName: budget-alarms
+
+Roles:
+  Type: update-stacks
+  Template: ./roles.yml
+  StackName: roles
+
+HostedZone:
+  Type: update-stacks
+  Template: ./hosted-zone.yml
+  StackName: hosted-zone
+
+CloudTrail:
+  Type: update-stacks
+  Template: ./cloudtrail.yml
+  StackName: cloudtrail
+
+
+

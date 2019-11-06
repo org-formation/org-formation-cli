@@ -9,6 +9,8 @@ import * as ini from 'ini';
 import { AwsOrganization } from './src/aws-provider/aws-organization';
 import { AwsOrganizationReader } from './src/aws-provider/aws-organization-reader';
 import { AwsOrganizationWriter } from './src/aws-provider/aws-organization-writer';
+import { BuildConfiguration } from './src/build-tasks/build-configuration';
+import { BuildRunner } from './src/build-tasks/build-runner';
 import { CloudFormationBinder } from './src/cfn-binder/cfn-binder';
 import { CfnTaskProvider } from './src/cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from './src/cfn-binder/cfn-task-runner';
@@ -57,6 +59,14 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
 
         state.setPreviousTemplate(template.source);
         await state.save();
+    });
+}
+
+export async function performTasks(path: string, command: ICommandArgs) {
+    await HandleErrors(async () => {
+        const config = new BuildConfiguration(path);
+        const tasks = config.enumBuildTasks();
+        await BuildRunner.RunTasks(tasks, command);
     });
 }
 

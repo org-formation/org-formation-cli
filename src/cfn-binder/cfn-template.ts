@@ -181,7 +181,7 @@ export class CfnTemplate {
                                 parameterAccountId: binding.accountId,
                                 parameterRegion: binding.region,
                                 parameterStackName: binding.stackName,
-                                parameterType: 'string',
+                                parameterType: 'String',
                                 valueExpression: { Ref: val },
                                 parameterName: `${val}`,
                                 outputName: `${other.stackName}-${val}`,
@@ -197,9 +197,9 @@ export class CfnTemplate {
                         if (!this.resources[resourceId]) {
                             const other = others.find((o) => undefined !== o.template.resources[resourceId]);
                             if (other) {
-                                let parameterType = 'string';
+                                let parameterType = 'String';
                                 let valueExpression: any = { 'Fn::GetAtt': [resourceId, path] };
-                                if (path.endsWith('NameServers')) { //todo: add more comma delimeted list attribute names that can be used in GetAtt
+                                if (path.endsWith('NameServers')) { // todo: add more comma delimeted list attribute names that can be used in GetAtt
                                     parameterType = 'CommaDelimitedList';
                                     valueExpression = {'Fn::Join' : [', ', { 'Fn::GetAtt': [resourceId, path] }]};
                                 }

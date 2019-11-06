@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, updateAccountResources, updateTemplate } from './index';
+import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, performTasks, updateAccountResources, updateTemplate } from './index';
 
 export class CliProgram {
 
@@ -28,6 +28,7 @@ export class CliProgram {
     private readonly updateStacks: Command;
     private readonly describeStacks: Command;
     private readonly deleteStacks: Command;
+    private readonly performTasks: Command;
 
     constructor() {
         this.program = new Command();
@@ -55,6 +56,9 @@ export class CliProgram {
         this.deleteStacks = this.program.command('delete-stacks <stack-name>');
         this.deleteStacks.description('removes all stacks deployed to accounts using org-formation');
 
+        this.performTasks = this.program.command('perform-tasks <path>');
+        this.performTasks.description('performs all tasks from either a file or directory structure');
+
         const allCommands = this.program.commands;
        // this.commandNames = allCommands.Map((x) => x.name);
 
@@ -73,6 +77,7 @@ export class CliProgram {
         this.updateStacks.action(async (templateFile, cmd) => await updateAccountResources(templateFile, cmd));
         this.describeStacks.action(async (cmd) => await describeAccountStacks(cmd));
         this.deleteStacks.action(async (stackName, cmd) => await deleteAccountStacks(stackName, cmd));
+        this.performTasks.action(async (path, cmd) => await performTasks(path, cmd));
     }
 
     public getCommand(): Command {

@@ -171,6 +171,7 @@ describe('when enumerating bindings on template resource with cross account depe
         expect(dependentTemplateObject.Parameters.resource1.ExportName).to.eq(dependencyTemplateObject.Outputs.testDashstackDashresource1.Export.Name);
         expect(dependentTemplateObject.Parameters.resource1.ExportRegion).to.eq('eu-central-1');
         expect(dependentTemplateObject.Parameters.resource1.ExportAccountId).to.eq('123123123123');
+        expect(dependentTemplateObject.Parameters.resource1.Type).to.eq('String');
     });
 
     it('can enum bound parameters', () => {

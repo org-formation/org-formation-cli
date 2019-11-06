@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09-OC'
-Description: Chain Slayer Org - Root Domain
+Description: example route 53 setup
 
 Parameters:
 
@@ -25,13 +25,6 @@ Resources:
       HostedZoneConfig:
         Comment: Root domain
       Name: !Ref hostedZoneName
-      HostedZoneTags:
-        - Key: Application
-          Value: cso
-        - Key: Component
-          Value: domains
-        - Key: Aspect
-          Value: addressing
 
   MxRecord:
     Type: AWS::Route53::RecordSet
@@ -61,7 +54,7 @@ Resources:
       Name: !Sub '${hostedZoneName}.'
       TTL: 86400
       ResourceRecords:
-        - '"google-site-verification=YEuUVzYyLcsurxJx9AwRaFSZRf1xBDLhfT8cM9tUiuo"'
+        - '"google-site-verification=xxxxxxxxxx"'
         - '"v=spf1 include:_spf.google.com ~all"'
 
   RootRecord:

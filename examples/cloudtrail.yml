@@ -8,18 +8,18 @@ Resources:
   CloudTrailS3Bucket:
     OrganizationBindings:
       Regions: eu-central-1
-      IncludeMasterAccount: true
+      Accounts: !Ref SharedComplianceAccount
     DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub
-      - 'cloudtrail-${MasterAccountId}'
-      - { MasterAccountId: !Ref MasterAccount }
+      - 'cloudtrail-${SharedComplianceAccountId}'
+      - { SharedComplianceAccountId: !Ref SharedComplianceAccount }
 
   CloudTrailS3BucketPolicy:
     OrganizationBindings:
       Regions: eu-central-1
-      IncludeMasterAccount: true
+      Accounts: !Ref SharedComplianceAccount
     Type: AWS::S3::BucketPolicy
     DependsOn: CloudTrailS3Bucket
     Properties:
@@ -90,9 +90,7 @@ Resources:
       - CloudTrailLogGroup
       - CloudTrailLogGroupRole
     Properties:
-      S3BucketName: !Sub
-      - 'cloudtrail-${MasterAccountId}'
-      - { MasterAccountId: !Ref MasterAccount }
+      S3BucketName: !Ref CloudTrailS3Bucket
       IsLogging: false
       IncludeGlobalServiceEvents: true
       IsMultiRegionTrail: true
