@@ -5,6 +5,7 @@ import { AccountResource } from './account-resource';
 import { MasterAccountResource } from './master-account-resource';
 import { OrganizationRootResource } from './organization-root-resource';
 import { OrganizationalUnitResource } from './organizational-unit-resource';
+import { PasswordPolicyResource } from './password-policy-resource';
 import { Resource } from './resource';
 import { OrgResourceTypes } from './resource-types';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
@@ -18,6 +19,7 @@ export class OrganizationSection {
     public readonly accounts: AccountResource[] = [];
     public readonly organizationalUnits: OrganizationalUnitResource[] = [];
     public readonly serviceControlPolicies: ServiceControlPolicyResource[] = [];
+    public readonly passwordPolicies: PasswordPolicyResource[] = [];
 
     constructor(root: TemplateRoot, contents: IOrganization) {
         this.root = root;
@@ -49,6 +51,8 @@ export class OrganizationSection {
                 this.organizationalUnits.push(resource);
             } else if (resource instanceof ServiceControlPolicyResource) {
                 this.serviceControlPolicies.push(resource);
+            } else if (resource instanceof PasswordPolicyResource) {
+                this.passwordPolicies.push(resource);
             }
         }
 
@@ -107,6 +111,9 @@ export class OrganizationSection {
 
             case OrgResourceTypes.ServiceControlPolicy:
                 return new ServiceControlPolicyResource(this.root, id, resource);
+
+            case OrgResourceTypes.PasswordPolicy:
+                return new PasswordPolicyResource(this.root, id, resource);
 
             default:
                 if (resource.Type === undefined) {

@@ -1,5 +1,7 @@
+import md5 = require('md5');
 import { OrgFormationError } from '../../org-formation-error';
 import { IResource, IResourceRef, TemplateRoot } from '../parser';
+import { PasswordPolicyResource } from './password-policy-resource';
 import { Reference, Resource } from './resource';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
 
@@ -8,6 +10,7 @@ export interface IAccountProperties {
     AccountName: string;
     AccountId?: string;
     ServiceControlPolicies?: IResourceRef | IResourceRef[];
+    PasswordPolicy?: IResourceRef;
     Alias?: string;
     Tags?: Record<string, string>;
 }
@@ -19,6 +22,7 @@ export class AccountResource extends Resource {
     public alias: string;
     public tags: Record<string, string>;
     public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>>;
+    public passwordPolicy: Reference<PasswordPolicyResource>;
     public organizationalUnitName: string;
     private props: IAccountProperties;
 
@@ -44,10 +48,24 @@ export class AccountResource extends Resource {
         this.alias = this.props.Alias;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags');
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy');
+    }
+
+    public calculateHash(): string {
+        const contents: any = { resource: this.resource };
+        if (this.passwordPolicy && this.passwordPolicy.TemplateResource) {
+            contents.passwordPolicyHash = this.passwordPolicy.TemplateResource.calculateHash();
+        }
+
+        const s = JSON.stringify(contents, null, 2);
+        return md5(s);
     }
 
     public resolveRefs() {
         this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
+        const passwordPolicies = super.resolve(this.props.PasswordPolicy, this.root.organizationSection.passwordPolicies);
+        if (passwordPolicies.length !== 0) {
+            this.passwordPolicy = passwordPolicies[0];
+        }
     }
 }

@@ -1,9 +1,14 @@
-CloudformationStacksets:
-  Type: update-stacks
-  Template: ./cloudformation-stacksets.yml
-  StackName: cloudformation-stacksets
 
-Budget-alarms:
+OrganizationUpdatE:
+  Type: update-organization
+  Template: ./organization.yml
+
+CloudformationSetup:
+  Type: update-stacks
+  Template: ./cloudformation-setup.yml
+  StackName: cloudformation-setup
+
+BudgetAlarms:
   Type: update-stacks
   Template: ./budget-alarms.yml
   StackName: budget-alarms

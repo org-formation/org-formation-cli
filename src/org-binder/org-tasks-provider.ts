@@ -2,6 +2,7 @@ import { AwsOrganizationWriter } from '../aws-provider/aws-organization-writer';
 import { AccountResource } from '../parser/model/account-resource';
 import { OrganizationRootResource } from '../parser/model/organization-root-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
+import { PasswordPolicyResource } from '../parser/model/password-policy-resource';
 import { Reference, Resource } from '../parser/model/resource';
 import { OrgResourceTypes } from '../parser/model/resource-types';
 import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
@@ -284,7 +285,8 @@ export class TaskProvider {
             previousResource = this.previousTemplate.organizationSection.masterAccount;
         }
 
-        if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.accountName !== resource.accountName || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)) {
+        if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.accountName !== resource.accountName || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)
+            || !policiesEqual(previousResource.passwordPolicy, resource.passwordPolicy)) {
             const updateAccountTask: IBuildTask = {
                 type: resource.type,
                 logicalId: resource.logicalId,
@@ -502,3 +504,16 @@ export interface IBuildTask {
 }
 
 type BuildTaskAction = 'Create' | 'Update' | 'Delete' | 'Relate' | 'Forget' | 'CommitHash' | string;
+
+function policiesEqual(left: Reference<PasswordPolicyResource> , right: Reference<PasswordPolicyResource>) {
+    const leftNull = !left || !left.TemplateResource;
+    const rightNull = !right || !right.TemplateResource;
+
+    if (leftNull && rightNull) {
+        return true;
+    }
+    if (leftNull || rightNull) {
+        return false;
+    }
+    return left.TemplateResource.calculateHash() === right.TemplateResource.calculateHash();
+}

@@ -1,11 +1,13 @@
-import { Organizations } from 'aws-sdk/clients/all';
+import { IAM, Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
-import { AwsUtil } from '../aws-util';
+import { AwsUtil, passwordPolicEquals } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
 import { OrganizationRootResource } from '../parser/model/organization-root-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
+import { PasswordPolicyResource } from '../parser/model/password-policy-resource';
+import { Reference } from '../parser/model/resource';
 import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
 import { AwsOrganization } from './aws-organization';
 
@@ -217,12 +219,44 @@ export class AwsOrganizationWriter {
         if (account.Alias !== resource.alias) {
             const iam = await AwsUtil.GetIamService(this.organization.organization, accountId);
             if (account.Alias) {
-                await iam.deleteAccountAlias({AccountAlias: account.Alias}).promise();
+                try {
+                    await iam.deleteAccountAlias({AccountAlias: account.Alias}).promise();
+                } catch (err) {
+                    if (err && err.code !== 'NoSuchEntity') {
+                        throw err;
+                    }
+                }
             }
             if (resource.alias) {
                 await iam.createAccountAlias({AccountAlias: resource.alias}).promise();
             }
 
+        }
+
+        if (!passwordPolicEquals(account.PasswordPolicy, resource.passwordPolicy)) {
+            const iam = await AwsUtil.GetIamService(this.organization.organization, accountId);
+            if (account.PasswordPolicy) {
+                try {
+                    await iam.deleteAccountPasswordPolicy().promise();
+                } catch (err) {
+                    if (err && err.code !== 'NoSuchEntity') {
+                        throw err;
+                    }
+                }
+            }
+            if (resource.passwordPolicy && resource.passwordPolicy.TemplateResource) {
+                const passwordPolicy = resource.passwordPolicy.TemplateResource;
+                await iam.updateAccountPasswordPolicy({
+                    MinimumPasswordLength: passwordPolicy.minimumPasswordLength,
+                    RequireSymbols: passwordPolicy.requireSymbols,
+                    RequireNumbers: passwordPolicy.requireNumbers,
+                    RequireUppercaseCharacters: passwordPolicy.requireUppercaseCharacters,
+                    RequireLowercaseCharacters: passwordPolicy.requireLowercaseCharacters,
+                    MaxPasswordAge: passwordPolicy.maxPasswordAge,
+                    PasswordReusePrevention: passwordPolicy.passwordReusePrevention,
+                    AllowUsersToChangePassword: passwordPolicy.allowUsersToChangePassword,
+                }).promise();
+            }
         }
 
         const tagsOnResource = Object.entries(resource.tags || {});
@@ -311,3 +345,4 @@ export class AwsOrganizationWriter {
 function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
+

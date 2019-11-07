@@ -5,7 +5,7 @@ export enum OrgResourceTypes {
     Account = 'OC::ORG::Account',
     MasterAccount = 'OC::ORG::MasterAccount',
     OrganizationRoot = 'OC::ORG::OrganizationRoot',
-
+    PasswordPolicy = 'OC::ORG::PasswordPolicy',
 }
 
 export enum ResourceTypes {

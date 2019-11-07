@@ -11,8 +11,9 @@ interface IAWSTags {
 interface IAWSAccountWithTags {
     Tags?: IAWSTags;
 }
-interface IAWSAccountWithAlias {
+interface IAWSAccountWithIAMAttributes {
     Alias?: string;
+    PasswordPolicy?: IAM.PasswordPolicy;
 }
 
 interface IObjectWithParentId {
@@ -38,7 +39,7 @@ interface IPolicyTargets {
 }
 
 export type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
-export type AWSAccount = Account & IAWSAccountWithTags & IAWSAccountWithAlias & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
+export type AWSAccount = Account & IAWSAccountWithTags & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
 export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject;
 export type AWSRoot = Root & IObjectWithPolicies;
 
@@ -174,9 +175,10 @@ export class AwsOrganizationReader {
                         continue;
                     }
 
-                    const [tags, alias] = await Promise.all([
+                    const [tags, alias, passwordPolicy] = await Promise.all([
                         AwsOrganizationReader.getTagsForAccount(that, acc.Id),
                         AwsOrganizationReader.getIamAliasForAccount(that, acc.Id),
+                        AwsOrganizationReader.getIamPasswordPolicyForAccount(that, acc.Id),
                     ]);
 
                     const account = {
@@ -188,6 +190,7 @@ export class AwsOrganizationReader {
                         Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT'),
                         Tags: tags,
                         Alias: alias,
+                        PasswordPolicy: passwordPolicy,
                     };
 
                     const parentOU = organizationalUnits.find((x) => x.Id === req.ParentId);
@@ -212,6 +215,20 @@ export class AwsOrganizationReader {
             return response.AccountAliases[0];
         } else {
             return undefined;
+        }
+    }
+
+    private static async getIamPasswordPolicyForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAM.PasswordPolicy> {
+        const org = await that.organization.getValue();
+        const iamService = await AwsUtil.GetIamService(org, accountId);
+        try {
+            const response = await iamService.getAccountPasswordPolicy().promise();
+            return response.PasswordPolicy;
+        } catch (err) {
+            if (err && err.code === 'NoSuchEntity') {
+                return undefined;
+            }
+            throw err;
         }
     }
 
