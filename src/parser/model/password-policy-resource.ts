@@ -63,6 +63,6 @@ export class PasswordPolicyResource extends Resource {
         this.allowUsersToChangePassword = this.props.AllowUsersToChangePassword;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'MaxPasswordAge', 'MinimumPasswordLength', 'RequireLowercaseCharacters', 'RequireNumbers', 'RequireSymbols', 'RequireUppercaseCharacters', 'PasswordReusePrevention');
+        super.throwForUnknownAttributes(this.props, id, 'MaxPasswordAge', 'MinimumPasswordLength', 'AllowUsersToChangePassword', 'RequireLowercaseCharacters', 'RequireNumbers', 'RequireSymbols', 'RequireUppercaseCharacters', 'PasswordReusePrevention');
     }
 }
