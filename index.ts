@@ -25,13 +25,13 @@ import { ICfnTarget, PersistedState } from './src/state/persisted-state';
 import { S3StorageProvider } from './src/state/storage-provider';
 import { DefaultTemplateWriter } from './src/writer/default-template-writer';
 
-async function HandleErrors(fn: () => {}) {
+async function HandleErrors(fn: () => {}): Promise<boolean> {
     try {
         await fn();
+        return true;
     } catch (err) {
         if (err instanceof OrgFormationError) {
             ConsoleUtil.LogError(err.message);
-            return;
         } else {
             if (err.code && err.requestId) {
                 ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
@@ -41,10 +41,11 @@ async function HandleErrors(fn: () => {}) {
             }
         }
     }
+    return false;
 }
 
-export async function updateTemplate(templateFile: string, command: ICommandArgs) {
-    await HandleErrors(async () => {
+export async function updateTemplate(templateFile: string, command: ICommandArgs): Promise<boolean> {
+    return await HandleErrors(async () => {
         const template = TemplateRoot.create(templateFile);
 
         const state = await getState(command);
@@ -62,16 +63,16 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
     });
 }
 
-export async function performTasks(path: string, command: ICommandArgs) {
-    await HandleErrors(async () => {
+export async function performTasks(path: string, command: ICommandArgs): Promise<boolean> {
+    return await HandleErrors(async () => {
         const config = new BuildConfiguration(path);
         const tasks = config.enumBuildTasks();
         await BuildRunner.RunTasks(tasks, command);
     });
 }
 
-export async function updateAccountResources(templateFile: string, command: ICommandArgs) {
-    await HandleErrors(async () => {
+export async function updateAccountResources(templateFile: string, command: ICommandArgs): Promise<boolean> {
+    return await HandleErrors(async () => {
         const template = TemplateRoot.create(templateFile);
 
         const state = await getState(command);
@@ -90,8 +91,8 @@ export async function updateAccountResources(templateFile: string, command: ICom
     });
 }
 
-export async function deleteAccountStacks(stackName: string, command: ICommandArgs) {
-    await HandleErrors(async () => {
+export async function deleteAccountStacks(stackName: string, command: ICommandArgs): Promise<boolean> {
+    return await HandleErrors(async () => {
         const state = await getState(command);
         const orgTemplate = JSON.parse(state.getPreviousTemplate()) as ITemplate;
         delete orgTemplate.Resources;
@@ -112,8 +113,8 @@ export async function deleteAccountStacks(stackName: string, command: ICommandAr
     });
 }
 
-export async function describeAccountStacks(command: ICommandArgs) {
-    await HandleErrors(async () => {
+export async function describeAccountStacks(command: ICommandArgs): Promise<boolean> {
+    return await HandleErrors(async () => {
         const state = await getState(command);
         const record: Record<string, ICfnTarget[]> = {};
         for (const stackName of state.listStacks()) {
@@ -130,8 +131,8 @@ export async function describeAccountStacks(command: ICommandArgs) {
     });
 }
 
-export async function generateTemplate(filePath: string, command: ICommandArgs) {
-    await HandleErrors(async () => {
+export async function generateTemplate(filePath: string, command: ICommandArgs): Promise<boolean> {
+    return await HandleErrors(async () => {
         const storageProvider = await initializeAndGetStorageProvider(command);
 
         const organizations = new Organizations({ region: 'us-east-1' });
@@ -147,8 +148,8 @@ export async function generateTemplate(filePath: string, command: ICommandArgs) 
     });
 }
 
-export async function createChangeSet(templateFile: string, command: ICommandArgs) {
-    await HandleErrors(async () => {
+export async function createChangeSet(templateFile: string, command: ICommandArgs): Promise<boolean> {
+    return await HandleErrors(async () => {
         const template = TemplateRoot.create(templateFile);
 
         const state = await getState(command);
@@ -165,8 +166,8 @@ export async function createChangeSet(templateFile: string, command: ICommandArg
     });
 }
 
-export async function executeChangeSet(changeSetName: string, command: ICommandArgs) {
-    await HandleErrors(async () => {
+export async function executeChangeSet(changeSetName: string, command: ICommandArgs): Promise<boolean> {
+    return await HandleErrors(async () => {
         initialize(command);
         const stateBucketName = await GetStateBucketName(command);
         const provider = new ChangeSetProvider(stateBucketName);

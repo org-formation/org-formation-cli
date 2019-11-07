@@ -19,10 +19,16 @@ export class BuildRunner {
             try {
                 if (task.Type === 'update-organization') {
                     console.log(`executing: ${task.Type} ${task.Template}`);
-                    await updateTemplate(task.Template, command as any );
+                    const succeeded = await updateTemplate(task.Template, command as any );
+                    if (!succeeded) {
+                        return;
+                    }
                 } else  if (task.Type === 'update-stacks') {
                     console.log(`executing: ${task.Type} ${task.Template} ${task.StackName}`);
-                    await updateAccountResources(task.Template, {...command, stackName: task.StackName} as any );
+                    const succeeded = await updateAccountResources(task.Template, {...command, stackName: task.StackName} as any );
+                    if (!succeeded) {
+                        return;
+                    }
                 }
                 task.done = true;
                 console.log(`done`);

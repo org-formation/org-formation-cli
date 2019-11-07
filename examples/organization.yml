@@ -124,3 +124,4 @@ Organization:
       RequireSymbols: true
       RequireUppercaseCharacters: true
       PasswordReusePrevention: 5
+      AllowUsersToChangePassword: true
