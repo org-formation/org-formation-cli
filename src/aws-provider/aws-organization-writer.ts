@@ -119,7 +119,7 @@ export class AwsOrganizationWriter {
         try {
             await this.organizationService.deletePolicy(deletePolicyRequest).promise();
         } catch (err) {
-            if (err && err.code !== 'PolicyNotFoundException') {
+            if (err && err.code !== 'PolicyNotFoundException' && err.code !== 'PolicyInUseException') {
                 // 'ConcurrentModificationException' ??
                 throw err;
             }
