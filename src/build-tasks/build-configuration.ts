@@ -37,7 +37,7 @@ export class BuildConfiguration {
 }
 
 export interface IBuildTask {
-    Type: 'update-stacks';
+    Type: 'update-stacks' | 'update-organization';
     Template: string;
     StackName: string;
     DependsOn?: string;
