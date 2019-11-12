@@ -41,6 +41,7 @@ async function HandleErrors(fn: () => {}): Promise<boolean> {
             }
         }
     }
+    process.exitCode = 1;
     return false;
 }
 
@@ -82,7 +83,6 @@ export async function updateAccountResources(templateFile: string, command: ICom
         if (cfnTasks.length === 0) {
             ConsoleUtil.LogInfo('accounts up to date, no work to be done.');
         } else {
-            console.log(cfnTasks);
             await CfnTaskRunner.RunTasks(cfnTasks);
         }
 
@@ -104,7 +104,6 @@ export async function deleteAccountStacks(stackName: string, command: ICommandAr
         if (cfnTasks.length === 0) {
             ConsoleUtil.LogInfo('accounts up to date, no work to be done.');
         } else {
-            console.log(cfnTasks);
             await CfnTaskRunner.RunTasks(cfnTasks);
         }
 
@@ -247,7 +246,9 @@ async function initialize(command: ICommandArgs) {
     }
 
     const credentials = new AWS.SharedIniFileCredentials(options);
-    AWS.config.credentials = credentials;
+    if (credentials.accessKeyId) {
+        AWS.config.credentials = credentials;
+    }
 }
 
 async function  customInitializationIncludingMFASupport(command: ICommandArgs): Promise<boolean> {

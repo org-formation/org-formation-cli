@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { yamlParse } from 'yaml-cfn';
+import { BuildTaskProvider } from './build-task-provider';
 
 export class BuildConfiguration {
     private directory: string;
@@ -24,23 +25,32 @@ export class BuildConfiguration {
     private enumBuildTasksFromFile(filePath: string): IBuildTask[] {
         const buffer = fs.readFileSync(filePath);
         const contents = buffer.toString('utf-8');
-        const buildFile = yamlParse(contents) as Record<string, IBuildTask>;
+        const buildFile = yamlParse(contents) as Record<string, IConfiguredBuildTask>;
         const tasks: IBuildTask[] = [];
         for (const name in buildFile) {
-            const task = buildFile[name];
-            task.name = name;
-            task.Template = path.join(this.directory, task.Template);
+            const config = buildFile[name];
+            const task = BuildTaskProvider.createBuildTask(filePath, name, config);
             tasks.push(task);
         }
         return tasks;
     }
 }
 
-export interface IBuildTask {
-    Type: 'update-stacks' | 'update-organization';
-    Template: string;
-    StackName: string;
+export type BuidTaskType  = 'update-stacks' | 'update-organization' | 'include'  | 'include-dir';
+
+export interface IConfiguredBuildTask {
+    Type: BuidTaskType;
+    Template?: string;
+    StackName?: string;
     DependsOn?: string;
-    name?: string;
-    done?: boolean;
+    Path?: string;
+    SearchPattern?: string;
+}
+
+export interface IBuildTask {
+    name: string;
+    type: string;
+    dependsOn: string;
+    done: boolean;
+    perform(command: any);
 }
