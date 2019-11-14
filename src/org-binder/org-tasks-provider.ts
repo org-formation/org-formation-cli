@@ -233,6 +233,10 @@ export class TaskProvider {
 
         const previousAccounts = this.resolveIDs(previousResource.accounts);
         const currentAccounts = this.resolveIDs(resource.accounts);
+        for (const detachedAccount of previousAccounts.physicalIds.filter((x) => !currentAccounts.physicalIds.includes(x))) {
+            const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, () => physicalId);
+            tasks.push(detachAccountTask);
+        }
         for (const attachAccount of currentAccounts.physicalIds.filter((x) => !previousAccounts.physicalIds.includes(x))) {
             const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, currentAccounts.mapping[attachAccount], that, () => physicalId);
             tasks.push(attachAccountTask);
@@ -240,10 +244,6 @@ export class TaskProvider {
         for (const attachAccount of currentAccounts.unresolvedResources) {
             const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, { TemplateResource: attachAccount as AccountResource }, that, () => physicalId);
             tasks.push(attachAccountTask);
-        }
-        for (const detachedAccount of previousAccounts.physicalIds.filter((x) => !currentAccounts.physicalIds.includes(x))) {
-            const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, () => physicalId);
-            tasks.push(detachAccountTask);
         }
 
         const createOrganizationalUnitCommitHashTask: IBuildTask = {

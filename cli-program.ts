@@ -26,8 +26,6 @@ export class CliProgram {
     private readonly createChangeSet: Command;
     private readonly executeChangeSet: Command;
     private readonly updateStacks: Command;
-    private readonly createStackChangeSets: Command;
-    private readonly executeStackChangeSets: Command;
     private readonly describeStacks: Command;
     private readonly deleteStacks: Command;
     private readonly performTasks: Command;
@@ -49,16 +47,16 @@ export class CliProgram {
         this.executeChangeSet = this.program.command('execute-change-set <change-set-name>');
         this.executeChangeSet.description('execute previously created change set');
 
-        this.updateStacks = this.program.command('stacks-update <templateFile>');
+        this.updateStacks = this.program.command('update-stacks <templateFile>');
         this.updateStacks.description('update cloudformation resources in accounts');
 
-        this.describeStacks = this.program.command('stacks-describe');
+        this.describeStacks = this.program.command('describe-stacks');
         this.describeStacks.description('list all stacks deployed to accounts using org-formation');
 
-        this.deleteStacks = this.program.command('stacks-delete <stack-name>');
+        this.deleteStacks = this.program.command('delete-stacks <stack-name>');
         this.deleteStacks.description('removes all stacks deployed to accounts using org-formation');
 
-        this.performTasks = this.program.command('tasks-execute <path>');
+        this.performTasks = this.program.command('perform-tasks <path>');
         this.performTasks.description('performs all tasks from either a file or directory structure');
 
         const allCommands = this.program.commands;
