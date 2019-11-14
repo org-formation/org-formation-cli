@@ -8,9 +8,9 @@ export class ResourcesSection {
     public rootAccount: MasterAccountResource;
     public readonly resources: CloudFormationResource[] = [];
     private readonly root: TemplateRoot;
-    private readonly contents: IResources;
+    private readonly contents?: IResources;
 
-    constructor(root: TemplateRoot, contents: IResources) {
+    constructor(root: TemplateRoot, contents?: IResources) {
         this.root = root;
         this.contents = contents;
 

@@ -1,7 +1,7 @@
 import { OrgFormationError } from '../../org-formation-error';
+import { ResourceUtil } from '../../resource-util';
 import { IResource, TemplateRoot } from '../parser';
 import { Resource } from './resource';
-import { ResourceUtil } from '../../resource-util';
 
 export interface IServiceControlPolicyProperties {
     PolicyName: string;
@@ -10,7 +10,7 @@ export interface IServiceControlPolicyProperties {
 }
 export class ServiceControlPolicyResource extends Resource {
     public policyName: string;
-    public description: string;
+    public description?: string;
     public policyDocument: any;
     constructor(root: TemplateRoot, id: string, resource: IResource) {
         super(root, id, resource);

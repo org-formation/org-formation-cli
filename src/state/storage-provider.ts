@@ -4,13 +4,13 @@ import { readFileSync, writeFileSync } from 'fs';
 import { OrgFormationError } from '../org-formation-error';
 
 export interface IStorageProvider {
-    get(): Promise<string>;
+    get(): Promise<string | undefined>;
     put(contents: string): Promise<void>;
 }
 
 export class S3StorageProvider implements IStorageProvider {
 
-    public static Create(bucketName: string, objectKey: string, createIfBucketDoesntExist: boolean = false, getRegionfn: () => Promise<string> = () => undefined): S3StorageProvider {
+    public static Create(bucketName: string, objectKey: string, createIfBucketDoesntExist: boolean = false, getRegionfn: () => Promise<string> = async () => 'us-east-1'): S3StorageProvider {
         return new S3StorageProvider(bucketName, objectKey, createIfBucketDoesntExist, getRegionfn);
     }
 
@@ -32,7 +32,7 @@ export class S3StorageProvider implements IStorageProvider {
         this.getRegionfn = getRegionfn;
     }
 
-    public async getObject<T>(): Promise<T> {
+    public async getObject<T>(): Promise<T | undefined> {
         const serialized = await this.get();
         if (!serialized) { return undefined; }
         try {
@@ -43,7 +43,7 @@ export class S3StorageProvider implements IStorageProvider {
         }
     }
 
-    public async get(): Promise<string> {
+    public async get(): Promise<string | undefined> {
 
         const s3client = new S3();
         const request: GetObjectRequest = {
@@ -52,6 +52,7 @@ export class S3StorageProvider implements IStorageProvider {
         };
         try {
             const response = await s3client.getObject(request).promise();
+            if (!response.Body) { return undefined; }
             const contents = response.Body.toString();
             return contents;
         } catch (err) {

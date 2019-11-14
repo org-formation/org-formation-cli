@@ -72,7 +72,7 @@ export class AwsOrganizationReader {
                     Type: 'Policy',
                     Name: policy.Name,
                     Id: policy.Id,
-                    Targets: [],
+                    Targets: [] as PolicyTargetSummary[],
                 };
 
                 result.push(awsPolicy);
@@ -137,7 +137,7 @@ export class AwsOrganizationReader {
                         Name: ou.Name,
                         Id: ou.Id,
                         ParentId: req.ParentId,
-                        Accounts: [],
+                        Accounts: [] as AWSAccount[],
                         Policies: GetPoliciesForTarget(policies, ou.Id, 'ORGANIZATIONAL_UNIT'),
                     };
 

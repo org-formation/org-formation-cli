@@ -342,7 +342,6 @@ export class AwsOrganizationWriter {
     }
 }
 
-function sleep(time) {
+function sleep(time: number) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
-

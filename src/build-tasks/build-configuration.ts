@@ -52,5 +52,5 @@ export interface IBuildTask {
     type: string;
     dependsOn: string;
     done: boolean;
-    perform(command: any);
+    perform(command: any): void;
 }

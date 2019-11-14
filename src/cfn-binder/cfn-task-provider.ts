@@ -1,9 +1,7 @@
 import { CloudFormation, STS } from 'aws-sdk/clients/all';
 import { CreateStackInput, DeleteStackInput, ListExportsInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
-import { Bool } from 'aws-sdk/clients/inspector';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import md5 = require('md5');
-import { stringify } from 'querystring';
 import uuid = require('uuid');
 import { ConsoleUtil } from '../console-util';
 import { PersistedState } from '../state/persisted-state';

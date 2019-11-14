@@ -41,7 +41,7 @@ export class OrganizationalUnitResource extends Resource {
 
         const accountWithOtherOrgUnit = this.accounts.find((x) => x.TemplateResource && (x.TemplateResource.organizationalUnitName !== undefined));
         if (accountWithOtherOrgUnit) {
-            throw new OrgFormationError(`account ${accountWithOtherOrgUnit.TemplateResource.logicalId} is part of multiple organizational units, e.g. ${this.logicalId} and ${accountWithOtherOrgUnit.TemplateResource.organizationalUnitName}.`);
+            throw new OrgFormationError(`account ${accountWithOtherOrgUnit.TemplateResource.logicalId} is part of multiple organizational units, e.g. ${this.logicalId} and ${accountWithOtherOrgUnit.TemplateResource!.organizationalUnitName}.`);
         }
 
         for (const account of this.accounts) {

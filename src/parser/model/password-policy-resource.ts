@@ -14,7 +14,7 @@ export interface IPasswordPolicyProperties {
 }
 
 export class PasswordPolicyResource extends Resource {
-    public maxPasswordAge: number;
+    public maxPasswordAge?: number;
     public minimumPasswordLength?: number;
     public requireLowercaseCharacters?: boolean;
     public requireNumbers?: boolean;

@@ -3,6 +3,7 @@ import { Organization } from 'aws-sdk/clients/organizations';
 import * as Yaml from 'yamljs';
 import { AwsOrganization } from '../aws-provider/aws-organization';
 import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot, IAWSObject } from '../aws-provider/aws-organization-reader';
+import { OrgFormationError } from '../org-formation-error';
 import { Resource } from '../parser/model/resource';
 import { OrgResourceTypes } from '../parser/model/resource-types';
 import { TemplateRoot } from '../parser/parser';
@@ -42,6 +43,9 @@ export class DefaultTemplateWriter {
         for (const root of this.organizationModel.roots) {
             const result = this.generateRoot(lines, root);
 
+            if (!root.Id) {
+                throw new OrgFormationError(`organizational root ${root.Name} has no Id`);
+            }
             bindings.push({
                 type: result.type,
                 logicalId: result.logicalName,
@@ -70,7 +74,7 @@ export class DefaultTemplateWriter {
             });
         }
         for (const scp of this.organizationModel.policies) {
-            if (scp.PolicySummary.AwsManaged) { continue; }
+            if (scp.PolicySummary && scp.PolicySummary.AwsManaged) { continue; }
             const result = this.generateSCP(lines, scp );
 
             bindings.push({
@@ -87,7 +91,7 @@ export class DefaultTemplateWriter {
         const templateRoot = TemplateRoot.createFromContents(template);
 
         for (const binding of bindings) {
-            let foundResource: Resource;
+            let foundResource: Resource | undefined;
             switch (binding.type) {
                 case OrgResourceTypes.MasterAccount:
                     foundResource = templateRoot.organizationSection.masterAccount;
@@ -105,14 +109,13 @@ export class DefaultTemplateWriter {
                     foundResource = templateRoot.organizationSection.serviceControlPolicies.find((x) => x.logicalId === binding.logicalId);
                     break;
             }
-            binding.lastCommittedHash = foundResource.calculateHash();
-            state.setBinding(binding);
+            if (foundResource) {
+                binding.lastCommittedHash = foundResource.calculateHash();
+                state.setBinding(binding);
+            }
         }
 
-        return {
-            template,
-            state,
-        };
+        return new DefaultTemplate(template, state);
     }
 
     private generateResource(lines: YamlLine[]) {
@@ -138,8 +141,12 @@ export class DefaultTemplateWriter {
         lines.push(new Line('Type', OrgResourceTypes.ServiceControlPolicy, 4));
         lines.push(new Line('Properties', '', 4));
         lines.push(new Line('PolicyName', policy.Name, 6));
-        lines.push(new Line('Description', policy.PolicySummary.Description, 6));
-        lines.push(new ObjLine('PolicyDocument', JSON.parse(policy.Content), 6));
+        if (policy.PolicySummary && policy.PolicySummary.Description) {
+            lines.push(new Line('Description', policy.PolicySummary.Description, 6));
+        }
+        if (policy.Content) {
+            lines.push(new ObjLine('PolicyDocument', JSON.parse(policy.Content), 6));
+        }
         lines.push(new EmptyLine());
 
         return {
@@ -150,14 +157,16 @@ export class DefaultTemplateWriter {
 
     private generateAccount(lines: YamlLine[], account: AWSAccount) {
         const logicalName = this.logicalNames.getName(account);
-        const policiesList = account.Policies.filter((x) => !x.PolicySummary.AwsManaged).map((x) => '!Ref ' + this.logicalNames.getName(x));
+        const policiesList = account.Policies.filter((x) => !x.PolicySummary!.AwsManaged).map((x) => '!Ref ' + this.logicalNames.getName(x));
 
         lines.push(new Line(logicalName, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.Account, 4));
         lines.push(new Line('Properties', '', 4));
         lines.push(new Line('AccountName', account.Name, 6));
         lines.push(new Line('AccountId', account.Id, 6));
-        lines.push(new Line('RootEmail', account.Email, 6));
+        if (account.Email) {
+            lines.push(new Line('RootEmail', account.Email, 6));
+        }
         if (account.Alias) {
             lines.push(new Line('Alias', account.Alias, 6));
         }
@@ -183,7 +192,7 @@ export class DefaultTemplateWriter {
 
     private generateRoot(lines: YamlLine[], root: AWSRoot) {
         const logicalName = 'OrganizationRoot';
-        const policiesList = root.Policies.filter((x) => !x.PolicySummary.AwsManaged).map((x) => '!Ref ' + this.logicalNames.getName(x));
+        const policiesList = root.Policies.filter((x) => !x.PolicySummary!.AwsManaged).map((x) => '!Ref ' + this.logicalNames.getName(x));
 
         lines.push(new Line(logicalName, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.OrganizationRoot, 4));
@@ -199,7 +208,7 @@ export class DefaultTemplateWriter {
 
     private generateOrganizationalUnit(lines: YamlLine[], organizationalUnit: AWSOrganizationalUnit) {
         const logicalName = this.logicalNames.getName(organizationalUnit);
-        const policiesList = organizationalUnit.Policies.filter((x) => !x.PolicySummary.AwsManaged).map((x) => '!Ref ' + this.logicalNames.getName(x));
+        const policiesList = organizationalUnit.Policies.filter((x) => !x.PolicySummary!.AwsManaged!).map((x) => '!Ref ' + this.logicalNames.getName(x));
         const accountList = organizationalUnit.Accounts.map((x) => '!Ref ' + this.logicalNames.getName(x));
 
         lines.push(new Line(logicalName, '', 2));
@@ -247,6 +256,11 @@ export class DefaultTemplateWriter {
 export class DefaultTemplate {
     public template: string;
     public state: PersistedState;
+
+    constructor(template: string, state: PersistedState) {
+        this.template = template;
+        this.state = state;
+    }
 }
 
 class LogicalNames {
@@ -293,6 +307,8 @@ class LogicalNames {
             case 'Policy':
                 return 'SCP';
         }
+
+        throw new Error('not implemented');
     }
 
     private getKey(element: any): string {

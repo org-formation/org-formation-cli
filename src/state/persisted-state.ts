@@ -50,7 +50,7 @@ export class PersistedState {
         this.masterAccount = state.masterAccountId;
     }
 
-    public getTarget(stackName: string, accountId: string, region: string): ICfnTarget {
+    public getTarget(stackName: string, accountId: string, region: string): ICfnTarget | undefined {
         const accounts = this.state.stacks[stackName];
         if (!accounts) { return undefined; }
 
@@ -117,7 +117,7 @@ export class PersistedState {
 
     }
 
-    public getBinding(type: string, logicalId: string): IBinding {
+    public getBinding(type: string, logicalId: string): IBinding | undefined {
         const typeDict = this.state.bindings[type];
         if (!typeDict) { return undefined; }
 
