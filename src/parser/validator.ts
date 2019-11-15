@@ -1,4 +1,4 @@
-import { OrgFormationError } from "../org-formation-error";
+import { OrgFormationError } from '../org-formation-error';
 
 export class Validator {
     public static ThrowForUnknownAttribute(obj: any, id: string, ...knownAttributes: string[]) {

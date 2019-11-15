@@ -23,7 +23,7 @@ export class AwsOrganizationWriter {
 
     public async ensureSCPEnabled() {
         const enablePolicyTypeReq: EnablePolicyTypeRequest = {
-            RootId: this.organization.roots[0].Id,
+            RootId: this.organization.roots[0].Id!,
             PolicyType: 'SERVICE_CONTROL_POLICY',
         };
         try {
@@ -42,16 +42,16 @@ export class AwsOrganizationWriter {
         try {
             const createPolicyRequest: CreatePolicyRequest = {
                 Name: resource.policyName,
-                Description: resource.description,
+                Description: resource.description!,
                 Type: 'SERVICE_CONTROL_POLICY',
                 Content: JSON.stringify(resource.policyDocument, null, 2),
             };
             const response = await this.organizationService.createPolicy(createPolicyRequest).promise();
-            return response.Policy.PolicySummary.Id;
+            return response.Policy!.PolicySummary!.Id!;
         } catch (err) {
             if (err.code === 'DuplicatePolicyException') {
                 const existingPolicy = this.organization.policies.find((x) => x.Name === resource.policyName);
-                await this.updatePolicy(resource, existingPolicy.Id);
+                await this.updatePolicy(resource, existingPolicy!.Id);
                 return existingPolicy.Id;
             }
 

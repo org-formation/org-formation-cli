@@ -12,8 +12,8 @@ export interface IOrganizationalUnitProperties {
 
 export class OrganizationalUnitResource extends Resource {
     public organizationalUnitName: string;
-    public accounts: Array<Reference<AccountResource>>;
-    public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>>;
+    public accounts: Array<Reference<AccountResource>> = [];
+    public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>> = [];
     private props: IOrganizationalUnitProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
@@ -41,7 +41,7 @@ export class OrganizationalUnitResource extends Resource {
 
         const accountWithOtherOrgUnit = this.accounts.find((x) => x.TemplateResource && (x.TemplateResource.organizationalUnitName !== undefined));
         if (accountWithOtherOrgUnit) {
-            throw new OrgFormationError(`account ${accountWithOtherOrgUnit.TemplateResource.logicalId} is part of multiple organizational units, e.g. ${this.logicalId} and ${accountWithOtherOrgUnit.TemplateResource!.organizationalUnitName}.`);
+            throw new OrgFormationError(`account ${accountWithOtherOrgUnit.TemplateResource!.logicalId} is part of multiple organizational units, e.g. ${this.logicalId} and ${accountWithOtherOrgUnit.TemplateResource!.organizationalUnitName}.`);
         }
 
         for (const account of this.accounts) {

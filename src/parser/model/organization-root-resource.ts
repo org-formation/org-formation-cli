@@ -1,5 +1,4 @@
 import { IResource, IResourceRef, TemplateRoot } from '../parser';
-import { AccountResource } from './account-resource';
 import { Reference, Resource } from './resource';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
 
@@ -8,8 +7,7 @@ export interface IOrganizationRootProperties {
 }
 
 export class OrganizationRootResource extends Resource {
-    public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>>;
-    public tags: Record<string, string>;
+    public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>> = [];
     private props: IOrganizationRootProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {

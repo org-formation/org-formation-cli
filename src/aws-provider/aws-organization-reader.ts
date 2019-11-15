@@ -262,8 +262,8 @@ export class AwsOrganizationReader {
 }
 
 class Lazy<T> {
-    private cachedValue: T;
-    private valueTimestamp: Date;
+    private cachedValue: T | undefined;
+    private valueTimestamp: Date | undefined;
     private obtainValueFn: (that: AwsOrganizationReader) => Promise<T>;
     private that: AwsOrganizationReader;
 

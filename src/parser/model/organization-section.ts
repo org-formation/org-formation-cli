@@ -13,8 +13,8 @@ import { ServiceControlPolicyResource } from './service-control-policy-resource'
 export class OrganizationSection {
     public readonly root: TemplateRoot;
     public readonly contents: IOrganization;
-    public masterAccount: MasterAccountResource;
-    public organizationRoot: OrganizationRootResource;
+    public masterAccount?: MasterAccountResource = undefined;
+    public organizationRoot?: OrganizationRootResource = undefined;
     public readonly resources: Resource[] = [];
     public readonly accounts: AccountResource[] = [];
     public readonly organizationalUnits: OrganizationalUnitResource[] = [];

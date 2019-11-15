@@ -1,11 +1,7 @@
 import { IResource, IResources, TemplateRoot } from '../parser';
 import { CloudFormationResource } from './cloudformation-resource';
-import { CloudFormationStackResource } from './cloudformation-stack-resource';
-import { MasterAccountResource } from './master-account-resource';
-import { ResourceTypes } from './resource-types';
 
 export class ResourcesSection {
-    public rootAccount: MasterAccountResource;
     public readonly resources: CloudFormationResource[] = [];
     private readonly root: TemplateRoot;
     private readonly contents?: IResources;
@@ -52,9 +48,6 @@ export class ResourcesSection {
 
     public createResource(id: string, resource: IResource): CloudFormationResource {
         switch (resource.Type) {
-            case ResourceTypes.StackResource:
-                return new CloudFormationStackResource(this.root, id, resource);
-
             default:
                 return new CloudFormationResource(this.root, id, resource);
         }

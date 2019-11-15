@@ -37,7 +37,7 @@ export abstract class Resource {
         Validator.ThrowForUnknownAttribute(obj, `resource ${id}`, ...knownAttributes);
     }
 
-    protected resolve<T extends Resource>(val: IResourceRef | IResourceRef[], list: T[] ): Array<Reference<T>> {
+    protected resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[] ): Array<Reference<T>> {
         if (val === undefined) {
             return [];
         }
