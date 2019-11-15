@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import md5 = require('md5');
 import * as Path from 'path';
 import { yamlParse } from 'yaml-cfn';
 import { OrgFormationError } from '../org-formation-error';
@@ -110,6 +111,7 @@ export class TemplateRoot {
     public readonly organizationSection: OrganizationSection;
     public readonly resourcesSection: ResourcesSection;
     public readonly source: string;
+    public readonly hash: string;
 
     constructor(contents: ITemplate, dirname: string) {
         if (!contents.AWSTemplateFormatVersion) {
@@ -129,6 +131,7 @@ export class TemplateRoot {
         this.contents = contents;
         this.dirname = dirname;
         this.source = JSON.stringify(contents);
+        this.hash = md5(this.source);
         this.organizationSection = new OrganizationSection(this, contents.Organization);
         this.resourcesSection = new ResourcesSection(this, contents.Resources);
 

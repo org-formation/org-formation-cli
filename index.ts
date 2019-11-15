@@ -81,9 +81,9 @@ export async function updateAccountResources(templateFile: string, command: ICom
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
-            ConsoleUtil.LogInfo('accounts up to date, no work to be done.');
+            ConsoleUtil.LogInfo(`stack ${command.stackName} up to date across accounts.`);
         } else {
-            await CfnTaskRunner.RunTasks(cfnTasks);
+            await CfnTaskRunner.RunTasks(cfnTasks, command.stackName);
         }
 
         state.setPreviousTemplate(template.source);
@@ -102,9 +102,9 @@ export async function deleteAccountStacks(stackName: string, command: ICommandAr
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
-            ConsoleUtil.LogInfo('accounts up to date, no work to be done.');
+            ConsoleUtil.LogInfo('no work to be done.');
         } else {
-            await CfnTaskRunner.RunTasks(cfnTasks);
+            await CfnTaskRunner.RunTasks(cfnTasks, stackName);
         }
 
         state.setPreviousTemplate(emptyTemplate.source);

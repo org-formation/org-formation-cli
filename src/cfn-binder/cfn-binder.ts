@@ -29,7 +29,8 @@ export class CloudFormationBinder {
         const result: ICfnBinding[] = [];
         const targetsInTemplate = [];
         const targets = this.template.resourcesSection.enumTemplateTargets();
-
+        const templateHash = this.template.hash;
+        const storedTargets = this.state.enumTargets(this.stackName);
         for (const target of targets) {
             let accountId = '';
             if (this.template.organizationSection.masterAccount && this.template.organizationSection.masterAccount.logicalId === target.accountLogicalId) {
@@ -43,17 +44,19 @@ export class CloudFormationBinder {
             targetsInTemplate.push(key);
 
             const cfnTarget = this.state.getTarget(stackName, accountId, region);
-
             const cfnTemplate = new CfnTemplate(target, this.template, this.state);
-
-            result.push({
-                ...key,
-                action: 'UpdateOrCreate',
-                target,
-                state: cfnTarget,
-                template: cfnTemplate,
-                dependencies: [],
-                dependents: []});
+            const stored = storedTargets.find((x) => x.region === region && x.accountId === accountId);
+            if (stored.lastCommittedHash !== templateHash) {
+                result.push({
+                    ...key,
+                    action: 'UpdateOrCreate',
+                    target,
+                    templateHash,
+                    state: cfnTarget,
+                    template: cfnTemplate,
+                    dependencies: [],
+                    dependents: []});
+                }
         }
 
         for (const binding of result) {
@@ -67,17 +70,18 @@ export class CloudFormationBinder {
             }
         }
 
-        for (const storedTargets of this.state.enumTargets(this.stackName)) {
-            const accountId = storedTargets.accountId;
-            const region = storedTargets.region;
-            const stackName = storedTargets.stackName;
+        for (const storedTarget of this.state.enumTargets(this.stackName)) {
+            const accountId = storedTarget.accountId;
+            const region = storedTarget.region;
+            const stackName = storedTarget.stackName;
             if (!targetsInTemplate.find((element) => element.accountId === accountId && element.region === region && element.stackName === stackName)) {
                 result.push({
                     accountId,
                     region,
                     stackName,
+                    templateHash,
                     action: 'Delete',
-                    state: storedTargets,
+                    state: storedTarget,
                 });
              }
         }
@@ -106,6 +110,7 @@ export interface ICfnBinding {
     stackName: string;
     action: CfnBindingAction;
     target?: IResourceTarget;
+    templateHash: string;
     state?: ICfnTarget;
     template?: CfnTemplate;
     dependencies?: ICfnCrossAccountDependency[];

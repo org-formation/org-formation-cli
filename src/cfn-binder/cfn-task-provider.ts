@@ -43,7 +43,6 @@ export class CfnTaskProvider {
                     } while (listExportsRequest.NextToken);
                  }
                  const templateBody = binding.template.createTemplateBody();
-                 const hash = md5(templateBody); // TODO: check?
                  const cfn = await that.createCreateCloudFormationFn(binding);
                  const clientToken = uuid();
                  const stackInput: CreateStackInput | UpdateStackInput = {
@@ -83,7 +82,7 @@ export class CfnTaskProvider {
                         accountId: binding.accountId,
                         region: binding.region,
                         stackName: binding.stackName,
-                        lastCommittedHash: hash,
+                        lastCommittedHash: binding.templateHash,
                         logicalAccountId: binding.target.accountLogicalId,
                     });
                 } catch (err) {

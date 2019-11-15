@@ -218,6 +218,10 @@ export class TaskProvider {
 
         const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
+        for (const detachedSCP of previousSCPs.physicalIds.filter((x) => !currentSCPS.physicalIds.includes(x))) {
+            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
+            tasks.push(detachSCPTask);
+        }
         for (const attachedSCP of currentSCPS.physicalIds.filter((x) => !previousSCPs.physicalIds.includes(x))) {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => physicalId);
             tasks.push(attachSCPTask);
@@ -225,10 +229,6 @@ export class TaskProvider {
         for (const attachedSCP of currentSCPS.unresolvedResources) {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => physicalId);
             tasks.push(attachSCPTask);
-        }
-        for (const detachedSCP of previousSCPs.physicalIds.filter((x) => !currentSCPS.physicalIds.includes(x))) {
-            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
-            tasks.push(detachSCPTask);
         }
 
         const previousAccounts = this.resolveIDs(previousResource.accounts);
@@ -301,6 +301,10 @@ export class TaskProvider {
 
         const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
+        for (const detachedSCP of previousSCPs.physicalIds.filter((x) => !currentSCPS.physicalIds.includes(x))) {
+            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
+            tasks.push(detachSCPTask);
+        }
         for (const attachedSCP of currentSCPS.physicalIds.filter((x) => !previousSCPs.physicalIds.includes(x))) {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => physicalId);
             tasks.push(attachSCPTask);
@@ -308,10 +312,6 @@ export class TaskProvider {
         for (const attachedSCP of currentSCPS.unresolvedResources) {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => physicalId);
             tasks.push(attachSCPTask);
-        }
-        for (const detachedSCP of previousSCPs.physicalIds.filter((x) => !currentSCPS.physicalIds.includes(x))) {
-            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
-            tasks.push(detachSCPTask);
         }
         const createAccountCommitHashTask: IBuildTask = {
             type: resource.type,
