@@ -4,7 +4,7 @@ import { Organizations, STS } from 'aws-sdk';
 import { bool } from 'aws-sdk/clients/signer';
 import { AssumeRoleRequest, GetSessionTokenRequest } from 'aws-sdk/clients/sts';
 import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
-import { read, readFileSync, writeFileSync } from 'fs';
+import { existsSync, read, readFileSync, writeFileSync } from 'fs';
 import * as ini from 'ini';
 import { AwsOrganization } from './src/aws-provider/aws-organization';
 import { AwsOrganizationReader } from './src/aws-provider/aws-organization-reader';
@@ -230,9 +230,9 @@ async function initializeAndGetStorageProvider(command: ICommandArgs) {
 
 async function initialize(command: ICommandArgs) {
     try {
-        if (await customInitializationIncludingMFASupport(command)) {
-            return;
-        }
+
+        await customInitializationIncludingMFASupport(command);
+
     } catch (err) {
         if (err instanceof OrgFormationError) {
             throw err;
@@ -251,10 +251,13 @@ async function initialize(command: ICommandArgs) {
     }
 }
 
-async function  customInitializationIncludingMFASupport(command: ICommandArgs): Promise<boolean> {
+async function  customInitializationIncludingMFASupport(command: ICommandArgs): Promise<void> {
     const profileName = command.profile ? command.profile : 'default' ;
     const homeDir = require('os').homedir();
     // todo: add support for windows?
+    if (!existsSync(homeDir + '/.aws/config')) {
+        return;
+    }
     const awsconfig = readFileSync(homeDir + '/.aws/config').toString('utf8');
     const contents = ini.parse(awsconfig);
     const profile = contents['profile ' + profileName];
@@ -278,9 +281,7 @@ async function  customInitializationIncludingMFASupport(command: ICommandArgs): 
         } catch (err) {
             throw new OrgFormationError(`unable to assume role, error: \n${err}`);
         }
-
     }
-    return false;
 }
 
 async function GetStorageProvider(objectKey: string, command: ICommandArgs) {
