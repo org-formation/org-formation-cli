@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, performTasks, updateAccountResources, updateTemplate } from './index';
+import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, performTasks, printAccountStacks, updateAccountResources, updateTemplate } from './index';
 
 export class CliProgram {
 
@@ -29,6 +29,7 @@ export class CliProgram {
     private readonly describeStacks: Command;
     private readonly deleteStacks: Command;
     private readonly performTasks: Command;
+    private readonly printStacks: Command;
 
     constructor() {
         this.program = new Command();
@@ -56,6 +57,9 @@ export class CliProgram {
         this.deleteStacks = this.program.command('delete-stacks <stack-name>');
         this.deleteStacks.description('removes all stacks deployed to accounts using org-formation');
 
+        this.printStacks = this.program.command('print-stacks <templateFile>');
+        this.printStacks.description('removes all stacks deployed to accounts using org-formation');
+
         this.performTasks = this.program.command('perform-tasks <path>');
         this.performTasks.description('performs all tasks from either a file or directory structure');
 
@@ -65,7 +69,8 @@ export class CliProgram {
         this.addProfileFlag(allCommands);
         this.addStateBucketFlags(allCommands);
         this.addStateBucketRegionFlag([this.init]);
-        this.addStackNameFlag([this.describeStacks, this.updateStacks]);
+        this.addStackNameFlagForDescribe([this.describeStacks]);
+        this.addStackNameFlagForUpdate([this.updateStacks, this.printStacks]);
         this.addChangeSetFlag([this.createChangeSet]);
 
         this.init.action(async (outFile, cmd) => await generateTemplate(outFile, cmd));
@@ -78,6 +83,7 @@ export class CliProgram {
         this.describeStacks.action(async (cmd) => await describeAccountStacks(cmd));
         this.deleteStacks.action(async (stackName, cmd) => await deleteAccountStacks(stackName, cmd));
         this.performTasks.action(async (path, cmd) => await performTasks(path, cmd));
+        this.printStacks.action(async (templateFile, cmd) => await printAccountStacks(templateFile, cmd));
     }
 
     public getCommand(): Command {
@@ -103,9 +109,15 @@ export class CliProgram {
         }
     }
 
-    private addStackNameFlag(commands: Command[]) {
+    private addStackNameFlagForDescribe(commands: Command[]) {
         for (const command of commands) {
             command.option('--stack-name [stack-name]', 'if specified only returns stacks of stack-name');
+        }
+    }
+
+    private addStackNameFlagForUpdate(commands: Command[]) {
+        for (const command of commands) {
+            command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation');
         }
     }
     private addChangeSetFlag(commands: Command[]) {

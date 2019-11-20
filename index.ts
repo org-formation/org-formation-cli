@@ -73,7 +73,12 @@ export async function performTasks(path: string, command: ICommandArgs): Promise
 }
 
 export async function updateAccountResources(templateFile: string, command: ICommandArgs): Promise<boolean> {
+
     return await HandleErrors(async () => {
+        if (!command.stackName) {
+            throw new OrgFormationError(`missing option --stack-name <stack-name>`);
+        }
+
         const template = TemplateRoot.create(templateFile);
 
         const state = await getState(command);
@@ -88,6 +93,26 @@ export async function updateAccountResources(templateFile: string, command: ICom
 
         state.setPreviousTemplate(template.source);
         await state.save();
+    });
+}
+
+export async function printAccountStacks(templateFile: string, command: ICommandArgs): Promise<boolean> {
+    return await HandleErrors(async () => {
+        if (!command.stackName) {
+            throw new OrgFormationError(`missing option --stack-name <stack-name>`);
+        }
+        const template = TemplateRoot.create(templateFile);
+
+        const state = await getState(command);
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state);
+
+        const bindings = cfnBinder.enumBindings();
+        for (const binding of bindings) {
+            console.log(`template for account ${binding.accountId} and region ${binding.region}`);
+            const templateBody = binding.template.createTemplateBody();
+            console.log(templateBody);
+        }
+
     });
 }
 
