@@ -40,6 +40,7 @@ export interface IResource {
     Type: OrgResourceTypes | ResourceTypes | string;
     Properties?: IPropertiesMap;
     OrganizationBindings?: IOrganizationBindings & IPropertiesMap;
+    Foreach?: IOrganizationBindings & IPropertiesMap;
 }
 
 export interface IPropertiesMap extends Record<string, any> {

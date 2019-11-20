@@ -27,7 +27,8 @@ export class ResourcesSection {
     public enumTemplateTargets(): IResourceTarget[] {
         const map = new Map<string, IResourceTarget>();
         for (const resource of this.resources) {
-            for (const account of resource.getNormalizedBoundAccounts()) {
+            if (!resource.normalizedBoundAccounts) { continue; }
+            for (const account of resource.normalizedBoundAccounts) {
                 for (const region of resource.regions) {
                     const key = `${account}${region}`;
                     const current = map.get(key);

@@ -32,13 +32,13 @@ describe('when creating cloudformation resource with * accounts', () => {
     });
 
     it('normalized accounts contains all accounts', () => {
-        const normalizedAccounts = account.getNormalizedBoundAccounts();
+        const normalizedAccounts = account.normalizedBoundAccounts;
         const allAccounts = template.organizationSection.accounts.map((x) => x.logicalId);
         expect(normalizedAccounts.sort().join(',')).to.eq(allAccounts.sort().join(','));
     });
 
     it('normalized accounts contains does not contain master account', () => {
-        const normalizedAccounts = account.getNormalizedBoundAccounts();
+        const normalizedAccounts = account.normalizedBoundAccounts;
         const masterAccount = template.organizationSection.masterAccount.logicalId;
         const containsMaster = normalizedAccounts.indexOf(masterAccount) !== -1;
         expect(containsMaster).to.eq(false);
@@ -74,7 +74,7 @@ describe('when creating cloudformation resource with include master', () => {
     });
 
     it('normalized accounts returns master account', () => {
-        const normalizedAccounts = account.getNormalizedBoundAccounts();
+        const normalizedAccounts =  account.normalizedBoundAccounts;
         const masterAccountId = template.organizationSection.masterAccount.logicalId;
         expect(normalizedAccounts[0]).to.eq(masterAccountId);
         expect(normalizedAccounts.length).to.eq(1);
@@ -111,7 +111,7 @@ describe('when including specific account as value', () => {
     });
 
     it('normalized accounts returns specific account', () => {
-        const normalizedAccounts = account.getNormalizedBoundAccounts();
+        const normalizedAccounts = account.normalizedBoundAccounts;
         expect(normalizedAccounts[0]).to.eq('Account2');
         expect(normalizedAccounts.length).to.eq(1);
     });
@@ -147,7 +147,7 @@ describe('when including specific account as array', () => {
     });
 
     it('normalized accounts returns specific account', () => {
-        const normalizedAccounts = account.getNormalizedBoundAccounts();
+        const normalizedAccounts = account.normalizedBoundAccounts;
         expect(normalizedAccounts[0]).to.eq('Account2');
         expect(normalizedAccounts.length).to.eq(1);
     });
@@ -215,7 +215,7 @@ describe('when exluding specific account as value', () => {
     });
 
     it('normalized does not return exluded account', () => {
-        const normalizedAccounts = account.getNormalizedBoundAccounts();
+        const normalizedAccounts = account.normalizedBoundAccounts;
         expect(normalizedAccounts[0]).to.eq('Account');
         expect(normalizedAccounts.length).to.eq(1);
     });
@@ -286,7 +286,7 @@ describe('when excluding specific account as array', () => {
     });
 
     it('normalized accounts does not return exluded account', () => {
-        const normalizedAccounts = account.getNormalizedBoundAccounts();
+        const normalizedAccounts = account.normalizedBoundAccounts;
         expect(normalizedAccounts[0]).to.eq('Account');
         expect(normalizedAccounts.length).to.eq(1);
     });
@@ -322,7 +322,7 @@ describe('when including specific ou as value', () => {
     });
 
     it('normalized accounts returns accounts from ou', () => {
-        const normalizedAccounts = account.getNormalizedBoundAccounts();
+        const normalizedAccounts = account.normalizedBoundAccounts;
         expect(normalizedAccounts[0]).to.eq('Account');
         expect(normalizedAccounts.length).to.eq(1);
     });
@@ -389,7 +389,7 @@ describe('when including specific account as array', () => {
     });
 
     it('normalized accounts returns accounts from ou', () => {
-        const normalizedAccounts = account.getNormalizedBoundAccounts();
+        const normalizedAccounts = account.normalizedBoundAccounts;
         expect(normalizedAccounts[0]).to.eq('Account');
         expect(normalizedAccounts.length).to.eq(1);
     });

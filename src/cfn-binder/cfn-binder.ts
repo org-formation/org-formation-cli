@@ -46,17 +46,23 @@ export class CloudFormationBinder {
             const cfnTarget = this.state.getTarget(stackName, accountId, region);
             const cfnTemplate = new CfnTemplate(target, this.template, this.state);
             const stored = storedTargets.find((x) => x.region === region && x.accountId === accountId);
+
+            const binding: ICfnBinding = {
+                ...key,
+                action: 'None',
+                target,
+                templateHash,
+                state: cfnTarget,
+                template: cfnTemplate,
+                dependencies: [],
+                dependents: [],
+            };
+
             if (!stored || stored.lastCommittedHash !== templateHash) {
-                result.push({
-                    ...key,
-                    action: 'UpdateOrCreate',
-                    target,
-                    templateHash,
-                    state: cfnTarget,
-                    template: cfnTemplate,
-                    dependencies: [],
-                    dependents: []});
-                }
+                binding.action = 'UpdateOrCreate';
+            }
+
+            result.push(binding);
         }
 
         for (const binding of result) {

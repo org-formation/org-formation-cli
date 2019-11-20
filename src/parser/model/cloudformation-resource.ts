@@ -14,21 +14,20 @@ export interface IOrganizationBindings {
 }
 
 export class CloudFormationResource extends Resource {
-    public accounts: Array<Reference<AccountResource>>;
-    public excludeAccounts: Array<Reference<AccountResource>>;
-    public organizationalUnits: Array<Reference<OrganizationalUnitResource>>;
-    public includeMasterAccount: boolean;
     public regions: string[];
     public resourceHash: string;
     public resourceForTemplate: any;
+    public normalizedBoundAccounts?: string[];
+    public normalizedForeachAccounts?: string[];
+    private foreach: IOrganizationBindings;
     private bindings: IOrganizationBindings;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
         super(root, id, resource);
 
         this.bindings = this.resource.OrganizationBindings as IOrganizationBindings;
+        this.foreach = this.resource.Foreach as IOrganizationBindings;
         if (this.bindings) {
-            this.includeMasterAccount = this.bindings.IncludeMasterAccount;
 
             if (typeof this.bindings.Regions === 'string') {
                 this.regions = [this.bindings.Regions];
@@ -37,9 +36,6 @@ export class CloudFormationResource extends Resource {
             }
 
         } else {
-            this.accounts = [];
-            this.excludeAccounts = [];
-            this.organizationalUnits = [];
             this.regions = [];
         }
 
@@ -47,6 +43,7 @@ export class CloudFormationResource extends Resource {
         this.resourceHash = md5(resourceString);
         this.resourceForTemplate = JSON.parse(JSON.stringify(resource));
         delete this.resourceForTemplate.OrganizationBindings;
+        delete this.resourceForTemplate.Foreach;
     }
 
     public calculateHash()  {
@@ -55,22 +52,27 @@ export class CloudFormationResource extends Resource {
 
     public resolveRefs() {
         if (this.bindings) {
-            this.accounts = super.resolve(this.bindings.Accounts, this.root.organizationSection.accounts);
-            this.excludeAccounts = super.resolve(this.bindings.ExcludeAccounts, this.root.organizationSection.accounts);
-            this.organizationalUnits = super.resolve(this.bindings.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
+            this.normalizedBoundAccounts = this.resolveNormalizedLogicalAccountIds(this.bindings);
+        }
+        if (this.foreach) {
+            this.normalizedForeachAccounts = this.resolveNormalizedLogicalAccountIds(this.foreach);
         }
     }
 
-    public getNormalizedBoundAccounts(): string[] {
-        const accountLogicalIds = this.accounts.map((x) => x.TemplateResource.logicalId);
+    private resolveNormalizedLogicalAccountIds(bidning: IOrganizationBindings): string[] {
+        const accounts = super.resolve(bidning.Accounts, this.root.organizationSection.accounts);
+        const excludeAccounts = super.resolve(bidning.ExcludeAccounts, this.root.organizationSection.accounts);
+        const organizationalUnits = super.resolve(bidning.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
+
+        const accountLogicalIds = accounts.map((x) => x.TemplateResource.logicalId);
         const result = new Set<string>(accountLogicalIds);
-        for (const unit of this.organizationalUnits) {
+        for (const unit of organizationalUnits) {
             const accountsForUnit = unit.TemplateResource.accounts.map((x) => x.TemplateResource.logicalId);
             for (const logicalId of accountsForUnit) {
                 result.add(logicalId);
             }
         }
-        if (this.includeMasterAccount) {
+        if (this.bindings.IncludeMasterAccount) {
             if (this.root.organizationSection.masterAccount) {
                 result.add(this.root.organizationSection.masterAccount.logicalId);
             } else {
@@ -78,7 +80,7 @@ export class CloudFormationResource extends Resource {
             }
         }
 
-        for (const account of this.excludeAccounts.map((x) => x.TemplateResource.logicalId)) {
+        for (const account of excludeAccounts.map((x) => x.TemplateResource.logicalId)) {
             result.delete(account);
         }
 

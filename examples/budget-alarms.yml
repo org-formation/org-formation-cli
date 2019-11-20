@@ -24,6 +24,10 @@ Resources:
             ComparisonOperator: GREATER_THAN
             Threshold: 100
           Subscribers:
-          - SubscriptionType: EMAIL
-            Address: !GetAtt AWSAccount.Tags.account-owner-email
+            !ForEach
+              - Regions: eu-central-1
+                Accounts: '*'
+                IncludeMasterAccount: true
+              - SubscriptionType: EMAIL
+                Address: !GetAtt AWSAccount.Tags.account-owner-email
 

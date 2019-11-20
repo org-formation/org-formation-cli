@@ -41,8 +41,15 @@ export class CfnTemplate {
             const clonedResource = JSON.parse(JSON.stringify(resource.resourceForTemplate));
             ResourceUtil.FixVersions(clonedResource);
             this._removeCrossAccountDependsOn(clonedResource, this.resourceIdsForTarget, this.allResourceIds);
-
-            this.resources[resource.logicalId] = this._resolveOrganizationFunctions(clonedResource, accountResource);
+            if (resource.normalizedForeachAccounts) {
+                for (const accountName of resource.normalizedForeachAccounts) {
+                    const resourceForAccount = JSON.parse(JSON.stringify(resource.resourceForTemplate));
+                    const keywordReplaced = this._replaceKeyword(resourceForAccount, 'CurrentAccount', accountName);
+                    this.resources[resource.logicalId + accountName] = this._resolveOrganizationFunctions(keywordReplaced, accountResource);
+                }
+            } else {
+                this.resources[resource.logicalId] = this._resolveOrganizationFunctions(clonedResource, accountResource);
+            }
         }
 
         for (const outputName in this.templateRoot.contents.Outputs) {
@@ -231,6 +238,60 @@ export class CfnTemplate {
 
         }
         return result;
+    }
+
+    private _replaceKeyword(resource: any, keyword: string, replacement: string) {
+        if (resource !== null && typeof resource === 'object') {
+            const entries = Object.entries(resource);
+            if (entries.length === 1) {
+                const [key, val]: [string, unknown] = entries[0];
+                if (key === 'Ref' && val === keyword) {
+                    return {Ref : replacement};
+                } else if (key === 'Fn::GetAtt') {
+                    if (Array.isArray(val) && val.length === 2) {
+                        if (val[0] === keyword) {
+                            return {'Fn::GetAtt' : [replacement, val[1]]};
+                        }
+                    }
+                } else if (key === 'Fn::Sub') {
+                    if (typeof val === 'string') {
+                        let result = val;
+                        const matches = val.match(/\${([\w\.]*)}/g);
+                        if (!matches) {
+                            return { 'Fn::Sub': result };
+                        }
+                        for (const match of matches) {
+                            const expresion = match.substr(2, match.length - 3); // ${xxx}
+                            if (!expresion.includes('.')) {
+                                if (expresion === keyword) {
+                                    result = result.replace(match, '${' + replacement + '}');
+                                }
+                            } else {
+                                const firstIndexOfDot = expresion.indexOf('.');
+                                const logicalId = expresion.substr(0, firstIndexOfDot);
+                                const path = expresion.substr(firstIndexOfDot + 1);
+                                if (logicalId === keyword) {
+                                    result = result.replace(match, '${' + replacement + '.' + path + '}');
+                                }
+                            }
+                        }
+
+                        if (result.includes('$')) {
+                            return {'Fn::Sub': result};
+                        }
+                        return result;
+                    }
+                }
+            }
+            for (const [key, val] of entries) {
+                if (val !== null && typeof val === 'object') {
+                    resource[key] = this._replaceKeyword(val, keyword, replacement);
+                }
+            }
+
+        }
+        return resource;
+
     }
 
     private _resolveOrganizationFunctions(resource: any, accountResource: AccountResource): any {
