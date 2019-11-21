@@ -59,10 +59,10 @@ export class CloudFormationResource extends Resource {
         }
     }
 
-    private resolveNormalizedLogicalAccountIds(bidning: IOrganizationBindings): string[] {
-        const accounts = super.resolve(bidning.Accounts, this.root.organizationSection.accounts);
-        const excludeAccounts = super.resolve(bidning.ExcludeAccounts, this.root.organizationSection.accounts);
-        const organizationalUnits = super.resolve(bidning.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
+    private resolveNormalizedLogicalAccountIds(binding: IOrganizationBindings): string[] {
+        const accounts = super.resolve(binding.Accounts, this.root.organizationSection.accounts);
+        const excludeAccounts = super.resolve(binding.ExcludeAccounts, this.root.organizationSection.accounts);
+        const organizationalUnits = super.resolve(binding.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
 
         const accountLogicalIds = accounts.map((x) => x.TemplateResource.logicalId);
         const result = new Set<string>(accountLogicalIds);
@@ -72,7 +72,7 @@ export class CloudFormationResource extends Resource {
                 result.add(logicalId);
             }
         }
-        if (this.bindings.IncludeMasterAccount) {
+        if (binding.IncludeMasterAccount) {
             if (this.root.organizationSection.masterAccount) {
                 result.add(this.root.organizationSection.masterAccount.logicalId);
             } else {

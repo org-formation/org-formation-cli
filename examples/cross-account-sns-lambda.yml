@@ -7,12 +7,17 @@ Resources:
 
   Topic:
     Type: AWS::SNS::Topic
+    DependsOn:
+    - Function
     OrganizationBindings:
       Accounts: '*'
       Regions: eu-central-1
     Properties:
       DisplayName: !Sub 'topic that will invoke a lambda cross account on account ${SharedServicesAccount.AccountName}'
       TopicName: !Sub 'cross-account-invoke'
+      Subscription:
+      - Protocol: lambda
+        Endpoint: !GetAtt Function.Arn
 
   TopicPolicy:
     Type: AWS::SNS::TopicPolicy
@@ -30,24 +35,10 @@ Resources:
           Principal:
             AWS: !Ref SharedServicesAccount
           Action:
-          - sns:Publish
+          - sns:Subscribe
           Resource: !Ref Topic
       Topics:
         -  !Ref Topic
-
-  MySubscription:
-    Type: AWS::SNS::Subscription
-    DependsOn:
-      - Function
-      - TopicPolicy
-      - Topic
-    OrganizationBindings:
-      Accounts: '*'
-      Regions: eu-central-1
-    Properties:
-      Endpoint: !GetAtt Function.Arn
-      Protocol: lambda
-      TopicArn: !Ref Topic
 
   FunctionInvokePermission:
     Type: 'AWS::Lambda::Permission'
@@ -84,7 +75,6 @@ Resources:
           logger.setLevel(logging.INFO)
           def lambda_handler(event, context):
               logger.info(json.dumps(event))
-
 
   AWSLambdaBasicExecutionRole:
     Type: 'AWS::IAM::Role'
