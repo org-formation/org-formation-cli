@@ -142,7 +142,7 @@ describe('when including specific account as array', () => {
     it('copies properties from resource', () => {
         const orgBindings = (account as any).bindings as IOrganizationBindings;
         expect(Array.isArray(orgBindings.Accounts)).to.eq(true);
-        expect(orgBindings.Accounts[0].Ref).to.eq('Account2');
+        expect((orgBindings.Accounts as any)[0].Ref).to.eq('Account2');
         expect(orgBindings.Regions).to.eq('eu-central-1');
     });
 
@@ -280,7 +280,7 @@ describe('when excluding specific account as array', () => {
     it('copies properties from resource', () => {
         const orgBindings = (account as any).bindings as IOrganizationBindings;
         expect(Array.isArray(orgBindings.ExcludeAccounts)).to.eq(true);
-        expect(orgBindings.ExcludeAccounts[0].Ref).to.eq('Account2');
+        expect((orgBindings.ExcludeAccounts as any)[0].Ref).to.eq('Account2');
         expect(orgBindings.Accounts).to.eq('*');
         expect(orgBindings.Regions).to.eq('eu-central-1');
     });
@@ -384,7 +384,7 @@ describe('when including specific account as array', () => {
     it('copies properties from resource', () => {
         const orgBindings = (account as any).bindings as IOrganizationBindings;
         expect(Array.isArray(orgBindings.OrganizationalUnits)).to.eq(true);
-        expect(orgBindings.OrganizationalUnits[0].Ref).to.eq('OU');
+        expect((orgBindings.OrganizationalUnits as any)[0].Ref).to.eq('OU');
         expect(orgBindings.Regions).to.eq('eu-central-1');
     });
 
@@ -392,5 +392,90 @@ describe('when including specific account as array', () => {
         const normalizedAccounts = account.normalizedBoundAccounts;
         expect(normalizedAccounts[0]).to.eq('Account');
         expect(normalizedAccounts.length).to.eq(1);
+    });
+});
+
+describe('when adding attribute that is not supported to organizational bindings', () => {
+    let template: TemplateRoot;
+    let resource: IResource;
+    beforeEach(() => {
+        template = TestTemplates.createBasicTemplate();
+
+        resource = {
+            Type : 'AWS::S3::Bucket',
+            OrganizationBindings: {
+                Something: [{Ref: 'XXX'}],
+                Regions: 'eu-central-1',
+            },
+            Properties: {
+                BucketName: 'test-bucket',
+            },
+        };
+    });
+
+    it('resolving references throws', () => {
+        try {
+            new CloudFormationResource(template, 'logical-id', resource);
+        } catch (err) {
+            expect(err.message).to.contain('Something');
+            expect(err.message).to.contain('logical-id');
+            expect(err.message).to.contain('OrganizationBindings');
+        }
+    });
+});
+
+describe('when adding attribute that is not supported to foreach', () => {
+    let template: TemplateRoot;
+    let resource: IResource;
+    beforeEach(() => {
+        template = TestTemplates.createBasicTemplate();
+
+        resource = {
+            Type : 'AWS::S3::Bucket',
+            Foreach: {
+                Something: [{Ref: 'XXX'}]
+            },
+            Properties: {
+                BucketName: 'test-bucket',
+            },
+        };
+    });
+
+    it('resolving references throws', () => {
+        try {
+            new CloudFormationResource(template, 'logical-id', resource);
+        } catch (err) {
+            expect(err.message).to.contain('Something');
+            expect(err.message).to.contain('logical-id');
+            expect(err.message).to.contain('Foreach');
+        }
+    });
+});
+
+describe('when adding region which is not supported to foreach', () => {
+    let template: TemplateRoot;
+    let resource: IResource;
+    beforeEach(() => {
+        template = TestTemplates.createBasicTemplate();
+
+        resource = {
+            Type : 'AWS::S3::Bucket',
+            Foreach: {
+                Regions: 'eu-central-1',
+            },
+            Properties: {
+                BucketName: 'test-bucket',
+            },
+        };
+    });
+
+    it('resolving references throws', () => {
+        try {
+            new CloudFormationResource(template, 'logical-id', resource);
+        } catch (err) {
+            expect(err.message).to.contain('Something');
+            expect(err.message).to.contain('logical-id');
+            expect(err.message).to.contain('Foreach');
+        }
     });
 });

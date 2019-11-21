@@ -26,7 +26,13 @@ export class CloudFormationResource extends Resource {
         super(root, id, resource);
 
         this.bindings = this.resource.OrganizationBindings as IOrganizationBindings;
+        if (this.bindings) {
+            super.throwForUnknownAttributes(this.bindings, id + '.OrganizationBindings', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'Regions', 'IncludeMasterAccount');
+        }
         this.foreach = this.resource.Foreach as IOrganizationBindings;
+        if (this.foreach) {
+            super.throwForUnknownAttributes(this.bindings, id + '.Foreach', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'IncludeMasterAccount');
+        }
         if (this.bindings) {
 
             if (typeof this.bindings.Regions === 'string') {
