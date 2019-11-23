@@ -36,7 +36,11 @@ export class CloudFormationBinder {
             if (this.template.organizationSection.masterAccount && this.template.organizationSection.masterAccount.logicalId === target.accountLogicalId) {
                 accountId = this.state.masterAccount;
             } else  {
-                accountId = this.state.getBinding(OrgResourceTypes.Account, target.accountLogicalId).physicalId;
+                const accountBinding = this.state.getBinding(OrgResourceTypes.Account, target.accountLogicalId);
+                if (!accountBinding) {
+                    throw new Error(`expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
+                }
+                accountId = accountBinding.physicalId;
             }
             const region = target.region;
             const stackName = this.stackName;

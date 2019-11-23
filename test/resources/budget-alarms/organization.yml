@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountId: '0'
+      RootEmail: 'master@org.com'
+      AccountName: oc test account 2
+      Tags:
+        budget-alarm-threshold: '500'
+
+  SharedUsersAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Users Account
+      AccountId: '1'
+
+  SharedServicesAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Services Account
+      AccountId: '2'
+
+  SharedComplianceAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Compliance Account
+      RootEmail: 'compliance@org.com'
+      AccountId: '3'
+      Tags:
+        budget-alarm-threshold: '100'

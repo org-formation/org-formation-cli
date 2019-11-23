@@ -44,6 +44,9 @@ export class AccountResource extends Resource {
         this.rootEmail = this.props.RootEmail;
         this.accountName = this.props.AccountName;
         this.accountId = this.props.AccountId;
+        if (typeof this.accountId === 'number') {
+            this.accountId = '' + this.accountId;
+        }
         this.tags = this.props.Tags;
         this.alias = this.props.Alias;
 

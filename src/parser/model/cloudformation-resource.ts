@@ -11,6 +11,7 @@ export interface IOrganizationBindings {
     ExcludeAccounts: IResourceRef | IResourceRef[];
     Regions: string | string[];
     IncludeMasterAccount: boolean;
+    HasTag?: string;
 }
 
 export class CloudFormationResource extends Resource {
@@ -27,11 +28,11 @@ export class CloudFormationResource extends Resource {
 
         this.bindings = this.resource.OrganizationBindings as IOrganizationBindings;
         if (this.bindings) {
-            super.throwForUnknownAttributes(this.bindings, id + '.OrganizationBindings', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'Regions', 'IncludeMasterAccount');
+            super.throwForUnknownAttributes(this.bindings, id + '.OrganizationBindings', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'Regions', 'IncludeMasterAccount', 'HasTag');
         }
         this.foreach = this.resource.Foreach as IOrganizationBindings;
         if (this.foreach) {
-            super.throwForUnknownAttributes(this.bindings, id + '.Foreach', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'IncludeMasterAccount');
+            super.throwForUnknownAttributes(this.foreach, id + '.Foreach', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'IncludeMasterAccount', 'HasTag');
         }
         if (this.bindings) {
 
@@ -52,7 +53,7 @@ export class CloudFormationResource extends Resource {
         delete this.resourceForTemplate.Foreach;
     }
 
-    public calculateHash()  {
+    public calculateHash() {
         return this.resourceHash;
     }
 
@@ -66,7 +67,14 @@ export class CloudFormationResource extends Resource {
     }
 
     private resolveNormalizedLogicalAccountIds(binding: IOrganizationBindings): string[] {
-        const accounts = super.resolve(binding.Accounts, this.root.organizationSection.accounts);
+        let accountsExpression = binding.Accounts;
+        let includeMaster = binding.IncludeMasterAccount;
+        if (accountsExpression === undefined && binding.OrganizationalUnits === undefined && includeMaster === undefined && typeof binding.HasTag === 'string') {
+            accountsExpression = '*';
+            includeMaster = true;
+        }
+
+        const accounts = super.resolve(accountsExpression, this.root.organizationSection.accounts);
         const excludeAccounts = super.resolve(binding.ExcludeAccounts, this.root.organizationSection.accounts);
         const organizationalUnits = super.resolve(binding.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
 
@@ -78,7 +86,7 @@ export class CloudFormationResource extends Resource {
                 result.add(logicalId);
             }
         }
-        if (binding.IncludeMasterAccount) {
+        if (includeMaster) {
             if (this.root.organizationSection.masterAccount) {
                 result.add(this.root.organizationSection.masterAccount.logicalId);
             } else {
@@ -90,6 +98,12 @@ export class CloudFormationResource extends Resource {
             result.delete(account);
         }
 
+        if (binding.HasTag) {
+            const accountsWithoutTag = this.root.organizationSection.findAccounts((x) => !x.tags || Object.keys(x.tags).indexOf(binding.HasTag) === -1);
+            for (const account of accountsWithoutTag.map((x) => x.logicalId)) {
+                result.delete(account);
+            }
+        }
         return [...result];
     }
 }

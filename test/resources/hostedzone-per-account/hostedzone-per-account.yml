@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: |
+  example org formation template that demonstrates
+    - Foreach using Organizational Units
+    - Referencing organizational tag from current account (AWSAccount.Tags.subdomain)
+    - Referencing organizational tag from current account in the context of a Foreach (CurrentAccount.Tags.subdomain)
+
+Parameters:
+
+  rootHostedZoneName:
+    Type: String
+    Default: 'something.io'
+
+Organization: !Include ./organization.yml
+
+Resources:
+
+  #=========================================#
+  # Zone
+  #=========================================#
+
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    OrganizationBindings:
+      Regions: eu-west-1
+      OrganizationalUnits:
+        - !Ref OU1
+        - !Ref OU2
+      HasTag: 'subdomain'
+    Properties:
+      HostedZoneConfig:
+        Comment: Domain Hosted Zone
+      Name: !Sub '${AWSAccount.Tags.subdomain}.${rootHostedZoneName}.'
+      HostedZoneTags:
+        - Key: tag
+          Value: val
+
+  #=========================================#
+  # Parent Record
+  #=========================================#
+
+  ParentNsRecord:
+    Type: AWS::Route53::RecordSet
+    OrganizationBindings:
+      Regions: eu-west-1
+      IncludeMasterAccount: true
+    Foreach:
+      OrganizationalUnits:
+        - !Ref OU1
+        - !Ref OU2
+      HasTag: 'subdomain'
+    Properties:
+      Type: NS
+      HostedZoneName: !Sub '${rootHostedZoneName}.'
+      Name: !Sub '${CurrentAccount.Tags.subdomain}.${rootHostedZoneName}.'
+      TTL: 86400
+      ResourceRecords: !GetAtt CurrentAccount.Resources.HostedZone.NameServers

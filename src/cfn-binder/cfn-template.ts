@@ -180,6 +180,7 @@ export class CfnTemplate {
                     const resourceId: string = '' + val;
                     if (!this.resources[resourceId]) {
                         const other = others.find((o) => undefined !== o.template.resources[resourceId]);
+                        // todo: add error for more than 1 target
                         if (other) {
                             const dependency = {
                                 outputAccountId: other.accountId,
@@ -203,6 +204,7 @@ export class CfnTemplate {
                         const path: string = val[1];
                         if (!this.resources[resourceId]) {
                             const other = others.find((o) => undefined !== o.template.resources[resourceId]);
+                            // todo: add error for more than 1 target
                             if (other) {
                                 let parameterType = 'String';
                                 let valueExpression: any = { 'Fn::GetAtt': [resourceId, path] };
@@ -220,12 +222,46 @@ export class CfnTemplate {
                                     parameterStackName: binding.stackName,
                                     parameterType,
                                     valueExpression,
-                                    parameterName: `${resourceId}Dot${path}`,
-                                    outputName: `${other.stackName}-${resourceId}-${path}`,
+                                    parameterName: `${resourceId}Dot${path.replace(/\./g, 'Dot')}`,
+                                    outputName: `${other.stackName}-${resourceId}-${path.replace(/\./g, 'Dot')}`,
                                 };
                                 result.push(dependency);
                                 parent[parentKey] = { Ref : dependency.parameterName};
                             }
+                        }
+                        const account = this.templateRoot.organizationSection.accounts.find((x) => x.logicalId === resourceId);
+                        if (account) {
+                            const accountBinding = this.state.getBinding(account.type, resourceId);
+                            const other = others.find((o) => accountBinding.physicalId === o.accountId);
+                            if (path.startsWith('Resources.')) {
+                                const pathParts = path.split('.');
+                                const remoteResourceId = pathParts[1];
+                                let remotePath = pathParts[2];
+                                for (let i  = 3; i < pathParts.length; i++) {
+                                    remotePath += '.' + pathParts[i];
+                                }
+                                let parameterType = 'String';
+                                let valueExpression: any = { 'Fn::GetAtt': [remoteResourceId, remotePath] };
+                                if (remotePath.endsWith('NameServers')) { // todo: add more comma delimeted list attribute names that can be used in GetAtt
+                                    parameterType = 'CommaDelimitedList';
+                                    valueExpression = {'Fn::Join' : [', ', { 'Fn::GetAtt': [remoteResourceId, remotePath] }]};
+                                }
+
+                                const dependency = {
+                                    outputAccountId: other.accountId,
+                                    outputRegion: other.region,
+                                    outputStackName: other.stackName,
+                                    parameterAccountId: binding.accountId,
+                                    parameterRegion: binding.region,
+                                    parameterStackName: binding.stackName,
+                                    parameterType,
+                                    valueExpression,
+                                    parameterName: `${resourceId}Dot${path.replace(/\./g, 'Dot')}`,
+                                    outputName: `${other.stackName}-${resourceId}-${path.replace(/\./g, 'Dot')}`,
+                                };
+                                result.push(dependency);
+                                parent[parentKey] = { Ref : dependency.parameterName};
+                             }
                         }
                     }
                 }

@@ -473,7 +473,7 @@ describe('when adding region which is not supported to foreach', () => {
         try {
             new CloudFormationResource(template, 'logical-id', resource);
         } catch (err) {
-            expect(err.message).to.contain('Something');
+            expect(err.message).to.contain('Regions');
             expect(err.message).to.contain('logical-id');
             expect(err.message).to.contain('Foreach');
         }

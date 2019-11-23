@@ -123,12 +123,16 @@ export class OrganizationSection {
         }
     }
 
-    public findAccount(fn: (x: AccountResource) => bool) {
+    public findAccount(fn: (x: AccountResource) => bool): AccountResource {
         if (fn(this.masterAccount)) {
             return this.masterAccount;
         }
 
         return this.accounts.find(fn);
+    }
+
+    public findAccounts(fn: (x: AccountResource) => bool): AccountResource[] {
+        return [this.masterAccount, ...this.accounts].filter(fn);
     }
 
     private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error) {

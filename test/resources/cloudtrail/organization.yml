@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountId: '0'
+      AccountName: oc test account 2
+
+  SharedUsersAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Users Account
+      AccountId: '1'
+
+  SharedServicesAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Services Account
+      AccountId: '2'
+
+  SharedComplianceAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Compliance Account
+      AccountId: '3'
