@@ -5,7 +5,7 @@ import { TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
 import { ICfnRefValue, ICfnTemplate } from '../cfn-types';
 
-describe('when loading template with foreach', () => {
+describe('when loading budget alarms template', () => {
     let template: TemplateRoot;
     let cloudformationBinder: CloudFormationBinder;
     let bindings: ICfnBinding[];

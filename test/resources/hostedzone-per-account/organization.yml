@@ -34,16 +34,12 @@ Organization:
     Properties:
       AccountId: 3
       AccountName: Account3
-      Tags:
-        #subdomain: acc3
 
   Account4:
     Type: OC::ORG::Account
     Properties:
       AccountId: 4
       AccountName: Account4
-      Tags:
-        subdomain: acc4
 
   #============================================#
   # Organizational Units

@@ -8,7 +8,7 @@ Resources:
   Budget:
     OrganizationBindings:
       Regions: eu-central-1
-      HasTag: budget-alarm-threshold
+      AccountsWithTag: budget-alarm-threshold
     Type: AWS::Budgets::Budget
     Properties:
       Budget:
