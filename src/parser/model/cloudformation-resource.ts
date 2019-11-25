@@ -72,10 +72,10 @@ export class CloudFormationResource extends Resource {
         const excludeAccounts = super.resolve(binding.ExcludeAccounts, this.root.organizationSection.accounts);
         const organizationalUnits = super.resolve(binding.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
 
-        const accountLogicalIds = accounts.map((x) => x.TemplateResource.logicalId);
+        const accountLogicalIds = accounts.map((x) => x.TemplateResource!.logicalId);
         const result = new Set<string>(accountLogicalIds);
         for (const unit of organizationalUnits) {
-            const accountsForUnit = unit.TemplateResource.accounts.map((x) => x.TemplateResource.logicalId);
+            const accountsForUnit = unit.TemplateResource!.accounts.map((x) => x.TemplateResource!.logicalId);
             for (const logicalId of accountsForUnit) {
                 result.add(logicalId);
             }
@@ -89,13 +89,14 @@ export class CloudFormationResource extends Resource {
         }
 
         if (binding.AccountsWithTag) {
-            const accountsWithTag = this.root.organizationSection.findAccounts((x) => x.tags && Object.keys(x.tags).indexOf(binding.AccountsWithTag) !== -1);
+            const tagToMatch = binding.AccountsWithTag;
+            const accountsWithTag = this.root.organizationSection.findAccounts((x) => (x.tags !== undefined) && Object.keys(x.tags).indexOf(tagToMatch) !== -1);
             for (const account of accountsWithTag.map((x) => x.logicalId)) {
                 result.add(account);
             }
         }
 
-        for (const account of excludeAccounts.map((x) => x.TemplateResource.logicalId)) {
+        for (const account of excludeAccounts.map((x) => x.TemplateResource!.logicalId)) {
             result.delete(account);
         }
 

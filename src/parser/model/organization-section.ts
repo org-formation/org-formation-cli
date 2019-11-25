@@ -58,7 +58,7 @@ export class OrganizationSection {
 
         const accountIds = this.accounts.map((acc) => acc.accountId).filter((x) => x);
         const rootEmails = this.accounts.map((acc) => acc.rootEmail).filter((x) => x);
-        const accountNames = this.accounts.map((acc) => acc.accountName);
+        const accountNames = this.accounts.map((acc) => acc.accountName).filter((x) => x);
         if (this.masterAccount) {
             if (this.masterAccount.accountId) {
                 accountIds.push(this.masterAccount.accountId);
@@ -74,11 +74,11 @@ export class OrganizationSection {
         const organizationUnitNames = this.organizationalUnits.map((ou) => ou.organizationalUnitName);
         const serviceControlPolicies = this.serviceControlPolicies.map((policy) => policy.policyName);
 
-        this.throwForDuplicateVale(accountIds, (duplicate) => new Error(`multiple accounts found with AccountId ${duplicate}`));
-        this.throwForDuplicateVale(rootEmails, (duplicate) => new Error(`multiple accounts found with RootEmail ${duplicate}`));
-        this.throwForDuplicateVale(accountNames, (duplicate) => new Error(`multiple accounts found with AccountName ${duplicate}`));
-        this.throwForDuplicateVale(organizationUnitNames, (duplicate) => new Error(`multiple organizational units found with OrganizationalUnitName ${duplicate}`));
-        this.throwForDuplicateVale(serviceControlPolicies, (duplicate) => new Error(`multiple service control policies found with policyName ${duplicate}`));
+        this.throwForDuplicateVale(accountIds, (duplicate: string) => new Error(`multiple accounts found with AccountId ${duplicate}`));
+        this.throwForDuplicateVale(rootEmails, (duplicate: string) => new Error(`multiple accounts found with RootEmail ${duplicate}`));
+        this.throwForDuplicateVale(accountNames, (duplicate: string) => new Error(`multiple accounts found with AccountName ${duplicate}`));
+        this.throwForDuplicateVale(organizationUnitNames, (duplicate: string) => new Error(`multiple organizational units found with OrganizationalUnitName ${duplicate}`));
+        this.throwForDuplicateVale(serviceControlPolicies, (duplicate: string) => new Error(`multiple service control policies found with policyName ${duplicate}`));
     }
 
     public resolveRefs() {
@@ -123,8 +123,8 @@ export class OrganizationSection {
         }
     }
 
-    public findAccount(fn: (x: AccountResource) => bool): AccountResource {
-        if (fn(this.masterAccount)) {
+    public findAccount(fn: (x: AccountResource) => bool): AccountResource | undefined {
+        if (this.masterAccount && fn(this.masterAccount)) {
             return this.masterAccount;
         }
 
@@ -132,7 +132,11 @@ export class OrganizationSection {
     }
 
     public findAccounts(fn: (x: AccountResource) => bool): AccountResource[] {
-        return [this.masterAccount, ...this.accounts].filter(fn);
+        const list: AccountResource[] = this.accounts;
+        if (this.masterAccount) {
+            list.push(this.masterAccount);
+        }
+        return list.filter(fn);
     }
 
     private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error) {

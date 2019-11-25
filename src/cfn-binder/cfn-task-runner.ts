@@ -17,10 +17,10 @@ export class CfnTaskRunner {
             if (task.done) {
                 continue;
             }
-            const taskPromise = this.performTask(task);
+            const taskPromise = this.performTask(task).then((x) => ConsoleUtil.LogInfo(`stack ${task.stackName} successfully ${task.action === 'Delete' ? 'deleted from' : 'updated in' } ${task.accountId}/${task.region}.`));
             runningTasks.push(taskPromise);
         }
-        ConsoleUtil.LogInfo(`executing stack ${stackName} in ${runningTasks.length} target accounts/regions.`);
+        ConsoleUtil.LogInfo(`executing stack ${stackName} in ${runningTasks.length} target accounts/regions...`);
         await Promise.all(runningTasks);
     }
 

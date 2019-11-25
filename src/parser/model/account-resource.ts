@@ -16,15 +16,15 @@ export interface IAccountProperties {
 }
 
 export class AccountResource extends Resource {
-    public accountName: string;
-    public rootEmail: string;
-    public accountId: string;
-    public alias: string;
-    public tags: Record<string, string>;
-    public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>>;
-    public passwordPolicy: Reference<PasswordPolicyResource>;
-    public organizationalUnitName: string;
-    private props: IAccountProperties;
+    public accountName?: string;
+    public rootEmail?: string;
+    public accountId?: string;
+    public alias?: string;
+    public tags?: Record<string, string>;
+    public serviceControlPolicies?: Array<Reference<ServiceControlPolicyResource>>;
+    public passwordPolicy?: Reference<PasswordPolicyResource>;
+    public organizationalUnitName?: string;
+    private props?: IAccountProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
         super(root, id, resource);
@@ -65,10 +65,12 @@ export class AccountResource extends Resource {
     }
 
     public resolveRefs() {
-        this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
-        const passwordPolicies = super.resolve(this.props.PasswordPolicy, this.root.organizationSection.passwordPolicies);
-        if (passwordPolicies.length !== 0) {
-            this.passwordPolicy = passwordPolicies[0];
+        if (this.props) {
+            this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
+            const passwordPolicies = super.resolve(this.props.PasswordPolicy, this.root.organizationSection.passwordPolicies);
+            if (passwordPolicies.length !== 0) {
+                this.passwordPolicy = passwordPolicies[0];
+            }
         }
     }
 }

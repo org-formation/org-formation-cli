@@ -13,15 +13,15 @@ Resources:
     Properties:
       Budget:
         BudgetLimit:
-          Unit: USD
           Amount: !GetAtt AWSAccount.Tags.budget-alarm-threshold
+          Unit: USD
         TimeUnit: MONTHLY
         BudgetType: COST
       NotificationsWithSubscribers:
         - Notification:
             NotificationType: FORECASTED
             ComparisonOperator: GREATER_THAN
-            Threshold: 100
+            Threshold: 1
           Subscribers:
             - SubscriptionType: EMAIL
               Address: !GetAtt AWSAccount.Tags.account-owner-email

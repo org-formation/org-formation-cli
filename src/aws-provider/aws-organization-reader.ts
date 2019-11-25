@@ -119,7 +119,7 @@ export class AwsOrganizationReader {
 
         const policies = await that.policies.getValue();
         const roots = await that.roots.getValue();
-        rootsIds.push(...roots.map((x) => x.Id));
+        rootsIds.push(...roots.map((x) => x.Id!));
 
         do {
             const req: ListOrganizationalUnitsForParentRequest = {
@@ -129,20 +129,21 @@ export class AwsOrganizationReader {
             do {
                 resp = await that.organizationService.listOrganizationalUnitsForParent(req).promise();
                 req.NextToken = resp.NextToken;
+                if (!resp.OrganizationalUnits) { continue; }
 
                 for (const ou of resp.OrganizationalUnits) {
                     const organization = {
                         ...ou,
                         Type: 'OrganizationalUnit',
                         Name: ou.Name,
-                        Id: ou.Id,
+                        Id: ou.Id!,
                         ParentId: req.ParentId,
                         Accounts: [] as AWSAccount[],
                         Policies: GetPoliciesForTarget(policies, ou.Id, 'ORGANIZATIONAL_UNIT'),
                     };
 
                     result.push(organization);
-                    rootsIds.push(ou.Id);
+                    rootsIds.push(organization.Id);
                 }
 
             } while (resp.NextToken);

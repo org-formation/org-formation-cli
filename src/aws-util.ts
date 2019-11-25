@@ -1,6 +1,5 @@
 import { IAM, Organizations, STS } from 'aws-sdk/clients/all';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
-import { AwsOrganization } from './aws-provider/aws-organization';
 import { PasswordPolicyResource } from './parser/model/password-policy-resource';
 import { Reference } from './parser/model/resource';
 

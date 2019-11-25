@@ -482,7 +482,7 @@ export class TaskProvider {
         for (const logicalRef of list.filter((x) => x.TemplateResource)) {
             const binding = this.state.getBinding(logicalRef.TemplateResource.type, logicalRef.TemplateResource.logicalId);
             if (binding === undefined) {
-                unresolvedResources.push(logicalRef.TemplateResource);
+                unresolvedResources.push(logicalRef.TemplateResource!);
             } else  {
                 physicalIdsForServiceControlPolicies.push(binding.physicalId);
                 mapping[binding.physicalId] = { ...logicalRef, PhysicalId: binding.physicalId};
@@ -515,5 +515,5 @@ function policiesEqual(left: Reference<PasswordPolicyResource> , right: Referenc
     if (leftNull || rightNull) {
         return false;
     }
-    return left.TemplateResource.calculateHash() === right.TemplateResource.calculateHash();
+    return left.TemplateResource!.calculateHash() === right.TemplateResource!.calculateHash();
 }

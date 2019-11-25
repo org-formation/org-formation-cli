@@ -36,15 +36,15 @@ export class PersistedState {
             bindings: {},
             stacks: {},
             previousTemplate: '',
-        }, null);
+        });
     }
 
     public readonly masterAccount: string;
-    private provider: IStorageProvider;
+    private provider?: IStorageProvider;
     private state: IState;
     private dirty: boolean = false;
 
-    constructor(state: IState, provider: IStorageProvider) {
+    constructor(state: IState, provider?: IStorageProvider) {
         this.provider = provider;
         this.state = state;
         this.masterAccount = state.masterAccountId;
@@ -164,7 +164,8 @@ export class PersistedState {
         return this.state.previousTemplate;
     }
 
-    public async save(storageProvider: IStorageProvider = this.provider) {
+    public async save(storageProvider: IStorageProvider | undefined = this.provider) {
+        if (!storageProvider) { return; }
         if (!this.dirty) { return; }
 
         const json = JSON.stringify(this.state, null, 2);
