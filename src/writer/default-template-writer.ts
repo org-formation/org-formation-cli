@@ -41,45 +41,45 @@ export class DefaultTemplateWriter {
         });
 
         for (const root of this.organizationModel.roots) {
-            const result = this.generateRoot(lines, root);
+            const rootResource = this.generateRoot(lines, root);
 
             if (!root.Id) {
                 throw new OrgFormationError(`organizational root ${root.Name} has no Id`);
             }
             bindings.push({
-                type: result.type,
-                logicalId: result.logicalName,
+                type: rootResource.type,
+                logicalId: rootResource.logicalName,
                 physicalId: root.Id,
                 lastCommittedHash: '',
             });
         }
         for (const organizationalUnit of this.organizationModel.organizationalUnits) {
-            const result = this.generateOrganizationalUnit(lines, organizationalUnit);
+            const organizationalUnitResource = this.generateOrganizationalUnit(lines, organizationalUnit);
 
             bindings.push({
-                type: result.type,
-                logicalId: result.logicalName,
+                type: organizationalUnitResource.type,
+                logicalId: organizationalUnitResource.logicalName,
                 physicalId: organizationalUnit.Id,
                 lastCommittedHash: '',
             });
         }
         for (const account of this.organizationModel.accounts) {
-            const result = this.generateAccount(lines, account);
+            const accountResource = this.generateAccount(lines, account);
 
             bindings.push({
-                type: result.type,
-                logicalId: result.logicalName,
+                type: accountResource.type,
+                logicalId: accountResource.logicalName,
                 physicalId: account.Id,
                 lastCommittedHash: '',
             });
         }
         for (const scp of this.organizationModel.policies) {
             if (scp.PolicySummary && scp.PolicySummary.AwsManaged) { continue; }
-            const result = this.generateSCP(lines, scp );
+            const policyResource = this.generateSCP(lines, scp );
 
             bindings.push({
-                type: result.type,
-                logicalId: result.logicalName,
+                type: policyResource.type,
+                logicalId: policyResource.logicalName,
                 physicalId: scp.Id,
                 lastCommittedHash: '',
             });
