@@ -56,9 +56,9 @@ export class OrganizationSection {
             }
         }
 
-        const accountIds = this.accounts.map((acc) => acc.accountId).filter((x) => x);
-        const rootEmails = this.accounts.map((acc) => acc.rootEmail).filter((x) => x);
-        const accountNames = this.accounts.map((acc) => acc.accountName).filter((x) => x);
+        const accountIds = this.accounts.filter((acc) => acc.accountId).map((acc) => acc.accountId!);
+        const rootEmails = this.accounts.filter((acc) => acc.rootEmail).map((acc) => acc.rootEmail!);
+        const accountNames = this.accounts.filter((acc) => acc.accountName).map((acc) => acc.accountName!);
         if (this.masterAccount) {
             if (this.masterAccount.accountId) {
                 accountIds.push(this.masterAccount.accountId);

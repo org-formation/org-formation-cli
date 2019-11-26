@@ -9,6 +9,8 @@ Organization:
 Resources:
   MyDeploymentBucket:
     Type: AWS::S3::Bucket
+    OrganizationBindings:
+      Accounts: '*'
     Properties:
       BucketName: 'my-deployment-deployments'
       PublicAccessBlockConfiguration:

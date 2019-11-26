@@ -443,7 +443,7 @@ describe('when adding attribute that is not supported to foreach', () => {
 
     it('resolving references throws', () => {
         try {
-            new CloudFormationResource(template, 'logical-id', resource);
+            new CloudFormationResource(template, 'logical-id', resource, template.contents.OrganizationBindings);
         } catch (err) {
             expect(err.message).to.contain('Something');
             expect(err.message).to.contain('logical-id');
@@ -471,7 +471,7 @@ describe('when adding region which is not supported to foreach', () => {
 
     it('resolving references throws', () => {
         try {
-            new CloudFormationResource(template, 'logical-id', resource);
+            new CloudFormationResource(template, 'logical-id', resource, template.contents.OrganizationBindings);
         } catch (err) {
             expect(err.message).to.contain('Regions');
             expect(err.message).to.contain('logical-id');

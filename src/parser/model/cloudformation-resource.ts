@@ -16,24 +16,26 @@ export class CloudFormationResource extends Resource {
         super(root, id, resource);
 
         this.binding = this.resource.OrganizationBindings as IOrganizationBinding;
-        if (!this.binding) {
+        if (!this.binding && defaultBinding) {
             this.binding = defaultBinding;
         }
-        if (this.binding) {
-            super.throwForUnknownAttributes(this.binding, id + '.OrganizationBindings', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'Regions', 'IncludeMasterAccount', 'AccountsWithTag');
+        if (!this.binding) {
+            throw new Error(`Resource ${id} is missing OrganizationBindings attribute and no top level OrganizationBindings found.`);
         }
+
+        super.throwForUnknownAttributes(this.binding, id + '.OrganizationBindings', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'Regions', 'IncludeMasterAccount', 'AccountsWithTag');
+
         this.foreach = this.resource.Foreach as IOrganizationBinding;
         if (this.foreach) {
             super.throwForUnknownAttributes(this.foreach, id + '.Foreach', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'IncludeMasterAccount', 'AccountsWithTag');
         }
 
-        if (this.binding) {
+        if (this.binding && this.binding.Regions) {
             if (typeof this.binding.Regions === 'string') {
                 this.regions = [this.binding.Regions];
             } else {
                 this.regions = this.binding.Regions;
             }
-
         } else {
             this.regions = [];
             // throw new Error(`no binding found for resource ${id}. Either add an OrganizationBindings attribute to the resource or globally to the template.`);

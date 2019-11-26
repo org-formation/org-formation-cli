@@ -142,7 +142,7 @@ describe('when creating cloudformation with output section', () => {
         };
 
         templateRoot.resourcesSection.resources.push(target.resources[0]);
-        templateRoot.resourcesSection.resources.push(new CloudFormationResource(templateRoot, 'bucket2', {Type: 'abcdef'}));
+        templateRoot.resourcesSection.resources.push(new CloudFormationResource(templateRoot, 'bucket2', {Type: 'abcdef'}, templateRoot.contents.OrganizationBindings));
 
         templateRoot.contents.Outputs = {
             Output : {
