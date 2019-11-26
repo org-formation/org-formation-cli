@@ -47,6 +47,9 @@ export class AccountResource extends Resource {
         if (typeof this.accountId === 'number') {
             this.accountId = '' + this.accountId;
         }
+        if (this.accountId && !/\d{12}/.test(this.accountId)) {
+            throw new Error(`AccountId is expected to be 12 digits on Account ${id}`);
+        }
         this.tags = this.props.Tags;
         this.alias = this.props.Alias;
 

@@ -4,23 +4,23 @@ Organization:
   MasterAccount:
     Type: OC::ORG::MasterAccount
     Properties:
-      AccountId: '0'
+      AccountId: '000000000000'
       AccountName: oc test account 2
 
   SharedUsersAccount:
     Type: OC::ORG::Account
     Properties:
       AccountName: Shared Users Account
-      AccountId: '1'
+      AccountId: '111111111111'
 
   SharedServicesAccount:
     Type: OC::ORG::Account
     Properties:
       AccountName: Shared Services Account
-      AccountId: '2'
+      AccountId: '222222222222'
 
   SharedComplianceAccount:
     Type: OC::ORG::Account
     Properties:
       AccountName: Shared Compliance Account
-      AccountId: '3'
+      AccountId: '333333333333'

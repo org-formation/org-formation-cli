@@ -59,4 +59,16 @@ describe('when creating account resource', () => {
         expect(() => { new AccountResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
         expect(() => { new AccountResource(template, 'logical-id', resource); }).to.throw(/AccountName/);
     });
+
+    it('throws an error if accountId is not a 12 digit string', () => {
+        accountProperties.AccountId = 'aaaaaaaaaaaa';
+        expect(() => { new AccountResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
+        expect(() => { new AccountResource(template, 'logical-id', resource); }).to.throw(/AccountId/);
+    });
+
+    it('converts accountId to string if digit', () => {
+        (accountProperties as any).AccountId = 111111111111;
+        const account = new AccountResource(template, 'logical-id', resource);
+        expect(typeof account.accountId).to.eq('string');
+    });
 });

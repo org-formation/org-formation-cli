@@ -22,18 +22,18 @@ describe('when loading cloudtrail template', () => {
         template = TemplateRoot.create('./test/resources/cloudtrail/cloudtrail.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '0', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '1', logicalId: 'SharedUsersAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '2', logicalId: 'SharedServicesAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '3', logicalId: 'SharedComplianceAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'SharedUsersAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'SharedServicesAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'SharedComplianceAccount', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('cloudtrail', template, persistedState);
         bindings = cloudformationBinder.enumBindings();
-        masterBinding = bindings.find((x) => x.accountId === '0');
+        masterBinding = bindings.find((x) => x.accountId === '000000000000');
         masterCfnTemplate = JSON.parse(masterBinding.template.createTemplateBody()) as ICfnTemplate;
-        servicesBinding = bindings.find((x) => x.accountId === '2');
+        servicesBinding = bindings.find((x) => x.accountId === '222222222222');
         servicesCfnTemplate = JSON.parse(servicesBinding.template.createTemplateBody()) as ICfnTemplate;
-        complianceBinding = bindings.find((x) => x.accountId === '3');
+        complianceBinding = bindings.find((x) => x.accountId === '333333333333');
         complianceCfnTemplate = JSON.parse(complianceBinding.template.createTemplateBody()) as ICfnTemplate;
     });
     it('can create cfn bindings for template', () => {
@@ -49,7 +49,7 @@ describe('when loading cloudtrail template', () => {
         const buckets = resources.filter((x) => x.Type === 'AWS::S3::Bucket');
         expect(buckets.length).to.eq(1);
 
-        expect(buckets[0].Properties.BucketName).to.eq('cloudtrail-3');
+        expect(buckets[0].Properties.BucketName).to.eq('cloudtrail-333333333333');
     });
 
     it('compliance account has export for s3 bucket', () => {
@@ -64,7 +64,7 @@ describe('when loading cloudtrail template', () => {
     it('master account has parameter for s3 bucket', () => {
         expect(masterCfnTemplate.Parameters).to.not.be.undefined;
         const parameter = Object.values(masterCfnTemplate.Parameters)[0];
-        expect(parameter.ExportAccountId).to.eq('3');
+        expect(parameter.ExportAccountId).to.eq('333333333333');
         expect(parameter.ExportName).to.eq(expectedExportNameFors3Bucket);
         expect(parameter.ExportRegion).to.eq('eu-central-1');
     });
@@ -72,7 +72,7 @@ describe('when loading cloudtrail template', () => {
     it('services account has parameter for s3 bucket', () => {
         expect(servicesCfnTemplate.Parameters).to.not.be.undefined;
         const parameter = Object.values(servicesCfnTemplate.Parameters)[0];
-        expect(parameter.ExportAccountId).to.eq('3');
+        expect(parameter.ExportAccountId).to.eq('333333333333');
         expect(parameter.ExportName).to.eq(expectedExportNameFors3Bucket);
         expect(parameter.ExportRegion).to.eq('eu-central-1');
     });

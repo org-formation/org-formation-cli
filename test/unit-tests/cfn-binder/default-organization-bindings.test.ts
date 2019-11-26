@@ -20,19 +20,19 @@ describe('when loading default-organization-bindings template', () => {
         template = TemplateRoot.create('./test/resources/default-organization-bindings/default-organization-bindings.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '0', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '1', logicalId: 'Account1', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '2', logicalId: 'Account2', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '3', logicalId: 'Account3', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '4', logicalId: 'Account4', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('default-organization-bindings', template, persistedState);
         bindings = cloudformationBinder.enumBindings();
-        account1Binding = bindings.find((x) => x.accountId === '1');
+        account1Binding = bindings.find((x) => x.accountId === '111111111111');
         account1CfnTemplate = JSON.parse(account1Binding.template.createTemplateBody()) as ICfnTemplate;
-        account2Binding = bindings.find((x) => x.accountId === '2');
+        account2Binding = bindings.find((x) => x.accountId === '222222222222');
         account2CfnTemplate = JSON.parse(account2Binding.template.createTemplateBody()) as ICfnTemplate;
-        account3Binding = bindings.find((x) => x.accountId === '3');
+        account3Binding = bindings.find((x) => x.accountId === '333333333333');
         account3CfnTemplate = JSON.parse(account3Binding.template.createTemplateBody()) as ICfnTemplate;
     });
 

@@ -2,36 +2,32 @@ AWSTemplateFormatVersion: '2010-09-09-OC'
 
 Organization:
 
-  #============================================#
-  # Accounts
-  #============================================#
-
   MasterAccount:
     Type: OC::ORG::MasterAccount
     Properties:
-      AccountId: '0'
+      AccountId: '000000000000'
       AccountName: 'master account'
 
   Account1:
     Type: OC::ORG::Account
     Properties:
-      AccountId: 1
+      AccountId: '111111111111'
       AccountName: Account1
 
   Account2:
     Type: OC::ORG::Account
     Properties:
-      AccountId: 2
+      AccountId: '222222222222'
       AccountName: Account2
 
   Account3:
     Type: OC::ORG::Account
     Properties:
-      AccountId: 3
+      AccountId: '333333333333'
       AccountName: Account3
 
   Account4:
     Type: OC::ORG::Account
     Properties:
-      AccountId: 4
+      AccountId: '444444444444'
       AccountName: Account4

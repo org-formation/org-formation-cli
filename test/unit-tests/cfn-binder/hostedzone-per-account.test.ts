@@ -20,19 +20,19 @@ describe('when loading hostedzone-per-account template', () => {
         template = TemplateRoot.create('./test/resources/hostedzone-per-account/hostedzone-per-account.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '0', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '1', logicalId: 'Account1', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '2', logicalId: 'Account2', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '3', logicalId: 'Account3', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '4', logicalId: 'Account4', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('foreach', template, persistedState);
         bindings = cloudformationBinder.enumBindings();
-        masterBinding = bindings.find((x) => x.accountId === '0');
+        masterBinding = bindings.find((x) => x.accountId === '000000000000');
         masterCfnTemplate = JSON.parse(masterBinding.template.createTemplateBody()) as ICfnTemplate;
-        account1Binding = bindings.find((x) => x.accountId === '1');
+        account1Binding = bindings.find((x) => x.accountId === '111111111111');
         account1CfnTemplate = JSON.parse(account1Binding.template.createTemplateBody()) as ICfnTemplate;
-        account2Binding = bindings.find((x) => x.accountId === '2');
+        account2Binding = bindings.find((x) => x.accountId === '222222222222');
         account2CfnTemplate = JSON.parse(account2Binding.template.createTemplateBody()) as ICfnTemplate;
     });
 
@@ -105,13 +105,13 @@ describe('when loading hostedzone-per-account template', () => {
         const paramAccount1 = masterCfnTemplate.Parameters.Account1DotResourcesDotHostedZoneDotNameServers;
         expect(paramAccount1).to.not.be.undefined;
         expect(paramAccount1.ExportRegion).to.eq('eu-west-1');
-        expect(paramAccount1.ExportAccountId).to.eq('1');
+        expect(paramAccount1.ExportAccountId).to.eq('111111111111');
         expect(paramAccount1.ExportName).to.eq('foreach-Account1-ResourcesDotHostedZoneDotNameServers');
 
         const paramAccount2 = masterCfnTemplate.Parameters.Account2DotResourcesDotHostedZoneDotNameServers;
         expect(paramAccount2).to.not.be.undefined;
         expect(paramAccount2.ExportRegion).to.eq('eu-west-1');
-        expect(paramAccount2.ExportAccountId).to.eq('2');
+        expect(paramAccount2.ExportAccountId).to.eq('222222222222');
         expect(paramAccount2.ExportName).to.eq('foreach-Account2-ResourcesDotHostedZoneDotNameServers');
     });
 });

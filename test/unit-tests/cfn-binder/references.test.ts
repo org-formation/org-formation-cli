@@ -9,11 +9,11 @@ describe('when loading reference to multiple', () => {
         const template = TemplateRoot.create('./test/resources/references/reference-to-multiple.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '0', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '1', logicalId: 'Account1', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '2', logicalId: 'Account2', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '3', logicalId: 'Account3', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '4', logicalId: 'Account4', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '10000000004', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         const cloudformationBinder = new CloudFormationBinder('foreach', template, persistedState);
         expect(() =>  cloudformationBinder.enumBindings()).to.throw(/Topic.TopicName/);

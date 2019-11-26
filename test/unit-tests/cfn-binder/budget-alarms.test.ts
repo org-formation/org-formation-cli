@@ -18,14 +18,14 @@ describe('when loading budget alarms template', () => {
         template = TemplateRoot.create('./test/resources/budget-alarms/budget-alarms.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '0', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '3', logicalId: 'SharedComplianceAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'SharedComplianceAccount', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('budget-alarms', template, persistedState);
         bindings = cloudformationBinder.enumBindings();
-        masterBinding = bindings.find((x) => x.accountId === '0');
+        masterBinding = bindings.find((x) => x.accountId === '000000000000');
         masterCfnTemplate = JSON.parse(masterBinding.template.createTemplateBody()) as ICfnTemplate;
-        complianceBinding = bindings.find((x) => x.accountId === '3');
+        complianceBinding = bindings.find((x) => x.accountId === '333333333333');
         complianceCfnTemplate = JSON.parse(complianceBinding.template.createTemplateBody()) as ICfnTemplate;
     });
 
