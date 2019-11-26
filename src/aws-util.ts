@@ -32,6 +32,7 @@ export class AwsUtil {
 }
 
 export function passwordPolicEquals(passwordPolicy: IAM.PasswordPolicy, pwdPolicyResource: Reference<PasswordPolicyResource>): boolean {
+
     if (!passwordPolicy && (!pwdPolicyResource || !pwdPolicyResource.TemplateResource)) {
         return true; // equal
     }

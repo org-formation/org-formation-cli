@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { CloudFormationResource } from '../../../../src/parser/model/cloudformation-resource';
-import { IOrganizationBindings, IResource, IResourceRef, IResourceRefExpression, TemplateRoot } from '../../../../src/parser/parser';
+import { IOrganizationBinding, IResource, IResourceRef, IResourceRefExpression, TemplateRoot } from '../../../../src/parser/parser';
 import { TestTemplates } from '../../test-templates';
 
 describe('when creating cloudformation resource with * accounts', () => {
@@ -26,7 +26,7 @@ describe('when creating cloudformation resource with * accounts', () => {
     });
 
     it('copies properties from resource', () => {
-        const orgBindings = (account as any).bindings as IOrganizationBindings;
+        const orgBindings = (account as any).binding as IOrganizationBinding;
         expect(orgBindings.Accounts).to.eq('*');
         expect(orgBindings.Regions).to.eq('eu-central-1');
     });
@@ -68,7 +68,7 @@ describe('when creating cloudformation resource with include master', () => {
     });
 
     it('copies properties from resource', () => {
-        const orgBindings = (account as any).bindings as IOrganizationBindings;
+        const orgBindings = (account as any).binding as IOrganizationBinding;
         expect(orgBindings.IncludeMasterAccount).to.eq(true);
         expect(orgBindings.Regions).to.eq('eu-central-1');
     });
@@ -104,7 +104,7 @@ describe('when including specific account as value', () => {
     });
 
     it('copies properties from resource', () => {
-        const orgBindings = (account as any).bindings as IOrganizationBindings;
+        const orgBindings = (account as any).binding as IOrganizationBinding;
         expect(Array.isArray(orgBindings.Accounts)).to.eq(false);
         expect((orgBindings.Accounts as IResourceRefExpression).Ref).to.eq('Account2');
         expect(orgBindings.Regions).to.eq('eu-central-1');
@@ -140,7 +140,7 @@ describe('when including specific account as array', () => {
     });
 
     it('copies properties from resource', () => {
-        const orgBindings = (account as any).bindings as IOrganizationBindings;
+        const orgBindings = (account as any).binding as IOrganizationBinding;
         expect(Array.isArray(orgBindings.Accounts)).to.eq(true);
         expect((orgBindings.Accounts as any)[0].Ref).to.eq('Account2');
         expect(orgBindings.Regions).to.eq('eu-central-1');
@@ -208,7 +208,7 @@ describe('when exluding specific account as value', () => {
     });
 
     it('copies properties from resource', () => {
-        const orgBindings = (account as any).bindings as IOrganizationBindings;
+        const orgBindings = (account as any).binding as IOrganizationBinding;
         expect(orgBindings.Accounts).to.eq('*');
         expect((orgBindings.ExcludeAccounts as IResourceRefExpression).Ref).to.eq('Account2');
         expect(orgBindings.Regions).to.eq('eu-central-1');
@@ -278,7 +278,7 @@ describe('when excluding specific account as array', () => {
     });
 
     it('copies properties from resource', () => {
-        const orgBindings = (account as any).bindings as IOrganizationBindings;
+        const orgBindings = (account as any).binding as IOrganizationBinding;
         expect(Array.isArray(orgBindings.ExcludeAccounts)).to.eq(true);
         expect((orgBindings.ExcludeAccounts as any)[0].Ref).to.eq('Account2');
         expect(orgBindings.Accounts).to.eq('*');
@@ -315,7 +315,7 @@ describe('when including specific ou as value', () => {
     });
 
     it('copies properties from resource', () => {
-        const orgBindings = (account as any).bindings as IOrganizationBindings;
+        const orgBindings = (account as any).binding as IOrganizationBinding;
         expect(Array.isArray(orgBindings.OrganizationalUnits)).to.eq(false);
         expect((orgBindings.OrganizationalUnits as IResourceRefExpression).Ref).to.eq('OU');
         expect(orgBindings.Regions).to.eq('eu-central-1');
@@ -382,7 +382,7 @@ describe('when including specific account as array', () => {
     });
 
     it('copies properties from resource', () => {
-        const orgBindings = (account as any).bindings as IOrganizationBindings;
+        const orgBindings = (account as any).binding as IOrganizationBinding;
         expect(Array.isArray(orgBindings.OrganizationalUnits)).to.eq(true);
         expect((orgBindings.OrganizationalUnits as any)[0].Ref).to.eq('OU');
         expect(orgBindings.Regions).to.eq('eu-central-1');
@@ -433,7 +433,7 @@ describe('when adding attribute that is not supported to foreach', () => {
         resource = {
             Type : 'AWS::S3::Bucket',
             Foreach: {
-                Something: [{Ref: 'XXX'}]
+                Something: [{Ref: 'XXX'}],
             },
             Properties: {
                 BucketName: 'test-bucket',

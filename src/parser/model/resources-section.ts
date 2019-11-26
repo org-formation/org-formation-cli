@@ -1,14 +1,16 @@
-import { IResource, IResources, TemplateRoot } from '../parser';
+import { IOrganizationBinding, IResource, IResources, TemplateRoot } from '../parser';
 import { CloudFormationResource } from './cloudformation-resource';
 
 export class ResourcesSection {
     public readonly resources: CloudFormationResource[] = [];
     private readonly root: TemplateRoot;
     private readonly contents?: IResources;
+    private readonly defaultBinding?: IOrganizationBinding;
 
-    constructor(root: TemplateRoot, contents?: IResources) {
+    constructor(root: TemplateRoot, contents?: IResources, defaultBinding?: IOrganizationBinding) {
         this.root = root;
         this.contents = contents;
+        this.defaultBinding = defaultBinding;
 
         if (!this.contents) { return; }
 
@@ -50,7 +52,7 @@ export class ResourcesSection {
     public createResource(id: string, resource: IResource): CloudFormationResource {
         switch (resource.Type) {
             default:
-                return new CloudFormationResource(this.root, id, resource);
+                return new CloudFormationResource(this.root, id, resource, this.defaultBinding);
         }
     }
 }

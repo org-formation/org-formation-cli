@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization:
+
+  #============================================#
+  # Accounts
+  #============================================#
+
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountId: '0'
+      AccountName: 'master account'
+
+  Account1:
+    Type: OC::ORG::Account
+    Properties:
+      AccountId: 1
+      AccountName: Account1
+
+  Account2:
+    Type: OC::ORG::Account
+    Properties:
+      AccountId: 2
+      AccountName: Account2
+
+  Account3:
+    Type: OC::ORG::Account
+    Properties:
+      AccountId: 3
+      AccountName: Account3
+
+  Account4:
+    Type: OC::ORG::Account
+    Properties:
+      AccountId: 4
+      AccountName: Account4

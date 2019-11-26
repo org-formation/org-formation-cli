@@ -15,6 +15,7 @@ export interface ITemplate {
     StackName?: string;
     Description?: string;
     Organization?: IOrganization;
+    OrganizationBindings?: IOrganizationBinding;
     Metadata?: any;
     Parameters?: any;
     Mappings?: any;
@@ -39,8 +40,8 @@ export interface IResourcesMap extends Record<string, IResource> {
 export interface IResource {
     Type: OrgResourceTypes | ResourceTypes | string;
     Properties?: IPropertiesMap;
-    OrganizationBindings?: IOrganizationBindings & IPropertiesMap;
-    Foreach?: IOrganizationBindings & IPropertiesMap;
+    OrganizationBindings?: IOrganizationBinding & IPropertiesMap;
+    Foreach?: IOrganizationBinding & IPropertiesMap;
 }
 
 export interface IPropertiesMap extends Record<string, any> {
@@ -53,12 +54,13 @@ export interface IResourceRefExpression {
     Ref: string;
 }
 
-export interface IOrganizationBindings {
+export interface IOrganizationBinding {
     IncludeMasterAccount?: boolean;
     Accounts?: IResourceRef | IResourceRef[];
     ExcludeAccounts?: IResourceRef | IResourceRef[];
     OrganizationalUnits?: IResourceRef | IResourceRef[];
     Regions?: string | string[];
+    AccountsWithTag?: string;
 }
 
 export class TemplateRoot {
@@ -126,7 +128,7 @@ export class TemplateRoot {
         }
 
         Validator.ThrowForUnknownAttribute(contents, 'template root',
-                'AWSTemplateFormatVersion', 'Description', 'Organization',
+                'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBindings',
                 'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs');
 
         this.contents = contents;
@@ -134,7 +136,7 @@ export class TemplateRoot {
         this.source = JSON.stringify(contents);
         this.hash = md5(this.source);
         this.organizationSection = new OrganizationSection(this, contents.Organization);
-        this.resourcesSection = new ResourcesSection(this, contents.Resources);
+        this.resourcesSection = new ResourcesSection(this, contents.Resources, contents.OrganizationBindings);
 
         this.organizationSection.resolveRefs();
         this.resourcesSection.resolveRefs();
