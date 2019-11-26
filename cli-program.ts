@@ -51,7 +51,7 @@ export class CliProgram {
         this.updateStacks = this.program.command('update-stacks <templateFile>');
         this.updateStacks.description('update cloudformation resources in accounts');
 
-        this.describeStacks = this.program.command('describe-stacks');
+        this.describeStacks = this.program.command('describe-stacks [stack-name]');
         this.describeStacks.description('list all stacks deployed to accounts using org-formation');
 
         this.deleteStacks = this.program.command('delete-stacks <stack-name>');
@@ -80,7 +80,7 @@ export class CliProgram {
         this.executeChangeSet.action(async (templateFile, cmd) => await executeChangeSet(templateFile, cmd));
 
         this.updateStacks.action(async (templateFile, cmd) => await updateAccountResources(templateFile, cmd));
-        this.describeStacks.action(async (cmd) => await describeAccountStacks(cmd));
+        this.describeStacks.action(async (stackName, cmd) => await describeAccountStacks(stackName, cmd));
         this.deleteStacks.action(async (stackName, cmd) => await deleteAccountStacks(stackName, cmd));
         this.performTasks.action(async (path, cmd) => await performTasks(path, cmd));
         this.printStacks.action(async (templateFile, cmd) => await printAccountStacks(templateFile, cmd));

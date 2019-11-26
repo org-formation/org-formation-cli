@@ -140,17 +140,20 @@ export async function deleteAccountStacks(stackName: string, command: ICommandAr
     });
 }
 
-export async function describeAccountStacks(command: ICommandArgs): Promise<boolean> {
+export async function describeAccountStacks(stackName: string, command: ICommandArgs): Promise<boolean> {
+    if (typeof stackName === 'string' ) {
+        command.stackName = stackName;
+    }
     return await HandleErrors(async () => {
         const state = await getState(command);
         const record: Record<string, ICfnTarget[]> = {};
-        for (const stackName of state.listStacks()) {
-            if (command.stackName && stackName !== command.stackName) {
+        for (const stack of state.listStacks()) {
+            if (command.stackName && stack !== command.stackName) {
                 continue;
             }
-            record[stackName] = [];
-            for (const target of state.enumTargets(stackName)) {
-                record[stackName].push(target);
+            record[stack] = [];
+            for (const target of state.enumTargets(stack)) {
+                record[stack].push(target);
             }
 
         }
