@@ -22,13 +22,14 @@ export interface ITemplate {
     Conditions?: any;
     Resources?: IResources;
     Outputs?: any;
-    // CrossAccountPermissions?: any;
 }
 
+// tslint:disable-next-line: no-empty-interface
 export interface IResources extends IResourcesMap {
 
 }
 
+// tslint:disable-next-line: no-empty-interface
 export interface IOrganization extends IResourcesMap {
 
 }
