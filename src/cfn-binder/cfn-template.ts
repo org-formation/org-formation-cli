@@ -16,7 +16,7 @@ export class CfnTemplate {
     private resourceIdsForTarget: string[];
     private allResourceIds: string[];
 
-    constructor(private target: IResourceTarget, private templateRoot: TemplateRoot, private state: PersistedState) {
+    constructor(target: IResourceTarget, private templateRoot: TemplateRoot, private state: PersistedState) {
         this.resourceIdsForTarget = target.resources.map((x) => x.logicalId);
         this.allResourceIds = this.templateRoot.resourcesSection.resources.map((x) => x.logicalId);
 
@@ -179,9 +179,12 @@ export class CfnTemplate {
                 if (key === 'Ref') {
                     const resourceId: string = '' + val;
                     if (!this.resources[resourceId]) {
-                        const other = others.find((o) => undefined !== o.template.resources[resourceId]);
-                        // todo: add error for more than 1 target
-                        if (other) {
+                        const foundAccounts = others.filter((o) => undefined !== o.template.resources[resourceId]);
+                        if (foundAccounts.length > 1) {
+                            throw new Error(`expression ${key}: ${val} matches resources in multiple accounts.`);
+                        }
+                        if (foundAccounts.length === 1) {
+                            const other = foundAccounts[0];
                             const dependency = {
                                 outputAccountId: other.accountId,
                                 outputRegion: other.region,
@@ -203,9 +206,13 @@ export class CfnTemplate {
                         const resourceId: string = val[0];
                         const path: string = val[1];
                         if (!this.resources[resourceId]) {
-                            const other = others.find((o) => undefined !== o.template.resources[resourceId]);
+                            const foundAccounts = others.filter((o) => undefined !== o.template.resources[resourceId]);
+                            if (foundAccounts.length > 1) {
+                                throw new Error(`expression ${key}: ${val.join('.')} matches resources in multiple accounts.`);
+                            }
                             // todo: add error for more than 1 target
-                            if (other) {
+                            if (foundAccounts.length === 1) {
+                                const other = foundAccounts[0];
                                 let parameterType = 'String';
                                 let valueExpression: any = { 'Fn::GetAtt': [resourceId, path] };
                                 if (path.endsWith('NameServers')) { // todo: add more comma delimeted list attribute names that can be used in GetAtt
