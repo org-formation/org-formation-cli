@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description:
+
+Organization: !Include ./organization.yml
+
+OrganizationBindings:
+  Regions: eu-west-1
+  Accounts: !Ref Account2
+
+Resources:
+
+  Topic:
+    Type: AWS::SNS::Topic
+    OrganizationBindings:
+      Regions: eu-west-1
+      Accounts: !Ref Account1
+    Properties:
+      DisplayName: Name
+
+  S3Bucket1:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Topic.TopicName}-bucket'
+
+  S3Bucket2:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Account1.Resources.Topic.TopicName}-bucket'
+
+  S3Bucket3:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+      - '${var}-bucket'
+      - { var: !GetAtt Account1.Resources.Topic.TopicName }
+
+  S3Bucket4:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+      - '${var}-bucket'
+      - { var: !Ref Topic }
+
+  S3Bucket5:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+      - '${var}-bucket'
+      - { var: !GetAtt Account2.Resources.S3Bucket4.BucketName }
+
+  S3Bucket6:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+      - '${var}-bucket'
+      - { var: !GetAtt Account1.Resources.Topic }
+
+  S3Bucket7:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Account2.Resources.S3Bucket6.BucketName}-bucket'
+
+  S3Bucket8:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Account2.Resources.S3Bucket6}-bucket'

@@ -128,16 +128,22 @@ export interface ICfnBinding {
 }
 
 export interface ICfnCrossAccountDependency {
-    outputAccountId: string;
-    outputRegion: string;
-    outputStackName: string;
     parameterAccountId: string;
     parameterRegion: string;
     parameterStackName: string;
     parameterType: string;
-    valueExpression: any;
     parameterName: string;
+    outputAccountId: string;
+    outputRegion: string;
+    outputStackName: string;
     outputName: string;
+    outputValueExpression: ICfnValue;
 }
 
 type CfnBindingAction = 'UpdateOrCreate' | 'Delete' | 'None';
+
+export interface ICfnRefValue { Ref: string; }
+export interface ICfnGetAttValue  { 'Fn::GetAtt': string[]; }
+export interface ICfnJoinValue  { 'Fn::Join': ICfnValue[]; }
+export interface ICfnSubValue  { 'Fn::Sub': any; }
+export type ICfnValue = string | ICfnRefValue  | ICfnGetAttValue | ICfnJoinValue;

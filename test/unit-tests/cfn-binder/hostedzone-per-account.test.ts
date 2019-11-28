@@ -26,7 +26,7 @@ describe('when loading hostedzone-per-account template', () => {
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc'});
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
-        cloudformationBinder = new CloudFormationBinder('foreach', template, persistedState);
+        cloudformationBinder = new CloudFormationBinder('hostedzone-per-account', template, persistedState);
         bindings = cloudformationBinder.enumBindings();
         masterBinding = bindings.find((x) => x.accountId === '000000000000');
         masterCfnTemplate = JSON.parse(masterBinding.template.createTemplateBody()) as ICfnTemplate;
@@ -72,7 +72,7 @@ describe('when loading hostedzone-per-account template', () => {
         expect(ValGetAtt['Fn::GetAtt'][0]).to.eq('HostedZone');
         expect(ValGetAtt['Fn::GetAtt'][1]).to.eq('NameServers');
 
-        expect(output.Export.Name).to.eq('foreach-Account1-ResourcesDotHostedZoneDotNameServers');
+        expect(output.Export.Name).to.eq('hostedzone-per-account-HostedZone-NameServers');
     });
 
     it('account 2 has export on HostedZoneNameServers', () => {
@@ -87,7 +87,7 @@ describe('when loading hostedzone-per-account template', () => {
         expect(ValGetAtt['Fn::GetAtt'][0]).to.eq('HostedZone');
         expect(ValGetAtt['Fn::GetAtt'][1]).to.eq('NameServers');
 
-        expect(output.Export.Name).to.eq('foreach-Account2-ResourcesDotHostedZoneDotNameServers');
+        expect(output.Export.Name).to.eq('hostedzone-per-account-HostedZone-NameServers');
     });
 
     it('master account imports HostedZoneNameServers from both other accounts', () => {
@@ -106,12 +106,12 @@ describe('when loading hostedzone-per-account template', () => {
         expect(paramAccount1).to.not.be.undefined;
         expect(paramAccount1.ExportRegion).to.eq('eu-west-1');
         expect(paramAccount1.ExportAccountId).to.eq('111111111111');
-        expect(paramAccount1.ExportName).to.eq('foreach-Account1-ResourcesDotHostedZoneDotNameServers');
+        expect(paramAccount1.ExportName).to.eq('hostedzone-per-account-HostedZone-NameServers');
 
         const paramAccount2 = masterCfnTemplate.Parameters.Account2DotResourcesDotHostedZoneDotNameServers;
         expect(paramAccount2).to.not.be.undefined;
         expect(paramAccount2.ExportRegion).to.eq('eu-west-1');
         expect(paramAccount2.ExportAccountId).to.eq('222222222222');
-        expect(paramAccount2.ExportName).to.eq('foreach-Account2-ResourcesDotHostedZoneDotNameServers');
+        expect(paramAccount2.ExportName).to.eq('hostedzone-per-account-HostedZone-NameServers');
     });
 });

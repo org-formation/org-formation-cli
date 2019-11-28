@@ -18,7 +18,7 @@ describe('when using Ref on account', () => {
     let target: IResourceTarget;
     let templateResource: any;
 
-    let masterAccountId;
+    let masterAccountId: string;
     const otherAccountId = '22332233223322';
 
     beforeEach(async () => {
@@ -82,7 +82,7 @@ describe('when using GetAtt on account', () => {
     let otherAccount: AccountResource;
     const otherAccountId = '12332233223322';
     const targetAccountId = '22332233223322';
-    let masterAccountId;
+    let masterAccountId: string;
 
     beforeEach(async () => {
         templateRoot = TestTemplates.createBasicTemplate();
@@ -204,7 +204,7 @@ describe('when using Sub on account', () => {
     let target: IResourceTarget;
     let templateResource: any;
 
-    let masterAccountId;
+    let masterAccountId: string;
     const otherAccountId = '22332233223322';
     let otherAccount: AccountResource;
 
