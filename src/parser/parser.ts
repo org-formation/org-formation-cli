@@ -16,6 +16,7 @@ export interface ITemplate {
     Description?: string;
     Organization?: IOrganization;
     OrganizationBindings?: IOrganizationBinding;
+    OrganizationBindingsRegions?: string | string[];
     Metadata?: any;
     Parameters?: any;
     Mappings?: any;
@@ -129,7 +130,7 @@ export class TemplateRoot {
         }
 
         Validator.ThrowForUnknownAttribute(contents, 'template root',
-                'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBindings',
+                'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBindings', 'OrganizationBindingsRegions',
                 'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs');
 
         this.contents = contents;
@@ -137,7 +138,7 @@ export class TemplateRoot {
         this.source = JSON.stringify(contents);
         this.hash = md5(this.source);
         this.organizationSection = new OrganizationSection(this, contents.Organization);
-        this.resourcesSection = new ResourcesSection(this, contents.Resources, contents.OrganizationBindings);
+        this.resourcesSection = new ResourcesSection(this, contents.Resources, contents.OrganizationBindings, contents.OrganizationBindingsRegions);
 
         this.organizationSection.resolveRefs();
         this.resourcesSection.resolveRefs();

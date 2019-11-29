@@ -6,11 +6,13 @@ export class ResourcesSection {
     private readonly root: TemplateRoot;
     private readonly contents?: IResources;
     private readonly defaultBinding?: IOrganizationBinding;
+    private readonly defaultRegion?: string | string[];
 
-    constructor(root: TemplateRoot, contents?: IResources, defaultBinding?: IOrganizationBinding) {
+    constructor(root: TemplateRoot, contents?: IResources, defaultBinding?: IOrganizationBinding, defaultRegion?: string | string[]) {
         this.root = root;
         this.contents = contents;
         this.defaultBinding = defaultBinding;
+        this.defaultRegion = defaultRegion;
 
         if (!this.contents) { return; }
 
@@ -52,7 +54,7 @@ export class ResourcesSection {
     public createResource(id: string, resource: IResource): CloudFormationResource {
         switch (resource.Type) {
             default:
-                return new CloudFormationResource(this.root, id, resource, this.defaultBinding);
+                return new CloudFormationResource(this.root, id, resource, this.defaultBinding, this.defaultRegion);
         }
     }
 }

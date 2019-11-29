@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization:
+
+  #============================================#
+  # Accounts
+  #============================================#
+
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountId: '000000000000'
+      AccountName: 'master account'
+
+  Account1:
+    Type: OC::ORG::Account
+    Properties:
+      AccountId: '111111111111'
+      AccountName: Account1
+      Tags:
+        subdomain: acc1
+
+  Account2:
+    Type: OC::ORG::Account
+    Properties:
+      AccountId: '222222222222'
+      AccountName: Account2
+      Tags:
+        subdomain: acc2
+
+
+  Account3:
+    Type: OC::ORG::Account
+    Properties:
+      AccountId: '333333333333'
+      AccountName: Account3
+
+  Account4:
+    Type: OC::ORG::Account
+    Properties:
+      AccountId: '444444444444'
+      AccountName: Account4
+
+  #============================================#
+  # Organizational Units
+  #============================================#
+
+
+  OU1:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: ou1
+      Accounts:
+        - !Ref Account1
+
+  OU2:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: ou2
+      Accounts:
+        - !Ref Account2
+        - !Ref Account3
+
+  OU3:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: ou3
+      Accounts:
+        - !Ref Account4

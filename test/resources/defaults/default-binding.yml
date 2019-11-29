@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description:
+
+Organization: !Include ./organization.yml
+
+OrganizationBindings:
+  Regions: eu-west-1
+  Accounts: !Ref Account1
+
+Resources:
+
+  Topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Topic in Account 1
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    OrganizationBindings:
+      Regions: eu-central-1
+      Accounts: !Ref Account2
+    Properties:
+      BucketName: Bucket in Account 2

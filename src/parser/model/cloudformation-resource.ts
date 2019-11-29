@@ -12,12 +12,16 @@ export class CloudFormationResource extends Resource {
     private foreach: IOrganizationBinding;
     private binding: IOrganizationBinding;
 
-    constructor(root: TemplateRoot, id: string, resource: IResource, defaultBinding?: IOrganizationBinding) {
+    constructor(root: TemplateRoot, id: string, resource: IResource, defaultBinding?: IOrganizationBinding, defaultRegion?: string | string[]) {
         super(root, id, resource);
 
         this.binding = this.resource.OrganizationBindings as IOrganizationBinding;
-        if (!this.binding && defaultBinding) {
+        if (!this.binding) {
             this.binding = defaultBinding;
+            this.resource.OrganizationBindings = defaultBinding;
+        }
+        if (!this.binding.Regions) {
+            this.binding.Regions = defaultRegion;
         }
         if (!this.binding) {
             throw new Error(`Resource ${id} is missing OrganizationBindings attribute and no top level OrganizationBindings found.`);
