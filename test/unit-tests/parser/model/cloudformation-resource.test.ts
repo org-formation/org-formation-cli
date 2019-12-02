@@ -22,6 +22,7 @@ describe('when creating cloudformation resource with * accounts', () => {
             },
         };
         account = new CloudFormationResource(template, 'logical-id', resource);
+
         account.resolveRefs();
     });
 
@@ -42,6 +43,12 @@ describe('when creating cloudformation resource with * accounts', () => {
         const masterAccount = template.organizationSection.masterAccount.logicalId;
         const containsMaster = normalizedAccounts.indexOf(masterAccount) !== -1;
         expect(containsMaster).to.eq(false);
+    });
+
+    it('resource for tempalte does not contain organizational bindings', () => {
+        expect(account.resourceForTemplate.OrganizationBindings).to.be.undefined;
+        expect(account.resourceForTemplate.Type).to.not.be.undefined;
+        expect(account.resourceForTemplate.Properties).to.not.be.undefined;
     });
 });
 
@@ -392,6 +399,43 @@ describe('when including specific account as array', () => {
         const normalizedAccounts = account.normalizedBoundAccounts;
         expect(normalizedAccounts[0]).to.eq('Account');
         expect(normalizedAccounts.length).to.eq(1);
+    });
+});
+
+describe('when declaring foreach on element level', () => {
+    let template: TemplateRoot;
+    let resource: IResource;
+    let account: CloudFormationResource;
+
+    beforeEach(() => {
+        template = TestTemplates.createBasicTemplate();
+
+        resource = {
+            Type : 'AWS::S3::Bucket',
+            OrganizationBindings: {
+                IncludeMasterAccount: true,
+            },
+            Foreach: {
+                OrganizationalUnits: [{Ref: 'OU'}],
+            },
+            Properties: {
+                BucketName: 'test-bucket',
+            },
+        };
+        account = new CloudFormationResource(template, 'logical-id', resource);
+        account.resolveRefs();
+    });
+
+    it('copies properties from resource', () => {
+        const foreachBinding = (account as any).foreach as IOrganizationBinding;
+        expect(Array.isArray(foreachBinding.OrganizationalUnits)).to.eq(true);
+        expect((foreachBinding.OrganizationalUnits as any)[0].Ref).to.eq('OU');
+    });
+
+    it('Foreach attribute is removed from resource for template', () => {
+        expect(account.resourceForTemplate.Foreach).to.be.undefined;
+        expect(account.resourceForTemplate.Type).to.not.be.undefined;
+        expect(account.resourceForTemplate.Properties).to.not.be.undefined;
     });
 });
 

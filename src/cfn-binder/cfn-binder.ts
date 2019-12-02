@@ -60,7 +60,31 @@ export class CloudFormationBinder {
                 template: cfnTemplate,
                 dependencies: [],
                 dependents: [],
+                regionDependencies: [],
+                accountDependencies: [],
             };
+            const dependsOnAccounts = new Set<string>();
+            const dependsOnRegions = new Set<string>();
+            for (const resource of target.resources) {
+                for (const accountLogiocalId of resource.dependsOnAccount) {
+                    dependsOnAccounts.add(accountLogiocalId);
+                }
+            }
+            for (const resource of target.resources) {
+                for (const dependsOnRegion of resource.dependsOnRegion) {
+                    dependsOnRegions.add(dependsOnRegion);
+                }
+            }
+
+            binding.regionDependencies = [...dependsOnRegions];
+
+            for (const dependsOnLogicalAccount of dependsOnAccounts) {
+                const dependsOnAccountBinding = this.state.getBinding(OrgResourceTypes.Account, dependsOnLogicalAccount);
+                if (!dependsOnAccountBinding) {
+                    throw new Error(`unable to find account with logical Id ${dependsOnLogicalAccount}`);
+                }
+                binding.accountDependencies.push(dependsOnAccountBinding.physicalId);
+            }
 
             if (!stored || stored.lastCommittedHash !== templateHash) {
                 binding.action = 'UpdateOrCreate';
@@ -92,6 +116,10 @@ export class CloudFormationBinder {
                     templateHash,
                     action: 'Delete',
                     state: storedTarget,
+                    dependencies: [],
+                    dependents: [],
+                    regionDependencies: [],
+                    accountDependencies: [],
                 });
              }
         }
@@ -103,7 +131,11 @@ export class CloudFormationBinder {
         for (const binding of this.enumBindings()) {
             if (binding.action === 'UpdateOrCreate') {
                 const task = this.taskProvider.createUpdateTemplateTask(binding);
-                task.dependentTaskFilter = (other) => binding.dependencies.findIndex((x) => x.outputAccountId === other.accountId && x.outputRegion === other.region && x.outputStackName === other.stackName) > -1;
+                task.dependentTaskFilter = (other) => {
+                    return binding.accountDependencies.includes(other.accountId) ||
+                           binding.regionDependencies.includes(other.region) ||
+                           binding.dependencies.findIndex((x) => x.outputAccountId === other.accountId && x.outputRegion === other.region && x.outputStackName === other.stackName) > -1;
+                };
                 result.push(task);
             } else if (binding.action === 'Delete') {
                 const task = this.taskProvider.createDeleteTemplateTask(binding);
@@ -123,8 +155,10 @@ export interface ICfnBinding {
     templateHash: string;
     state?: ICfnTarget;
     template?: CfnTemplate;
-    dependencies?: ICfnCrossAccountDependency[];
-    dependents?: ICfnCrossAccountDependency[];
+    dependencies: ICfnCrossAccountDependency[];
+    dependents: ICfnCrossAccountDependency[];
+    accountDependencies: string[];
+    regionDependencies: string[];
 }
 
 export interface ICfnCrossAccountDependency {

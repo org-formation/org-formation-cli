@@ -10,8 +10,10 @@ export class CloudFormationResource extends Resource {
     public resourceForTemplate: any;
     public normalizedBoundAccounts?: string[];
     public normalizedForeachAccounts?: string[];
-    public dependsOnAccount: IResourceRef | IResourceRef[];
-    public dependsOnRegion: IResourceRef | IResourceRef[];
+    public dependsOnAccount: string[] = [];
+    public dependsOnRegion: string[] = [];
+    private dependsOnAccountRef?: IResourceRef | IResourceRef[];
+    private dependsOnRegionRef?: string | string[];
     private foreach: IOrganizationBinding;
     private binding: IOrganizationBinding;
 
@@ -23,11 +25,13 @@ export class CloudFormationResource extends Resource {
             this.binding = defaultBinding;
             this.resource.OrganizationBindings = defaultBinding;
         }
-        if (!this.binding.Regions) {
-            this.binding.Regions = defaultRegion;
-        }
+
         if (!this.binding) {
             throw new Error(`Resource ${id} is missing OrganizationBindings attribute and no top level OrganizationBindings found.`);
+        }
+
+        if (!this.binding.Regions) {
+            this.binding.Regions = defaultRegion;
         }
 
         super.throwForUnknownAttributes(this.binding, id + '.OrganizationBindings', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'Regions', 'IncludeMasterAccount', 'AccountsWithTag');
@@ -47,14 +51,16 @@ export class CloudFormationResource extends Resource {
             this.regions = [];
             ConsoleUtil.LogWarning(`No binding found for resource ${id}. Either add defaults globally or OrganizationBindings to the resource attributes.`);
         }
-        this.dependsOnAccount = this.resource.DependsOnAccount;
-        this.dependsOnRegion = this.resource.DependsOnRegion;
+        this.dependsOnAccountRef = this.resource.DependsOnAccount;
+        this.dependsOnRegionRef = this.resource.DependsOnRegion;
 
         const resourceString = JSON.stringify(resource);
         this.resourceHash = md5(resourceString);
         this.resourceForTemplate = JSON.parse(JSON.stringify(resource));
         delete this.resourceForTemplate.OrganizationBindings;
         delete this.resourceForTemplate.Foreach;
+        delete this.resourceForTemplate.DependsOnAccount;
+        delete this.resourceForTemplate.DependsOnRegion;
     }
 
     public calculateHash() {
@@ -67,6 +73,24 @@ export class CloudFormationResource extends Resource {
         }
         if (this.foreach) {
             this.normalizedForeachAccounts = this.resolveNormalizedLogicalAccountIds(this.foreach);
+        }
+
+        if (this.dependsOnAccountRef) {
+            const accountsAndMaster = [...this.root.organizationSection.accounts, this.root.organizationSection.masterAccount];
+            const resolvedResources = super.resolve(this.dependsOnAccountRef, accountsAndMaster);
+            for (const resolved of resolvedResources) {
+                if (resolved.TemplateResource && resolved.TemplateResource.logicalId) {
+                    this.dependsOnAccount.push(resolved.TemplateResource.logicalId);
+                }
+            }
+
+            if (this.dependsOnRegionRef) {
+                if (typeof this.dependsOnRegionRef === 'string') {
+                    this.dependsOnRegion = [this.dependsOnRegionRef];
+                } else {
+                    this.dependsOnRegion = this.dependsOnRegionRef;
+                }
+            }
         }
     }
 

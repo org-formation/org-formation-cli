@@ -8,8 +8,7 @@ Resources:
 
   Topic:
     Type: AWS::SNS::Topic
-    DependsOnAccount: !Ref Account2
-    DependsOnRegion: us-east-1
+    DependsOnAccount: !Ref AccountUnknown
     OrganizationBindings:
       Accounts: !Ref Account1
     Properties:
