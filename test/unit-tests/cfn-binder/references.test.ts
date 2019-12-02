@@ -28,6 +28,7 @@ describe('when loading cross account references through sub', () => {
     let bindings: ICfnBinding[];
     let templateAccount1: ICfnTemplate;
     let templateAccount2: ICfnTemplate;
+    let masterAccount: ICfnTemplate;
 
     beforeEach (() => {
         const template = TemplateRoot.create('./test/resources/references/reference-using-sub.yml');
@@ -42,16 +43,22 @@ describe('when loading cross account references through sub', () => {
         const cloudformationBinder = new CloudFormationBinder('reference-using-sub', template, persistedState);
         bindings = cloudformationBinder.enumBindings();
 
+        masterAccount = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
         templateAccount1 = JSON.parse(bindings.find((x) => x.accountId === '111111111111').template.createTemplateBody());
         templateAccount2 = JSON.parse(bindings.find((x) => x.accountId === '222222222222').template.createTemplateBody());
-
     });
     it('can create cfn bindings for template', () => {
         expect(bindings).to.not.be.undefined;
     });
 
-    it('creates 2 bindings for template', () => {
-        expect(bindings.length).to.eq(2);
+    it('creates 3 bindings for template', () => {
+        expect(bindings.length).to.eq(3);
+    });
+
+    it('master has 1 topic as only resource', () => {
+        const keys = Object.keys(masterAccount.Resources);
+        expect(keys.length).to.eq(1);
+        expect(keys[0]).to.eq('TopicMaster');
     });
 
     it('template 1 has topic as only resource', () => {
@@ -143,5 +150,27 @@ describe('when loading cross account references through sub', () => {
         expect(getAttExpression).to.not.be.undefined;
         expect(getAttExpression).to.contain('S3Bucket6.BucketName');
         expect(getAttExpression).to.not.contain('Account2');
+    });
+
+    it('Account 2 S3Bucket 9 Bucketname gets rewritten to parameter', () => {
+        const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket9.Properties.BucketName;
+        expect(bucketName['Fn::Sub']).to.not.contain('MasterAccount.Resource');
+        expect(bucketName['Fn::Sub']).to.eq('${TopicMasterDotTopicName}-bucket');
+    });
+
+    it('Account 2 S3Bucket 10 Bucketname gets rewritten to local GetAtt reference', () => {
+        const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket10.Properties.BucketName;
+        const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
+
+        expect(refExpression.Ref).to.not.be.undefined;
+        expect(refExpression.Ref).to.eq('TopicMaster');
+    });
+
+    it('Account 2 S3Bucket 11 Bucketname gets rewritten to value', () => {
+        const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket11.Properties.BucketName;
+        const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
+
+        expect(refExpression).to.not.be.undefined;
+        expect(refExpression).to.eq('root@mail.com');
     });
 });

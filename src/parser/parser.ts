@@ -44,6 +44,8 @@ export interface IResource {
     Properties?: IPropertiesMap;
     OrganizationBindings?: IOrganizationBinding & IPropertiesMap;
     Foreach?: IOrganizationBinding & IPropertiesMap;
+    DependsOnAccount?: IResourceRef | IResourceRef[];
+    DependsOnRegion?: string | string[];
 }
 
 export interface IPropertiesMap extends Record<string, any> {

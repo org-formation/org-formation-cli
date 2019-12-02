@@ -276,7 +276,7 @@ export class CfnTemplate {
                         let resourceId = variable.resource;
                         let path = variable.path;
                         if (variable.path && variable.path.startsWith('Resources')) {
-                            const targetAccount = this.templateRoot.organizationSection.accounts.find((x) => x.logicalId === resourceId);
+                            const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === resourceId);
                             if (!targetAccount) { throw new Error(`unable to find account ${resourceId} for cross account dependency`); }
                             const pathParts = variable.path.split('.');
                             const remoteResourceId = pathParts[1];
@@ -337,7 +337,7 @@ export class CfnTemplate {
                             let processed = false;
                             let target;
                             if (path.startsWith('Resources.')) {
-                                const targetAccount = this.templateRoot.organizationSection.accounts.find((x) => x.logicalId === resourceId);
+                                const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === resourceId);
                                 if (!targetAccount) { throw new Error(`unable to find account ${resourceId} for cross account dependency`); }
                                 const pathParts = path.split('.');
                                 const accountLogicalId = resourceId;
@@ -472,9 +472,16 @@ export class CfnTemplate {
                         }
                     }
 
+                    for (const [key, val] of entries) {
+                        if (val !== null && typeof val === 'object') {
+                            resource[key] = this._resolveOrganizationFunctions(val, accountResource);
+                        }
+                    }
+
                     if (sub.hasVariables()) {
                         return {'Fn::Sub': sub.getSubValue()};
                     }
+
                     return sub.getSubValue();
                 }
             }

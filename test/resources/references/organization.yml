@@ -11,7 +11,7 @@ Organization:
     Properties:
       AccountId: '000000000000'
       AccountName: 'master account'
-
+      RootEmail: 'root@mail.com'
   Account1:
     Type: OC::ORG::Account
     Properties:

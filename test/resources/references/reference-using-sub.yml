@@ -3,17 +3,23 @@ Description:
 
 Organization: !Include ./organization.yml
 
-OrganizationBindings:
-  Regions: eu-west-1
-  Accounts: !Ref Account2
+OrganizationBindings: { Accounts: !Ref Account2 }
+
+OrganizationBindingsRegions: eu-west-1
 
 Resources:
 
   Topic:
     Type: AWS::SNS::Topic
     OrganizationBindings:
-      Regions: eu-west-1
       Accounts: !Ref Account1
+    Properties:
+      DisplayName: Name
+
+  TopicMaster:
+    Type: AWS::SNS::Topic
+    OrganizationBindings:
+      IncludeMasterAccount: true
     Properties:
       DisplayName: Name
 
@@ -64,3 +70,22 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub '${Account2.Resources.S3Bucket6}-bucket'
+
+  S3Bucket9:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${MasterAccount.Resources.TopicMaster.TopicName}-bucket'
+
+  S3Bucket10:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+      - '${var}-bucket'
+      - { var: !GetAtt MasterAccount.Resources.TopicMaster }
+
+  S3Bucket11:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+      - '${var}-bucket'
+      - { var: !GetAtt MasterAccount.RootEmail }

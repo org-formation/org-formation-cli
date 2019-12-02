@@ -1,4 +1,5 @@
 import md5 = require('md5');
+import { ConsoleUtil } from '../../console-util';
 import { OrgFormationError } from '../../org-formation-error';
 import { IOrganizationBinding, IResource, IResourceRef, TemplateRoot } from '../parser';
 import { Resource } from './resource';
@@ -9,6 +10,8 @@ export class CloudFormationResource extends Resource {
     public resourceForTemplate: any;
     public normalizedBoundAccounts?: string[];
     public normalizedForeachAccounts?: string[];
+    public dependsOnAccount: IResourceRef | IResourceRef[];
+    public dependsOnRegion: IResourceRef | IResourceRef[];
     private foreach: IOrganizationBinding;
     private binding: IOrganizationBinding;
 
@@ -42,8 +45,10 @@ export class CloudFormationResource extends Resource {
             }
         } else {
             this.regions = [];
-            // throw new Error(`no binding found for resource ${id}. Either add an OrganizationBindings attribute to the resource or globally to the template.`);
+            ConsoleUtil.LogWarning(`No binding found for resource ${id}. Either add defaults globally or OrganizationBindings to the resource attributes.`);
         }
+        this.dependsOnAccount = this.resource.DependsOnAccount;
+        this.dependsOnRegion = this.resource.DependsOnRegion;
 
         const resourceString = JSON.stringify(resource);
         this.resourceHash = md5(resourceString);
@@ -66,7 +71,6 @@ export class CloudFormationResource extends Resource {
     }
 
     private resolveNormalizedLogicalAccountIds(binding: IOrganizationBinding): string[] {
-
         const accounts = super.resolve(binding.Accounts, this.root.organizationSection.accounts);
         const excludeAccounts = super.resolve(binding.ExcludeAccounts, this.root.organizationSection.accounts);
         const organizationalUnits = super.resolve(binding.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
