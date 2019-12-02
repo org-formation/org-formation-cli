@@ -1,18 +1,33 @@
 import { ConsoleUtil } from '../console-util';
+import { OrgFormationError } from '../org-formation-error';
 import { ICfnTask } from './cfn-task-provider';
 
 export class CfnTaskRunner {
 
-    public static async RunTasks(tasks: ICfnTask[], stackName: string) {
+    public static async RunTasks(tasks: ICfnTask[], stackName: string, alltasks?: ICfnTask[], pendingDependencies?: ICfnTask[]) {
+        if (!alltasks) {
+            alltasks = tasks;
+        }
+        if (!pendingDependencies) {
+            pendingDependencies = [];
+        }
         const runningTasks: Array<Promise<void>> = [];
         for (const task of tasks) {
+
+            if (pendingDependencies.includes(task)) {
+                throw new OrgFormationError(`circular dependency on task for target account ${task.accountId} / ${task.region}`);
+            }
             const dependentTasks = [];
             if (task.dependentTaskFilter) {
-                dependentTasks.push(...tasks.filter(task.dependentTaskFilter));
+                if (task.dependentTaskFilter(task)) {
+                    throw new OrgFormationError(`task has dependency on self target account ${task.accountId} / ${task.region}`);
+                }
+                dependentTasks.push(...alltasks.filter(task.dependentTaskFilter));
             }
             const needToRunFirst = dependentTasks.filter((x) => !x.done);
             if (needToRunFirst.length > 0) {
-                await CfnTaskRunner.RunTasks(needToRunFirst, stackName);
+                pendingDependencies.push(task);
+                await CfnTaskRunner.RunTasks(needToRunFirst, stackName, alltasks, pendingDependencies);
             }
             if (task.done) {
                 continue;
