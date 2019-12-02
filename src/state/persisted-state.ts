@@ -1,8 +1,5 @@
-import { S3 } from 'aws-sdk';
-import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
-import { readFileSync, stat, writeFileSync } from 'fs';
 import { OrgFormationError } from '../org-formation-error';
-import {IStorageProvider} from './storage-provider';
+import { IStorageProvider } from './storage-provider';
 
 export class PersistedState {
 

@@ -1,4 +1,4 @@
-import { S3, STS } from 'aws-sdk';
+import { S3 } from 'aws-sdk';
 import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
 import { readFileSync, writeFileSync } from 'fs';
 import { OrgFormationError } from '../org-formation-error';
