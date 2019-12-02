@@ -79,7 +79,7 @@ export class CloudFormationBinder {
             binding.regionDependencies = [...dependsOnRegions];
 
             for (const dependsOnLogicalAccount of dependsOnAccounts) {
-                const dependsOnAccountBinding = this.state.getBinding(OrgResourceTypes.Account, dependsOnLogicalAccount);
+                const dependsOnAccountBinding = this.state.getBinding(OrgResourceTypes.Account, dependsOnLogicalAccount) || this.state.getBinding(OrgResourceTypes.MasterAccount, dependsOnLogicalAccount);
                 if (!dependsOnAccountBinding) {
                     throw new Error(`unable to find account with logical Id ${dependsOnLogicalAccount}`);
                 }
