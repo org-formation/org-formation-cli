@@ -20,7 +20,6 @@ Resources:
       Region: eu-central-1
     Properties:
       DetectorId: !Ref Detector
-      InvitationId: !Ref MemberInvitation
       MasterId: !Ref MasterAccount
   Member:
     Type: AWS::GuardDuty::Member
