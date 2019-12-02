@@ -11,6 +11,7 @@
         "arrow-return-shorthand": false,
         "no-unused-expression": false,
         "quotemark": [true, "single"],
+        "interface-name": false,
         "forin": false,
         "indent": [
             "error",
