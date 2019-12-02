@@ -6,8 +6,8 @@ Organization: !Include ./organization.yml
 Resources:
 
   Budget:
-    OrganizationBindings:
-      Regions: eu-central-1
+    OrganizationBinding:
+      Region: eu-central-1
       AccountsWithTag: budget-alarm-threshold
     Type: AWS::Budgets::Budget
     Properties:

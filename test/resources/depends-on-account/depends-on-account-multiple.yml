@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09-OC'
 Description:
 
 Organization: !Include ./organization.yml
-OrganizationBindingsRegions: 'eu-west-1'
+OrganizationBindingRegion: 'eu-west-1'
 
 Resources:
 
@@ -16,8 +16,8 @@ Resources:
       - us-east-1
       - us-east-1
       - us-east-1
-    OrganizationBindings:
-      Accounts: !Ref Account1
+    OrganizationBinding:
+      Account: !Ref Account1
     Properties:
       DisplayName: Topic in eu-west-1 that depends on us-east-1
 
@@ -31,15 +31,15 @@ Resources:
       - us-east-1
       - us-east-1
       - us-east-1
-    OrganizationBindings:
-      Accounts: !Ref Account1
+    OrganizationBinding:
+      Account: !Ref Account1
     Properties:
       DisplayName: Topic in eu-west-1 that depends on us-east-1
 
   S3Bucket:
     Type: AWS::S3::Bucket
-    OrganizationBindings:
-      Accounts: !Ref Account2
-      Regions: us-east-1
+    OrganizationBinding:
+      Account: !Ref Account2
+      Region: us-east-1
     Properties:
       BucketName: Bucket in us-east-1

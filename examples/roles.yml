@@ -6,9 +6,9 @@ Organization: !Include ./organization.yml
 Resources:
 
   DeveloperGroup:
-    OrganizationBindings:
-      Regions: eu-central-1
-      Accounts:
+    OrganizationBinding:
+      Region: eu-central-1
+      Account:
         - !Ref SharedUsersAccount
     Type: AWS::IAM::Group
     Properties:
@@ -23,9 +23,9 @@ Resources:
                 Resource: arn:aws:iam::*:role/CloudWatcherRole
 
   CloudWatcherRole:
-    OrganizationBindings:
-      Regions: eu-central-1
-      OrganizationalUnits:
+    OrganizationBinding:
+      Region: eu-central-1
+      OrganizationalUnit:
         - !Ref ProductionOU
         - !Ref SharedOU
     Type: AWS::IAM::Role

@@ -9,9 +9,9 @@ Resources:
     Type: AWS::SNS::Topic
     DependsOn:
     - Function
-    OrganizationBindings:
-      Accounts: '*'
-      Regions: eu-central-1
+    OrganizationBinding:
+      Account: '*'
+      Region: eu-central-1
     Properties:
       DisplayName: !Sub 'topic that will invoke a lambda cross account on account ${SharedServicesAccount.AccountName}'
       TopicName: !Sub 'cross-account-invoke'
@@ -23,9 +23,9 @@ Resources:
     Type: AWS::SNS::TopicPolicy
     DependsOn:
       - Topic
-    OrganizationBindings:
-      Accounts: '*'
-      Regions: eu-central-1
+    OrganizationBinding:
+      Account: '*'
+      Region: eu-central-1
     Properties:
       PolicyDocument:
         Version: '2012-10-17'
@@ -42,12 +42,12 @@ Resources:
 
   FunctionInvokePermission:
     Type: 'AWS::Lambda::Permission'
-    OrganizationBindings:
-      Accounts: !Ref SharedServicesAccount
-      Regions: eu-central-1
+    OrganizationBinding:
+      Account: !Ref SharedServicesAccount
+      Region: eu-central-1
     Foreach:
-      Accounts: '*'
-      ExcludeAccounts: !Ref SharedServicesAccount
+      Account: '*'
+      ExcludeAccount: !Ref SharedServicesAccount
     Properties:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref Function
@@ -57,9 +57,9 @@ Resources:
 
   Function:
     Type: 'AWS::Lambda::Function'
-    OrganizationBindings:
-      Accounts: !Ref SharedServicesAccount
-      Regions: eu-central-1
+    OrganizationBinding:
+      Account: !Ref SharedServicesAccount
+      Region: eu-central-1
     Properties:
       Description: Sample function
       Handler: index.lambda_handler
@@ -78,9 +78,9 @@ Resources:
 
   AWSLambdaBasicExecutionRole:
     Type: 'AWS::IAM::Role'
-    OrganizationBindings:
-      Accounts: !Ref SharedServicesAccount
-      Regions: eu-central-1
+    OrganizationBinding:
+      Account: !Ref SharedServicesAccount
+      Region: eu-central-1
     Properties:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'

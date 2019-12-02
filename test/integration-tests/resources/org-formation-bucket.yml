@@ -4,8 +4,8 @@ Organization: !Include ./organization.yml
 
 Resources:
   Bucket:
-    OrganizationBindings:
-      Regions: eu-west-1
-      Accounts: '*'
+    OrganizationBinding:
+      Region: eu-west-1
+      Account: '*'
       IncludeMasterAccount: true
     Type: AWS::S3::Bucket

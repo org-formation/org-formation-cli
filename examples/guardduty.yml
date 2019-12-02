@@ -6,28 +6,29 @@ Organization: !Include ./organization.yml
 Resources:
   Detector:
     Type: AWS::GuardDuty::Detector
-    OrganizationBindings:
-      Accounts: '*'
+    OrganizationBinding:
+      Account: '*'
       IncludeMasterAccount: true
-      Regions: eu-central-1
+      Region: eu-central-1
     Properties:
       Enable: 'true'
   Master:
+    DependsOnAccount: !Ref MasterAccount
     Type: AWS::GuardDuty::Master
-    OrganizationBindings:
-      Accounts: '*'
-      Regions: eu-central-1
+    OrganizationBinding:
+      Account: '*'
+      Region: eu-central-1
     Properties:
       DetectorId: !Ref Detector
       InvitationId: !Ref MemberInvitation
       MasterId: !Ref MasterAccount
   Member:
     Type: AWS::GuardDuty::Member
-    OrganizationBindings:
+    OrganizationBinding:
       IncludeMasterAccount: true
-      Regions: eu-central-1
+      Region: eu-central-1
     Foreach:
-      Accounts: '*'
+      Account: '*'
     Properties:
       DetectorId: !Ref Detector
       Email: !GetAtt CurrentAccount.RootEmail

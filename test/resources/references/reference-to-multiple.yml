@@ -7,17 +7,17 @@ Resources:
 
   Topic:
     Type: AWS::SNS::Topic
-    OrganizationBindings:
-      Regions: eu-west-1
-      OrganizationalUnits: !Ref OU2
+    OrganizationBinding:
+      Region: eu-west-1
+      OrganizationalUnit: !Ref OU2
     Properties:
       DisplayName: Name
 
   S3Bucket:
     Type: AWS::S3::Bucket
-    OrganizationBindings:
-      Regions: eu-west-1
-      OrganizationalUnits: !Ref OU1
+    OrganizationBinding:
+      Region: eu-west-1
+      OrganizationalUnit: !Ref OU1
     Properties:
       BucketName: !GetAtt Topic.TopicName
 #      BucketName: !Sub '${Topic.TopicName}-bucket' //todo: support this

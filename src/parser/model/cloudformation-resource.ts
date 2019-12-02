@@ -20,36 +20,41 @@ export class CloudFormationResource extends Resource {
     constructor(root: TemplateRoot, id: string, resource: IResource, defaultBinding?: IOrganizationBinding, defaultRegion?: string | string[]) {
         super(root, id, resource);
 
-        this.binding = this.resource.OrganizationBindings as IOrganizationBinding;
+        if ((this.resource as any).OrganizationBindings) {
+            throw new Error(`Resource ${id} has an OrganizationBindings attribute which must be OrganizationBinding (without the S)`);
+        }
+
+        this.binding = this.resource.OrganizationBinding as IOrganizationBinding;
+
         if (!this.binding) {
             this.binding = defaultBinding;
-            this.resource.OrganizationBindings = defaultBinding;
+            this.resource.OrganizationBinding = defaultBinding;
         }
 
         if (!this.binding) {
-            throw new Error(`Resource ${id} is missing OrganizationBindings attribute and no top level OrganizationBindings found.`);
+            throw new Error(`Resource ${id} is missing OrganizationBinding attribute and no top level OrganizationBinding found.`);
         }
 
-        if (!this.binding.Regions) {
-            this.binding.Regions = defaultRegion;
+        if (!this.binding.Region) {
+            this.binding.Region = defaultRegion;
         }
 
-        super.throwForUnknownAttributes(this.binding, id + '.OrganizationBindings', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'Regions', 'IncludeMasterAccount', 'AccountsWithTag');
+        super.throwForUnknownAttributes(this.binding, id + '.OrganizationBinding', 'OrganizationalUnit', 'Account', 'ExcludeAccount', 'Region', 'IncludeMasterAccount', 'AccountsWithTag');
 
         this.foreach = this.resource.Foreach as IOrganizationBinding;
         if (this.foreach) {
-            super.throwForUnknownAttributes(this.foreach, id + '.Foreach', 'OrganizationalUnits', 'Accounts', 'ExcludeAccounts', 'IncludeMasterAccount', 'AccountsWithTag');
+            super.throwForUnknownAttributes(this.foreach, id + '.Foreach', 'OrganizationalUnit', 'Account', 'ExcludeAccount', 'IncludeMasterAccount', 'AccountsWithTag');
         }
 
-        if (this.binding && this.binding.Regions) {
-            if (typeof this.binding.Regions === 'string') {
-                this.regions = [this.binding.Regions];
+        if (this.binding && this.binding.Region) {
+            if (typeof this.binding.Region === 'string') {
+                this.regions = [this.binding.Region];
             } else {
-                this.regions = this.binding.Regions;
+                this.regions = this.binding.Region;
             }
         } else {
             this.regions = [];
-            ConsoleUtil.LogWarning(`No binding found for resource ${id}. Either add defaults globally or OrganizationBindings to the resource attributes.`);
+            ConsoleUtil.LogWarning(`No binding found for resource ${id}. Either add defaults globally or OrganizationBinding to the resource attributes.`);
         }
         this.dependsOnAccountRef = this.resource.DependsOnAccount;
         this.dependsOnRegionRef = this.resource.DependsOnRegion;
@@ -57,7 +62,7 @@ export class CloudFormationResource extends Resource {
         const resourceString = JSON.stringify(resource);
         this.resourceHash = md5(resourceString);
         this.resourceForTemplate = JSON.parse(JSON.stringify(resource));
-        delete this.resourceForTemplate.OrganizationBindings;
+        delete this.resourceForTemplate.OrganizationBinding;
         delete this.resourceForTemplate.Foreach;
         delete this.resourceForTemplate.DependsOnAccount;
         delete this.resourceForTemplate.DependsOnRegion;
@@ -95,9 +100,9 @@ export class CloudFormationResource extends Resource {
     }
 
     private resolveNormalizedLogicalAccountIds(binding: IOrganizationBinding): string[] {
-        const accounts = super.resolve(binding.Accounts, this.root.organizationSection.accounts);
-        const excludeAccounts = super.resolve(binding.ExcludeAccounts, this.root.organizationSection.accounts);
-        const organizationalUnits = super.resolve(binding.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
+        const accounts = super.resolve(binding.Account, this.root.organizationSection.accounts);
+        const excludeAccounts = super.resolve(binding.ExcludeAccount, this.root.organizationSection.accounts);
+        const organizationalUnits = super.resolve(binding.OrganizationalUnit, this.root.organizationSection.organizationalUnits);
 
         const accountLogicalIds = accounts.map((x) => x.TemplateResource!.logicalId);
         const result = new Set<string>(accountLogicalIds);

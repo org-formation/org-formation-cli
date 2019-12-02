@@ -44,7 +44,7 @@ describe('when using Ref on account', () => {
                             OtherAccountRef: { Ref : otherAccountLogicalId },
                             NonAccountRef: { Ref : 'something' },
                         },
-                    }, templateRoot.contents.OrganizationBindings),
+                    }, templateRoot.contents.OrganizationBinding),
             ],
         };
 
@@ -107,7 +107,7 @@ describe('when using GetAtt on account', () => {
                 new CloudFormationResource(templateRoot, 'resource',
                     {
                         Type: 'AWS::FantasyType',
-                        OrganizationBindings: { Accounts: '*'},
+                        OrganizationBinding: { Account: '*'},
                         Properties: {
                             CurrentAccountName: { 'Fn::GetAtt' : ['AWSAccount', 'AccountName'] },
                             CurrentAccountId: { 'Fn::GetAtt' : ['AWSAccount', 'AccountId'] },
@@ -227,7 +227,7 @@ describe('when using Sub on account', () => {
                 new CloudFormationResource(templateRoot, 'resource',
                     {
                         Type: 'AWS::Custom',
-                        OrganizationBindings: { Accounts: '*'},
+                        OrganizationBinding: { Account: '*'},
                         Properties: {
                             MasterAccountRef: { 'Fn::Sub' : '${' + masterAccountLogicalId + '}' },
                             OtherAccountRef: { 'Fn::Sub' : '${' + otherAccountLogicalId + '}' },

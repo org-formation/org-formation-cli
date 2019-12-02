@@ -13,9 +13,9 @@ describe('when creating cloudformation resource with * accounts', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                Accounts: '*',
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                Account: '*',
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -28,8 +28,8 @@ describe('when creating cloudformation resource with * accounts', () => {
 
     it('copies properties from resource', () => {
         const orgBindings = (account as any).binding as IOrganizationBinding;
-        expect(orgBindings.Accounts).to.eq('*');
-        expect(orgBindings.Regions).to.eq('eu-central-1');
+        expect(orgBindings.Account).to.eq('*');
+        expect(orgBindings.Region).to.eq('eu-central-1');
     });
 
     it('normalized accounts contains all accounts', () => {
@@ -46,7 +46,7 @@ describe('when creating cloudformation resource with * accounts', () => {
     });
 
     it('resource for tempalte does not contain organizational bindings', () => {
-        expect(account.resourceForTemplate.OrganizationBindings).to.be.undefined;
+        expect(account.resourceForTemplate.OrganizationBinding).to.be.undefined;
         expect(account.resourceForTemplate.Type).to.not.be.undefined;
         expect(account.resourceForTemplate.Properties).to.not.be.undefined;
     });
@@ -62,9 +62,9 @@ describe('when creating cloudformation resource with include master', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
+            OrganizationBinding: {
                 IncludeMasterAccount: true,
-                Regions: 'eu-central-1',
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -77,7 +77,7 @@ describe('when creating cloudformation resource with include master', () => {
     it('copies properties from resource', () => {
         const orgBindings = (account as any).binding as IOrganizationBinding;
         expect(orgBindings.IncludeMasterAccount).to.eq(true);
-        expect(orgBindings.Regions).to.eq('eu-central-1');
+        expect(orgBindings.Region).to.eq('eu-central-1');
     });
 
     it('normalized accounts returns master account', () => {
@@ -98,9 +98,9 @@ describe('when including specific account as value', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                Accounts: {Ref: 'Account2'},
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                Account: {Ref: 'Account2'},
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -112,9 +112,9 @@ describe('when including specific account as value', () => {
 
     it('copies properties from resource', () => {
         const orgBindings = (account as any).binding as IOrganizationBinding;
-        expect(Array.isArray(orgBindings.Accounts)).to.eq(false);
-        expect((orgBindings.Accounts as IResourceRefExpression).Ref).to.eq('Account2');
-        expect(orgBindings.Regions).to.eq('eu-central-1');
+        expect(Array.isArray(orgBindings.Account)).to.eq(false);
+        expect((orgBindings.Account as IResourceRefExpression).Ref).to.eq('Account2');
+        expect(orgBindings.Region).to.eq('eu-central-1');
     });
 
     it('normalized accounts returns specific account', () => {
@@ -134,9 +134,9 @@ describe('when including specific account as array', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                Accounts: [{Ref: 'Account2'}],
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                Account: [{Ref: 'Account2'}],
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -148,9 +148,9 @@ describe('when including specific account as array', () => {
 
     it('copies properties from resource', () => {
         const orgBindings = (account as any).binding as IOrganizationBinding;
-        expect(Array.isArray(orgBindings.Accounts)).to.eq(true);
-        expect((orgBindings.Accounts as any)[0].Ref).to.eq('Account2');
-        expect(orgBindings.Regions).to.eq('eu-central-1');
+        expect(Array.isArray(orgBindings.Account)).to.eq(true);
+        expect((orgBindings.Account as any)[0].Ref).to.eq('Account2');
+        expect(orgBindings.Region).to.eq('eu-central-1');
     });
 
     it('normalized accounts returns specific account', () => {
@@ -170,9 +170,9 @@ describe('when including specific account that doesnt exist', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                Accounts: {Ref: 'AccountX'},
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                Account: {Ref: 'AccountX'},
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -201,10 +201,10 @@ describe('when exluding specific account as value', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                Accounts: '*',
-                ExcludeAccounts: {Ref: 'Account2'},
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                Account: '*',
+                ExcludeAccount: {Ref: 'Account2'},
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -216,9 +216,9 @@ describe('when exluding specific account as value', () => {
 
     it('copies properties from resource', () => {
         const orgBindings = (account as any).binding as IOrganizationBinding;
-        expect(orgBindings.Accounts).to.eq('*');
-        expect((orgBindings.ExcludeAccounts as IResourceRefExpression).Ref).to.eq('Account2');
-        expect(orgBindings.Regions).to.eq('eu-central-1');
+        expect(orgBindings.Account).to.eq('*');
+        expect((orgBindings.ExcludeAccount as IResourceRefExpression).Ref).to.eq('Account2');
+        expect(orgBindings.Region).to.eq('eu-central-1');
     });
 
     it('normalized does not return exluded account', () => {
@@ -238,10 +238,10 @@ describe('when exluding specific account that doesnt exist', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                Accounts: '*',
-                ExcludeAccounts: {Ref: 'XYZ'},
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                Account: '*',
+                ExcludeAccount: {Ref: 'XYZ'},
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -271,10 +271,10 @@ describe('when excluding specific account as array', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                Accounts: '*',
-                ExcludeAccounts: [{Ref: 'Account2'}],
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                Account: '*',
+                ExcludeAccount: [{Ref: 'Account2'}],
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -286,10 +286,10 @@ describe('when excluding specific account as array', () => {
 
     it('copies properties from resource', () => {
         const orgBindings = (account as any).binding as IOrganizationBinding;
-        expect(Array.isArray(orgBindings.ExcludeAccounts)).to.eq(true);
-        expect((orgBindings.ExcludeAccounts as any)[0].Ref).to.eq('Account2');
-        expect(orgBindings.Accounts).to.eq('*');
-        expect(orgBindings.Regions).to.eq('eu-central-1');
+        expect(Array.isArray(orgBindings.ExcludeAccount)).to.eq(true);
+        expect((orgBindings.ExcludeAccount as any)[0].Ref).to.eq('Account2');
+        expect(orgBindings.Account).to.eq('*');
+        expect(orgBindings.Region).to.eq('eu-central-1');
     });
 
     it('normalized accounts does not return exluded account', () => {
@@ -309,9 +309,9 @@ describe('when including specific ou as value', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                OrganizationalUnits: {Ref: 'OU'},
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                OrganizationalUnit: {Ref: 'OU'},
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -323,9 +323,9 @@ describe('when including specific ou as value', () => {
 
     it('copies properties from resource', () => {
         const orgBindings = (account as any).binding as IOrganizationBinding;
-        expect(Array.isArray(orgBindings.OrganizationalUnits)).to.eq(false);
-        expect((orgBindings.OrganizationalUnits as IResourceRefExpression).Ref).to.eq('OU');
-        expect(orgBindings.Regions).to.eq('eu-central-1');
+        expect(Array.isArray(orgBindings.OrganizationalUnit)).to.eq(false);
+        expect((orgBindings.OrganizationalUnit as IResourceRefExpression).Ref).to.eq('OU');
+        expect(orgBindings.Region).to.eq('eu-central-1');
     });
 
     it('normalized accounts returns accounts from ou', () => {
@@ -345,9 +345,9 @@ describe('when including specific ou that doesnt exist', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                OrganizationalUnits: [{Ref: 'XXX'}],
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                OrganizationalUnit: [{Ref: 'XXX'}],
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -376,9 +376,9 @@ describe('when including specific account as array', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
-                OrganizationalUnits: [{Ref: 'OU'}],
-                Regions: 'eu-central-1',
+            OrganizationBinding: {
+                OrganizationalUnit: [{Ref: 'OU'}],
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -390,9 +390,9 @@ describe('when including specific account as array', () => {
 
     it('copies properties from resource', () => {
         const orgBindings = (account as any).binding as IOrganizationBinding;
-        expect(Array.isArray(orgBindings.OrganizationalUnits)).to.eq(true);
-        expect((orgBindings.OrganizationalUnits as any)[0].Ref).to.eq('OU');
-        expect(orgBindings.Regions).to.eq('eu-central-1');
+        expect(Array.isArray(orgBindings.OrganizationalUnit)).to.eq(true);
+        expect((orgBindings.OrganizationalUnit as any)[0].Ref).to.eq('OU');
+        expect(orgBindings.Region).to.eq('eu-central-1');
     });
 
     it('normalized accounts returns accounts from ou', () => {
@@ -412,11 +412,11 @@ describe('when declaring foreach on element level', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
+            OrganizationBinding: {
                 IncludeMasterAccount: true,
             },
             Foreach: {
-                OrganizationalUnits: [{Ref: 'OU'}],
+                OrganizationalUnit: [{Ref: 'OU'}],
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -428,8 +428,8 @@ describe('when declaring foreach on element level', () => {
 
     it('copies properties from resource', () => {
         const foreachBinding = (account as any).foreach as IOrganizationBinding;
-        expect(Array.isArray(foreachBinding.OrganizationalUnits)).to.eq(true);
-        expect((foreachBinding.OrganizationalUnits as any)[0].Ref).to.eq('OU');
+        expect(Array.isArray(foreachBinding.OrganizationalUnit)).to.eq(true);
+        expect((foreachBinding.OrganizationalUnit as any)[0].Ref).to.eq('OU');
     });
 
     it('Foreach attribute is removed from resource for template', () => {
@@ -447,9 +447,9 @@ describe('when adding attribute that is not supported to organizational bindings
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            OrganizationBindings: {
+            OrganizationBinding: {
                 Something: [{Ref: 'XXX'}],
-                Regions: 'eu-central-1',
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -463,7 +463,7 @@ describe('when adding attribute that is not supported to organizational bindings
         } catch (err) {
             expect(err.message).to.contain('Something');
             expect(err.message).to.contain('logical-id');
-            expect(err.message).to.contain('OrganizationBindings');
+            expect(err.message).to.contain('OrganizationBinding');
         }
     });
 });
@@ -487,7 +487,7 @@ describe('when adding attribute that is not supported to foreach', () => {
 
     it('resolving references throws', () => {
         try {
-            new CloudFormationResource(template, 'logical-id', resource, template.contents.OrganizationBindings);
+            new CloudFormationResource(template, 'logical-id', resource, template.contents.OrganizationBinding);
         } catch (err) {
             expect(err.message).to.contain('Something');
             expect(err.message).to.contain('logical-id');
@@ -505,7 +505,7 @@ describe('when adding region which is not supported to foreach', () => {
         resource = {
             Type : 'AWS::S3::Bucket',
             Foreach: {
-                Regions: 'eu-central-1',
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -515,9 +515,9 @@ describe('when adding region which is not supported to foreach', () => {
 
     it('resolving references throws', () => {
         try {
-            new CloudFormationResource(template, 'logical-id', resource, template.contents.OrganizationBindings);
+            new CloudFormationResource(template, 'logical-id', resource, template.contents.OrganizationBinding);
         } catch (err) {
-            expect(err.message).to.contain('Regions');
+            expect(err.message).to.contain('Region');
             expect(err.message).to.contain('logical-id');
             expect(err.message).to.contain('Foreach');
         }

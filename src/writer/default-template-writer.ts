@@ -123,8 +123,8 @@ export class DefaultTemplateWriter {
         // lines.push(new EmptyLine());
         // lines.push(new CommentedLine('IamBaseLine', '', 2));
         // lines.push(new CommentedLine('Type', 'AWS::CloudFormation::Stack', 4));
-        // lines.push(new CommentedLine('OrganizationBindings', '', 4));
-        // lines.push(new CommentedLine('Regions', 'eu-central-1', 6));
+        // lines.push(new CommentedLine('OrganizationBinding', '', 4));
+        // lines.push(new CommentedLine('Region', 'eu-central-1', 6));
         // lines.push(new CommentedLine('Accounts', '*', 6));
         // lines.push(new CommentedLine('IncludeMasterAccount', 'false', 6));
         // lines.push(new CommentedLine('Properties', '', 4));

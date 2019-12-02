@@ -9,8 +9,8 @@ export class TestTemplates {
     public static createBasicTemplate(resources?: IResources): TemplateRoot {
         const template: ITemplate  = {
             AWSTemplateFormatVersion: '2010-09-09-OC',
-            OrganizationBindings : {
-                Accounts: [{Ref: 'Account'}],
+            OrganizationBinding : {
+                Account: [{Ref: 'Account'}],
             },
             Organization: {
                 MasterAccount: {

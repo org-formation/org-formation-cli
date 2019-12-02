@@ -3,22 +3,22 @@ Description:
 
 Organization: !Include ./organization.yml
 
-OrganizationBindings: { Accounts: !Ref Account2 }
+OrganizationBinding: { Account: !Ref Account2 }
 
-OrganizationBindingsRegions: eu-west-1
+OrganizationBindingRegion: eu-west-1
 
 Resources:
 
   Topic:
     Type: AWS::SNS::Topic
-    OrganizationBindings:
-      Accounts: !Ref Account1
+    OrganizationBinding:
+      Account: !Ref Account1
     Properties:
       DisplayName: Name
 
   TopicMaster:
     Type: AWS::SNS::Topic
-    OrganizationBindings:
+    OrganizationBinding:
       IncludeMasterAccount: true
     Properties:
       DisplayName: Name

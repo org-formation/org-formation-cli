@@ -15,8 +15,8 @@ export interface ITemplate {
     StackName?: string;
     Description?: string;
     Organization?: IOrganization;
-    OrganizationBindings?: IOrganizationBinding;
-    OrganizationBindingsRegions?: string | string[];
+    OrganizationBinding?: IOrganizationBinding;
+    OrganizationBindingRegion?: string | string[];
     Metadata?: any;
     Parameters?: any;
     Mappings?: any;
@@ -42,7 +42,7 @@ export interface IResourcesMap extends Record<string, IResource> {
 export interface IResource {
     Type: OrgResourceTypes | ResourceTypes | string;
     Properties?: IPropertiesMap;
-    OrganizationBindings?: IOrganizationBinding & IPropertiesMap;
+    OrganizationBinding?: IOrganizationBinding & IPropertiesMap;
     Foreach?: IOrganizationBinding & IPropertiesMap;
     DependsOnAccount?: IResourceRef | IResourceRef[];
     DependsOnRegion?: string | string[];
@@ -60,10 +60,10 @@ export interface IResourceRefExpression {
 
 export interface IOrganizationBinding {
     IncludeMasterAccount?: boolean;
-    Accounts?: IResourceRef | IResourceRef[];
-    ExcludeAccounts?: IResourceRef | IResourceRef[];
-    OrganizationalUnits?: IResourceRef | IResourceRef[];
-    Regions?: string | string[];
+    Account?: IResourceRef | IResourceRef[];
+    ExcludeAccount?: IResourceRef | IResourceRef[];
+    OrganizationalUnit?: IResourceRef | IResourceRef[];
+    Region?: string | string[];
     AccountsWithTag?: string;
 }
 
@@ -132,7 +132,7 @@ export class TemplateRoot {
         }
 
         Validator.ThrowForUnknownAttribute(contents, 'template root',
-                'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBindings', 'OrganizationBindingsRegions',
+                'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'OrganizationBindingRegion',
                 'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs');
 
         this.contents = contents;
@@ -140,7 +140,7 @@ export class TemplateRoot {
         this.source = JSON.stringify(contents);
         this.hash = md5(this.source);
         this.organizationSection = new OrganizationSection(this, contents.Organization);
-        this.resourcesSection = new ResourcesSection(this, contents.Resources, contents.OrganizationBindings, contents.OrganizationBindingsRegions);
+        this.resourcesSection = new ResourcesSection(this, contents.Resources, contents.OrganizationBinding, contents.OrganizationBindingRegion);
 
         this.organizationSection.resolveRefs();
         this.resourcesSection.resolveRefs();

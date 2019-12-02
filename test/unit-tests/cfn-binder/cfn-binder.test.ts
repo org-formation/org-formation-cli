@@ -24,9 +24,9 @@ describe('when enumerating bindings on template resource with multiple accounts'
                 Properties: {
                     Whatever: 'Value',
                 },
-                OrganizationBindings: {
-                    Regions: 'eu-central-1',
-                    Accounts: [
+                OrganizationBinding: {
+                    Region: 'eu-central-1',
+                    Account: [
                         {Ref: 'Account'},
                         {Ref: 'Account2'},
                     ],
@@ -61,9 +61,9 @@ describe('when enumerating bindings on template resource with multiple regions',
                 Properties: {
                     Whatever: 'Value',
                 },
-                OrganizationBindings: {
-                    Regions: ['eu-west-1', 'eu-central-1'],
-                    Accounts:  {Ref: 'Account'},
+                OrganizationBinding: {
+                    Region: ['eu-west-1', 'eu-central-1'],
+                    Account:  {Ref: 'Account'},
                 },
             },
         });
@@ -94,9 +94,9 @@ describe('when enumerating bindings on template resource with cross account depe
                 Properties: {
                     Whatever: 'Value',
                 },
-                OrganizationBindings: {
-                    Regions: ['eu-central-1'],
-                    Accounts:  {Ref: 'Account'},
+                OrganizationBinding: {
+                    Region: ['eu-central-1'],
+                    Account:  {Ref: 'Account'},
                 },
             },
             resource2:  {
@@ -105,9 +105,9 @@ describe('when enumerating bindings on template resource with cross account depe
                     propRef: {Ref: 'resource1' },
                     propAtt: {'Fn::GetAtt': 'resource1.Whatever' },
                 },
-                OrganizationBindings: {
-                    Regions: ['eu-west-1'],
-                    Accounts:  {Ref: 'Account2'},
+                OrganizationBinding: {
+                    Region: ['eu-west-1'],
+                    Account:  {Ref: 'Account2'},
                 },
             },
         });

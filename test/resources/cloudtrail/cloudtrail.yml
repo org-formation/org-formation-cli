@@ -9,18 +9,18 @@ Organization: !Include ./organization.yml
 Resources:
 
   CloudTrailS3Bucket:
-    OrganizationBindings:
-      Regions: eu-central-1
-      Accounts: !Ref SharedComplianceAccount
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: !Ref SharedComplianceAccount
     DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub 'cloudtrail-${SharedComplianceAccount}'
 
   CloudTrailS3BucketPolicy:
-    OrganizationBindings:
-      Regions: eu-central-1
-      Accounts: !Ref SharedComplianceAccount
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: !Ref SharedComplianceAccount
     Type: AWS::S3::BucketPolicy
     DependsOn: CloudTrailS3Bucket
     Properties:
@@ -43,9 +43,9 @@ Resources:
                 s3:x-amz-acl: 'bucket-owner-full-control'
 
   CloudTrailLogGroup:
-    OrganizationBindings:
-      Regions: eu-central-1
-      Accounts: '*'
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: '*'
       IncludeMasterAccount: true
     Type: 'AWS::Logs::LogGroup'
     Properties:
@@ -53,9 +53,9 @@ Resources:
       LogGroupName: CloudTrail/audit-log
 
   CloudTrailLogGroupRole:
-    OrganizationBindings:
-      Regions: eu-central-1
-      Accounts: '*'
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: '*'
       IncludeMasterAccount: true
     Type: 'AWS::IAM::Role'
     Properties:
@@ -81,9 +81,9 @@ Resources:
             Resource: !GetAtt 'CloudTrailLogGroup.Arn'
 
   CloudTrail:
-    OrganizationBindings:
-      Regions: eu-central-1
-      Accounts: '*'
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: '*'
       IncludeMasterAccount: true
     Type: AWS::CloudTrail::Trail
     DependsOn:

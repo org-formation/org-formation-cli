@@ -30,8 +30,8 @@ describe('when creating cloudformation with simple resource', () => {
                         Properties: {
                             BucketName: 'BucketName',
                         },
-                        OrganizationBindings: {
-                            Accounts: '*',
+                        OrganizationBinding: {
+                            Account: '*',
                         },
                     }),
             ],
@@ -65,7 +65,7 @@ describe('when creating cloudformation with simple resource', () => {
         expect(result).to.not.be.undefined;
         expect(result.Resources).to.not.be.undefined;
         expect(result.Resources.bucket).to.not.be.undefined;
-        expect(result.Resources.bucket.OrganizationBindings).to.be.undefined;
+        expect(result.Resources.bucket.OrganizationBinding).to.be.undefined;
     });
 
 });
@@ -94,8 +94,8 @@ describe('when creating cloudformation with resource that has version attribute'
                               Version: '2012-10-17T00:00:00.000Z',
                             },
                         },
-                        OrganizationBindings: {
-                            Accounts: '*',
+                        OrganizationBinding: {
+                            Account: '*',
                         },
                     }),
             ],
@@ -134,15 +134,15 @@ describe('when creating cloudformation with output section', () => {
                         Properties: {
                             BucketName: 'BucketName',
                         },
-                        OrganizationBindings: {
-                            Accounts: '*',
+                        OrganizationBinding: {
+                            Account: '*',
                         },
                     }),
             ],
         };
 
         templateRoot.resourcesSection.resources.push(target.resources[0]);
-        templateRoot.resourcesSection.resources.push(new CloudFormationResource(templateRoot, 'bucket2', {Type: 'abcdef'}, templateRoot.contents.OrganizationBindings));
+        templateRoot.resourcesSection.resources.push(new CloudFormationResource(templateRoot, 'bucket2', {Type: 'abcdef'}, templateRoot.contents.OrganizationBinding));
 
         templateRoot.contents.Outputs = {
             Output : {
@@ -216,8 +216,8 @@ describe('when creating cross account reference', () => {
                         Properties: {
                             BucketName: { Ref : 'bucket2' },
                         },
-                        OrganizationBindings: {
-                            Accounts: { Ref: account1 },
+                        OrganizationBinding: {
+                            Account: { Ref: account1 },
                         },
                     }),
             ],
@@ -226,8 +226,8 @@ describe('when creating cross account reference', () => {
         const other = new CloudFormationResource(templateRoot, 'bucket2',
             {
                 Type: 'abcdef',
-                OrganizationBindings: {
-                    Accounts: {
+                OrganizationBinding: {
+                    Account: {
                         Ref: account2,
                     },
                 },

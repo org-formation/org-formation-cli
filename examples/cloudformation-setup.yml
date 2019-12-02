@@ -7,8 +7,8 @@ Resources:
 
   CloudFormationStackSetAdministrationRole:
     Type: AWS::IAM::Role
-    OrganizationBindings:
-      Regions: eu-central-1
+    OrganizationBinding:
+      Region: eu-central-1
       IncludeMasterAccount: true
     Properties:
       RoleName: AWSCloudFormationStackSetAdministrationRole
@@ -34,9 +34,9 @@ Resources:
 
   CloudFormationStackSetExecutionRole:
     Type: AWS::IAM::Role
-    OrganizationBindings:
-      Accounts: '*'
-      Regions: eu-central-1
+    OrganizationBinding:
+      Account: '*'
+      Region: eu-central-1
     Properties:
       RoleName: AWSCloudFormationStackSetExecutionRole
       AssumeRolePolicyDocument:

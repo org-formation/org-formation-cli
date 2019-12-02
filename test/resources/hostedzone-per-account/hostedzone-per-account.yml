@@ -21,8 +21,8 @@ Resources:
 
   HostedZone:
     Type: AWS::Route53::HostedZone
-    OrganizationBindings:
-      Regions: eu-west-1
+    OrganizationBinding:
+      Region: eu-west-1
       AccountsWithTag: 'subdomain'
     Properties:
       HostedZoneConfig:
@@ -38,8 +38,8 @@ Resources:
 
   ParentNsRecord:
     Type: AWS::Route53::RecordSet
-    OrganizationBindings:
-      Regions: eu-west-1
+    OrganizationBinding:
+      Region: eu-west-1
       IncludeMasterAccount: true
     Foreach:
       AccountsWithTag: 'subdomain'

@@ -3,9 +3,9 @@ Description:
 
 Organization: !Include ./organization.yml
 
-OrganizationBindings:
-  Regions: eu-west-1
-  Accounts: !Ref Account1
+OrganizationBinding:
+  Region: eu-west-1
+  Account: !Ref Account1
 
 Resources:
 
@@ -16,8 +16,8 @@ Resources:
 
   S3Bucket:
     Type: AWS::S3::Bucket
-    OrganizationBindings:
-      Regions: eu-central-1
-      Accounts: !Ref Account2
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: !Ref Account2
     Properties:
       BucketName: Bucket in Account 2

@@ -3,7 +3,7 @@ Description:
 
 Organization: !Include ./organization.yml
 
-OrganizationBindingsRegions:
+OrganizationBindingRegion:
   - eu-west-1
   - eu-central-1
 
@@ -11,15 +11,15 @@ Resources:
 
   Topic:
     Type: AWS::SNS::Topic
-    OrganizationBindings:
-      Accounts: !Ref Account1
+    OrganizationBinding:
+      Account: !Ref Account1
     Properties:
       DisplayName: Topic in eu-west-1 and eu-central-1
 
   S3Bucket:
     Type: AWS::S3::Bucket
-    OrganizationBindings:
-      Accounts: !Ref Account1
-      Regions: us-east-1
+    OrganizationBinding:
+      Account: !Ref Account1
+      Region: us-east-1
     Properties:
       BucketName: Bucket in us-east-1
