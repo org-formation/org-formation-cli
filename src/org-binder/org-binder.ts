@@ -28,11 +28,11 @@ export class OrganizationBinder {
 
     public getBindings(): BindingRoot {
         return  {
-            organization: this.getOrganizationBindings(),
+            organization: this.getOrganizationBinding(),
         };
     }
 
-    public getOrganizationBindings(): OrganizationBinding {
+    public getOrganizationBinding(): OrganizationBinding {
         const policies = Array.from(ServiceControlPolicyBinding.enumerateServiceControlBindings(this.template, this.state));
         const organizationalUnits = Array.from(OrganizationalUnitBinding.enumerateOrganizationalUnitBindings(this.template, this.state));
         const accounts = Array.from(AccountBinding.enumerateAccountBindings(this.template, this.state));
@@ -50,7 +50,7 @@ export class OrganizationBinder {
 
     public enumBuildTasks() {
         const tasks: IBuildTask[] = [];
-        const org = this.getOrganizationBindings();
+        const org = this.getOrganizationBinding();
         for (const boundPolicy of org.policies) {
             switch (boundPolicy.action) {
                 case 'Create':

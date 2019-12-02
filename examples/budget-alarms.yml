@@ -12,6 +12,7 @@ Resources:
     Type: AWS::Budgets::Budget
     Properties:
       Budget:
+        BudgetName: !Sub 'my-budget-${AWSAccount.Alias}'
         BudgetLimit:
           Amount: !GetAtt AWSAccount.Tags.budget-alarm-threshold
           Unit: USD

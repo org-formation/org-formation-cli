@@ -513,10 +513,12 @@ export class CfnTemplate {
             if (path.indexOf('Tags.') === 0) {
                 const tagName = path.substr(5); // Tags.
                 if (!account.tags) {
-                    return '';
+                    throw new OrgFormationError(`unable to resolve account attribute ${logicalId}.${path}. Account has no Tags`);
                 }
                 const tagValue = account.tags[tagName];
-                if (!tagValue) { return ''; }
+                if (!tagValue) {
+                    throw new OrgFormationError(`unable to resolve account attribute ${logicalId}.${path}. Tag ${tagName} not found on account`);
+                }
                 return tagValue;
             } else if (path === 'AccountName') {
                 return account.accountName;
@@ -527,6 +529,9 @@ export class CfnTemplate {
                 return binding.physicalId;
             } else if (path === 'RootEmail') {
                 return account.rootEmail;
+            }
+            if (!path.startsWith('Resources')) {
+                throw new OrgFormationError(`unable to resolve account attribute ${logicalId}.${path}`);
             }
         }
 
