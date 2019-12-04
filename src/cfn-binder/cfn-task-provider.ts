@@ -158,7 +158,6 @@ export interface ICfnTask {
     accountId: string;
     region: string;
     stackName: string;
-    done?: boolean;
     perform: (task: ICfnTask) => Promise<void>;
     dependentTaskFilter?: (task: ICfnTask) => boolean;
 

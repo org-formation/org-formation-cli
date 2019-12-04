@@ -4,6 +4,79 @@ import { CfnTaskRunner } from './../../../src/cfn-binder/cfn-task-runner';
 
 describe('when running cfn tasks', () => {
 
+    it('will run dependencies prior to dependend tasks', async () => {
+        let order = 1;
+        let task1order: number = 0;
+        let task2order: number = 0;
+        const task1: ICfnTask = {
+            action: 'UpdateOrCreate',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task1',
+            perform: async (x) => { task1order =  order; order = order + 1; },
+        };
+        const task2: ICfnTask = {
+            action: 'UpdateOrCreate',
+            dependentTaskFilter: (t) => t.stackName === 'task1',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task2',
+            perform: async (x) => { task2order =  order; order = order + 1; },
+        };
+        await CfnTaskRunner.RunTasks([task2, task1], 'stack');
+        expect(task1order).to.eq(1);
+        expect(task2order).to.eq(2);
+    });
+    it('all tasks will exactly run once without dependencies', async () => {
+        type MyTask = ICfnTask & { callCount: number};
+        const tasks: MyTask[] = [];
+        for (let x = 0; x <= 9; x++) {
+            const task: MyTask = {
+                action: 'UpdateOrCreate',
+                region: 'eu-central-1',
+                accountId: '100000000000' + x,
+                stackName: 'task' + x,
+                callCount: 0,
+                perform: async (t: MyTask) => { t.callCount = t.callCount + 1; await createSleepPromise(10 - x); },
+            };
+            tasks.push(task);
+        }
+        await CfnTaskRunner.RunTasks(tasks, 'stack');
+
+        const notExactlyOnce = tasks.find((x) => x.callCount !== 1);
+        expect(notExactlyOnce).to.be.undefined;
+    });
+
+    it('all tasks will exactly run once with dependencies', async () => {
+        type MyTask = ICfnTask & { callCount: number};
+        const tasks: MyTask[] = [];
+        const task1: MyTask = {
+            action: 'UpdateOrCreate',
+            region: 'eu-central-1',
+            accountId: '1000000000000' ,
+            stackName: 'task1',
+            callCount: 0,
+            perform: async (x: MyTask) => { x.callCount = x.callCount + 1; await createSleepPromise(10); },
+        };
+        tasks.push(task1);
+        for (let x = 2; x <= 10; x++) {
+            const task: MyTask = {
+                action: 'UpdateOrCreate',
+                dependentTaskFilter: (t) => t.stackName === 'task' + (x - 1),
+                region: 'eu-central-1',
+                accountId: '100000000000' + x,
+                stackName: 'task' + x,
+                callCount: 0,
+                perform: async (t: MyTask) => { t.callCount = t.callCount + 1; await createSleepPromise(10 - x); },
+            };
+            tasks.push(task);
+        }
+        await CfnTaskRunner.RunTasks(tasks, 'stack');
+
+        const notExactlyOnce = tasks.find((x) => x.callCount !== 1);
+        expect(notExactlyOnce).to.be.undefined;
+    });
+
     it('will throw for circular dependency', async () => {
         const task1: ICfnTask = {
             action: 'UpdateOrCreate',
@@ -48,3 +121,10 @@ describe('when running cfn tasks', () => {
         }
     });
 });
+
+function createSleepPromise(timeout: number) {
+
+    return new Promise((resolve) => {
+        setTimeout(resolve, timeout);
+    });
+}
