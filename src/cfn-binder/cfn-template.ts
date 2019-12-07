@@ -461,7 +461,7 @@ export class CfnTemplate {
                     for (const variable of sub.variables) {
                         if (variable.path) { // GetAtt
                             const resolvedValue = this.getOrgResourceAtt(variable.resource, variable.path, accountResource);
-                            if (resolvedValue) {
+                            if (resolvedValue !== undefined) {
                                 variable.replace(resolvedValue);
                             }
                         } else { // Ref
@@ -521,13 +521,16 @@ export class CfnTemplate {
                 }
                 return tagValue;
             } else if (path === 'AccountName') {
+                if (!account.accountName) { return ''; }
                 return account.accountName;
             } else if (path === 'Alias') {
+                if (!account.alias) { return ''; }
                 return account.alias;
             } else if (path === 'AccountId') {
                 const binding = this.state.getBinding(account.type, account.logicalId);
                 return binding.physicalId;
             } else if (path === 'RootEmail') {
+                if (!account.rootEmail) { return ''; }
                 return account.rootEmail;
             }
             if (!path.startsWith('Resources')) {

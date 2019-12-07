@@ -74,7 +74,7 @@ class UpdateStacksTask implements IBuildTask {
             args.organizationBindingRegion = this.config.OrganizationBindingRegion;
         }
 
-        if (this.config.TerminationProtection) {
+        if (this.config.TerminationProtection !== undefined) {
             args.terminationProtection = this.config.TerminationProtection;
         }
 

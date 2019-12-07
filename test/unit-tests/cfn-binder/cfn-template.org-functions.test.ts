@@ -241,6 +241,8 @@ describe('when using Sub on account', () => {
                             TwoRootAliases: { 'Fn::Sub' : '1${' + otherAccountLogicalId + '.Alias' + '}2${' + otherAccountLogicalId + '.Alias' + '}' },
                             AccountIdTag: {'Fn::Sub' : 'arn:aws:iam::${AWS::AccountId}:root'},
                             SubWithoutExpressionTag: {'Fn::Sub' : 'something'},
+                            SubWith2Expressions: {'Fn::Sub' : '${parameter}-abc${' + otherAccountLogicalId + '.Alias' + '}'},
+                            MissingAlias: {'Fn::Sub' : 'abc-${AWSAccount.Alias}'},
                         },
                     }),
             ],
@@ -310,5 +312,16 @@ describe('when using Sub on account', () => {
         const firstIndexOf = templateResource.Properties.TwoRootAliases.indexOf('account-2');
         const lastIndexOf = templateResource.Properties.TwoRootAliases.lastIndexOf('account-2');
         expect(firstIndexOf).to.not.eq(lastIndexOf);
+    });
+
+    it('Sub can replace only second expression', () => {
+        expect(templateResource).to.not.be.undefined;
+        expect(templateResource.Properties.SubWith2Expressions['Fn::Sub']).contains('account-2');
+        expect(templateResource.Properties.SubWith2Expressions['Fn::Sub'].startsWith('${parameter}-abc'));
+    });
+
+    it('Sub replaces missing alias with empty string', () => {
+        expect(templateResource).to.not.be.undefined;
+        expect(templateResource.Properties.MissingAlias).to.eq('abc-');
     });
 });
