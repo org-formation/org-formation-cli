@@ -1,18 +1,20 @@
 AWSTemplateFormatVersion: '2010-09-09-OC'
-Description: default template generated for organization with master account 507468909204
 
 Organization: !Include ./organization.yml
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+    Default: my
 
 Resources:
 
   Budget:
-    OrganizationBinding:
-      Region: eu-central-1
-      AccountsWithTag: budget-alarm-threshold
     Type: AWS::Budgets::Budget
     Properties:
       Budget:
-        BudgetName: !Sub 'my-budget-${AWSAccount.Alias}'
+        BudgetName: !Sub '${resourcePrefix}-budget-${AWSAccount.Alias}'
         BudgetLimit:
           Amount: !GetAtt AWSAccount.Tags.budget-alarm-threshold
           Unit: USD

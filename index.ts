@@ -1,10 +1,9 @@
 
 import * as AWS from 'aws-sdk';
 import { Organizations, STS } from 'aws-sdk';
-import { bool } from 'aws-sdk/clients/signer';
-import { AssumeRoleRequest, GetSessionTokenRequest } from 'aws-sdk/clients/sts';
+import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
-import { existsSync, read, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import * as ini from 'ini';
 import { AwsOrganization } from './src/aws-provider/aws-organization';
 import { AwsOrganizationReader } from './src/aws-provider/aws-organization-reader';
@@ -12,15 +11,14 @@ import { AwsOrganizationWriter } from './src/aws-provider/aws-organization-write
 import { BuildConfiguration } from './src/build-tasks/build-configuration';
 import { BuildRunner } from './src/build-tasks/build-runner';
 import { CloudFormationBinder } from './src/cfn-binder/cfn-binder';
-import { CfnTaskProvider } from './src/cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from './src/cfn-binder/cfn-task-runner';
 import { ChangeSetProvider } from './src/change-set/change-set-provider';
 import { ConsoleUtil } from './src/console-util';
-import { BindingRoot, OrganizationBinder } from './src/org-binder/org-binder';
+import { OrganizationBinder } from './src/org-binder/org-binder';
 import { TaskRunner } from './src/org-binder/org-task-runner';
 import { TaskProvider } from './src/org-binder/org-tasks-provider';
 import { OrgFormationError } from './src/org-formation-error';
-import { ITemplate, TemplateRoot } from './src/parser/parser';
+import { IOrganizationBinding, ITemplate, ITemplateOverrides, TemplateRoot } from './src/parser/parser';
 import { ICfnTarget, PersistedState } from './src/state/persisted-state';
 import { S3StorageProvider } from './src/state/storage-provider';
 import { DefaultTemplateWriter } from './src/writer/default-template-writer';
@@ -73,17 +71,17 @@ export async function performTasks(path: string, command: ICommandArgs): Promise
     });
 }
 
-export async function updateAccountResources(templateFile: string, command: ICommandArgs): Promise<boolean> {
+export async function updateAccountResources(templateFile: string, command: IUpdateStackCommandArgs): Promise<boolean> {
 
     return await HandleErrors(async () => {
         if (!command.stackName) {
             throw new OrgFormationError(`missing option --stack-name <stack-name>`);
         }
 
-        const template = TemplateRoot.create(templateFile);
-
+        const template = createTemplateUsingOverrides(command, templateFile);
+        const parameters = parseStackParameters(command);
         const state = await getState(command);
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state);
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, command.terminationProtection);
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
@@ -98,15 +96,15 @@ export async function updateAccountResources(templateFile: string, command: ICom
     });
 }
 
-export async function printAccountStacks(templateFile: string, command: ICommandArgs): Promise<boolean> {
+export async function printAccountStacks(templateFile: string, command: IUpdateStackCommandArgs): Promise<boolean> {
     return await HandleErrors(async () => {
         if (!command.stackName) {
             throw new OrgFormationError(`missing option --stack-name <stack-name>`);
         }
-        const template = TemplateRoot.create(templateFile);
-
+        const template = createTemplateUsingOverrides(command, templateFile);
+        const parameters = parseStackParameters(command);
         const state = await getState(command);
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state);
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters);
 
         const bindings = cfnBinder.enumBindings();
         for (const binding of bindings) {
@@ -221,13 +219,66 @@ export async function executeChangeSet(changeSetName: string, command: ICommandA
     });
 }
 
-interface ICommandArgs {
+function parseStackParameters(command: IUpdateStackCommandArgs) {
+    if (command.parameters && typeof command.parameters === 'object') {
+        return command.parameters;
+    }
+    const parameters: Record<string, string> = {};
+    if (command.parameters && typeof command.parameters === 'string') {
+        const parameterParts = command.parameters.split(' ');
+        for (const parameterPart of parameterParts) {
+            const parameterAttributes = parameterPart.split(',');
+            if (parameterAttributes.length === 1) {
+                const parts = parameterAttributes[0].split('=');
+                if (parts.length !== 2) {
+                    throw new Error(`error reading parameter ${parameterAttributes[0]}. Expected either key=val or ParameterKey=key,ParameterVaue=val.`);
+                }
+                parameters[parts[0]] = parts[1];
+            } else {
+                const key = parameterAttributes.find((x) => x.startsWith('ParameterKey='));
+                const value = parameterAttributes.find((x) => x.startsWith('ParameterValue='));
+                if (key === undefined || value === undefined) {
+                    throw new Error(`error reading parameter ${parameterAttributes[0]}. Expected ParameterKey=key,ParameterVaue=val`);
+                }
+                parameters[key] = value;
+            }
+        }
+    }
+
+    return parameters;
+}
+
+function createTemplateUsingOverrides(command: IUpdateStackCommandArgs,  templateFile: string) {
+    const templateOverrides: ITemplateOverrides = {};
+
+    if (command.stackDescription) {
+        templateOverrides.Description = command.stackDescription;
+    }
+    if (command.organizationBinding) {
+        templateOverrides.OrganizationBinding = command.organizationBinding;
+    }
+    if (command.organizationBindingRegion) {
+        templateOverrides.OrganizationBindingRegion = command.organizationBindingRegion;
+    }
+    const template = TemplateRoot.create(templateFile, templateOverrides);
+    return template;
+}
+
+export interface ICommandArgs {
     profile: string;
     stateBucketName: string;
     stateObject: string;
     stateBucketRegion: string;
     changeSetName: string;
     stackName: string;
+}
+
+export interface IUpdateStackCommandArgs extends ICommandArgs {
+    stackDescription?: string;
+    parameters?: string;
+    organizationBinding?: IOrganizationBinding;
+    organizationBindingRegion?: string | string[];
+    terminationProtection?: boolean;
 }
 
 async function getOrganizationBinder(template: TemplateRoot, state: PersistedState) {

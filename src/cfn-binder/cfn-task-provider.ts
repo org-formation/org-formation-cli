@@ -22,11 +22,11 @@ export class CfnTaskProvider {
             stackName: binding.stackName,
             action: 'UpdateOrCreate',
             perform: async () => {
-                 const boundParameters = binding.template.enumBoundParameters();
-                 for (const param of boundParameters) {
-                    const site: ICfnSite = {accountId: binding.accountId, region: binding.region};
+                const boundParameters = binding.template.enumBoundParameters();
+                for (const param of boundParameters) {
+                    const site: ICfnSite = { accountId: binding.accountId, region: binding.region };
                     if (param.ExportAccountId) { site.accountId = param.ExportAccountId; }
-                    if (param.ExportRegion) {site.region = param.ExportRegion; }
+                    if (param.ExportRegion) { site.region = param.ExportRegion; }
                     const cfnRetrieveExport = await that.createCreateCloudFormationFn(site);
                     const listExportsRequest: ListExportsInput = {};
                     const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
@@ -41,17 +41,26 @@ export class CfnTaskProvider {
                             break;
                         }
                     } while (listExportsRequest.NextToken);
-                 }
-                 const templateBody = binding.template.createTemplateBody();
-                 const cfn = await that.createCreateCloudFormationFn(binding);
-                 const clientToken = uuid();
-                 const stackInput: CreateStackInput | UpdateStackInput = {
+                }
+                const templateBody = binding.template.createTemplateBody();
+                const cfn = await that.createCreateCloudFormationFn(binding);
+                const clientToken = uuid();
+                const stackInput: CreateStackInput | UpdateStackInput = {
                     StackName: binding.stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
                     ClientRequestToken: clientToken,
                 };
-                 try {
+                if (binding.parameters) {
+                    stackInput.Parameters = [];
+                    for (const [key, value] of Object.entries(binding.parameters)) {
+                        stackInput.Parameters.push( {
+                            ParameterKey: key,
+                            ParameterValue: value,
+                        });
+                    }
+                }
+                try {
                     try {
                         await cfn.updateStack(stackInput).promise();
                         await cfn.waitFor('stackUpdateComplete', { StackName: binding.stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
@@ -78,17 +87,32 @@ export class CfnTaskProvider {
                         }
                     }
 
+                    if (binding.state === undefined && binding.terminationProtection === true) {
+                        await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
+                    } else if (binding.state !== undefined) {
+                        if (binding.terminationProtection) {
+                            if (!binding.state.terminationProtection) {
+                                await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
+                            }
+                        } else {
+                            if (binding.state.terminationProtection) {
+                                await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: false}).promise();
+                            }
+                        }
+                    }
+
                     that.state.setTarget({
                         accountId: binding.accountId,
                         region: binding.region,
                         stackName: binding.stackName,
                         lastCommittedHash: binding.templateHash,
                         logicalAccountId: binding.target.accountLogicalId,
+                        terminationProtection: binding.terminationProtection,
                     });
                 } catch (err) {
                     ConsoleUtil.LogError(`error updating cloudformation stack ${binding.stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
                     try {
-                        const stackEvents = await cfn.describeStackEvents({StackName: binding.stackName }).promise();
+                        const stackEvents = await cfn.describeStackEvents({ StackName: binding.stackName }).promise();
                         for (const event of stackEvents.StackEvents) {
                             const failureStates = ['CREATE_FAILED', 'DELETE_FAILED', 'UPDATE_FAILED'];
                             if (event.ClientRequestToken === clientToken) {
@@ -97,7 +121,7 @@ export class CfnTaskProvider {
                                 }
                             }
                         }
-                    } catch {/*hide*/}
+                    } catch {/*hide*/ }
 
                     throw err;
                 }

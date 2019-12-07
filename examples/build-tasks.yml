@@ -1,32 +1,42 @@
 
-OrganizationUpdate:
-  Type: update-organization
-  Template: ./organization.yml
+# OrganizationUpdate:
+#   Type: update-organization
+#   Template: ./organization.yml
 
 CloudformationSetup:
   Type: update-stacks
   Template: ./cloudformation-setup.yml
   StackName: cloudformation-setup
+  StackDescription: 'Cloudformation setup used by stacksets'
+  TerminationProtection: true
+  OrganizationBindingRegion: eu-central-1
+  OrganizationBinding:
+    Account: '*'
 
 BudgetAlarms:
   Type: update-stacks
   Template: ./budget-alarms.yml
   StackName: budget-alarms
+  OrganizationBinding:
+    AccountsWithTag: budget-alarm-threshold
+  OrganizationBindingRegion: eu-central-1
+  Parameters:
+    resourcePrefix: my
 
-Roles:
-  Type: update-stacks
-  Template: ./roles.yml
-  StackName: roles
+# Roles:
+#   Type: update-stacks
+#   Template: ./roles.yml
+#   StackName: roles
 
-HostedZone:
-  Type: update-stacks
-  Template: ./hosted-zone.yml
-  StackName: hosted-zone
+# HostedZone:
+#   Type: update-stacks
+#   Template: ./hosted-zone.yml
+#   StackName: hosted-zone
 
-CloudTrail:
-  Type: update-stacks
-  Template: ./cloudtrail.yml
-  StackName: cloudtrail
+# CloudTrail:
+#   Type: update-stacks
+#   Template: ./cloudtrail.yml
+#   StackName: cloudtrail
 
 
 

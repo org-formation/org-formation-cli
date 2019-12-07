@@ -191,5 +191,6 @@ export interface ICfnTarget {
     region: string;
     accountId: string;
     stackName: string;
+    terminationProtection?: boolean;
     lastCommittedHash: string;
 }

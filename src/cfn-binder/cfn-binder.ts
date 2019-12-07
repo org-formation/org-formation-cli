@@ -8,28 +8,42 @@ import { CfnTaskProvider, ICfnTask } from './cfn-task-provider';
 import { CfnTemplate } from './cfn-template';
 
 export class CloudFormationBinder {
-    private template: TemplateRoot;
-    private stackName: string;
-    private state: PersistedState;
-    private taskProvider: CfnTaskProvider;
-    private masterAccount: string;
+    private readonly template: TemplateRoot;
+    private readonly stackName: string;
+    private readonly state: PersistedState;
+    private readonly taskProvider: CfnTaskProvider;
+    private readonly masterAccount: string;
+    private readonly invocationHash: string;
+    private readonly parameters: Record<string, string>;
+    private readonly terminationProtection: boolean;
 
-    constructor(stackName: string, template: TemplateRoot, state: PersistedState, taskProvider: CfnTaskProvider = new CfnTaskProvider(state)) {
+    constructor(stackName: string, template: TemplateRoot, state: PersistedState, parameters: Record<string, string> = {}, terminationProtection: boolean = false, taskProvider: CfnTaskProvider = new CfnTaskProvider(state)) {
         this.template = template;
         this.masterAccount = template.organizationSection.masterAccount.accountId;
         this.state = state;
         this.taskProvider = taskProvider;
         this.stackName = stackName;
+        this.parameters = parameters;
+        this.terminationProtection = terminationProtection;
+
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new OrgFormationError('state and template do not belong to the same organization');
         }
+
+        const invocation = {
+            stackName,
+            templateHash: template.hash,
+            parameters,
+            terminationProtection,
+        };
+        this.invocationHash = md5(JSON.stringify(invocation));
     }
 
     public enumBindings(): ICfnBinding[] {
         const result: ICfnBinding[] = [];
         const targetsInTemplate = [];
         const targets = this.template.resourcesSection.enumTemplateTargets();
-        const templateHash = this.template.hash;
+
         const storedTargets = this.state.enumTargets(this.stackName);
         for (const target of targets) {
             let accountId = '';
@@ -47,16 +61,17 @@ export class CloudFormationBinder {
             const key = {accountId, region, stackName};
             targetsInTemplate.push(key);
 
-            const cfnTarget = this.state.getTarget(stackName, accountId, region);
+            const stored = this.state.getTarget(stackName, accountId, region);
             const cfnTemplate = new CfnTemplate(target, this.template, this.state);
-            const stored = storedTargets.find((x) => x.region === region && x.accountId === accountId);
 
             const binding: ICfnBinding = {
                 ...key,
                 action: 'None',
                 target,
-                templateHash,
-                state: cfnTarget,
+                parameters: this.parameters,
+                templateHash: this.invocationHash,
+                terminationProtection: this.terminationProtection,
+                state: stored,
                 template: cfnTemplate,
                 dependencies: [],
                 dependents: [],
@@ -86,7 +101,7 @@ export class CloudFormationBinder {
                 binding.accountDependencies.push(dependsOnAccountBinding.physicalId);
             }
 
-            if (!stored || stored.lastCommittedHash !== templateHash) {
+            if (!stored || stored.lastCommittedHash !== this.invocationHash) {
                 binding.action = 'UpdateOrCreate';
             }
 
@@ -113,7 +128,7 @@ export class CloudFormationBinder {
                     accountId,
                     region,
                     stackName,
-                    templateHash,
+                    templateHash: this.invocationHash,
                     action: 'Delete',
                     state: storedTarget,
                     dependencies: [],
@@ -159,6 +174,8 @@ export interface ICfnBinding {
     dependents: ICfnCrossAccountDependency[];
     accountDependencies: string[];
     regionDependencies: string[];
+    parameters?: Record<string, string>;
+    terminationProtection?: boolean;
 }
 
 export interface ICfnCrossAccountDependency {

@@ -70,7 +70,7 @@ export class CliProgram {
         this.addStateBucketFlags(allCommands);
         this.addStateBucketRegionFlag([this.init]);
         this.addStackNameFlagForDescribe([this.describeStacks]);
-        this.addStackNameFlagForUpdate([this.updateStacks, this.printStacks]);
+        this.addStackOptionsFlagForUpdate([this.updateStacks, this.printStacks]);
         this.addChangeSetFlag([this.createChangeSet]);
 
         this.init.action(async (outFile, cmd) => await generateTemplate(outFile, cmd));
@@ -115,9 +115,12 @@ export class CliProgram {
         }
     }
 
-    private addStackNameFlagForUpdate(commands: Command[]) {
+    private addStackOptionsFlagForUpdate(commands: Command[]) {
         for (const command of commands) {
             command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation');
+            command.option('--stack-description <description>', 'description of the stack that will be displayed cloudformation');
+            command.option('--parameters <parameters>', 'parameter values passed to cloudformation when executing stacks');
+            command.option('--termination-protection <termination-protection>', 'value that indicates whether stack must have deletion protection');
         }
     }
     private addChangeSetFlag(commands: Command[]) {

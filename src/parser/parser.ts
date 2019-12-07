@@ -67,12 +67,20 @@ export interface IOrganizationBinding {
     AccountsWithTag?: string;
 }
 
+export interface ITemplateOverrides {
+    StackName?: string;
+    Description?: string;
+    Organization?: IOrganization;
+    OrganizationBinding?: IOrganizationBinding;
+    OrganizationBindingRegion?: string | string[];
+}
+
 export class TemplateRoot {
-    public static create(path: string): TemplateRoot {
+    public static create(path: string, overrides: ITemplateOverrides = {}): TemplateRoot {
         try {
             const contents = fs.readFileSync(path).toString();
             const dirname = Path.dirname(path);
-            return TemplateRoot.createFromContents(contents , dirname);
+            return TemplateRoot.createFromContents(contents , dirname, overrides);
         } catch (err) {
             let reason = 'unknown';
             if (err && err.message) {
@@ -82,7 +90,7 @@ export class TemplateRoot {
         }
     }
 
-    public static createFromContents(contents: string, dirname: string = './'): TemplateRoot {
+    public static createFromContents(contents: string, dirname: string = './', overrides: ITemplateOverrides = {}): TemplateRoot {
         if (contents === undefined) { throw new OrgFormationError('contents is undefined'); }
         if (contents.trim().length === 0) { throw new OrgFormationError('contents is empty'); }
         const organizationInclude = /Organization:\s*!Include\s*(\S*)/.exec(contents);
@@ -102,7 +110,9 @@ export class TemplateRoot {
         if (includedOrganization && !obj.Organization) {
             obj.Organization = includedOrganization;
         }
-        return new TemplateRoot(obj, dirname);
+
+        const mergedWithOverrides = {...obj, ...overrides};
+        return new TemplateRoot(mergedWithOverrides, dirname);
 
     }
 

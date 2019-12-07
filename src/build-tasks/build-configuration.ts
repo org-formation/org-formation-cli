@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { yamlParse } from 'yaml-cfn';
+import { IOrganizationBinding } from '../parser/parser';
 import { BuildTaskProvider } from './build-task-provider';
 
 export class BuildConfiguration {
@@ -41,10 +42,19 @@ export type BuidTaskType  = 'update-stacks' | 'update-organization' | 'include' 
 export interface IConfiguredBuildTask {
     Type: BuidTaskType;
     Template?: string;
-    StackName?: string;
     DependsOn?: string;
     Path?: string;
     SearchPattern?: string;
+}
+
+export interface IConfiguratedUpdateStackBuildTask extends IConfiguredBuildTask {
+    StackName?: string;
+    StackDescription?: string;
+    Parameters?: Record<string, string>;
+    DeletionProtection?: boolean;
+    OrganizationBinding?: IOrganizationBinding;
+    OrganizationBindingRegion?: string | string[];
+    TerminationProtection?: boolean;
 }
 
 export interface IBuildTask {
@@ -52,5 +62,5 @@ export interface IBuildTask {
     type: string;
     dependsOn: string;
     done: boolean;
-    perform(command: any): void;
+    perform(command: any): Promise<boolean>;
 }

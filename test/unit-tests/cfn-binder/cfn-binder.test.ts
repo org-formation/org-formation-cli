@@ -2,12 +2,7 @@ import * as chai from 'chai';
 import { expect } from 'chai';
 import { beforeEach } from 'mocha';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
-import { CfnTemplate } from '../../../src/cfn-binder/cfn-template';
-import { AccountResource } from '../../../src/parser/model/account-resource';
-import { CloudFormationResource } from '../../../src/parser/model/cloudformation-resource';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
-import { IResourceTarget, ResourcesSection } from '../../../src/parser/model/resources-section';
-import { IResource, TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
 import { TestTemplates } from '../test-templates';
 

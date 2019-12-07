@@ -25,7 +25,10 @@ export class CfnTaskRunner {
                     continue;
                 }
 
-                const taskPromise = this.performTask(task).then((x) => ConsoleUtil.LogInfo(`stack ${task.stackName} successfully ${task.action === 'Delete' ? 'deleted from' : 'updated in' } ${task.accountId}/${task.region}.`));
+                const taskPromise = this.performTask(task).then((x) => {
+                    if (task.failed) { return; }
+                    ConsoleUtil.LogInfo(`stack ${task.stackName} successfully ${task.action === 'Delete' ? 'deleted from' : 'updated in' } ${task.accountId}/${task.region}.`);
+                });
                 runningTasks.push(taskPromise);
             }
             if (runningTasks.length === 0 && tasksWithDependencies.length > 0) {
