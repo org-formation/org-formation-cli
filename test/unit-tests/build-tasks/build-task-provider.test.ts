@@ -11,7 +11,7 @@ describe('when creating UpdateStacksTask task', () => {
     let updateStacksResoruces: sinon.SinonStub;
     beforeEach(() => {
         const config: IConfiguratedUpdateStackBuildTask = {Type: 'update-stacks', StackName: 'stack', Template: 'path.yml'};
-        task = BuildTaskProvider.createBuildTask('./.', 'task', config);
+        task = BuildTaskProvider.createBuildTask('./.', 'task', config, {});
         updateStacksResoruces = sinon.stub(All, 'updateAccountResources');
     });
 
@@ -24,7 +24,7 @@ describe('when creating UpdateStacksTask task', () => {
     });
 
     it('template and stackname are passed to updateStackResources', async () => {
-        await task.perform({});
+        await task.perform();
         const fileArg: string = updateStacksResoruces.lastCall.args[0];
         const commandArgs = updateStacksResoruces.lastCall.args[1];
         const commandKeys = Object.keys(commandArgs);
@@ -34,9 +34,26 @@ describe('when creating UpdateStacksTask task', () => {
         expect(commandKeys).contains('stackName');
         expect(commandArgs.stackName).to.eq('stack');
     });
+});
 
+describe('when creating UpdateStacksTask task with command args', () => {
+    let task: IBuildTask;
+    let updateStacksResoruces: sinon.SinonStub;
+    beforeEach(() => {
+        const config: IConfiguratedUpdateStackBuildTask = {Type: 'update-stacks', StackName: 'stack', Template: 'path.yml'};
+        task = BuildTaskProvider.createBuildTask('./.', 'task', config, {arg: 'Val'});
+        updateStacksResoruces = sinon.stub(All, 'updateAccountResources');
+    });
+
+    afterEach(() => {
+        updateStacksResoruces.restore();
+    });
+
+    it('creates task', () => {
+        expect(task).to.not.be.undefined;
+    });
     it('arguments sent to perform are passed to updateStackResources', async () => {
-        await task.perform({arg: 'Val'});
+        await task.perform();
         const fileArg: string = updateStacksResoruces.lastCall.args[0];
         const commandArgs = updateStacksResoruces.lastCall.args[1];
         const commandKeys = Object.keys(commandArgs);
@@ -49,7 +66,6 @@ describe('when creating UpdateStacksTask task', () => {
         expect(commandArgs.arg).to.eq('Val');
     });
 });
-
 describe('when creating UpdateStacksTask task with arguments', () => {
     let task: IBuildTask;
     let updateStacksResoruces: sinon.SinonStub;
@@ -67,12 +83,12 @@ describe('when creating UpdateStacksTask task with arguments', () => {
             OrganizationBindingRegion:  ['eu-central-1', 'us-west-1'],
             TerminationProtection: false,
          };
-        task = BuildTaskProvider.createBuildTask('./.', 'task', config);
+        task = BuildTaskProvider.createBuildTask('./.', 'task', config, {arg: 'Val'});
         updateStacksResoruces = sinon.stub(All, 'updateAccountResources');
     });
 
     it('all arguments are passed to updateStackResources', async () => {
-        await task.perform({arg: 'Val'});
+        await task.perform();
         const fileArg: string = updateStacksResoruces.lastCall.args[0];
         const commandArgs = updateStacksResoruces.lastCall.args[1];
         const commandKeys = Object.keys(commandArgs);

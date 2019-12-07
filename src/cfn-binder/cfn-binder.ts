@@ -146,7 +146,7 @@ export class CloudFormationBinder {
         for (const binding of this.enumBindings()) {
             if (binding.action === 'UpdateOrCreate') {
                 const task = this.taskProvider.createUpdateTemplateTask(binding);
-                task.dependentTaskFilter = (other) => {
+                task.isDependency = (other) => {
                     return binding.accountDependencies.includes(other.accountId) ||
                            binding.regionDependencies.includes(other.region) ||
                            binding.dependencies.findIndex((x) => x.outputAccountId === other.accountId && x.outputRegion === other.region && x.outputStackName === other.stackName) > -1;

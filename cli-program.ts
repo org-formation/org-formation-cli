@@ -1,5 +1,7 @@
 import { Command } from 'commander';
 import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, performTasks, printAccountStacks, updateAccountResources, updateTemplate } from './index';
+import { ConsoleUtil } from './src/console-util';
+import { OrgFormationError } from './src/org-formation-error';
 
 export class CliProgram {
 
@@ -73,17 +75,17 @@ export class CliProgram {
         this.addStackOptionsFlagForUpdate([this.updateStacks, this.printStacks]);
         this.addChangeSetFlag([this.createChangeSet]);
 
-        this.init.action(async (outFile, cmd) => await generateTemplate(outFile, cmd));
+        this.init.action(async (outFile, cmd) => await HandleErrors(async () => { await generateTemplate(outFile, cmd); }));
 
-        this.update.action(async (templateFile, cmd) => await updateTemplate(templateFile, cmd));
-        this.createChangeSet.action(async (templateFile, cmd) => await createChangeSet(templateFile, cmd));
-        this.executeChangeSet.action(async (templateFile, cmd) => await executeChangeSet(templateFile, cmd));
+        this.update.action(async (templateFile, cmd) => await HandleErrors(async () => { await updateTemplate(templateFile, cmd); }));
+        this.createChangeSet.action(async (templateFile, cmd) => await HandleErrors(async () => { await createChangeSet(templateFile, cmd); }));
+        this.executeChangeSet.action(async (templateFile, cmd) => await HandleErrors(async () => { await executeChangeSet(templateFile, cmd); }));
 
-        this.updateStacks.action(async (templateFile, cmd) => await updateAccountResources(templateFile, cmd));
-        this.describeStacks.action(async (stackName, cmd) => await describeAccountStacks(stackName, cmd));
-        this.deleteStacks.action(async (stackName, cmd) => await deleteAccountStacks(stackName, cmd));
-        this.performTasks.action(async (path, cmd) => await performTasks(path, cmd));
-        this.printStacks.action(async (templateFile, cmd) => await printAccountStacks(templateFile, cmd));
+        this.updateStacks.action(async (templateFile, cmd) => await HandleErrors(async () => { await updateAccountResources(templateFile, cmd); }));
+        this.describeStacks.action(async (stackName, cmd) => await HandleErrors(async () => { await describeAccountStacks(stackName, cmd); }));
+        this.deleteStacks.action(async (stackName, cmd) => await HandleErrors(async () => { await deleteAccountStacks(stackName, cmd); }));
+        this.performTasks.action(async (path, cmd) => await HandleErrors(async () => { await performTasks(path, cmd); }));
+        this.printStacks.action(async (templateFile, cmd) => await HandleErrors(async () => { await printAccountStacks(templateFile, cmd);  }));
     }
 
     public getCommand(): Command {
@@ -127,5 +129,23 @@ export class CliProgram {
         for (const command of commands) {
             command.option('--change-set-name [change-set-name]', 'change set name');
         }
+    }
+}
+
+async function HandleErrors(fn: () => {}): Promise<void> {
+    try {
+        await fn();
+    } catch (err) {
+        if (err instanceof OrgFormationError) {
+            ConsoleUtil.LogError(err.message);
+        } else {
+            if (err.code && err.requestId) {
+                ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
+                ConsoleUtil.LogError(err.message);
+            } else {
+                ConsoleUtil.LogError(`unexpected error occurred...`, err);
+            }
+        }
+        process.exitCode = 1;
     }
 }

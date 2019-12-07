@@ -1,29 +1,18 @@
 import { updateAccountResources, updateTemplate } from '../../index';
+import { ConsoleUtil } from '../console-util';
+import { GenericTaskRunner, ITaskRunnerDelegates } from '../core/generic-task-runner';
+import { OrgFormationError } from '../org-formation-error';
 import { IBuildTask } from './build-configuration';
 
 export class BuildRunner {
-    public static async RunTasks(tasks: IBuildTask[], command: any) {
-        for (const task of tasks) {
-
-            if (task.done) {
-                continue;
-            }
-
-            if (task.type === 'update-stacks') {
-                const updateOrgTasks = tasks.filter((x) => x.type === 'update-organization' && !x.done);
-                if (updateOrgTasks.length !== 0) {
-                    await BuildRunner.RunTasks(updateOrgTasks, command);
-                }
-            }
-
-            try {
-                await task.perform(command);
-                task.done = true;
-                console.log(`done`);
-            } catch (err) {
-                console.log(`failed executing task: ${err}`);
-                throw err;
-            }
-        }
+    public static async RunTasks(tasks: IBuildTask[]) {
+        const delegate: ITaskRunnerDelegates<IBuildTask> = {
+            onTaskRanFailed: (task, err) => {ConsoleUtil.LogInfo(`task ${task.name} failed. \n${err}`); },
+            onTaskRanSuccessfully: (task) => {ConsoleUtil.LogInfo(`task ${task.name} ran successfully`); },
+            throwCircularDependency: (ts) => {throw new OrgFormationError(`circular dependency detected with tasks: ${ts.map((t) => t.name).join(', ')}`); },
+            throwDependencyOnSelfException: (task) => {throw new OrgFormationError(`task ${task.name} has a dependency on itself.`); },
+            maxNumberOfTasks: 1,
+        };
+        await GenericTaskRunner.RunTasks<IBuildTask>(tasks, delegate);
     }
 }

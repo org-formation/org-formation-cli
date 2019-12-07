@@ -13,15 +13,16 @@ describe('when running cfn tasks', () => {
             region: 'eu-central-1',
             accountId: '123123123123',
             stackName: 'task1',
-            perform: async (x) => { task1order =  order; order = order + 1; },
+            perform: async () => { task1order =  order; order = order + 1; },
+            isDependency: () => false,
         };
         const task2: ICfnTask = {
             action: 'UpdateOrCreate',
-            dependentTaskFilter: (t) => t.stackName === 'task1',
             region: 'eu-central-1',
             accountId: '123123123123',
             stackName: 'task2',
-            perform: async (x) => { task2order =  order; order = order + 1; },
+            perform: async () => { task2order =  order; order = order + 1; },
+            isDependency: (t) => t.stackName === 'task1',
         };
         await CfnTaskRunner.RunTasks([task2, task1], 'stack');
         expect(task1order).to.eq(1);
@@ -37,7 +38,8 @@ describe('when running cfn tasks', () => {
                 accountId: '100000000000' + x,
                 stackName: 'task' + x,
                 callCount: 0,
-                perform: async (t: MyTask) => { t.callCount = t.callCount + 1; await createSleepPromise(10 - x); },
+                perform: async () => { task.callCount = task.callCount + 1; await createSleepPromise(10 - x); },
+                isDependency: () => false,
             };
             tasks.push(task);
         }
@@ -56,18 +58,19 @@ describe('when running cfn tasks', () => {
             accountId: '1000000000000' ,
             stackName: 'task1',
             callCount: 0,
-            perform: async (x: MyTask) => { x.callCount = x.callCount + 1; await createSleepPromise(10); },
+            perform: async () => { task1.callCount = task1.callCount + 1; await createSleepPromise(10); },
+            isDependency: () => false,
         };
         tasks.push(task1);
         for (let x = 2; x <= 10; x++) {
             const task: MyTask = {
                 action: 'UpdateOrCreate',
-                dependentTaskFilter: (t) => t.stackName === 'task' + (x - 1),
+                isDependency: (t) => t.stackName === 'task' + (x - 1),
                 region: 'eu-central-1',
                 accountId: '100000000000' + x,
                 stackName: 'task' + x,
                 callCount: 0,
-                perform: async (t: MyTask) => { t.callCount = t.callCount + 1; await createSleepPromise(10 - x); },
+                perform: async () => { task.callCount = task.callCount + 1; await createSleepPromise(10 - x); },
             };
             tasks.push(task);
         }
@@ -80,19 +83,19 @@ describe('when running cfn tasks', () => {
     it('will throw for circular dependency', async () => {
         const task1: ICfnTask = {
             action: 'UpdateOrCreate',
-            dependentTaskFilter: (t) => t.stackName === 'task2',
+            isDependency: (t) => t.stackName === 'task2',
             region: 'eu-central-1',
             accountId: '123123123123',
             stackName: 'task1',
-            perform: async (x) => { return undefined; },
+            perform: async () => { return undefined; },
         };
         const task2: ICfnTask = {
             action: 'UpdateOrCreate',
-            dependentTaskFilter: (t) => t.stackName === 'task1',
+            isDependency: (t) => t.stackName === 'task1',
             region: 'eu-central-1',
             accountId: '123123123123',
             stackName: 'task2',
-            perform: async (x) => { return undefined; },
+            perform: async () => { return undefined; },
         };
         try {
             await CfnTaskRunner.RunTasks([task1, task2], 'stack');
@@ -107,11 +110,11 @@ describe('when running cfn tasks', () => {
     it('will throw for dependency on self', async () => {
         const task1: ICfnTask = {
             action: 'UpdateOrCreate',
-            dependentTaskFilter: (t) => true,
+            isDependency: (t) => true,
             region: 'eu-central-1',
             accountId: '123123123123',
             stackName: 'task1',
-            perform: async (x) => { return undefined; },
+            perform: async () => { return undefined; },
         };
         try {
             await CfnTaskRunner.RunTasks([task1], 'stack');

@@ -1,7 +1,7 @@
 
-# OrganizationUpdate:
-#   Type: update-organization
-#   Template: ./organization.yml
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
 
 CloudformationSetup:
   Type: update-stacks
@@ -23,20 +23,24 @@ BudgetAlarms:
   Parameters:
     resourcePrefix: my
 
-# Roles:
-#   Type: update-stacks
-#   Template: ./roles.yml
-#   StackName: roles
+Roles:
+  Type: update-stacks
+  Template: ./roles.yml
+  StackName: roles
+  StackDescription: 'Roles example template'
+  TerminationProtection: true
 
-# HostedZone:
-#   Type: update-stacks
-#   Template: ./hosted-zone.yml
-#   StackName: hosted-zone
+HostedZone:
+  Type: update-stacks
+  Template: ./hosted-zone.yml
+  StackName: hosted-zone
+  StackDescription: 'Hosted Zone example template'
 
-# CloudTrail:
-#   Type: update-stacks
-#   Template: ./cloudtrail.yml
-#   StackName: cloudtrail
+CloudTrail:
+  Type: update-stacks
+  Template: ./cloudtrail.yml
+  StackName: cloudtrail
+  StackDescription: 'Cloudtrail example template'
 
 
 

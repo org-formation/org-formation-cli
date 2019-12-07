@@ -23,200 +23,165 @@ import { ICfnTarget, PersistedState } from './src/state/persisted-state';
 import { S3StorageProvider } from './src/state/storage-provider';
 import { DefaultTemplateWriter } from './src/writer/default-template-writer';
 
-async function HandleErrors(fn: () => {}): Promise<boolean> {
-    try {
-        await fn();
-        return true;
-    } catch (err) {
-        if (err instanceof OrgFormationError) {
-            ConsoleUtil.LogError(err.message);
-        } else {
-            if (err.code && err.requestId) {
-                ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
-                ConsoleUtil.LogError(err.message);
-            } else {
-                ConsoleUtil.LogError(`unexpected error occurred...`, err);
-            }
-        }
+export async function updateTemplate(templateFile: string, command: ICommandArgs): Promise<void> {
+    const template = TemplateRoot.create(templateFile);
+
+    const state = await getState(command);
+    const binder = await getOrganizationBinder(template, state);
+
+    const tasks = binder.enumBuildTasks();
+    if (tasks.length === 0) {
+        ConsoleUtil.LogInfo('organization up to date, no work to be done.');
+    } else {
+        await TaskRunner.RunTasks(tasks);
+        ConsoleUtil.LogInfo('done');
     }
-    process.exitCode = 1;
-    return false;
+
+    state.setPreviousTemplate(template.source);
+    await state.save();
 }
 
-export async function updateTemplate(templateFile: string, command: ICommandArgs): Promise<boolean> {
-    return await HandleErrors(async () => {
-        const template = TemplateRoot.create(templateFile);
-
-        const state = await getState(command);
-        const binder = await getOrganizationBinder(template, state);
-
-        const tasks = binder.enumBuildTasks();
-        if (tasks.length === 0) {
-            ConsoleUtil.LogInfo('organization up to date, no work to be done.');
-        } else {
-            await TaskRunner.RunTasks(tasks);
-            ConsoleUtil.LogInfo('done');
-        }
-
-        state.setPreviousTemplate(template.source);
-        await state.save();
-    });
+export async function performTasks(path: string, command: ICommandArgs): Promise<void> {
+    const config = new BuildConfiguration(path);
+    const tasks = config.enumBuildTasks(command);
+    await BuildRunner.RunTasks(tasks);
 }
 
-export async function performTasks(path: string, command: ICommandArgs): Promise<boolean> {
-    return await HandleErrors(async () => {
-        const config = new BuildConfiguration(path);
-        const tasks = config.enumBuildTasks();
-        await BuildRunner.RunTasks(tasks, command);
-    });
+export async function updateAccountResources(templateFile: string, command: IUpdateStackCommandArgs): Promise<void> {
+    if (!command.stackName) {
+        throw new OrgFormationError(`missing option --stack-name <stack-name>`);
+    }
+
+    const template = createTemplateUsingOverrides(command, templateFile);
+    const parameters = parseStackParameters(command);
+    const state = await getState(command);
+    const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, command.terminationProtection);
+
+    const cfnTasks = cfnBinder.enumTasks();
+    if (cfnTasks.length === 0) {
+        ConsoleUtil.LogInfo(`stack ${command.stackName} already up to date.`);
+    } else {
+        await CfnTaskRunner.RunTasks(cfnTasks, command.stackName);
+        ConsoleUtil.LogInfo('done');
+    }
+
+    state.setPreviousTemplate(template.source);
+    await state.save();
 }
 
-export async function updateAccountResources(templateFile: string, command: IUpdateStackCommandArgs): Promise<boolean> {
+export async function printAccountStacks(templateFile: string, command: IUpdateStackCommandArgs): Promise<void> {
 
-    return await HandleErrors(async () => {
-        if (!command.stackName) {
-            throw new OrgFormationError(`missing option --stack-name <stack-name>`);
-        }
+    if (!command.stackName) {
+        throw new OrgFormationError(`missing option --stack-name <stack-name>`);
+    }
+    const template = createTemplateUsingOverrides(command, templateFile);
+    const parameters = parseStackParameters(command);
+    const state = await getState(command);
+    const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters);
 
-        const template = createTemplateUsingOverrides(command, templateFile);
-        const parameters = parseStackParameters(command);
-        const state = await getState(command);
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, command.terminationProtection);
-
-        const cfnTasks = cfnBinder.enumTasks();
-        if (cfnTasks.length === 0) {
-            ConsoleUtil.LogInfo(`stack ${command.stackName} already up to date.`);
-        } else {
-            await CfnTaskRunner.RunTasks(cfnTasks, command.stackName);
-            ConsoleUtil.LogInfo('done');
-        }
-
-        state.setPreviousTemplate(template.source);
-        await state.save();
-    });
+    const bindings = cfnBinder.enumBindings();
+    for (const binding of bindings) {
+        console.log(`template for account ${binding.accountId} and region ${binding.region}`);
+        const templateBody = binding.template.createTemplateBody();
+        console.log(templateBody);
+    }
 }
 
-export async function printAccountStacks(templateFile: string, command: IUpdateStackCommandArgs): Promise<boolean> {
-    return await HandleErrors(async () => {
-        if (!command.stackName) {
-            throw new OrgFormationError(`missing option --stack-name <stack-name>`);
-        }
-        const template = createTemplateUsingOverrides(command, templateFile);
-        const parameters = parseStackParameters(command);
-        const state = await getState(command);
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters);
+export async function deleteAccountStacks(stackName: string, command: ICommandArgs): Promise<void> {
 
-        const bindings = cfnBinder.enumBindings();
-        for (const binding of bindings) {
-            console.log(`template for account ${binding.accountId} and region ${binding.region}`);
-            const templateBody = binding.template.createTemplateBody();
-            console.log(templateBody);
-        }
+    const state = await getState(command);
+    const orgTemplate = JSON.parse(state.getPreviousTemplate()) as ITemplate;
+    delete orgTemplate.Resources;
+    const emptyTemplate = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
 
-    });
+    const cfnBinder = new CloudFormationBinder(stackName, emptyTemplate, state);
+
+    const cfnTasks = cfnBinder.enumTasks();
+    if (cfnTasks.length === 0) {
+        ConsoleUtil.LogInfo('no work to be done.');
+    } else {
+        await CfnTaskRunner.RunTasks(cfnTasks, stackName);
+        ConsoleUtil.LogInfo('done');
+    }
+
+    state.setPreviousTemplate(emptyTemplate.source);
+    await state.save();
 }
 
-export async function deleteAccountStacks(stackName: string, command: ICommandArgs): Promise<boolean> {
-    return await HandleErrors(async () => {
-        const state = await getState(command);
-        const orgTemplate = JSON.parse(state.getPreviousTemplate()) as ITemplate;
-        delete orgTemplate.Resources;
-        const emptyTemplate = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
-
-        const cfnBinder = new CloudFormationBinder(stackName, emptyTemplate, state);
-
-        const cfnTasks = cfnBinder.enumTasks();
-        if (cfnTasks.length === 0) {
-            ConsoleUtil.LogInfo('no work to be done.');
-        } else {
-            await CfnTaskRunner.RunTasks(cfnTasks, stackName);
-            ConsoleUtil.LogInfo('done');
-        }
-
-        state.setPreviousTemplate(emptyTemplate.source);
-        await state.save();
-    });
-}
-
-export async function describeAccountStacks(stackName: string, command: ICommandArgs): Promise<boolean> {
-    if (typeof stackName === 'string' ) {
+export async function describeAccountStacks(stackName: string, command: ICommandArgs): Promise<void> {
+    if (typeof stackName === 'string') {
         command.stackName = stackName;
     }
-    return await HandleErrors(async () => {
-        const state = await getState(command);
-        const record: Record<string, ICfnTarget[]> = {};
-        for (const stack of state.listStacks()) {
-            if (command.stackName && stack !== command.stackName) {
-                continue;
-            }
-            record[stack] = [];
-            for (const target of state.enumTargets(stack)) {
-                record[stack].push(target);
-            }
 
+    const state = await getState(command);
+    const record: Record<string, ICfnTarget[]> = {};
+    for (const stack of state.listStacks()) {
+        if (command.stackName && stack !== command.stackName) {
+            continue;
         }
-        console.log(JSON.stringify(record, null, 2));
-    });
+        record[stack] = [];
+        for (const target of state.enumTargets(stack)) {
+            record[stack].push(target);
+        }
+
+    }
+    console.log(JSON.stringify(record, null, 2));
 }
 
-export async function generateTemplate(filePath: string, command: ICommandArgs): Promise<boolean> {
-    return await HandleErrors(async () => {
-        const storageProvider = await initializeAndGetStorageProvider(command);
+export async function generateTemplate(filePath: string, command: ICommandArgs): Promise<void> {
+    const storageProvider = await initializeAndGetStorageProvider(command);
 
-        const organizations = new Organizations({ region: 'us-east-1' });
-        const awsReader = new AwsOrganizationReader(organizations);
-        const awsOrganization = new AwsOrganization(awsReader);
-        const writer = new DefaultTemplateWriter(awsOrganization);
-        const template = await writer.generateDefaultTemplate();
-        const templateContents = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
-        writeFileSync(filePath, templateContents);
+    const organizations = new Organizations({ region: 'us-east-1' });
+    const awsReader = new AwsOrganizationReader(organizations);
+    const awsOrganization = new AwsOrganization(awsReader);
+    const writer = new DefaultTemplateWriter(awsOrganization);
+    const template = await writer.generateDefaultTemplate();
+    const templateContents = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
+    writeFileSync(filePath, templateContents);
 
-        template.state.setPreviousTemplate(templateContents);
-        await template.state.save(storageProvider);
-    });
+    template.state.setPreviousTemplate(templateContents);
+    await template.state.save(storageProvider);
+
 }
 
-export async function createChangeSet(templateFile: string, command: ICommandArgs): Promise<boolean> {
-    return await HandleErrors(async () => {
-        const template = TemplateRoot.create(templateFile);
+export async function createChangeSet(templateFile: string, command: ICommandArgs): Promise<void> {
+    const template = TemplateRoot.create(templateFile);
 
-        const state = await getState(command);
-        const binder = await getOrganizationBinder(template, state);
+    const state = await getState(command);
+    const binder = await getOrganizationBinder(template, state);
 
-        const stateBucketName = await GetStateBucketName(command);
-        const provider = new ChangeSetProvider(stateBucketName);
-        const tasks = binder.enumBuildTasks();
+    const stateBucketName = await GetStateBucketName(command);
+    const provider = new ChangeSetProvider(stateBucketName);
+    const tasks = binder.enumBuildTasks();
 
-        const changeSet = await provider.createChangeSet(command.changeSetName, template, tasks);
+    const changeSet = await provider.createChangeSet(command.changeSetName, template, tasks);
 
-        const contents = JSON.stringify(changeSet, null, 2);
-        console.log(contents);
-    });
+    const contents = JSON.stringify(changeSet, null, 2);
+    console.log(contents);
+
 }
 
-export async function executeChangeSet(changeSetName: string, command: ICommandArgs): Promise<boolean> {
-    return await HandleErrors(async () => {
-        initialize(command);
-        const stateBucketName = await GetStateBucketName(command);
-        const provider = new ChangeSetProvider(stateBucketName);
-        const changeSetObj = await provider.getChangeSet(changeSetName);
-        if (!changeSetObj) {
-            ConsoleUtil.LogError(`change set '${changeSetName}' not found.`);
-            return;
-        }
-        const template = new TemplateRoot(changeSetObj.template, './');
-        const state = await getState(command);
-        const binder = await getOrganizationBinder(template, state);
-        const tasks = binder.enumBuildTasks();
-        const changeSet = ChangeSetProvider.CreateChangeSet(tasks, changeSetName);
-        if (JSON.stringify(changeSet) !== JSON.stringify(changeSetObj.changeSet)) {
-            ConsoleUtil.LogError(`AWS organization state has changed since creating change set.`);
-            return;
-        }
-        await TaskRunner.RunTasks(tasks);
-        state.setPreviousTemplate(template.source);
-        await state.save();
-    });
+export async function executeChangeSet(changeSetName: string, command: ICommandArgs): Promise<void> {
+    initialize(command);
+    const stateBucketName = await GetStateBucketName(command);
+    const provider = new ChangeSetProvider(stateBucketName);
+    const changeSetObj = await provider.getChangeSet(changeSetName);
+    if (!changeSetObj) {
+        ConsoleUtil.LogError(`change set '${changeSetName}' not found.`);
+        return;
+    }
+    const template = new TemplateRoot(changeSetObj.template, './');
+    const state = await getState(command);
+    const binder = await getOrganizationBinder(template, state);
+    const tasks = binder.enumBuildTasks();
+    const changeSet = ChangeSetProvider.CreateChangeSet(tasks, changeSetName);
+    if (JSON.stringify(changeSet) !== JSON.stringify(changeSetObj.changeSet)) {
+        ConsoleUtil.LogError(`AWS organization state has changed since creating change set.`);
+        return;
+    }
+    await TaskRunner.RunTasks(tasks);
+    state.setPreviousTemplate(template.source);
+    await state.save();
 }
 
 function parseStackParameters(command: IUpdateStackCommandArgs) {
@@ -248,7 +213,7 @@ function parseStackParameters(command: IUpdateStackCommandArgs) {
     return parameters;
 }
 
-function createTemplateUsingOverrides(command: IUpdateStackCommandArgs,  templateFile: string) {
+function createTemplateUsingOverrides(command: IUpdateStackCommandArgs, templateFile: string) {
     const templateOverrides: ITemplateOverrides = {};
 
     if (command.stackDescription) {
@@ -333,8 +298,8 @@ async function initialize(command: ICommandArgs) {
     }
 }
 
-async function  customInitializationIncludingMFASupport(command: ICommandArgs): Promise<void> {
-    const profileName = command.profile ? command.profile : 'default' ;
+async function customInitializationIncludingMFASupport(command: ICommandArgs): Promise<void> {
+    const profileName = command.profile ? command.profile : 'default';
     const homeDir = require('os').homedir();
     // todo: add support for windows?
     if (!existsSync(homeDir + '/.aws/config')) {
@@ -347,19 +312,19 @@ async function  customInitializationIncludingMFASupport(command: ICommandArgs): 
         const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
         const secrets = ini.parse(awssecrets);
         const creds = secrets[profile.source_profile];
-        const sts = new STS({credentials: {accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key} });
+        const sts = new STS({ credentials: { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key } });
 
         const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profile.mfa_serial}`);
         const assumeRoleReq: AssumeRoleRequest = {
             RoleArn: profile.role_arn,
             RoleSessionName: 'organization-build',
             SerialNumber: profile.mfa_serial,
-            TokenCode : token,
-          };
+            TokenCode: token,
+        };
 
         try {
             const tokens = await sts.assumeRole(assumeRoleReq).promise();
-            AWS.config.credentials = { accessKeyId: tokens.Credentials.AccessKeyId, secretAccessKey: tokens.Credentials.SecretAccessKey, sessionToken: tokens.Credentials.SessionToken};
+            AWS.config.credentials = { accessKeyId: tokens.Credentials.AccessKeyId, secretAccessKey: tokens.Credentials.SecretAccessKey, sessionToken: tokens.Credentials.SessionToken };
         } catch (err) {
             throw new OrgFormationError(`unable to assume role, error: \n${err}`);
         }

@@ -1,5 +1,4 @@
 AWSTemplateFormatVersion: '2010-09-09-OC'
-Description: example route 53 setup
 
 Parameters:
 

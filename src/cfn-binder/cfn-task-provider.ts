@@ -21,6 +21,7 @@ export class CfnTaskProvider {
             region: binding.region,
             stackName: binding.stackName,
             action: 'UpdateOrCreate',
+            isDependency: () => false,
             perform: async () => {
                 const boundParameters = binding.template.enumBoundParameters();
                 for (const param of boundParameters) {
@@ -135,6 +136,7 @@ export class CfnTaskProvider {
             accountId: binding.accountId,
             region: binding.region,
             stackName: binding.stackName,
+            isDependency: () => false,
             action: 'Delete',
             perform: async () => {
                 const cfn = await that.createCreateCloudFormationFn(binding);
@@ -182,8 +184,8 @@ export interface ICfnTask {
     accountId: string;
     region: string;
     stackName: string;
-    perform: (task: ICfnTask) => Promise<void>;
-    dependentTaskFilter?: (task: ICfnTask) => boolean;
+    perform: () => Promise<void>;
+    isDependency: (task: ICfnTask) => boolean;
 
 }
 type CfnBuildTaskAction = 'UpdateOrCreate' | 'Delete';

@@ -17,32 +17,30 @@ export class BuildConfiguration {
         }
     }
 
-    public enumBuildTasks(): IBuildTask[] {
-        if (this.file) {
-            return this.enumBuildTasksFromFile(this.file);
-        }
+    public enumBuildTasks(command: any): IBuildTask[] {
+        return this.enumBuildTasksFromFile(this.file, command);
     }
 
-    private enumBuildTasksFromFile(filePath: string): IBuildTask[] {
+    private enumBuildTasksFromFile(filePath: string, command: any): IBuildTask[] {
         const buffer = fs.readFileSync(filePath);
         const contents = buffer.toString('utf-8');
         const buildFile = yamlParse(contents) as Record<string, IConfiguredBuildTask>;
         const tasks: IBuildTask[] = [];
         for (const name in buildFile) {
             const config = buildFile[name];
-            const task = BuildTaskProvider.createBuildTask(filePath, name, config);
+            const task = BuildTaskProvider.createBuildTask(filePath, name, config, command);
             tasks.push(task);
         }
         return tasks;
     }
 }
 
-export type BuidTaskType  = 'update-stacks' | 'update-organization' | 'include'  | 'include-dir';
+export type BuildTaskType = 'update-stacks' | 'update-organization' | 'include' | 'include-dir';
 
 export interface IConfiguredBuildTask {
-    Type: BuidTaskType;
+    Type: BuildTaskType;
     Template?: string;
-    DependsOn?: string;
+    DependsOn?: string | string[];
     Path?: string;
     SearchPattern?: string;
 }
@@ -59,8 +57,7 @@ export interface IConfiguratedUpdateStackBuildTask extends IConfiguredBuildTask 
 
 export interface IBuildTask {
     name: string;
-    type: string;
-    dependsOn: string;
-    done: boolean;
-    perform(command: any): Promise<boolean>;
+    type: BuildTaskType;
+    isDependency(task: IBuildTask): boolean;
+    perform(): Promise<void>;
 }
