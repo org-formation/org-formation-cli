@@ -308,7 +308,7 @@ class LogicalNames {
                 return 'SCP';
         }
 
-        throw new Error('not implemented');
+        throw new OrgFormationError('not implemented');
     }
 
     private getKey(element: any): string {

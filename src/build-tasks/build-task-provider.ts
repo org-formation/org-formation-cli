@@ -37,7 +37,7 @@ class IncludeTaskFile implements IBuildTask {
 
     constructor(filePath: string, name: string, config: IIncludeTaskConfiguration, command: any) {
         if (config.Path === undefined) {
-            throw new Error(`Required atrribute Path missing for task ${name}`);
+            throw new OrgFormationError(`Required atrribute Path missing for task ${name}`);
         }
         this.name = name;
         this.type = config.Type;
@@ -80,10 +80,10 @@ class UpdateStacksTask implements IBuildTask {
 
     constructor(filePath: string, name: string, config: IUpdateStackTaskConfiguration, command: any) {
         if (config.Template === undefined) {
-            throw new Error(`Required atrribute Template missing for task ${name}`);
+            throw new OrgFormationError(`Required atrribute Template missing for task ${name}`);
         }
         if (config.StackName === undefined) {
-            throw new Error(`Required atrribute StackName missing for task ${name}`);
+            throw new OrgFormationError(`Required atrribute StackName missing for task ${name}`);
         }
         this.name = name;
         if (typeof config.DependsOn === 'string') {

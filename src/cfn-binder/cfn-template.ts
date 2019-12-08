@@ -22,7 +22,7 @@ export class CfnTemplate {
         }
         if (foundBinding.length > 1) {
             const list = foundBinding.map((x) => `${x.accountId}/${x.region}`).join(', ');
-            throw new Error(`Found multiple targets for reference to ${accountLogicalId} ${resourceLogicalId}. e.g: ${list}`);
+            throw new OrgFormationError(`Found multiple targets for reference to ${accountLogicalId} ${resourceLogicalId}. e.g: ${list}`);
         }
         return foundBinding[0];
     }
@@ -35,7 +35,7 @@ export class CfnTemplate {
         }
         if (foundBinding.length > 1) {
             const list = foundBinding.map((x) => `${x.accountId}/${x.region}`).join(', ');
-            throw new Error(`Found multiple targets for reference to ${resourceLogicalId}. e.g: ${list}`);
+            throw new OrgFormationError(`Found multiple targets for reference to ${resourceLogicalId}. e.g: ${list}`);
         }
         return foundBinding[0];
     }
@@ -277,7 +277,7 @@ export class CfnTemplate {
                         let path = variable.path;
                         if (variable.path && variable.path.startsWith('Resources')) {
                             const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === resourceId);
-                            if (!targetAccount) { throw new Error(`unable to find account ${resourceId} for cross account dependency`); }
+                            if (!targetAccount) { throw new OrgFormationError(`unable to find account ${resourceId} for cross account dependency`); }
                             const pathParts = variable.path.split('.');
                             const remoteResourceId = pathParts[1];
                             let remotePath = (pathParts.length > 2) ? pathParts[2] : undefined;
@@ -338,7 +338,7 @@ export class CfnTemplate {
                             let target;
                             if (path.startsWith('Resources.')) {
                                 const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === resourceId);
-                                if (!targetAccount) { throw new Error(`unable to find account ${resourceId} for cross account dependency`); }
+                                if (!targetAccount) { throw new OrgFormationError(`unable to find account ${resourceId} for cross account dependency`); }
                                 const pathParts = path.split('.');
                                 const accountLogicalId = resourceId;
                                 const remoteResourceId = pathParts[1];
@@ -548,18 +548,18 @@ class SubExpression {
     public expression: string;
     public locals?: any;
     constructor(subValue: string | any[]) {
-        if (!subValue) { throw new Error('!Sub Value must not be undefined'); }
+        if (!subValue) { throw new OrgFormationError('!Sub Value must not be undefined'); }
         if (typeof subValue === 'string') {
             this.expression = subValue;
         } else if (Array.isArray(subValue)) {
-            if (subValue.length === 0) { throw new Error('!Sub Value must not be empty array'); }
-            if (typeof subValue[0] !== 'string') { throw new Error('!Sub first element must be string'); }
+            if (subValue.length === 0) { throw new OrgFormationError('!Sub Value must not be empty array'); }
+            if (typeof subValue[0] !== 'string') { throw new OrgFormationError('!Sub first element must be string'); }
             this.expression = subValue[0];
             if (subValue.length > 1) {
                 this.locals = subValue[1];
             }
         } else  {
-            throw new Error('unable to parse !Sub expression');
+            throw new OrgFormationError('unable to parse !Sub expression');
         }
 
         const matches = this.expression.match(/\${([\w\.]*)}/g);

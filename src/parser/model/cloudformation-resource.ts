@@ -21,7 +21,7 @@ export class CloudFormationResource extends Resource {
         super(root, id, resource);
 
         if ((this.resource as any).OrganizationBindings) {
-            throw new Error(`Resource ${id} has an OrganizationBindings attribute which must be OrganizationBinding (without the S)`);
+            throw new OrgFormationError(`Resource ${id} has an OrganizationBindings attribute which must be OrganizationBinding (without the S)`);
         }
 
         this.binding = this.resource.OrganizationBinding as IOrganizationBinding;
@@ -32,7 +32,7 @@ export class CloudFormationResource extends Resource {
         }
 
         if (!this.binding) {
-            throw new Error(`Resource ${id} is missing OrganizationBinding attribute and no top level OrganizationBinding found.`);
+            throw new OrgFormationError(`Resource ${id} is missing OrganizationBinding attribute and no top level OrganizationBinding found.`);
         }
 
         if (!this.binding.Region) {

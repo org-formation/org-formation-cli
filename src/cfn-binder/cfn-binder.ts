@@ -52,7 +52,7 @@ export class CloudFormationBinder {
             } else  {
                 const accountBinding = this.state.getBinding(OrgResourceTypes.Account, target.accountLogicalId);
                 if (!accountBinding) {
-                    throw new Error(`expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
+                    throw new OrgFormationError(`expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
                 }
                 accountId = accountBinding.physicalId;
             }
@@ -96,7 +96,7 @@ export class CloudFormationBinder {
             for (const dependsOnLogicalAccount of dependsOnAccounts) {
                 const dependsOnAccountBinding = this.state.getBinding(OrgResourceTypes.Account, dependsOnLogicalAccount) || this.state.getBinding(OrgResourceTypes.MasterAccount, dependsOnLogicalAccount);
                 if (!dependsOnAccountBinding) {
-                    throw new Error(`unable to find account with logical Id ${dependsOnLogicalAccount}`);
+                    throw new OrgFormationError(`unable to find account with logical Id ${dependsOnLogicalAccount}`);
                 }
                 binding.accountDependencies.push(dependsOnAccountBinding.physicalId);
             }

@@ -204,14 +204,14 @@ function parseStackParameters(command: IUpdateStackCommandArgs) {
             if (parameterAttributes.length === 1) {
                 const parts = parameterAttributes[0].split('=');
                 if (parts.length !== 2) {
-                    throw new Error(`error reading parameter ${parameterAttributes[0]}. Expected either key=val or ParameterKey=key,ParameterVaue=val.`);
+                    throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected either key=val or ParameterKey=key,ParameterVaue=val.`);
                 }
                 parameters[parts[0]] = parts[1];
             } else {
                 const key = parameterAttributes.find((x) => x.startsWith('ParameterKey='));
                 const value = parameterAttributes.find((x) => x.startsWith('ParameterValue='));
                 if (key === undefined || value === undefined) {
-                    throw new Error(`error reading parameter ${parameterAttributes[0]}. Expected ParameterKey=key,ParameterVaue=val`);
+                    throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected ParameterKey=key,ParameterVaue=val`);
                 }
                 parameters[key] = value;
             }
