@@ -1,5 +1,4 @@
-import { Organization, PolicySummary, Root } from 'aws-sdk/clients/organizations';
-import { OrgFormationError } from '../org-formation-error';
+import { Organization } from 'aws-sdk/clients/organizations';
 import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot } from './aws-organization-reader';
 
 export class AwsOrganization {

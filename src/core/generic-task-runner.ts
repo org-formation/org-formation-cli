@@ -1,7 +1,10 @@
+import { OrgFormationError } from '../org-formation-error';
+
 export class GenericTaskRunner {
 
     public static async RunTasks<TTask>(tasks: Array<IGenericTaskInternal<TTask>>, delegate: ITaskRunnerDelegates<TTask>) {
         let totalTasksRan = 0;
+        let totalTasksFailed = 0;
         let remainingTasks: Array<IGenericTaskInternal<TTask>> = tasks;
         let tasksWithDependencies: Array<IGenericTaskInternal<TTask>> = [];
         let runningTasks: Array<IGenericTaskInternal<TTask>> = [];
@@ -18,7 +21,7 @@ export class GenericTaskRunner {
                     continue;
                 }
 
-                if (runningTasks.length >= delegate.maxNumberOfTasks) {
+                if (runningTasks.length >= delegate.maxConcurrentTasks) {
                     tasksWithDependencies.push(task);
                     continue;
                 }
@@ -32,6 +35,10 @@ export class GenericTaskRunner {
             }
             await Promise.all(runningTaskPromises);
             totalTasksRan = totalTasksRan + runningTasks.length;
+            totalTasksFailed = totalTasksFailed + runningTasks.filter((x) => x.failed === true).length;
+            if (totalTasksFailed >= delegate.failedTasksTolerance) {
+                throw new OrgFormationError(`number failed tasks ${totalTasksFailed} exceeded tolerance for failed tasks ${delegate.failedTasksTolerance}`);
+            }
             runningTasks = [];
             runningTaskPromises = [];
             remainingTasks = tasksWithDependencies;
@@ -60,7 +67,8 @@ export class GenericTaskRunner {
 }
 
 export interface ITaskRunnerDelegates<TTask> {
-    maxNumberOfTasks: number;
+    maxConcurrentTasks: number;
+    failedTasksTolerance: number;
     onTaskRanFailed(task: IGenericTaskInternal<TTask>, err: any): void;
     onTaskRanSuccessfully(task: IGenericTaskInternal<TTask>): void;
     throwDependencyOnSelfException(task: IGenericTaskInternal<TTask>): void;

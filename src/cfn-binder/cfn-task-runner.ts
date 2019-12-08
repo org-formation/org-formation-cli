@@ -9,7 +9,7 @@ export class CfnTaskRunner {
 
         const delegate: ITaskRunnerDelegates<ICfnTask> = {
             onTaskRanFailed: (task, err) => {
-                ConsoleUtil.LogError(`failed executing stack ${task.stackName} in account ${task.accountId} (${task.region}) \n err: ${err}`);
+                ConsoleUtil.LogError(`failed executing stack ${task.stackName} in account ${task.accountId} (${task.region}). Reason: ${err}`);
             },
             onTaskRanSuccessfully: (task) => {
                 ConsoleUtil.LogInfo(`stack ${task.stackName} successfully ${task.action === 'Delete' ? 'deleted from' : 'updated in' } ${task.accountId}/${task.region}.`);
@@ -19,7 +19,8 @@ export class CfnTaskRunner {
                 throw new OrgFormationError(`circular dependency on stack ${stackName} for targets ${targets.join(', ')}`);
              },
             throwDependencyOnSelfException: (task) => {throw new OrgFormationError(`stack ${task.stackName} has dependency on self target account ${task.accountId} / ${task.region}`); },
-            maxNumberOfTasks: 100,
+            maxConcurrentTasks: 100,
+            failedTasksTolerance: 100,
         };
         await GenericTaskRunner.RunTasks<ICfnTask>(tasks, delegate);
     }
