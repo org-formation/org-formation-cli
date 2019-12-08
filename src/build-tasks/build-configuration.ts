@@ -24,7 +24,7 @@ export class BuildConfiguration {
     private enumBuildTasksFromFile(filePath: string, command: any): IBuildTask[] {
         const buffer = fs.readFileSync(filePath);
         const contents = buffer.toString('utf-8');
-        const buildFile = yamlParse(contents) as Record<string, IConfiguredBuildTask>;
+        const buildFile = yamlParse(contents) as Record<string, IBuildTaskConfiguration>;
         const tasks: IBuildTask[] = [];
         for (const name in buildFile) {
             const config = buildFile[name];
@@ -37,15 +37,24 @@ export class BuildConfiguration {
 
 export type BuildTaskType = 'update-stacks' | 'update-organization' | 'include' | 'include-dir';
 
-export interface IConfiguredBuildTask {
+export interface IBuildTaskConfiguration {
     Type: BuildTaskType;
-    Template?: string;
     DependsOn?: string | string[];
-    Path?: string;
-    SearchPattern?: string;
 }
 
-export interface IConfiguratedUpdateStackBuildTask extends IConfiguredBuildTask {
+export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {
+    Path: string;
+    MaxConcurrentTasks?: number;
+    FailedTaskTolerance?: number;
+}
+export interface IIncludeDirTaskConfiguration extends IBuildTaskConfiguration {
+    SearchPattern?: string;
+    MaxConcurrentTasks: number;
+    FailedTaskTolerance: number;
+}
+
+export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
+    Template: string;
     StackName?: string;
     StackDescription?: string;
     Parameters?: Record<string, string>;
@@ -53,6 +62,9 @@ export interface IConfiguratedUpdateStackBuildTask extends IConfiguredBuildTask 
     OrganizationBinding?: IOrganizationBinding;
     OrganizationBindingRegion?: string | string[];
     TerminationProtection?: boolean;
+}
+export interface IUpdateOrganizationTaskConfiguration extends IBuildTaskConfiguration {
+    Template: string;
 }
 
 export interface IBuildTask {

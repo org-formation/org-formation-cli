@@ -42,5 +42,8 @@ CloudTrail:
   StackName: cloudtrail
   StackDescription: 'Cloudtrail example template'
 
-
-
+# Include:
+#   Type: include
+#   Path: ./build-tasks-include.yml
+#   MaxConcurrentTasks: 10
+#   FailedTaskTolerance: 10

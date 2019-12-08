@@ -2,20 +2,21 @@ import path from 'path';
 import { IUpdateStackCommandArgs, updateAccountResources, updateTemplate } from '../..';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { BuildTaskType, IBuildTask, IConfiguratedUpdateStackBuildTask, IConfiguredBuildTask } from './build-configuration';
+import { BuildConfiguration, BuildTaskType, IBuildTask, IBuildTaskConfiguration, IIncludeTaskConfiguration, IUpdateOrganizationTaskConfiguration, IUpdateStackTaskConfiguration } from './build-configuration';
+import { BuildRunner } from './build-runner';
 
 export class BuildTaskProvider {
 
-    public static createBuildTask(filePath: string, name: string, configuration: IConfiguredBuildTask, command: any): IBuildTask {
+    public static createBuildTask(filePath: string, name: string, configuration: IBuildTaskConfiguration, command: any): IBuildTask {
         switch (configuration.Type) {
             case 'update-stacks':
-                return new UpdateStacksTask(filePath, name, configuration as IConfiguratedUpdateStackBuildTask, command);
+                return new UpdateStacksTask(filePath, name, configuration as IUpdateStackTaskConfiguration, command);
 
             case 'update-organization':
-                return new UpdateOrganization(filePath, name, configuration, command);
+                return new UpdateOrganization(filePath, name, configuration as IUpdateOrganizationTaskConfiguration, command);
 
             case 'include':
-                throw new OrgFormationError('type include not implemented');
+                return new IncludeTaskFile(filePath, name, configuration as IIncludeTaskConfiguration, command);
 
             case 'include-dir':
                 throw new OrgFormationError('type include-dir not implemented');
@@ -26,16 +27,58 @@ export class BuildTaskProvider {
     }
 }
 
+class IncludeTaskFile implements IBuildTask {
+    public name: string;
+    public type: BuildTaskType;
+    public dependsOn: string[];
+    public taskFilePath: string;
+    private command: any;
+    private config: IIncludeTaskConfiguration;
+
+    constructor(filePath: string, name: string, config: IIncludeTaskConfiguration, command: any) {
+        if (config.Path === undefined) {
+            throw new Error(`Required atrribute Path missing for task ${name}`);
+        }
+        this.name = name;
+        this.type = config.Type;
+        if (typeof config.DependsOn === 'string') {
+            this.dependsOn = [config.DependsOn];
+        } else {
+            this.dependsOn = config.DependsOn;
+        }
+        this.config = config;
+        const dir = path.dirname(filePath);
+        this.taskFilePath = path.join(dir, config.Path);
+        this.command = command;
+    }
+
+    public isDependency(task: IBuildTask): boolean {
+        if (task.type === 'update-organization') {
+            return true;
+        }
+        if (this.dependsOn) {
+            return this.dependsOn.includes(task.name);
+        }
+    }
+    public async perform(): Promise<void> {
+        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.taskFilePath}`);
+        const buildConfig = new BuildConfiguration(this.taskFilePath);
+        const tasks = buildConfig.enumBuildTasks(this.command);
+        await BuildRunner.RunTasks(tasks, this.config.MaxConcurrentTasks, this.config.FailedTaskTolerance);
+    }
+
+}
+
 class UpdateStacksTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
     public dependsOn: string[];
     public stackName: string;
     public templatePath: string;
-    private config: IConfiguratedUpdateStackBuildTask;
+    private config: IUpdateStackTaskConfiguration;
     private command: any;
 
-    constructor(filePath: string, name: string, config: IConfiguratedUpdateStackBuildTask, command: any) {
+    constructor(filePath: string, name: string, config: IUpdateStackTaskConfiguration, command: any) {
         if (config.Template === undefined) {
             throw new Error(`Required atrribute Template missing for task ${name}`);
         }
@@ -95,14 +138,13 @@ class UpdateStacksTask implements IBuildTask {
 }
 
 class UpdateOrganization implements IBuildTask {
-
     public name: string;
     public type: BuildTaskType;
     public templatePath: string;
-    private config: IConfiguredBuildTask;
+    private config: IUpdateOrganizationTaskConfiguration;
     private command: any;
 
-    constructor(filePath: string, name: string, config: IConfiguredBuildTask, command: any) {
+    constructor(filePath: string, name: string, config: IUpdateOrganizationTaskConfiguration, command: any) {
         this.name = name;
         this.type = config.Type;
         this.config = config;
