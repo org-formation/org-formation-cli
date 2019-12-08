@@ -112,7 +112,7 @@ class UpdateOrganization implements IBuildTask {
 
     }
     public async perform(): Promise<void> {
-        console.log(`executing: ${this.config.Type} ${this.templatePath}`);
+        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath}`);
         await updateTemplate(this.templatePath, this.command);
     }
     public isDependency(task: IBuildTask) {

@@ -27,6 +27,14 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
     const template = TemplateRoot.create(templateFile);
 
     const state = await getState(command);
+    const templateHash = template.hash;
+
+    const lastHash = state.getValue('organization.template.hash');
+    if (lastHash === templateHash) {
+        ConsoleUtil.LogInfo('organization up to date, no work to be done.');
+        return;
+    }
+
     const binder = await getOrganizationBinder(template, state);
 
     const tasks = binder.enumBuildTasks();
@@ -36,7 +44,7 @@ export async function updateTemplate(templateFile: string, command: ICommandArgs
         await TaskRunner.RunTasks(tasks);
         ConsoleUtil.LogInfo('done');
     }
-
+    state.putValue('organization.template.hash', templateHash);
     state.setPreviousTemplate(template.source);
     await state.save();
 }
@@ -277,9 +285,7 @@ async function initializeAndGetStorageProvider(command: ICommandArgs) {
 
 async function initialize(command: ICommandArgs) {
     try {
-
         await customInitializationIncludingMFASupport(command);
-
     } catch (err) {
         if (err instanceof OrgFormationError) {
             throw err;

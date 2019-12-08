@@ -2,7 +2,6 @@ import { OrgFormationError } from '../org-formation-error';
 import { IStorageProvider } from './storage-provider';
 
 export class PersistedState {
-
     public static async Load(provider: IStorageProvider): Promise<PersistedState> {
 
         try {
@@ -32,6 +31,7 @@ export class PersistedState {
             masterAccountId,
             bindings: {},
             stacks: {},
+            values: {},
             previousTemplate: '',
         });
     }
@@ -45,6 +45,17 @@ export class PersistedState {
         this.provider = provider;
         this.state = state;
         this.masterAccount = state.masterAccountId;
+    }
+
+    public putValue(key: string, val: string) {
+        if (this.state.values === undefined) {
+            this.state.values = {};
+        }
+        this.state.values[key] = val;
+    }
+    public getValue(key: string): string | undefined {
+        if (this.state.values === undefined) { return undefined; }
+        return this.state.values[key];
     }
 
     public getTarget(stackName: string, accountId: string, region: string): ICfnTarget | undefined {
@@ -176,6 +187,7 @@ export interface IState {
     masterAccountId: string;
     bindings: Record<string, Record<string, IBinding>>;
     stacks: Record<string, Record<string, Record<string, ICfnTarget>>>;
+    values: Record<string, string>;
     previousTemplate: string;
 }
 
