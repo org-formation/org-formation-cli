@@ -1,5 +1,3 @@
-import md5 = require('md5');
-import { StringDecoder } from 'string_decoder';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
@@ -115,10 +113,7 @@ export class CfnTemplate {
             AWSTemplateFormatVersion: '2010-09-09',
             Description: this.templateRoot.contents.Description,
             Parameters: this.parameters,
-            Metadata: this.templateRoot.contents.Metadata,
             Resources: this.resources,
-            Mappings: this.templateRoot.contents.Mappings,
-            Conditions: this.templateRoot.contents.Conditions,
             Outputs: this.outputs,
         };
 
@@ -149,7 +144,23 @@ export class CfnTemplate {
 
         for (const paramName in this.templateRoot.contents.Parameters) {
             const param = this.templateRoot.contents.Parameters[paramName];
-            this.parameters[paramName] = param;
+            const clonedParam = JSON.parse(JSON.stringify(param));
+            this.parameters[paramName] = this._resolveOrganizationFunctions(clonedParam, accountResource);
+        }
+
+        if (this.templateRoot.contents.Metadata) {
+            const clonedMetadata = JSON.parse(JSON.stringify(this.templateRoot.contents.Metadata));
+            this.resultingTemplate.Metadata = this._resolveOrganizationFunctions(clonedMetadata, accountResource);
+
+        }
+        if (this.templateRoot.contents.Conditions) {
+            const clonedConditions = JSON.parse(JSON.stringify(this.templateRoot.contents.Conditions));
+            this.resultingTemplate.Conditions = this._resolveOrganizationFunctions(clonedConditions, accountResource);
+        }
+
+        if (this.templateRoot.contents.Mappings) {
+            const clonedMappings = JSON.parse(JSON.stringify(this.templateRoot.contents.Mappings));
+            this.resultingTemplate.Mappings = this._resolveOrganizationFunctions(clonedMappings, accountResource);
         }
 
         for (const prop in this.resultingTemplate) {

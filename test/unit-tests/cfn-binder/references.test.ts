@@ -174,3 +174,22 @@ describe('when loading cross account references through sub', () => {
         expect(refExpression).to.eq('root@mail.com');
     });
 });
+
+describe('when loading reference to account in param', () => {
+    it ('resolved account id', () => {
+        const template = TemplateRoot.create('./test/resources/references/reference-to-account-in-param.yml');
+        const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
+
+        persistedState.setBinding({type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc'});
+        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
+
+        const cloudformationBinder = new CloudFormationBinder('references', template, persistedState);
+        const binding = cloudformationBinder.enumBindings()[0];
+        const cfnTemplate = JSON.parse(binding.template.createTemplateBody());
+        expect(cfnTemplate).to.not.be.undefined;
+        expect(cfnTemplate.Parameters.masterAccountId.Default).to.eq('000000000000');
+    });
+});

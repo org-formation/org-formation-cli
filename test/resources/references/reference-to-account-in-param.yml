@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description:
+
+Organization: !Include ./organization.yml
+
+Parameters:
+
+  masterAccountId:
+    Type: String
+    Default: !Ref MasterAccount
+
+Resources:
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    OrganizationBinding:
+      Region: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      BucketName: !Sub 'something-${masterAccountId}'
+
