@@ -23,7 +23,16 @@ export class CloudFormationBinder {
         this.state = state;
         this.taskProvider = taskProvider;
         this.stackName = stackName;
-        this.parameters = parameters;
+
+        this.parameters = {};
+        for (const [key, val] of Object.entries(parameters)) {
+            if (typeof val  === 'object') {
+                throw new OrgFormationError(`parameter ${key} has invalid value, value must not be an object`);
+            }
+
+            parameters[key] = '' + val;
+        }
+
         this.terminationProtection = terminationProtection;
 
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
