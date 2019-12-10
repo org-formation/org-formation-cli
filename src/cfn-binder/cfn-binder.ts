@@ -30,7 +30,7 @@ export class CloudFormationBinder {
                 throw new OrgFormationError(`parameter ${key} has invalid value, value must not be an object`);
             }
 
-            parameters[key] = '' + val;
+            this.parameters[key] = '' + val;
         }
 
         this.terminationProtection = terminationProtection;
