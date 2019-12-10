@@ -53,7 +53,6 @@ export class CloudFormationBinder {
         const targetsInTemplate = [];
         const targets = this.template.resourcesSection.enumTemplateTargets();
 
-        const storedTargets = this.state.enumTargets(this.stackName);
         for (const target of targets) {
             let accountId = '';
             if (this.template.organizationSection.masterAccount && this.template.organizationSection.masterAccount.logicalId === target.accountLogicalId) {
