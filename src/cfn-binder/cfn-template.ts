@@ -458,7 +458,7 @@ export class CfnTemplate {
                 } else if (key === 'Fn::GetAtt') {
                     if (Array.isArray(val) && val.length === 2) {
                         const att = this.getOrgResourceAtt(val[0], val[1], accountResource);
-                        if (att !== undefined) {
+                        if (att) {
                             return att;
                         }
                     }
@@ -527,7 +527,7 @@ export class CfnTemplate {
                     throw new OrgFormationError(`unable to resolve account attribute ${logicalId}.${path}. Account has no Tags`);
                 }
                 const tagValue = account.tags[tagName];
-                if (tagValue === undefined) {
+                if (!tagValue) {
                     throw new OrgFormationError(`unable to resolve account attribute ${logicalId}.${path}. Tag ${tagName} not found on account`);
                 }
                 return tagValue;
