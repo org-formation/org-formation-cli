@@ -1,7 +1,5 @@
 import { IResource, IResourceRef, TemplateRoot } from '../parser';
 import { AccountResource } from './account-resource';
-import { Reference, Resource } from './resource';
-import { ServiceControlPolicyResource } from './service-control-policy-resource';
 
 export interface IMasterAccountProperties {
     RootEmail: string;
