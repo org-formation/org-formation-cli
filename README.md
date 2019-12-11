@@ -133,9 +133,9 @@ Organization Formation supports the following AWS Organization resources:
 
 MasterAccount is the AWS Account that functions as the master account within your organization.
 
-**type** OC::ORG::MasterAccount
+**Type** OC::ORG::MasterAccount
 
-**properties**
+**Properties**
 
 |Property |Value|Remarks|
 |:---|:---|:---|
@@ -147,7 +147,7 @@ MasterAccount is the AWS Account that functions as the master account within you
 |Alias|IAM alias|This property is optional.<br/><br/>The [IAM Alias](https://docs.aws.amazon.com/IAM/latest/UserGuide/console_account-alias.html) associated with the account. Organization Formation supports a maximum of 1 IAM alias per account|
 |Tags|Dictionary|This property is optional.<br/><br/>Dictionary that contains the tags on the MasterAccount resource|
 
-**example**
+**Example**
 
 ```yaml
     Type: OC::ORG::MasterAccount
@@ -167,9 +167,9 @@ MasterAccount is the AWS Account that functions as the master account within you
 
 Account is an AWS Account within your organization.
 
-**type** OC::ORG::Account
+**Type** OC::ORG::Account
 
-**properties**
+**Properties**
 
 |Property |Value|Remarks|
 |:---|:---|:---|
@@ -181,11 +181,9 @@ Account is an AWS Account within your organization.
 |Alias|IAM alias|This property is optional.<br/><br/>The [IAM Alias](https://docs.aws.amazon.com/IAM/latest/UserGuide/console_account-alias.html) associated with the account. Organization Formation supports a maximum of 1 IAM alias per account|
 |Tags|Dictionary|This property is optional.<br/><br/>Dictionary that contains the tags on the Account resource|
 
-**note**
+**Note** When creating an account the RootEmail and AccountName are used to create the Account resource in AWS. The AccountId property can later be added as a means of ‘documentation’ but this is not required.
 
-When creating an account the RootEmail and AccountName are used to create the Account resource in AWS. The AccountId property can later be added as a means of ‘documentation’ but this is not required.
-
-**example**
+**Example**
 
 ```yaml
   MyAccount1:
@@ -207,19 +205,17 @@ When creating an account the RootEmail and AccountName are used to create the Ac
 
 OrganizationRoot is the AWS Root Resource that functions like a top-level Organizational Unit within your Organization.
 
-**type** OC::ORG::OrganizationRoot
+**Type** OC::ORG::OrganizationRoot
 
-**properties**
+**Properties**
 
 |Property |Value|Remarks|
 |:---|:---|:---|
 |ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on all accounts (including master account) within the AWS Organization.|
 
-**note**
+**Note** Any account (or master account) within an AWS organization that is not part of an Organizational Unit will be a member of the Organizational Root.
 
-Any account (or master account) within an AWS organization that is not part of an Organizational Unit will be a member of the Organizational Root.
-
-**example**
+**Example**
 
 ```yaml
   OrganizationRoot:
@@ -235,9 +231,9 @@ Any account (or master account) within an AWS organization that is not part of a
 
 OrganizationalUnit is an AWS Organizational Unit within your organization and can be used to group accounts and apply policies to the accounts within the organizational unit.
 
-**type** OC::ORG::OrganizationalUnit
+**Type** OC::ORG::OrganizationalUnit
 
-**properties**
+**Properties**
 
 |Property |Value|Remarks|
 |:---|:---|:---|
@@ -245,11 +241,9 @@ OrganizationalUnit is an AWS Organizational Unit within your organization and ca
 |Accounts|Reference or list of References|This property is optional.<br/><br/>Reference or list of References to [Account](#account) resources that need to be part of the Organizational Unit.
 |ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on all accounts (including master account) within the AWS Organization.|
 
-**note**
+**Note** It is currently not supported to nest organizational units (have an OU as the parent of another OU). It is also not possible to add a MasterAccount resource to an OU.
 
-It is currently not supported to nest organizational units (have an OU as the parent of another OU). It is also not possible to add a MasterAccount resource to an OU.
-
-**example**
+**Example**
 
 ```yaml
   DevelopmentOU:
@@ -268,9 +262,9 @@ It is currently not supported to nest organizational units (have an OU as the pa
 
 ServiceControlPolicy is an [AWS Service Control Policy](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scp.html) that can be used to manage permissions within the accounts contained in your organization.
 
-**type** OC::ORG::ServiceControlPolicy
+**Type** OC::ORG::ServiceControlPolicy
 
-**properties**
+**Properties**
 
 |Property |Value|Remarks|
 |:---|:---|:---|
@@ -278,7 +272,7 @@ ServiceControlPolicy is an [AWS Service Control Policy](https://docs.aws.amazon.
 |Description|Description of the SCP|This property is optional.
 |PolicyDocument|Policy Document|This property is optional.
 
-**example**
+**Example**
 
 ```yaml
   RestrictUnusedRegionsSCP:
@@ -310,9 +304,9 @@ ServiceControlPolicy is an [AWS Service Control Policy](https://docs.aws.amazon.
 
 PasswordPolicy is an [AWS IAM Password Policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html) that applies to all IAM Users within the account.
 
-**type** OC::ORG::PasswordPolicy
+**Type** OC::ORG::PasswordPolicy
 
-**properties**
+**Properties**
 
 |Property |Value|Remarks|
 |:---|:---|:---|
@@ -325,7 +319,7 @@ PasswordPolicy is an [AWS IAM Password Policy](https://docs.aws.amazon.com/IAM/l
 |PasswordReusePrevention|number|This property is optional.
 |AllowUsersToChangePassword|boolean|This property is optional.
 
-**example**
+**Example**
 
 ```yaml
   PasswordPolicy:
