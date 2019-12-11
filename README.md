@@ -136,6 +136,7 @@ MasterAccount is the AWS Account that functions as the master account within you
 **type** OC::ORG::MasterAccount
 
 **properties**
+
 |Property |Value|Remarks|
 |:---|:---|:---|
 |AccountName|Name of the master account |This property is required.<br/><br/>Changing the name of the AWS MasterAccount resource is not possible, this requires the root account to log in to the master account and change this manually.<br/><br/>However, it is possible to change the AccountName of the MasterAccount in the template and this change will be reflected when doing a !GetAtt on the resource from within a template.|
@@ -171,7 +172,7 @@ Account is an AWS Account within your organization.
 **properties**
 
 |Property |Value|Remarks|
-|---|---|---|
+|:---|:---|:---|
 |AccountName|Name of the account |This property is required.<br/><br/>Changing the name of the AWS Account resource is not possible, this requires the root account to log in to the account and change this manually. <br/><br/>However, it is possible to change the AccountName of the Account in the template and this change will be reflected when doing a !GetAtt on the resource from within a template.|
 |AccountId|AccountId of account|This property is optional.<br/><br/>Changing the AccountId of the account is not supported|
 |RootEmail|RootEmail of the account|This property is optional (only if AccountId is specified)<br/><br/>Changing the RootEmail of the Account AWS resource is not possible, this requires the root account to log in to the master account and change this manually. <br/><br/>However, it is possible to change the RootEmail of the MasterAccount in the template and this change will be reflected when doing a !GetAtt on the resource from within a template.|
@@ -211,7 +212,7 @@ OrganizationRoot is the AWS Root Resource that functions like a top-level Organi
 **properties**
 
 |Property |Value|Remarks|
-|---|---|---|
+|:---|:---|:---|
 |ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on all accounts (including master account) within the AWS Organization.|
 
 **note**
@@ -239,7 +240,7 @@ OrganizationalUnit is an AWS Organizational Unit within your organization and ca
 **properties**
 
 |Property |Value|Remarks|
-|---|---|---|
+|:---|:---|:---|
 |OrganizationalUnitName|Name of the organizational unit|This property is required.
 |Accounts|Reference or list of References|This property is optional.<br/><br/>Reference or list of References to [Account](#account) resources that need to be part of the Organizational Unit.
 |ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on all accounts (including master account) within the AWS Organization.|
@@ -272,7 +273,7 @@ ServiceControlPolicy is an [AWS Service Control Policy](https://docs.aws.amazon.
 **properties**
 
 |Property |Value|Remarks|
-|---|---|---|
+|:---|:---|:---|
 |PolicyName|Name of the SCP|This property is required.
 |Description|Description of the SCP|This property is optional.
 |PolicyDocument|Policy Document|This property is optional.
@@ -314,7 +315,7 @@ PasswordPolicy is an [AWS IAM Password Policy](https://docs.aws.amazon.com/IAM/l
 **properties**
 
 |Property |Value|Remarks|
-|---|---|---|
+|:---|:---|:---|
 |MaxPasswordAge|number|This property is optional.
 |MinimumPasswordLength|number|This property is optional.
 |RequireLowercaseCharacters|boolean|This property is optional.
