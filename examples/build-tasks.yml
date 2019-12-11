@@ -13,6 +13,13 @@ CloudformationSetup:
   OrganizationBinding:
     Account: '*'
 
+Roles:
+  Type: update-stacks
+  Template: ./roles.yml
+  StackName: roles
+  StackDescription: 'Roles example template'
+  TerminationProtection: false
+
 BudgetAlarms:
   Type: update-stacks
   Template: ./budget-alarms.yml
@@ -22,13 +29,6 @@ BudgetAlarms:
   OrganizationBindingRegion: eu-central-1
   Parameters:
     resourcePrefix: my
-
-Roles:
-  Type: update-stacks
-  Template: ./roles.yml
-  StackName: roles
-  StackDescription: 'Roles example template'
-  TerminationProtection: true
 
 HostedZone:
   Type: update-stacks

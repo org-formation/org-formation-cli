@@ -1,14 +1,17 @@
 AWSTemplateFormatVersion: 2010-09-09-OC
 
+# include organization template.
 Organization: !Include ./organization.yml
+
+# default region used when exe.
+OrganizationBindingRegion: eu-central-1
 
 Resources:
 
+  # this resource will only be created in the SharedUsersAccount
   DeveloperGroup:
     OrganizationBinding:
-      Region: eu-central-1
-      Account:
-        - !Ref SharedUsersAccount
+      Account: !Ref SharedUsersAccount
     Type: AWS::IAM::Group
     Properties:
       GroupName: DevelopersGroup
@@ -19,26 +22,21 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sts:AssumeRole
-                Resource: arn:aws:iam::*:role/CloudWatcherRole
+                Resource: arn:aws:iam::*:role/DeveloperRole
 
-  CloudWatcherRole:
+  # this resource will only be created in all accounts (except the organizational master)
+  DeveloperRole:
     OrganizationBinding:
-      Region: eu-central-1
-      OrganizationalUnit:
-        - !Ref ProductionOU
-        - !Ref SharedOU
+      Account: '*'
     Type: AWS::IAM::Role
     Properties:
       ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
-      RoleName: CloudWatcherRole
+      - arn:aws:iam::aws:policy/PowerUserAccess
+      RoleName: DeveloperRole
       AssumeRolePolicyDocument:
        Version: 2012-10-17
        Statement:
          - Effect: Allow
            Action: sts:AssumeRole
-           Condition:
-            Bool:
-              aws:MultiFactorAuthPresent: true
            Principal:
-            AWS: !Ref SharedUsersAccount
+            AWS: !Ref SharedUsersAccount # role can only be assumed from SharedUsersAccount

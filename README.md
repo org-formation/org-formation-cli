@@ -16,6 +16,7 @@ Organization Formation allows you to manage AWS Organization resources and accou
     - [OrganizationalUnit](#organizationalunit)
     - [ServiceControlPolicy](#servicecontrolpolicy)
     - [PasswordPolicy](#passwordpolicy)
+  - [Managing resources across accounts](#managing-resources-across-accounts)
 
 ## Installation
 
@@ -47,6 +48,9 @@ and
 ## Why is this important
 
 Just like with resources within your AWS Account managing AWS Organization resources allows you to apply changes to these resources automatically, reducing manual work, inconsistencies and mistakes.
+
+If you are considering to use an account vending machine (e.g. [AWS Control Tower](https://aws.amazon.com/controltower/)) to create and manage new accounts within your organization: Do realize that the account vending machine allows you to quickly create organization resources but only has limited facilities when it comes to updating and maintaining these resoruces.
+
 
 ## Example Template
 
@@ -162,6 +166,17 @@ MasterAccount is the AWS Account that functions as the master account within you
         tag2: Value of Tag 2
 ```
 
+**!Ref** Returns the AccountId of the MasterAccount resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.AccountName returns the AccountName of the MasterAccount resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.Alias returns the IAM alias of the MasterAccount resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.AccountId returns the AccountId of the MasterAccount resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.RootEmail returns the RootEmail of the MasterAccount resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.Tags.*&lt;Key&gt;* returns the value of tag *&lt;Key&gt;* for the MasterAccount resource.
 
 ### Account
 
@@ -182,6 +197,18 @@ Account is an AWS Account within your organization.
 |Tags|Dictionary|This property is optional.<br/><br/>Dictionary that contains the tags on the Account resource|
 
 **Note** When creating an account the RootEmail and AccountName are used to create the Account resource in AWS. The AccountId property can later be added as a means of ‘documentation’ but this is not required.
+
+**!Ref** Returns the AccountId of the Account resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.AccountName returns the AccountName of the Account resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.Alias returns the IAM alias of the Account resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.AccountId returns the AccountId of the Account resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.RootEmail returns the RootEmail of the Account resource.
+
+**!GetAtt** *&lt;logicalId&gt;*.Tags.*&lt;Key&gt;* returns the value of tag *&lt;Key&gt;* for the Account resource.
 
 **Example**
 
@@ -215,6 +242,8 @@ OrganizationRoot is the AWS Root Resource that functions like a top-level Organi
 
 **Note** Any account (or master account) within an AWS organization that is not part of an Organizational Unit will be a member of the Organizational Root.
 
+**!Ref** Returns the physical id of the OrganizationRoot resource.
+
 **Example**
 
 ```yaml
@@ -242,6 +271,8 @@ OrganizationalUnit is an AWS Organizational Unit within your organization and ca
 |ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on all accounts (including master account) within the AWS Organization.|
 
 **Note** It is currently not supported to nest organizational units (have an OU as the parent of another OU). It is also not possible to add a MasterAccount resource to an OU.
+
+**!Ref** Returns the physical id of the OrganizationalUnit resource.
 
 **Example**
 
@@ -271,6 +302,8 @@ ServiceControlPolicy is an [AWS Service Control Policy](https://docs.aws.amazon.
 |PolicyName|Name of the SCP|This property is required.
 |Description|Description of the SCP|This property is optional.
 |PolicyDocument|Policy Document|This property is optional.
+
+**!Ref** Returns the physical id of the ServiceControlPolicy resource.
 
 **Example**
 
@@ -333,4 +366,25 @@ PasswordPolicy is an [AWS IAM Password Policy](https://docs.aws.amazon.com/IAM/l
       RequireUppercaseCharacters: true
       PasswordReusePrevention: 5
       AllowUsersToChangePassword: true
+```
+
+## Managing resources across accounts
+
+[CloudFormation](https://aws.amazon.com/cloudformation/) is the infrastructure as code solution native to AWS. It works great when managing resources within a single organization but doesnt contain syntax to manage resources across multiple accounts.
+
+examples:
+- In CloudFormation it is not possible to specify a !Ref to another resource in another account or region.
+- In CloudFormation it is not possible to reference organization resource attributes
+- In CloudFormation it is possible to deploy stacks to multiple accounts (using [StackSets](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html)) but only a subset of Cloudformation features can be used.
+
+The constraints above can be difficult when managing a baseline of resources across different accounts in an AWS Organization:
+- Relationships between resources in different accounts/regions are important.
+- Variability in resource configuration needs to be managed centranlly and relative to the account resource
+
+Organization Formation allows you to define any CloudFormation resource and annotate this with additional attributes that contain information about how these should be bound to the accounts within your organization.
+
+**example**:
+
+```yaml
+
 ```
