@@ -19,7 +19,7 @@ export class CfnTaskRunner {
                 throw new OrgFormationError(`circular dependency on stack ${stackName} for targets ${targets.join(', ')}`);
              },
             throwDependencyOnSelfException: (task) => {throw new OrgFormationError(`stack ${task.stackName} has dependency on self target account ${task.accountId} / ${task.region}`); },
-            maxConcurrentTasks: 1,
+            maxConcurrentTasks: 10,
             failedTasksTolerance: 1,
         };
         await GenericTaskRunner.RunTasks<ICfnTask>(tasks, delegate);
