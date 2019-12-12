@@ -55,6 +55,15 @@ export abstract class Resource {
                 const ref = (elm as IResourceRefExpression).Ref;
                 const foundElm = list.find((x) => x.logicalId === ref);
                 if (foundElm === undefined) {
+                    if (this.root.contents.Parameters) {
+                        const paramValue = this.root.contents.Parameters[ref];
+                        if (paramValue && paramValue.Default && paramValue.Default.Ref) {
+                            const refFromParam = paramValue.Default.Ref;
+                            const foundElmThroughParam = list.find((x) => x.logicalId === refFromParam);
+                            results.push({TemplateResource: foundElmThroughParam});
+                            continue;
+                        }
+                    }
                     throw new OrgFormationError(`unable to find resource named ${ref}`);
                 }
                 results.push({TemplateResource: foundElm});

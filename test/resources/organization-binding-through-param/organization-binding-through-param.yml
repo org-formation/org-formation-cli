@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description:
+
+Organization: !Include ./organization.yml
+
+
+Parameters:
+
+  usersAccount:
+    Type: String
+    Default: !Ref SharedUsersAccount
+
+  masterAccount:
+    Type: String
+    Default: !Ref MasterAccount
+
+Resources:
+
+  Topic2:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region: eu-west-1
+      Account: !Ref usersAccount
+    Properties:
+      DisplayName: Physical AccountId as Account Binding Via Parameter
+
+  Topic:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region: eu-west-1
+      Account: !Ref masterAccount
+    Properties:
+      DisplayName: Physical AccountId as Account Binding Via Parameter
+

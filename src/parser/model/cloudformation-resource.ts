@@ -100,8 +100,9 @@ export class CloudFormationResource extends Resource {
     }
 
     private resolveNormalizedLogicalAccountIds(binding: IOrganizationBinding): string[] {
-        const accounts = super.resolve(binding.Account, this.root.organizationSection.accounts);
-        const excludeAccounts = super.resolve(binding.ExcludeAccount, this.root.organizationSection.accounts);
+        const organizationAccountsAndMaster = [this.root.organizationSection.masterAccount, ...this.root.organizationSection.accounts];
+        const accounts = super.resolve(binding.Account, binding.Account === '*' ? this.root.organizationSection.accounts : organizationAccountsAndMaster);
+        const excludeAccounts = super.resolve(binding.ExcludeAccount, binding.ExcludeAccount === '*' ? this.root.organizationSection.accounts : organizationAccountsAndMaster);
         const organizationalUnits = super.resolve(binding.OrganizationalUnit, this.root.organizationSection.organizationalUnits);
 
         const accountLogicalIds = accounts.map((x) => x.TemplateResource!.logicalId);
