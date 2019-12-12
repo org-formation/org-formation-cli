@@ -73,7 +73,6 @@ export async function updateAccountResources(templateFile: string, command: IUpd
         ConsoleUtil.LogInfo('done');
     }
 
-    state.setPreviousTemplate(template.source);
     await state.save();
 }
 
@@ -112,7 +111,6 @@ export async function deleteAccountStacks(stackName: string, command: ICommandAr
         ConsoleUtil.LogInfo('done');
     }
 
-    state.setPreviousTemplate(emptyTemplate.source);
     await state.save();
 }
 
