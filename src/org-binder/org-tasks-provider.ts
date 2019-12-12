@@ -1,4 +1,5 @@
 import { AwsOrganizationWriter } from '../aws-provider/aws-organization-writer';
+import { ConsoleUtil } from '../console-util';
 import { AccountResource } from '../parser/model/account-resource';
 import { OrganizationRootResource } from '../parser/model/organization-root-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
@@ -17,10 +18,15 @@ export class TaskProvider {
     constructor(currentTemplate: TemplateRoot, persistedState: PersistedState, writer: AwsOrganizationWriter) {
         this.writer = writer;
         this.state = persistedState;
-        const previousTemplate = persistedState.getPreviousTemplate();
-        if (previousTemplate) {
-            this.previousTemplate = TemplateRoot.createFromContents(previousTemplate, currentTemplate.dirname);
-        } else {
+        try {
+            const previousTemplate = persistedState.getPreviousTemplate();
+            if (previousTemplate) {
+                this.previousTemplate = TemplateRoot.createFromContents(previousTemplate, currentTemplate.dirname);
+            } else {
+                this.previousTemplate = TemplateRoot.createEmpty();
+            }
+        } catch (err) {
+            ConsoleUtil.LogInfo(`unable to load previous state, using empty template instead. reason: ${err}`);
             this.previousTemplate = TemplateRoot.createEmpty();
         }
     }
