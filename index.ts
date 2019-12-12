@@ -231,6 +231,9 @@ function createTemplateUsingOverrides(command: IUpdateStackCommandArgs, template
     if (command.organizationBindingRegion) {
         templateOverrides.OrganizationBindingRegion = command.organizationBindingRegion;
     }
+    if (command.organizationFile) {
+        templateOverrides.OrganizationFile = command.organizationFile;
+    }
     const template = TemplateRoot.create(templateFile, templateOverrides);
     return template;
 }
@@ -247,6 +250,7 @@ export interface ICommandArgs {
 export interface IUpdateStackCommandArgs extends ICommandArgs {
     stackDescription?: string;
     parameters?: string;
+    organizationFile: string;
     organizationBinding?: IOrganizationBinding;
     organizationBindingRegion?: string | string[];
     terminationProtection?: boolean;

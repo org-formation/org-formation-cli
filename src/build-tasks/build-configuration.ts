@@ -59,6 +59,7 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     StackDescription?: string;
     Parameters?: Record<string, string>;
     DeletionProtection?: boolean;
+    OrganizationFile?: string;
     OrganizationBinding?: IOrganizationBinding;
     OrganizationBindingRegion?: string | string[];
     TerminationProtection?: boolean;

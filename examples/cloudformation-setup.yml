@@ -1,7 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09-OC'
 
-Organization: !Include ./organization.yml
-
 Resources:
   CloudFormationStackSetAdministrationRole:
     Type: AWS::IAM::Role

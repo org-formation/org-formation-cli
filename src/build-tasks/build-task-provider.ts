@@ -77,6 +77,7 @@ class UpdateStacksTask implements IBuildTask {
     public templatePath: string;
     private config: IUpdateStackTaskConfiguration;
     private command: any;
+    private dir: string;
 
     constructor(filePath: string, name: string, config: IUpdateStackTaskConfiguration, command: any) {
         if (config.Template === undefined) {
@@ -94,8 +95,8 @@ class UpdateStacksTask implements IBuildTask {
         this.stackName = config.StackName;
         this.type = config.Type;
         this.config = config;
-        const dir = path.dirname(filePath);
-        this.templatePath = path.join(dir, config.Template);
+        this.dir = path.dirname(filePath);
+        this.templatePath = path.join(this.dir, config.Template);
         this.command = command;
 
     }
@@ -121,6 +122,9 @@ class UpdateStacksTask implements IBuildTask {
             args.organizationBindingRegion = this.config.OrganizationBindingRegion;
         }
 
+        if (this.config.OrganizationFile) {
+            args.organizationFile = path.join(this.dir, this.config.OrganizationFile);
+        }
         if (this.config.TerminationProtection !== undefined) {
             args.terminationProtection = this.config.TerminationProtection;
         }

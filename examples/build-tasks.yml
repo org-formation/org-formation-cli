@@ -8,6 +8,7 @@ CloudformationSetup:
   Template: ./cloudformation-setup.yml
   StackName: cloudformation-setup
   StackDescription: 'Cloudformation setup used by stacksets'
+  OrganizationFile: ./organization.yml
   TerminationProtection: true
   OrganizationBindingRegion: eu-central-1
   OrganizationBinding:
