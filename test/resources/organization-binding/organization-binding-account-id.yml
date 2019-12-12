@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description:
+
+Organization: !Include ./organization.yml
+
+Resources:
+
+  Topic:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region: eu-west-1
+      Account: '123123123123'
+    Properties:
+      DisplayName: Physical AccountId as Account Binding Via Parameter
+

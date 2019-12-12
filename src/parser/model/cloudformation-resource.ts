@@ -100,6 +100,9 @@ export class CloudFormationResource extends Resource {
     }
 
     private resolveNormalizedLogicalAccountIds(binding: IOrganizationBinding): string[] {
+        this.throwForAccountIDs(binding.Account);
+        this.throwForAccountIDs(binding.ExcludeAccount);
+
         const organizationAccountsAndMaster = [this.root.organizationSection.masterAccount, ...this.root.organizationSection.accounts];
         const accounts = super.resolve(binding.Account, binding.Account === '*' ? this.root.organizationSection.accounts : organizationAccountsAndMaster);
         const excludeAccounts = super.resolve(binding.ExcludeAccount, binding.ExcludeAccount === '*' ? this.root.organizationSection.accounts : organizationAccountsAndMaster);
@@ -134,5 +137,25 @@ export class CloudFormationResource extends Resource {
         }
 
         return [...result];
+    }
+
+    private throwForAccountIDs(resourceRefs: IResourceRef | IResourceRef[]) {
+
+        if (resourceRefs) {
+            if (typeof resourceRefs === 'string') {
+                if (resourceRefs.match(/\d{12}/)) {
+                    throw new OrgFormationError(`error with account binding on ${resourceRefs}. Directly binding on accountid is not supported, use !Ref logicalId instead.`);
+                }
+                if (Array.isArray(resourceRefs)) {
+                    for (const elm of resourceRefs) {
+                        if (typeof elm === 'string') {
+                            if (elm.match(/\d{12}/)) {
+                                throw new OrgFormationError(`error with account binding on ${elm}. Directly binding on accountid is not supported, use !Ref logicalId instead.`);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

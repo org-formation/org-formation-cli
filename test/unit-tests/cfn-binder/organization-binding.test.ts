@@ -5,12 +5,12 @@ import { TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
 import { ICfnRefValue, ICfnTemplate } from '../cfn-types';
 
-describe('when loading account with binding on account Id', () => {
+describe('when resolving organization binding through parameter', () => {
     let template: TemplateRoot;
     let cloudformationBinder: CloudFormationBinder;
     let bindings: ICfnBinding[];
     beforeEach(() => {
-        template = TemplateRoot.create('./test/resources/organization-binding-through-param/organization-binding-through-param.yml');
+        template = TemplateRoot.create('./test/resources/organization-binding/organization-binding-through-param.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
@@ -34,5 +34,19 @@ describe('when loading account with binding on account Id', () => {
 
     it('will create binding for master account', () => {
         expect(bindings.find((x) => x.accountId === '000000000000')).to.not.be.undefined;
+    });
+});
+
+describe('when trying to resolve organization binding with accountId', () => {
+    it('error is thrown', () => {
+        try {
+            TemplateRoot.create('./test/resources/organization-binding/organization-binding-account-id.yml');
+            throw new Error('error expected');
+        } catch (err) {
+            expect(err).to.not.be.undefined;
+            expect(err.message).to.contain('123123123123');
+            expect(err.message).to.contain('not supported');
+            expect(err.message).to.contain('!Ref logicalId ');
+        }
     });
 });
