@@ -22,7 +22,7 @@ export class BuildTaskProvider {
                 throw new OrgFormationError('type include-dir not implemented');
 
             default:
-                throw new OrgFormationError(`unable to loead file ${filePath}, unknown cnofiguration type ${configuration.Type}`);
+                throw new OrgFormationError(`unable to load file ${filePath}, unknown configuration type ${configuration.Type}`);
         }
     }
 }
