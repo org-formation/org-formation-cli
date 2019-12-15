@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization: !Include ./organization.yml
+
+Parameters:
+
+  someParam:
+    Type: string
+
+Resources:
+
+  Topic:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region: eu-west-1
+      IncludeMasterAccount: true
+    Foreach:
+      Account: '*'
+    Properties:
+      TagInSub: !Sub '${CurrentAccount.Tags.subdomain}.${someParam}.'
+      TagInGetAtt: !GetAtt CurrentAccount.Tags.subdomain
+      AccountId: !Ref CurrentAccount

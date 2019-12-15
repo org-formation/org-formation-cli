@@ -423,7 +423,7 @@ export class CfnTemplate {
                     }
 
                     for (const variableWithKeyword of variablesWithKeyword) {
-                        let expressionWithReplacement = variableWithKeyword.resource;
+                        let expressionWithReplacement = replacement;
                         if (variableWithKeyword.path) {
                             expressionWithReplacement = expressionWithReplacement + '.' + variableWithKeyword.path;
                         }
