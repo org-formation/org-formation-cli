@@ -167,7 +167,11 @@ export async function initializeCodePipeline(command: ICommandArgs): Promise<voi
     await template.state.save(storageProvider);
 
     const stateBucketName = await GetStateBucketName(command);
-    const orgformationCloudformation = readFileSync('./resources/orgformation-codepipeline.yml').toString('utf8');
+    let path = '../resources/';
+    if (!existsSync(path + 'orgformation-codepipeline.yml')) {
+        path = './resources/';
+    }
+    const orgformationCloudformation = readFileSync(path + 'orgformation-codepipeline.yml').toString('utf8');
     const s3client = new S3();
     const cfn = new CloudFormation({ region: 'eu-central-1' });
 
@@ -194,7 +198,7 @@ export async function initializeCodePipeline(command: ICommandArgs): Promise<voi
             });
 
             archive.pipe(output);
-            archive.directory('./resources/initial-commit/', false);
+            archive.directory(path + 'initial-commit/', false);
             archive.append(template.template, { name: 'templates/organization.yml' });
 
             archive.finalize();
