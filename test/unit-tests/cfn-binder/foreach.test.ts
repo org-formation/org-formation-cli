@@ -53,6 +53,7 @@ describe('when loading template with resource that does Foreach', () => {
             expect(resource.Properties.TagInGetAtt).to.not.be.undefined;
             expect(resource.Properties.TagInGetAtt).to.not.be.undefined;
             expect(resource.Properties.TagInGetAtt).to.not.contain('CurrentAccount');
+            expect(resource.Properties.TagInSub['Fn::Sub']).to.not.contain('Tags');
         }
     });
 
@@ -62,6 +63,7 @@ describe('when loading template with resource that does Foreach', () => {
             expect(resource.Properties.TagInSub).to.not.be.undefined;
             expect(resource.Properties.TagInSub['Fn::Sub']).to.not.be.undefined;
             expect(resource.Properties.TagInSub['Fn::Sub']).to.not.contain('CurrentAccount');
+            expect(resource.Properties.TagInSub['Fn::Sub']).to.not.contain('Tags');
         }
     });
 });
