@@ -146,7 +146,8 @@ async function generateDefaultTemplate(): Promise<DefaultTemplate> {
     const writer = new DefaultTemplateWriter(awsOrganization);
     const template = await writer.generateDefaultTemplate();
     template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
-    template.state.setPreviousTemplate(template.template);
+    const parsedTemplate = TemplateRoot.createFromContents(template.template, './');
+    template.state.setPreviousTemplate(parsedTemplate.source);
     return template;
 }
 
@@ -167,9 +168,9 @@ export async function initializeCodePipeline(command: ICommandArgs): Promise<voi
     await template.state.save(storageProvider);
 
     const stateBucketName = await GetStateBucketName(command);
-    let path = '../resources/';
+    let path = __dirname + '../resources/';
     if (!existsSync(path + 'orgformation-codepipeline.yml')) {
-        path = './resources/';
+        path = __dirname + './resources/';
     }
     const orgformationCloudformation = readFileSync(path + 'orgformation-codepipeline.yml').toString('utf8');
     const s3client = new S3();
