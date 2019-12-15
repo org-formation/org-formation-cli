@@ -20,3 +20,12 @@ Resources:
       TagInSub: !Sub '${CurrentAccount.Tags.subdomain}.${someParam}.'
       TagInGetAtt: !GetAtt CurrentAccount.Tags.subdomain
       AccountId: !Ref CurrentAccount
+      GetAttOfResouce: !GetAtt CurrentAccount.Resources.OtherTopic.Name
+
+  OtherTopic:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region: eu-west-1
+      Account: '*'
+    Properties:
+      Name: name

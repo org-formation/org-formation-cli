@@ -66,4 +66,11 @@ describe('when loading template with resource that does Foreach', () => {
             expect(resource.Properties.TagInSub['Fn::Sub']).to.not.contain('Tags');
         }
     });
+
+    it('GetAtt of resource is replaced', () => {
+        for (const resourceName in masterAccountCfnTemplate.Resources) {
+            const resource = masterAccountCfnTemplate.Resources[resourceName];
+            expect(resource.Properties.GetAttOfResouce.Ref).to.not.be.undefined;
+        }
+    });
 });
