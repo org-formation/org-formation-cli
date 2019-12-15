@@ -1,0 +1,13 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - npm install aws-organization-formation -g
+      - echo installed aws-organization-formation
+      - org-formation -v
+  build:
+    commands:
+      - org-formation perform-tasks templates/orgformation-tasks.yml
+  post_build:
+    commands:
+      - echo Build completed

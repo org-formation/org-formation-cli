@@ -1,10 +1,14 @@
 
+import archiver from 'archiver';
 import * as AWS from 'aws-sdk';
-import { Organizations, STS } from 'aws-sdk';
+import { CloudFormation, Organizations, S3, STS } from 'aws-sdk';
+import { CreateStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
+import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import * as ini from 'ini';
+import { WritableStream } from 'memory-streams';
 import { AwsOrganization } from './src/aws-provider/aws-organization';
 import { AwsOrganizationReader } from './src/aws-provider/aws-organization-reader';
 import { AwsOrganizationWriter } from './src/aws-provider/aws-organization-writer';
@@ -21,7 +25,7 @@ import { OrgFormationError } from './src/org-formation-error';
 import { IOrganizationBinding, ITemplate, ITemplateOverrides, TemplateRoot } from './src/parser/parser';
 import { ICfnTarget, PersistedState } from './src/state/persisted-state';
 import { S3StorageProvider } from './src/state/storage-provider';
-import { DefaultTemplateWriter } from './src/writer/default-template-writer';
+import { DefaultTemplate, DefaultTemplateWriter } from './src/writer/default-template-writer';
 
 export async function updateTemplate(templateFile: string, command: ICommandArgs): Promise<void> {
     const template = TemplateRoot.create(templateFile);
@@ -134,19 +138,112 @@ export async function describeAccountStacks(stackName: string, command: ICommand
     console.log(JSON.stringify(record, null, 2));
 }
 
-export async function generateTemplate(filePath: string, command: ICommandArgs): Promise<void> {
-    const storageProvider = await initializeAndGetStorageProvider(command);
+async function generateDefaultTemplate(): Promise<DefaultTemplate> {
 
     const organizations = new Organizations({ region: 'us-east-1' });
     const awsReader = new AwsOrganizationReader(organizations);
     const awsOrganization = new AwsOrganization(awsReader);
     const writer = new DefaultTemplateWriter(awsOrganization);
     const template = await writer.generateDefaultTemplate();
-    const templateContents = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
+    template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
+    template.state.setPreviousTemplate(template.template);
+    return template;
+}
+
+export async function generateTemplate(filePath: string, command: ICommandArgs): Promise<void> {
+    const storageProvider = await initializeAndGetStorageProvider(command);
+
+    const template = await generateDefaultTemplate();
+    const templateContents = template.template;
     writeFileSync(filePath, templateContents);
 
-    template.state.setPreviousTemplate(templateContents);
     await template.state.save(storageProvider);
+}
+
+export async function initializeCodePipeline(command: ICommandArgs): Promise<void> {
+    const storageProvider = await initializeAndGetStorageProvider(command);
+
+    const template = await generateDefaultTemplate();
+    await template.state.save(storageProvider);
+
+    const stateBucketName = await GetStateBucketName(command);
+    const orgformationCloudformation = readFileSync('./resources/orgformation-codepipeline.yml').toString('utf8');
+    const s3client = new S3();
+    const cfn = new CloudFormation({ region: 'eu-central-1' });
+
+    const uploadInitialCommit = new Promise((resolve, reject) => {
+        try {
+            const output = new WritableStream();
+            const archive = archiver('zip');
+
+            archive.on('error', reject);
+
+            archive.on('end', () => {
+
+                const uploadRequest: PutObjectRequest = {
+                    Body: output.toBuffer(),
+                    Key: `initial-commit.zip`,
+                    Bucket: stateBucketName,
+                };
+
+                s3client.upload(uploadRequest)
+                    .promise()
+                    .then(() => resolve())
+                    .catch(reject);
+
+            });
+
+            archive.pipe(output);
+            archive.directory('./resources/initial-commit/', false);
+            archive.append(template.template, { name: 'templates/organization.yml' });
+
+            archive.finalize();
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+    ConsoleUtil.LogInfo(`uploading initial commit to S3 ${stateBucketName}/initial-commit.zip...`);
+    await uploadInitialCommit;
+
+    ConsoleUtil.LogInfo(`creating codecommit / codebuild and codepipeline resoures using cloudformmation...`);
+
+    const stackName = 'organization-formation-build';
+    const stackInput: CreateStackInput | UpdateStackInput = {
+        StackName: stackName,
+        TemplateBody: orgformationCloudformation,
+        Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
+        Parameters: [{ParameterKey: 'stateBucketName', ParameterValue: stateBucketName}],
+    };
+
+    try {
+        await cfn.updateStack(stackInput).promise();
+        await cfn.waitFor('stackUpdateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+    } catch (err) {
+        if (err && err.code === 'ValidationError' && err.message) {
+            const message = err.message as string;
+            if (-1 !== message.indexOf('ROLLBACK_COMPLETE')) {
+                await cfn.deleteStack({ StackName: stackName }).promise();
+                await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1 } }).promise();
+                await cfn.createStack(stackInput).promise();
+                await cfn.waitFor('stackCreateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+            } else if (-1 !== message.indexOf('does not exist')) {
+                await cfn.createStack(stackInput).promise();
+                await cfn.waitFor('stackCreateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+            } else if (-1 !== message.indexOf('No updates are to be performed.')) {
+                // ignore;
+            } else if (err.code === 'ResourceNotReady') {
+                ConsoleUtil.LogError('error when executing cloudformation');
+            } else {
+                throw err;
+            }
+        } else {
+            throw err;
+        }
+    }
+
+    await s3client.deleteObject({Bucket: stateBucketName, Key: `initial-commit.zip`}).promise();
+    ConsoleUtil.LogInfo('done');
 
 }
 
@@ -369,3 +466,4 @@ async function getCurrentAccountId(): Promise<string> {
     const caller = await stsClient.getCallerIdentity().promise();
     return caller.Account;
 }
+

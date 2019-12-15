@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, performTasks, printAccountStacks, updateAccountResources, updateTemplate } from './index';
+import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, initializeCodePipeline, performTasks, printAccountStacks, updateAccountResources, updateTemplate } from './index';
 import { ConsoleUtil } from './src/console-util';
 import { OrgFormationError } from './src/org-formation-error';
 
@@ -24,6 +24,7 @@ export class CliProgram {
 
     private readonly program: Command;
     private readonly init: Command;
+    private readonly initCodePipeline: Command;
     private readonly update: Command;
     private readonly createChangeSet: Command;
     private readonly executeChangeSet: Command;
@@ -40,6 +41,8 @@ export class CliProgram {
 
         this.init = this.program.command('init <outFile>');
         this.init.description('generate template & initialize organization');
+
+        this.initCodePipeline = this.program.command('init-codepipeline');
 
         this.update = this.program.command('update <templateFile>');
         this.update.description('update organization resources');
@@ -86,6 +89,7 @@ export class CliProgram {
         this.deleteStacks.action(async (stackName, cmd) => await HandleErrors(async () => { await deleteAccountStacks(stackName, cmd); }));
         this.performTasks.action(async (path, cmd) => await HandleErrors(async () => { await performTasks(path, cmd); }));
         this.printStacks.action(async (templateFile, cmd) => await HandleErrors(async () => { await printAccountStacks(templateFile, cmd);  }));
+        this.initCodePipeline.action(async (cmd) => await HandleErrors(async () => { await initializeCodePipeline(cmd);  }));
     }
 
     public getCommand(): Command {
@@ -142,6 +146,7 @@ async function HandleErrors(fn: () => {}): Promise<void> {
             if (err.code && err.requestId) {
                 ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
                 ConsoleUtil.LogError(err.message);
+
             } else {
                 ConsoleUtil.LogError(`unexpected error occurred...`, err);
             }

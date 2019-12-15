@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09-OC'
+AWSTemplateFormatVersion: '2010-09-09'
 
 Resources:
   CloudFormationStackSetAdministrationRole:
