@@ -168,9 +168,9 @@ export async function initializeCodePipeline(command: ICommandArgs): Promise<voi
     await template.state.save(storageProvider);
 
     const stateBucketName = await GetStateBucketName(command);
-    let path = __dirname + '../resources/';
+    let path = __dirname + '/../resources/';
     if (!existsSync(path + 'orgformation-codepipeline.yml')) {
-        path = __dirname + './resources/';
+        path = __dirname + '/resources/';
     }
     const orgformationCloudformation = readFileSync(path + 'orgformation-codepipeline.yml').toString('utf8');
     const s3client = new S3();
