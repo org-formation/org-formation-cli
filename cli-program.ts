@@ -42,7 +42,7 @@ export class CliProgram {
         this.init = this.program.command('init <outFile>');
         this.init.description('generate template & initialize organization');
 
-        this.initCodePipeline = this.program.command('init-codepipeline');
+        this.initCodePipeline = this.program.command('init-pipeline');
 
         this.update = this.program.command('update <templateFile>');
         this.update.description('update organization resources');
