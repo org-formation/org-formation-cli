@@ -59,7 +59,7 @@ If you are considering to use an account vending machine (e.g. [AWS Control Towe
 
 ## Example Template
 
-```yml
+```yaml
 AWSTemplateFormatVersion: '2010-09-09-OC'
 
 Organization:
