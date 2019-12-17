@@ -1,7 +1,14 @@
 import { Command } from 'commander';
-import { createChangeSet, deleteAccountStacks, describeAccountStacks, executeChangeSet, generateTemplate, initializeCodePipeline, performTasks, printAccountStacks, updateAccountResources, updateTemplate } from './index';
-import { ConsoleUtil } from './src/console-util';
-import { OrgFormationError } from './src/org-formation-error';
+import { CreateChangeSetCommand } from './src/commands/create-organization-changeset';
+import { DeleteStacksCommand } from './src/commands/delete-stacks';
+import { DescribeStacksCommand } from './src/commands/describe-stacks';
+import { ExecuteChangeSetCommand } from './src/commands/execute-organization-changeset';
+import { InitOrganizationCommand } from './src/commands/init-organization';
+import { InitPipelineCommand } from './src/commands/init-organization-pipeline';
+import { PerformTasksCommand } from './src/commands/perform-tasks';
+import { PrintStacksCommand } from './src/commands/print-stacks';
+import { UpdateOrganizationCommand } from './src/commands/update-organization';
+import { UpdateStacksCommand } from './src/commands/update-stacks';
 
 export class CliProgram {
 
@@ -23,134 +30,26 @@ export class CliProgram {
     public commandNames: string[];
 
     private readonly program: Command;
-    private readonly init: Command;
-    private readonly initCodePipeline: Command;
-    private readonly update: Command;
-    private readonly createChangeSet: Command;
-    private readonly executeChangeSet: Command;
-    private readonly updateStacks: Command;
-    private readonly describeStacks: Command;
-    private readonly deleteStacks: Command;
-    private readonly performTasks: Command;
-    private readonly printStacks: Command;
 
     constructor() {
         this.program = new Command();
         this.program.version(CliProgram.GetVersion(), '-v, --version');
         this.program.description('aws organization formation');
 
-        this.init = this.program.command('init <outFile>');
-        this.init.description('generate template & initialize organization');
+        new CreateChangeSetCommand(this.program);
+        new DeleteStacksCommand(this.program);
+        new DescribeStacksCommand(this.program);
+        new ExecuteChangeSetCommand(this.program);
+        new InitPipelineCommand(this.program);
+        new InitOrganizationCommand(this.program);
+        new PerformTasksCommand(this.program);
+        new PrintStacksCommand(this.program);
+        new UpdateOrganizationCommand(this.program);
+        new UpdateStacksCommand(this.program);
 
-        this.initCodePipeline = this.program.command('init-pipeline');
-
-        this.update = this.program.command('update <templateFile>');
-        this.update.description('update organization resources');
-
-        this.createChangeSet = this.program.command('create-change-set <templateFile>');
-        this.createChangeSet.description('create change set that can be reviewed and executed later');
-
-        this.executeChangeSet = this.program.command('execute-change-set <change-set-name>');
-        this.executeChangeSet.description('execute previously created change set');
-
-        this.updateStacks = this.program.command('update-stacks <templateFile>');
-        this.updateStacks.description('update cloudformation resources in accounts');
-
-        this.describeStacks = this.program.command('describe-stacks [stack-name]');
-        this.describeStacks.description('list all stacks deployed to accounts using org-formation');
-
-        this.deleteStacks = this.program.command('delete-stacks <stack-name>');
-        this.deleteStacks.description('removes all stacks deployed to accounts using org-formation');
-
-        this.printStacks = this.program.command('print-stacks <templateFile>');
-        this.printStacks.description('removes all stacks deployed to accounts using org-formation');
-
-        this.performTasks = this.program.command('perform-tasks <path>');
-        this.performTasks.description('performs all tasks from either a file or directory structure');
-
-        const allCommands = this.program.commands;
-       // this.commandNames = allCommands.Map((x) => x.name);
-
-        this.addProfileFlag(allCommands);
-        this.addStateBucketFlags(allCommands);
-        this.addStateBucketRegionFlag([this.init]);
-        this.addStackNameFlagForDescribe([this.describeStacks]);
-        this.addStackOptionsFlagForUpdate([this.updateStacks, this.printStacks]);
-        this.addChangeSetFlag([this.createChangeSet]);
-
-        this.init.action(async (outFile, cmd) => await HandleErrors(async () => { await generateTemplate(outFile, cmd); }));
-
-        this.update.action(async (templateFile, cmd) => await HandleErrors(async () => { await updateTemplate(templateFile, cmd); }));
-        this.createChangeSet.action(async (templateFile, cmd) => await HandleErrors(async () => { await createChangeSet(templateFile, cmd); }));
-        this.executeChangeSet.action(async (templateFile, cmd) => await HandleErrors(async () => { await executeChangeSet(templateFile, cmd); }));
-
-        this.updateStacks.action(async (templateFile, cmd) => await HandleErrors(async () => { await updateAccountResources(templateFile, cmd); }));
-        this.describeStacks.action(async (stackName, cmd) => await HandleErrors(async () => { await describeAccountStacks(stackName, cmd); }));
-        this.deleteStacks.action(async (stackName, cmd) => await HandleErrors(async () => { await deleteAccountStacks(stackName, cmd); }));
-        this.performTasks.action(async (path, cmd) => await HandleErrors(async () => { await performTasks(path, cmd); }));
-        this.printStacks.action(async (templateFile, cmd) => await HandleErrors(async () => { await printAccountStacks(templateFile, cmd);  }));
-        this.initCodePipeline.action(async (cmd) => await HandleErrors(async () => { await initializeCodePipeline(cmd);  }));
     }
 
     public getCommand(): Command {
         return this.program;
-    }
-
-    private addProfileFlag(commands: Command[]) {
-        for (const command of commands) {
-            command.option('--profile [profile]', 'aws profile to use');
-        }
-    }
-
-    private addStateBucketFlags(commands: Command[]) {
-        for (const command of commands) {
-            command.option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}');
-            command.option('--state-object [state-object]', 'key for object used to store state', 'state.json');
-        }
-    }
-
-    private addStateBucketRegionFlag(commands: Command[]) {
-        for (const command of commands) {
-            command.option('--state-bucket-region [state-bucket-region]', 'region used to created state-bucket in');
-        }
-    }
-
-    private addStackNameFlagForDescribe(commands: Command[]) {
-        for (const command of commands) {
-            command.option('--stack-name [stack-name]', 'if specified only returns stacks of stack-name');
-        }
-    }
-
-    private addStackOptionsFlagForUpdate(commands: Command[]) {
-        for (const command of commands) {
-            command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation');
-            command.option('--stack-description <description>', 'description of the stack that will be displayed cloudformation');
-            command.option('--parameters <parameters>', 'parameter values passed to cloudformation when executing stacks');
-            command.option('--termination-protection <termination-protection>', 'value that indicates whether stack must have deletion protection');
-        }
-    }
-    private addChangeSetFlag(commands: Command[]) {
-        for (const command of commands) {
-            command.option('--change-set-name [change-set-name]', 'change set name');
-        }
-    }
-}
-
-async function HandleErrors(fn: () => {}): Promise<void> {
-    try {
-        await fn();
-    } catch (err) {
-        if (err instanceof OrgFormationError) {
-            ConsoleUtil.LogError(err.message);
-        } else {
-            if (err.code && err.requestId) {
-                ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
-                ConsoleUtil.LogError(err.message);
-
-            } else {
-                ConsoleUtil.LogError(`unexpected error occurred...`, err);
-            }
-        }
-        process.exitCode = 1;
     }
 }

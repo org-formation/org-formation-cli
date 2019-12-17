@@ -22,7 +22,7 @@ describe('when calling org-formation init', () => {
         initResponse = spawnSync('ts-node', ['cli.ts', 'init', templateFileName,
                                             '--profile', awsProfileForTests,
                                             '--state-bucket-name', bucketName,
-                                            '--state-bucket-region', 'eu-west-1']);
+                                            '--region', 'eu-west-1']);
 
         template = TemplateRoot.create(templateFileName);
     });
@@ -76,8 +76,7 @@ describe('when calling org-formation init', () => {
                                                 '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
 
-            describeStacksResponse = spawnSync('ts-node', ['cli.ts', 'describe-stacks',
-                                                '--stack-name', stackName,
+            describeStacksResponse = spawnSync('ts-node', ['cli.ts', 'describe-stacks', stackName,
                                                 '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
         });

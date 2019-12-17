@@ -445,7 +445,7 @@ async function GetStorageProvider(objectKey: string, command: ICommandArgs) {
     const stateBucketName = await GetStateBucketName(command);
     // ConsoleUtil.LogDebug(`getting state from s3://${stateBucketName}/${objectKey}`);
     const getBucketRegionFn = async () => await GetBucketRegion(command.stateBucketRegion);
-    const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, true, getBucketRegionFn);
+    const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
     return storageProvider;
 }
 
