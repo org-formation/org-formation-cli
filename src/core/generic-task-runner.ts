@@ -48,21 +48,31 @@ export class GenericTaskRunner {
     }
 
     private static async performTask<TTask>(task: IGenericTaskInternal<TTask>, delegate: ITaskRunnerDelegates<TTask>): Promise<void> {
-        try {
-            task.running = true;
-            task.promise  = task.perform();
-            await task.promise;
-            task.done = true;
-            task.failed = false;
-            task.running = false;
-            delegate.onTaskRanSuccessfully(task);
-
-        } catch (err) {
-            task.done = true;
-            task.failed = true;
-            task.running = false;
-            delegate.onTaskRanFailed(task, err);
-        }
+        let retryWhenRateLimited = false;
+        let retryAttemptRateLimited = 0;
+        do {
+            try {
+                retryWhenRateLimited = false;
+                task.running = true;
+                task.promise  = task.perform();
+                await task.promise;
+                task.done = true;
+                task.failed = false;
+                task.running = false;
+                delegate.onTaskRanSuccessfully(task);
+            } catch (err) {
+                if (err.code === 'Throttling' && retryAttemptRateLimited < 5)  {
+                    retryWhenRateLimited = true;
+                    retryAttemptRateLimited = retryAttemptRateLimited + 1;
+                    await sleep(Math.pow(retryAttemptRateLimited, 2) + Math.random());
+                    continue;
+                }
+                task.done = true;
+                task.failed = true;
+                task.running = false;
+                delegate.onTaskRanFailed(task, err);
+            }
+        } while (retryWhenRateLimited);
     }
 }
 
@@ -87,4 +97,10 @@ export interface IGenericTaskState {
     failed?: boolean;
     running?: boolean;
     promise?: Promise<void>;
+}
+
+async function sleep(seconds: number) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, seconds * 1000);
+    });
 }
