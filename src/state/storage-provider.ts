@@ -63,12 +63,9 @@ export class S3StorageProvider implements IStorageProvider {
     public async getObject<T>(): Promise<T | undefined> {
         const serialized = await this.get();
         if (!serialized) { return undefined; }
-        try {
-            const obj = JSON.parse(serialized);
-            return obj as T;
-        } catch (err) {
-            return undefined;
-        }
+
+        const obj = JSON.parse(serialized);
+        return obj as T;
     }
 
     public async get(): Promise<string | undefined> {
