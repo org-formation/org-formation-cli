@@ -9,9 +9,9 @@ const commandDescription = 'update organization resources';
 
 export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizationCommandArgs> {
 
-    public static Perform(command: IUpdateOrganizationCommandArgs) {
+    public static async Perform(command: IUpdateOrganizationCommandArgs) {
         const x = new UpdateOrganizationCommand();
-        x.performCommand(command);
+        await x.performCommand(command);
     }
 
     constructor(command?: Command) {

@@ -11,9 +11,9 @@ const commandDescription = 'update cloudformation resources in accounts';
 
 export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs> {
 
-    public static Perform(command: IUpdateStacksCommandArgs) {
+    public static async Perform(command: IUpdateStacksCommandArgs) {
         const x = new UpdateStacksCommand();
-        x.performCommand(command);
+        await x.performCommand(command);
     }
 
     constructor(command?: Command) {
