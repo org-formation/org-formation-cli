@@ -24,7 +24,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation');
         command.option('--stack-description [description]', 'description of the stack that will be displayed cloudformation');
         command.option('--parameters [parameters]', 'parameter values passed to cloudformation when executing stacks');
-        command.option('--termination-protection [termination-protection]', 'value that indicates whether stack must have deletion protection');
+        command.option('--termination-protection', 'value that indicates whether stack must have deletion protection');
         super.addOptions(command);
     }
 
@@ -32,13 +32,14 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         if (!command.stackName) {
             throw new OrgFormationError(`argument --stack-name is missing`);
         }
+        const terminationProtection = command.terminationProtection === true;
         const stackName = command.stackName;
         const templateFile = command.templateFile;
 
         const template = this.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseStackParameters(command.parameters);
         const state = await this.getState(command);
-        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.terminationProtection);
+        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, terminationProtection);
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
