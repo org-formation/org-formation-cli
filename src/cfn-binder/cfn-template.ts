@@ -15,7 +15,7 @@ export class CfnTemplate {
                 filter((x) => x.template!.resources[resourceLogicalId]);
 
         if (foundBinding.length === 0) {
-            ConsoleUtil.LogDebug(`Unable to find resource ${resourceLogicalId} on account ${accountLogicalId}`);
+            ConsoleUtil.LogWarning(`Unable to find resource ${resourceLogicalId} on account ${accountLogicalId}`);
             return undefined;
         }
         if (foundBinding.length > 1) {
@@ -350,6 +350,10 @@ export class CfnTemplate {
                             if (path.startsWith('Resources.')) {
                                 const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === resourceId);
                                 if (!targetAccount) { throw new OrgFormationError(`unable to find account ${resourceId} for cross account dependency`); }
+
+                                const accountState = this.state.getBinding(targetAccount.type, targetAccount.logicalId);
+                                if (!accountState) { throw new OrgFormationError(`unable to find account ${resourceId} in state. Is your organiation up to date?`); }
+
                                 const pathParts = path.split('.');
                                 const accountLogicalId = resourceId;
                                 const remoteResourceId = pathParts[1];
@@ -360,7 +364,7 @@ export class CfnTemplate {
                                     }
                                 }
 
-                                target = CfnTemplate.ResolveBindingForResourceSpecificAccount(others, targetAccount.accountId, remoteResourceId, accountLogicalId);
+                                target = CfnTemplate.ResolveBindingForResourceSpecificAccount(others, accountState.physicalId, remoteResourceId, accountLogicalId);
                                 if (target) {
                                     if (target.accountId === binding.accountId && target.region === binding.region) {
                                         // rewrite to local reference, todo: add tests
