@@ -4,8 +4,8 @@ Organization:
   MasterAccount:
     Type: OC::ORG::MasterAccount
     Properties:
-      AccountId: '000000000000'
       RootEmail: 'master@org.com'
+      AccountId: '000000000000'
       AccountName: oc test account 2
       Tags:
         budget-alarm-threshold: '500'
@@ -14,19 +14,18 @@ Organization:
     Type: OC::ORG::Account
     Properties:
       AccountName: Shared Users Account
-      AccountId: '111111111111'
+      RootEmail: 'users@org.com'
 
   SharedServicesAccount:
     Type: OC::ORG::Account
     Properties:
       AccountName: Shared Services Account
-      AccountId: '222222222222'
+      RootEmail: 'services@org.com'
 
   SharedComplianceAccount:
     Type: OC::ORG::Account
     Properties:
       AccountName: Shared Compliance Account
       RootEmail: 'compliance@org.com'
-      AccountId: '333333333333'
       Tags:
         budget-alarm-threshold: '100'

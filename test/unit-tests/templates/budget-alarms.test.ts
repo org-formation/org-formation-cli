@@ -16,7 +16,7 @@ describe('when loading budget alarms template', () => {
 
     beforeEach(() => {
         template = TemplateRoot.create('./test/resources/budget-alarms/budget-alarms.yml');
-        const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
+        const persistedState = PersistedState.CreateEmpty('000000000000');
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'SharedComplianceAccount', lastCommittedHash: 'abc'});

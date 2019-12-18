@@ -104,6 +104,7 @@ describe('when validating organization section', () => {
             Type: OrgResourceTypes.MasterAccount,
             Properties: {
                 AccountName: 'Master 1',
+                AccountId: '111111111111',
                 RootEmail: 'my@email.com',
             } as IMasterAccountProperties,
         };
@@ -111,6 +112,7 @@ describe('when validating organization section', () => {
             Type: OrgResourceTypes.MasterAccount,
             Properties: {
                 AccountName: 'Master 2',
+                AccountId: '111111111111',
                 RootEmail: 'my2@email.com',
             } as IMasterAccountProperties,
         };

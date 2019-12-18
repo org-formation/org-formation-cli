@@ -69,4 +69,10 @@ describe('when creating master account resource', () => {
         const account = new MasterAccountResource(template, 'logical-id', resource);
         expect(typeof account.accountId).to.eq('string');
     });
+
+    it('throws an error if accountId is missing', () => {
+        delete accountProperties.AccountId;
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/AccountId/);
+    });
 });
