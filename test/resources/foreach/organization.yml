@@ -16,7 +16,7 @@ Organization:
   Account1:
     Type: OC::ORG::Account
     Properties:
-      AccountId: '111111111111'
+      RootEmail: acc1@my.org
       AccountName: Account1
       Tags:
         subdomain: acc1
@@ -24,7 +24,7 @@ Organization:
   Account2:
     Type: OC::ORG::Account
     Properties:
-      AccountId: '222222222222'
+      RootEmail: acc2@my.org
       AccountName: Account2
       Tags:
         subdomain: acc2
@@ -33,7 +33,7 @@ Organization:
   Account3:
     Type: OC::ORG::Account
     Properties:
-      AccountId: '333333333333'
+      RootEmail: acc3@my.org
       AccountName: Account3
       Tags:
         subdomain: acc2
@@ -41,7 +41,7 @@ Organization:
   Account4:
     Type: OC::ORG::Account
     Properties:
-      AccountId: '444444444444'
+      RootEmail: acc4@my.org
       AccountName: Account4
       Tags:
         subdomain: acc2

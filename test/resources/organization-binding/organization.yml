@@ -11,16 +11,16 @@ Organization:
     Type: OC::ORG::Account
     Properties:
       AccountName: Shared Users Account
-      AccountId: '111111111111'
+      RootEmail: acc1@my.org
 
   SharedServicesAccount:
     Type: OC::ORG::Account
     Properties:
       AccountName: Shared Services Account
-      AccountId: '222222222222'
+      RootEmail: acc2@my.org
 
   SharedComplianceAccount:
     Type: OC::ORG::Account
     Properties:
       AccountName: Shared Compliance Account
-      AccountId: '333333333333'
+      RootEmail: acc3@my.org
