@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { CloudFormationBinder } from '../cfn-binder/cfn-binder';
+import { OrgFormationError } from '../org-formation-error';
 import { TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
@@ -13,10 +14,14 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
     }
 
     public addOptions(command: Command) {
+        command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation');
         super.addOptions(command);
     }
 
     public async performCommand(command: IPrintStacksCommandArgs) {
+        if (!command.stackName) {
+            throw new OrgFormationError(`argument --stack-name is missing`);
+        }
         const templateFile = command.templateFile;
         const template = TemplateRoot.create(templateFile);
         const state = await this.getState(command);

@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { CloudFormationBinder } from '../cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '../cfn-binder/cfn-task-runner';
 import { ConsoleUtil } from '../console-util';
+import { OrgFormationError } from '../org-formation-error';
 import { ITemplateOverrides, TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
@@ -28,6 +29,9 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
     }
 
     public async performCommand(command: IUpdateStacksCommandArgs) {
+        if (!command.stackName) {
+            throw new OrgFormationError(`argument --stack-name is missing`);
+        }
         const stackName = command.stackName;
         const templateFile = command.templateFile;
 
