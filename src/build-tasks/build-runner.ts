@@ -1,4 +1,3 @@
-import { updateAccountResources, updateTemplate } from '../../index';
 import { ConsoleUtil } from '../console-util';
 import { GenericTaskRunner, ITaskRunnerDelegates } from '../core/generic-task-runner';
 import { OrgFormationError } from '../org-formation-error';

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { yamlParse } from 'yaml-cfn';
+import { ICommandArgs } from '../commands/base-command';
 import { IOrganizationBinding } from '../parser/parser';
 import { BuildTaskProvider } from './build-task-provider';
 
@@ -17,11 +18,11 @@ export class BuildConfiguration {
         }
     }
 
-    public enumBuildTasks(command: any): IBuildTask[] {
+    public enumBuildTasks(command: ICommandArgs): IBuildTask[] {
         return this.enumBuildTasksFromFile(this.file, command);
     }
 
-    private enumBuildTasksFromFile(filePath: string, command: any): IBuildTask[] {
+    private enumBuildTasksFromFile(filePath: string, command: ICommandArgs): IBuildTask[] {
         const buffer = fs.readFileSync(filePath);
         const contents = buffer.toString('utf-8');
         const buildFile = yamlParse(contents) as Record<string, IBuildTaskConfiguration>;

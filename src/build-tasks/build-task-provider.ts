@@ -1,5 +1,7 @@
 import path from 'path';
-import { IUpdateStackCommandArgs, updateAccountResources, updateTemplate } from '../..';
+import { ICommandArgs } from '../commands/base-command';
+import { IUpdateOrganizationCommandArgs, UpdateOrganizationCommand } from '../commands/update-organization';
+import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '../commands/update-stacks';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BuildConfiguration, BuildTaskType, IBuildTask, IBuildTaskConfiguration, IIncludeTaskConfiguration, IUpdateOrganizationTaskConfiguration, IUpdateStackTaskConfiguration } from './build-configuration';
@@ -7,7 +9,7 @@ import { BuildRunner } from './build-runner';
 
 export class BuildTaskProvider {
 
-    public static createBuildTask(filePath: string, name: string, configuration: IBuildTaskConfiguration, command: any): IBuildTask {
+    public static createBuildTask(filePath: string, name: string, configuration: IBuildTaskConfiguration, command: ICommandArgs): IBuildTask {
         switch (configuration.Type) {
             case 'update-stacks':
                 return new UpdateStacksTask(filePath, name, configuration as IUpdateStackTaskConfiguration, command);
@@ -35,7 +37,7 @@ class IncludeTaskFile implements IBuildTask {
     private command: any;
     private config: IIncludeTaskConfiguration;
 
-    constructor(filePath: string, name: string, config: IIncludeTaskConfiguration, command: any) {
+    constructor(filePath: string, name: string, config: IIncludeTaskConfiguration, command: ICommandArgs) {
         if (config.Path === undefined) {
             throw new OrgFormationError(`Required atrribute Path missing for task ${name}`);
         }
@@ -79,7 +81,7 @@ class UpdateStacksTask implements IBuildTask {
     private command: any;
     private dir: string;
 
-    constructor(filePath: string, name: string, config: IUpdateStackTaskConfiguration, command: any) {
+    constructor(filePath: string, name: string, config: IUpdateStackTaskConfiguration, command: ICommandArgs) {
         if (config.Template === undefined) {
             throw new OrgFormationError(`Required atrribute Template missing for task ${name}`);
         }
@@ -102,16 +104,17 @@ class UpdateStacksTask implements IBuildTask {
     }
     public async perform(): Promise<void> {
         ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath} ${this.stackName}`);
-        const args: IUpdateStackCommandArgs = {
+        const args: IUpdateStacksCommandArgs = {
             ...this.command,
             stackName: this.stackName,
+            templateFile: this.templatePath,
         };
         if (this.config.StackDescription) {
             args.stackDescription = this.config.StackDescription;
         }
 
         if (this.config.Parameters) {
-            (args as any).parameters = this.config.Parameters;
+            args.parameters = this.config.Parameters;
         }
 
         if (this.config.OrganizationBinding) {
@@ -129,7 +132,7 @@ class UpdateStacksTask implements IBuildTask {
             args.terminationProtection = this.config.TerminationProtection;
         }
 
-        await updateAccountResources(this.templatePath, args);
+        await UpdateStacksCommand.Perform(args);
     }
     public isDependency(x: IBuildTask) {
         if (x.type === 'update-organization') {
@@ -148,7 +151,7 @@ class UpdateOrganization implements IBuildTask {
     private config: IUpdateOrganizationTaskConfiguration;
     private command: any;
 
-    constructor(filePath: string, name: string, config: IUpdateOrganizationTaskConfiguration, command: any) {
+    constructor(filePath: string, name: string, config: IUpdateOrganizationTaskConfiguration, command: ICommandArgs) {
         this.name = name;
         this.type = config.Type;
         this.config = config;
@@ -159,7 +162,10 @@ class UpdateOrganization implements IBuildTask {
     }
     public async perform(): Promise<void> {
         ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath}`);
-        await updateTemplate(this.templatePath, this.command);
+
+        const updateCommand = this.command as IUpdateOrganizationCommandArgs;
+        updateCommand.templateFile = this.templatePath;
+        await UpdateOrganizationCommand.Perform(updateCommand);
     }
     public isDependency(task: IBuildTask) {
         return false;

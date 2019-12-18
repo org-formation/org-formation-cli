@@ -9,7 +9,12 @@ const commandDescription = 'update organization resources';
 
 export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizationCommandArgs> {
 
-    constructor(command: Command) {
+    public static Perform(command: IUpdateOrganizationCommandArgs) {
+        const x = new UpdateOrganizationCommand();
+        x.performCommand(command);
+    }
+
+    constructor(command?: Command) {
         super(command, commandName, commandDescription, 'templateFile');
     }
 
@@ -43,6 +48,6 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
     }
 }
 
-interface IUpdateOrganizationCommandArgs extends ICommandArgs {
+export interface IUpdateOrganizationCommandArgs extends ICommandArgs {
     templateFile: string;
 }

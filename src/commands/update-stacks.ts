@@ -10,7 +10,12 @@ const commandDescription = 'update cloudformation resources in accounts';
 
 export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs> {
 
-    constructor(command: Command) {
+    public static Perform(command: IUpdateStacksCommandArgs) {
+        const x = new UpdateStacksCommand();
+        x.performCommand(command);
+    }
+
+    constructor(command?: Command) {
         super(command, commandName, commandDescription, 'templateFile');
     }
 
@@ -62,13 +67,13 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
     }
 }
 
-interface IUpdateStacksCommandArgs extends ICommandArgs {
-    organizationFile: any;
-    organizationBindingRegion: any;
-    organizationBinding: any;
+export interface IUpdateStacksCommandArgs extends ICommandArgs {
+    organizationFile?: any;
+    organizationBindingRegion?: any;
+    organizationBinding?: any;
     templateFile: string;
     stackName: string;
     stackDescription?: string;
-    parameters?: string;
+    parameters?: string | {};
     terminationProtection?: boolean;
 }

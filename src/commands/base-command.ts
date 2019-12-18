@@ -23,9 +23,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     private masterAccountId?: string;
 
-    constructor(command: Command, name: string, description: string, firstArgName?: string) {
+    constructor(command?: Command, name?: string, description?: string, firstArgName?: string) {
+        if (command !== undefined && name !== undefined) {
         this.command = command.command(name);
-        this.command.description(description);
+        if (description !== undefined) {
+            this.command.description(description);
+        }
         this.command.allowUnknownOption(false);
         this.addOptions(this.command);
         this.command.action(async (firstArg: string) => {
@@ -33,7 +36,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 this.command[firstArgName] = firstArg;
             }
             this.handleErrors();
-        });
+        }); }
     }
     protected abstract async performCommand(command: T): Promise<void>;
 
