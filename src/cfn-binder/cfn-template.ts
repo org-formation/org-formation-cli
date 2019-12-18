@@ -352,7 +352,7 @@ export class CfnTemplate {
                                 if (!targetAccount) { throw new OrgFormationError(`unable to find account ${resourceId} for cross account dependency`); }
 
                                 const accountState = this.state.getBinding(targetAccount.type, targetAccount.logicalId);
-                                if (!accountState) { throw new OrgFormationError(`unable to find account ${resourceId} in state. Is your organiation up to date?`); }
+                                if (!accountState) { throw new OrgFormationError(`unable to find account ${resourceId} in state. Is your organization up to date?`); }
 
                                 const pathParts = path.split('.');
                                 const accountLogicalId = resourceId;
