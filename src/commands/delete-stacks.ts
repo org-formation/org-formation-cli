@@ -4,6 +4,7 @@ import { CfnTaskRunner } from '../cfn-binder/cfn-task-runner';
 import { ConsoleUtil } from '../console-util';
 import { ITemplate, TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { OrgFormationError } from '../org-formation-error';
 
 const commandName = 'delete-stacks';
 const commandDescription = 'removes all stacks deployed to accounts using org-formation';
@@ -20,6 +21,9 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
     }
 
     public async performCommand(command: IDeleteStackCommandArgs) {
+        if (!command.stackName) {
+            throw new OrgFormationError(`argument --stack-name is missing`);
+        }
         const stackName = command.stackName;
 
         const state = await this.getState(command);

@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from 'fs';
 import { WritableStream } from 'memory-streams';
 import { ConsoleUtil } from '../console-util';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { OrgFormationError } from '../org-formation-error';
 
 const commandName = 'init-pipeline';
 const commandDescription = 'initializes organization and created codecommit repo, codebuild and codepipeline';
@@ -19,7 +20,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
     public addOptions(command: Command) {
         command.option('--region <region>', 'region used to created state-bucket and pipeline in');
-        command.option('--stack-name <stack-name>', 'stack name used to create pipeline artifacts', 'organization-formation-build');
+        command.option('--stack-name [stack-name]', 'stack name used to create pipeline artifacts', 'organization-formation-build');
         command.option('--resource-prefix [resource-prefix]', 'name prefix used when creating AWS resources', 'orgformation-');
         command.option('--repository-name [repository-name]', 'name of the code commit repository created', 'organization-formation');
 
@@ -27,7 +28,12 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     }
 
     public async performCommand(command: IInitPipelineCommandArgs) {
+        if (!command.region) {
+            throw new OrgFormationError(`argument --region is missing`);
+        }
+
         const region = command.region;
+
         const resourcePrefix = command.resourcePrefix;
         const stackName = command.stackName;
         const storageProvider = await this.createStateBucket(command, region);

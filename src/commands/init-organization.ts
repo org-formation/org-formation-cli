@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { writeFileSync } from 'fs';
 import { IStorageProvider } from '../state/storage-provider';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { OrgFormationError } from '../org-formation-error';
 
 const commandName = 'init <file>';
 const commandDescription = 'generate template & initialize organization';
@@ -19,6 +20,9 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
     }
 
     public async performCommand(command: IInitCommandArgs) {
+        if (!command.region) {
+            throw new OrgFormationError(`argument --region is missing`);
+        }
         const region = command.region;
         const filePath = command.file;
         let storageProvider: IStorageProvider;
