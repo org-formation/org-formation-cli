@@ -43,7 +43,6 @@ Organization:
       RootEmail: users-2@olafconijn.awsapps.com
       Alias: org-formation-users
       AccountName: Shared Users Account
-      AccountId: '998174572440'
       PasswordPolicy: !Ref PasswordPolicy
       Tags:
         budget-alarm-threshold: '100'
@@ -52,7 +51,6 @@ Organization:
   SharedServicesAccount:
     Type: OC::ORG::Account
     Properties:
-      AccountId: '516455415878'
       Alias: org-formation-services
       AccountName: Shared Services Account
       RootEmail: shared-services-2@olafconijn.awsapps.com
@@ -65,7 +63,6 @@ Organization:
     Properties:
       Alias: org-formation-compliance
       AccountName: Shared Compliance Account
-      AccountId: '295223382687'
       RootEmail: shared-compliance-2@olafconijn.awsapps.com
       Tags:
         budget-alarm-threshold: '200'
