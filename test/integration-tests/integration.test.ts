@@ -60,6 +60,13 @@ describe('when calling org-formation init', () => {
         expect(response.PublicAccessBlockConfiguration.RestrictPublicBuckets).to.eq(true);
     });
 
+    it('creates state file within bucket ', async () => {
+        const response = await s3client.getObject({Bucket: bucketName, Key: 'state.json'}).promise();
+        expect(response.Body).to.not.be.undefined;
+        const state = JSON.parse(response.Body.toString());
+        expect(state.masterAccountId).to.not.be.undefined;
+    });
+
     describe('when calling update account resources', () => {
         const stackName = 'a' + v4().replace(/-/g, '');
         let updateResponse: SpawnSyncReturns<string>;
