@@ -2,7 +2,7 @@ import { OrgFormationError } from '../org-formation-error';
 import { IStorageProvider } from './storage-provider';
 
 export class PersistedState {
-    public static async Load(provider: IStorageProvider): Promise<PersistedState> {
+    public static async Load(provider: IStorageProvider, masterAccountId: string): Promise<PersistedState> {
 
         try {
             const contents = await provider.get();
@@ -15,6 +15,11 @@ export class PersistedState {
             }
             if (object.bindings === undefined) {
                 object.bindings = {};
+            }
+            if (object.masterAccountId === undefined) {
+                object.masterAccountId = masterAccountId;
+            } else if (object.masterAccountId !== masterAccountId) {
+                throw new OrgFormationError('state and session do not belong to the same organization');
             }
             return new PersistedState(object, provider);
         } catch (err) {

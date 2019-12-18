@@ -21,6 +21,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected command: Command;
     protected firstArg: any;
 
+    private masterAccountId?: string;
+
     constructor(command: Command, name: string, description: string, firstArgName?: string) {
         this.command = command.command(name);
         this.command.description(description);
@@ -82,9 +84,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected async getState(command: ICommandArgs): Promise<PersistedState> {
         const storageProvider = await this.getStateBucket(command);
+        const accountId = await this.getMasterAccountId();
 
         try {
-            const state = await PersistedState.Load(storageProvider);
+            const state = await PersistedState.Load(storageProvider, accountId);
             return state;
         } catch (err) {
             if (err && err.code === 'NoSuchBucket') {
@@ -97,7 +100,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected async GetStateBucketName(command: ICommandArgs): Promise<string> {
         const bucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
-            const accountId = await this.getCurrentAccountId();
+            const accountId = await this.getMasterAccountId();
             return bucketName.replace('${AWS::AccountId}', accountId);
         }
         return bucketName;
@@ -131,11 +134,14 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         return parameters;
     }
-
-    private async getCurrentAccountId(): Promise<string> {
+    private async getMasterAccountId(): Promise<string> {
+        if (this.masterAccountId !== undefined) {
+            return this.masterAccountId;
+        }
         const stsClient = new STS();
         const caller = await stsClient.getCallerIdentity().promise();
-        return caller.Account;
+        this.masterAccountId = caller.Account;
+        return this.masterAccountId;
     }
 
     private async customInitializationIncludingMFASupport(command: ICommandArgs)  {
