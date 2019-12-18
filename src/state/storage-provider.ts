@@ -56,6 +56,9 @@ export class S3StorageProvider implements IStorageProvider {
             if (err && err.code === 'IllegalLocationConstraintException') {
                 throw new OrgFormationError(`Unable to create bucket in region ${region}. Is the region spelled correctly?\nIf a bucket with the same name was recently deleted from a different region it could take up to a couple of hours for you to be able to create the same bucket in a different region.`);
             }
+            if (err && err.code === 'BucketAlreadyOwnedByYou') {
+                return;
+            }
             throw err;
         }
     }

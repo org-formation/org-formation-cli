@@ -19,27 +19,40 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
     public addOptions(command: Command) {
         command.option('--region <region>', 'region used to created state-bucket and pipeline in');
+        command.option('--stack-name <stack-name>', 'stack name used to create pipeline artifacts', 'organization-formation-build');
         command.option('--resource-prefix [resource-prefix]', 'name prefix used when creating AWS resources', 'orgformation-');
+        command.option('--repository-name [repository-name]', 'name of the code commit repository created', 'organization-formation');
+
         super.addOptions(command);
     }
 
     public async performCommand(command: IInitPipelineCommandArgs) {
         const region = command.region;
+        const resourcePrefix = command.resourcePrefix;
+        const stackName = command.stackName;
         const storageProvider = await this.createStateBucket(command, region);
 
-        const stateBucketName = await this.GetStateBucketName(command);
+        const stateBucketName = storageProvider.bucketName;
         const codePipelineTemplateFileName = 'orgformation-codepipeline.yml';
-        let path = __dirname + '/../../resources/';
+        let path = __dirname + '/../../../resources/';
         if (!existsSync(path + codePipelineTemplateFileName)) {
-            path = __dirname + '/..resources/';
+            path = __dirname + '/../../resources/';
         }
         const template = await this.generateDefaultTemplate();
+        let buildSpecContents = readFileSync(path + 'buildspec.yml').toString('utf-8');
+        if (command.stateBucketName) {
+            buildSpecContents = buildSpecContents.replace('XXX-ARGS', '--state-bucket-name ' + stateBucketName + ' XXX-ARGS');
+        }
+        if (command.stateObject) {
+            buildSpecContents = buildSpecContents.replace('XXX-ARGS', '--state-object ' + command.stateObject + ' XXX-ARGS');
+        }
+        buildSpecContents = buildSpecContents.replace('XXX-ARGS', '');
 
         ConsoleUtil.LogInfo(`uploading initial commit to S3 ${stateBucketName}/initial-commit.zip...`);
-        await this.uploadInitialCommit(stateBucketName, path + 'initial-commit/', template.template);
+        await this.uploadInitialCommit(stateBucketName, path + 'initial-commit/', template.template, buildSpecContents);
 
         ConsoleUtil.LogInfo(`creating codecommit / codebuild and codepipeline resoures using cloudformmation...`);
-        await this.executeStack(path + codePipelineTemplateFileName, stateBucketName);
+        await this.executeStack(path + codePipelineTemplateFileName, command.region, stateBucketName, resourcePrefix, stackName );
 
         await template.state.save(storageProvider);
 
@@ -49,7 +62,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
     }
 
-    private uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string): Promise<void> {
+    private uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
                 const s3client = new S3();
@@ -74,6 +87,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
                 archive.pipe(output);
                 archive.directory(initialCommitPath, false);
+                archive.append(buildSpecContents, {name: 'buildspec.yml'});
                 archive.append(templateContents, { name: 'templates/organization.yml' });
 
                 archive.finalize();
@@ -83,16 +97,18 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     });
     }
 
-    private async executeStack(cfnTemplatePath: string, stateBucketName: string) {
+    private async executeStack(cfnTemplatePath: string, region: string, stateBucketName: string, resourcePrefix: string, stackName: string) {
 
         const cfnTemplate = readFileSync(cfnTemplatePath).toString('utf8');
-        const cfn = new CloudFormation({ region: 'eu-central-1' });
-        const stackName = 'organization-formation-build';
+        const cfn = new CloudFormation({ region });
         const stackInput: CreateStackInput | UpdateStackInput = {
             StackName: stackName,
             TemplateBody: cfnTemplate,
             Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
-            Parameters: [{ParameterKey: 'stateBucketName', ParameterValue: stateBucketName}],
+            Parameters: [
+                {ParameterKey: 'stateBucketName', ParameterValue: stateBucketName},
+                {ParameterKey: 'resourcePrefix', ParameterValue: resourcePrefix},
+            ],
         };
 
         try {
@@ -125,5 +141,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
 interface IInitPipelineCommandArgs extends ICommandArgs {
     region: string;
+    stackName: string;
     resourcePrefix: string;
+    repositoryName: string;
 }
