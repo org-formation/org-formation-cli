@@ -5,17 +5,18 @@ import { ConsoleUtil } from '../console-util';
 import { ITemplate, TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
-const commandName = 'delete-stacks <stack-name>';
+const commandName = 'delete-stacks';
 const commandDescription = 'removes all stacks deployed to accounts using org-formation';
 
 export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs> {
 
     constructor(command: Command) {
-        super(command, commandName, commandDescription, 'stackName');
+        super(command, commandName, commandDescription);
     }
 
     public addOptions(command: Command) {
         super.addOptions(command);
+        command.option('--stack-name <stack-name>', 'name of the stack that will be deleted');
     }
 
     public async performCommand(command: IDeleteStackCommandArgs) {
@@ -30,7 +31,7 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
-            ConsoleUtil.LogInfo('no work to be done.');
+            ConsoleUtil.LogInfo('no templates found.');
         } else {
             await CfnTaskRunner.RunTasks(cfnTasks, stackName);
             ConsoleUtil.LogInfo('done');

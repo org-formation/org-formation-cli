@@ -83,7 +83,8 @@ describe('when calling org-formation init', () => {
                                                 '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
 
-            describeStacksResponse = spawnSync('ts-node', ['cli.ts', 'describe-stacks', stackName,
+            describeStacksResponse = spawnSync('ts-node', ['cli.ts', 'describe-stacks',
+                                                '--stack-name', stackName,
                                                 '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
         });
@@ -91,7 +92,8 @@ describe('when calling org-formation init', () => {
         after(() => {
             unlinkSync(templatePath.dir + '/' + 'bucket.yml');
 
-            const deleteResponse = spawnSync('ts-node', ['cli.ts', 'delete-stacks', stackName,
+            const deleteResponse = spawnSync('ts-node', ['cli.ts', 'delete-stacks',
+                                                '--stack-name', stackName,
                                                 '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
 
