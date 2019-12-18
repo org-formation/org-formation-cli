@@ -4,7 +4,7 @@ Organization: !Include ./organization.yml
 
 OrganizationBinding:
   AccountsWithTag: budget-alarm-threshold
-OrganizationBindingRegion: eu-central-1\
+OrganizationBindingRegion: eu-central-1
 
 Parameters:
 
