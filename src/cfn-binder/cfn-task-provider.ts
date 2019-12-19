@@ -139,12 +139,16 @@ export class CfnTaskProvider {
             isDependency: () => false,
             action: 'Delete',
             perform: async () => {
-                const cfn = await that.createCreateCloudFormationFn(binding);
-                const deleteStackInput: DeleteStackInput = {
-                    StackName: binding.stackName,
-                };
-                await cfn.deleteStack(deleteStackInput).promise();
-                await cfn.waitFor('stackDeleteComplete', { StackName: deleteStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                try {
+                    const cfn = await that.createCreateCloudFormationFn(binding);
+                    const deleteStackInput: DeleteStackInput = {
+                        StackName: binding.stackName,
+                    };
+                    await cfn.deleteStack(deleteStackInput).promise();
+                    await cfn.waitFor('stackDeleteComplete', { StackName: deleteStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                } catch (err) {
+                    ConsoleUtil.LogInfo(`unable to delete stack ${binding.stackName} from ${binding.accountId} / ${binding.region}. Removing stack from state instead.`);
+                }
                 that.state.removeTarget(
                     binding.stackName,
                     binding.accountId,
