@@ -5,6 +5,7 @@ import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { Command } from 'commander';
 import { existsSync, readFileSync } from 'fs';
 import { WritableStream } from 'memory-streams';
+import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
@@ -20,9 +21,9 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
     public addOptions(command: Command) {
         command.option('--region <region>', 'region used to created state-bucket and pipeline in');
-        command.option('--stack-name [stack-name]', 'stack name used to create pipeline artifacts', 'organization-formation-build');
-        command.option('--resource-prefix [resource-prefix]', 'name prefix used when creating AWS resources', 'orgformation-');
-        command.option('--repository-name [repository-name]', 'name of the code commit repository created', 'organization-formation');
+        command.option('--stack-name <stack-name>', 'stack name used to create pipeline artifacts', 'organization-formation-build');
+        command.option('--resource-prefix <resource-prefix>', 'name prefix used when creating AWS resources', 'orgformation-');
+        command.option('--repository-name <repository-name>', 'name of the code commit repository created', 'organization-formation');
 
         super.addOptions(command);
     }
@@ -45,14 +46,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             path = __dirname + '/../../resources/';
         }
         const template = await this.generateDefaultTemplate();
-        let buildSpecContents = readFileSync(path + 'buildspec.yml').toString('utf-8');
-        if (command.stateBucketName) {
-            buildSpecContents = buildSpecContents.replace('XXX-ARGS', '--state-bucket-name ' + stateBucketName + ' XXX-ARGS');
-        }
-        if (command.stateObject) {
-            buildSpecContents = buildSpecContents.replace('XXX-ARGS', '--state-object ' + command.stateObject + ' XXX-ARGS');
-        }
-        buildSpecContents = buildSpecContents.replace('XXX-ARGS', '');
+        const buildSpecContents = this.createBuildSpecContents(path, command, stateBucketName);
 
         ConsoleUtil.LogInfo(`uploading initial commit to S3 ${stateBucketName}/initial-commit.zip...`);
         await this.uploadInitialCommit(stateBucketName, path + 'initial-commit/', template.template, buildSpecContents);
@@ -62,13 +56,12 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
         await template.state.save(storageProvider);
 
-        const s3client = new S3();
-        await s3client.deleteObject({Bucket: stateBucketName, Key: `initial-commit.zip`}).promise();
+        await AwsUtil.DeleteObject(stateBucketName, 'initial-commit.zip');
         ConsoleUtil.LogInfo('done');
 
     }
 
-    private uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string): Promise<void> {
+    public uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
                 const s3client = new S3();
@@ -88,7 +81,6 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
                         .promise()
                         .then(() => resolve())
                         .catch(reject);
-
                 });
 
                 archive.pipe(output);
@@ -103,7 +95,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     });
     }
 
-    private async executeStack(cfnTemplatePath: string, region: string, stateBucketName: string, resourcePrefix: string, stackName: string) {
+    public async executeStack(cfnTemplatePath: string, region: string, stateBucketName: string, resourcePrefix: string, stackName: string) {
 
         const cfnTemplate = readFileSync(cfnTemplatePath).toString('utf8');
         const cfn = new CloudFormation({ region });
@@ -143,9 +135,21 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             }
         }
     }
+
+    private createBuildSpecContents(path: string, command: IInitPipelineCommandArgs, stateBucketName: string) {
+        let buildSpecContents = readFileSync(path + 'buildspec.yml').toString('utf-8');
+
+        buildSpecContents = buildSpecContents.replace('XXX-ARGS', '--state-bucket-name ' + stateBucketName + ' XXX-ARGS');
+
+        if (command.stateObject) {
+            buildSpecContents = buildSpecContents.replace('XXX-ARGS', '--state-object ' + command.stateObject + ' XXX-ARGS');
+        }
+        buildSpecContents = buildSpecContents.replace('XXX-ARGS', '');
+        return buildSpecContents;
+    }
 }
 
-interface IInitPipelineCommandArgs extends ICommandArgs {
+export interface IInitPipelineCommandArgs extends ICommandArgs {
     region: string;
     stackName: string;
     resourcePrefix: string;

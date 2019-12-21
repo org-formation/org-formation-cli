@@ -1,4 +1,4 @@
-import { IAM, Organizations, STS } from 'aws-sdk/clients/all';
+import { IAM, Organizations, S3, STS } from 'aws-sdk/clients/all';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { PasswordPolicyResource } from './parser/model/password-policy-resource';
 import { Reference } from './parser/model/resource';
@@ -27,6 +27,11 @@ export class AwsUtil {
         const iam = new IAM({ credentials: credentialOptions });
         AwsUtil.IamServiceCache[accountId] = iam;
         return iam;
+    }
+
+    public static async DeleteObject(bucketName: string, objectKey: string) {
+        const s3client = new S3();
+        await s3client.deleteObject({Bucket: bucketName, Key: objectKey}).promise();
     }
     private static IamServiceCache: Record<string, IAM> = {};
 }
