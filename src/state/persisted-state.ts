@@ -32,13 +32,16 @@ export class PersistedState {
     }
 
     public static CreateEmpty(masterAccountId: string) {
-        return new PersistedState({
+        const empty = new PersistedState({
             masterAccountId,
             bindings: {},
             stacks: {},
             values: {},
             previousTemplate: '',
         });
+        empty.dirty = true;
+
+        return empty;
     }
 
     public readonly masterAccount: string;

@@ -20,23 +20,45 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected command: Command;
     protected firstArg: any;
-
     private masterAccountId?: string;
 
     constructor(command?: Command, name?: string, description?: string, firstArgName?: string) {
         if (command !== undefined && name !== undefined) {
-        this.command = command.command(name);
-        if (description !== undefined) {
-            this.command.description(description);
-        }
-        this.command.allowUnknownOption(false);
-        this.addOptions(this.command);
-        this.command.action(async (firstArg: string) => {
-            if (firstArgName && (typeof firstArg !== 'object')) {
-                this.command[firstArgName] = firstArg;
+            this.command = command.command(name);
+            if (description !== undefined) {
+                this.command.description(description);
             }
-            this.handleErrors();
-        }); }
+            this.command.allowUnknownOption(false);
+            this.addOptions(this.command);
+            this.command.action(async (firstArg: string) => {
+                if (firstArgName && (typeof firstArg !== 'object')) {
+                    this.command[firstArgName] = firstArg;
+                }
+                this.handleErrors();
+            });
+        }
+    }
+    public async getMasterAccountId(): Promise<string> {
+        if (this.masterAccountId !== undefined) {
+            return this.masterAccountId;
+        }
+        const stsClient = new STS();
+        const caller = await stsClient.getCallerIdentity().promise();
+        this.masterAccountId = caller.Account;
+        return this.masterAccountId;
+    }
+
+    public async generateDefaultTemplate(): Promise<DefaultTemplate> {
+
+        const organizations = new Organizations({ region: 'us-east-1' });
+        const awsReader = new AwsOrganizationReader(organizations);
+        const awsOrganization = new AwsOrganization(awsReader);
+        const writer = new DefaultTemplateWriter(awsOrganization);
+        const template = await writer.generateDefaultTemplate();
+        template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
+        const parsedTemplate = TemplateRoot.createFromContents(template.template, './');
+        template.state.setPreviousTemplate(parsedTemplate.source);
+        return template;
     }
     protected abstract async performCommand(command: T): Promise<void>;
 
@@ -57,24 +79,16 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return binder;
     }
 
-    protected async generateDefaultTemplate(): Promise<DefaultTemplate> {
-
-        const organizations = new Organizations({ region: 'us-east-1' });
-        const awsReader = new AwsOrganizationReader(organizations);
-        const awsOrganization = new AwsOrganization(awsReader);
-        const writer = new DefaultTemplateWriter(awsOrganization);
-        const template = await writer.generateDefaultTemplate();
-        template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
-        const parsedTemplate = TemplateRoot.createFromContents(template.template, './');
-        template.state.setPreviousTemplate(parsedTemplate.source);
-        return template;
-    }
-
-    protected async createStateBucket(command: ICommandArgs, region: string): Promise<S3StorageProvider> {
-        const objectKey = command.stateObject;
-        const stateBucketName = await this.GetStateBucketName(command);
-        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
-        await storageProvider.create(region);
+    protected async createOrGetStateBucket(command: ICommandArgs, region: string): Promise<S3StorageProvider> {
+        const storageProvider = await this.getStateBucket(command);
+        try {
+            await storageProvider.create(region);
+        } catch (err) {
+            if (err && err.code === 'BucketAlreadyOwnedByYou') {
+                return storageProvider;
+            }
+            throw err;
+        }
         return storageProvider;
     }
 
@@ -136,15 +150,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
 
         return parameters;
-    }
-    private async getMasterAccountId(): Promise<string> {
-        if (this.masterAccountId !== undefined) {
-            return this.masterAccountId;
-        }
-        const stsClient = new STS();
-        const caller = await stsClient.getCallerIdentity().promise();
-        this.masterAccountId = caller.Account;
-        return this.masterAccountId;
     }
 
     private async customInitializationIncludingMFASupport(command: ICommandArgs)  {

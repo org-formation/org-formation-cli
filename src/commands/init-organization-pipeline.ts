@@ -6,8 +6,8 @@ import { Command } from 'commander';
 import { existsSync, readFileSync } from 'fs';
 import { WritableStream } from 'memory-streams';
 import { ConsoleUtil } from '../console-util';
-import { BaseCliCommand, ICommandArgs } from './base-command';
 import { OrgFormationError } from '../org-formation-error';
+import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'init-pipeline';
 const commandDescription = 'initializes organization and created codecommit repo, codebuild and codepipeline';
@@ -36,7 +36,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
         const resourcePrefix = command.resourcePrefix;
         const stackName = command.stackName;
-        const storageProvider = await this.createStateBucket(command, region);
+        const storageProvider = await this.createOrGetStateBucket(command, region);
 
         const stateBucketName = storageProvider.bucketName;
         const codePipelineTemplateFileName = 'orgformation-codepipeline.yml';

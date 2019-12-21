@@ -1,9 +1,8 @@
-import { throws } from 'assert';
 import { Command } from 'commander';
-import { writeFileSync } from 'fs';
+import { FileUtil } from '../file-util';
+import { OrgFormationError } from '../org-formation-error';
 import { IStorageProvider } from '../state/storage-provider';
 import { BaseCliCommand, ICommandArgs } from './base-command';
-import { OrgFormationError } from '../org-formation-error';
 
 const commandName = 'init <file>';
 const commandDescription = 'generate template & initialize organization';
@@ -23,27 +22,20 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
         if (!command.region) {
             throw new OrgFormationError(`argument --region is missing`);
         }
+
         const region = command.region;
         const filePath = command.file;
-        let storageProvider: IStorageProvider;
-        try {
-            storageProvider = await this.createStateBucket(command, region);
-        } catch (err) {
-            if (err.code === 'BucketAlreadyOwnedByYou') {
-                storageProvider = await this.getStateBucket(command);
-            }
-        }
-
+        const storageProvider = await this.createOrGetStateBucket(command, region);
         const template = await this.generateDefaultTemplate();
         const templateContents = template.template;
-        writeFileSync(filePath, templateContents);
+        FileUtil.writeFileSync(filePath, templateContents);
 
         await template.state.save(storageProvider);
 
     }
 }
 
-interface IInitCommandArgs extends ICommandArgs {
+export interface IInitCommandArgs extends ICommandArgs {
     file: string;
     region: string;
 }
