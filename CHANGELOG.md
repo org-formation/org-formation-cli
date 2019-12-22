@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.49**
+- Added validate tasks command (org-formation validate-tasks <task-file>)
+
 **version 0.0.48**
 - Added validate stacks command (org-formation validate-stacks <template-file>)
 - Init-pipeline now reuses state bucket if already present.
