@@ -2,12 +2,12 @@ import { CloudFormation, STS } from 'aws-sdk/clients/all';
 import { CreateStackInput, DeleteStackInput, ListExportsInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import md5 = require('md5');
+import { stringify } from 'querystring';
 import uuid = require('uuid');
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { PersistedState } from '../state/persisted-state';
 import { ICfnBinding } from './cfn-binder';
-
 export class CfnTaskProvider {
     private state: PersistedState;
 
@@ -17,6 +17,25 @@ export class CfnTaskProvider {
 
     public createUpdateTemplateTask(binding: ICfnBinding): ICfnTask {
         const that = this;
+        const dependencies: ICrossAccountParameterDependency[] = [];
+        const boundParameters = binding.template.enumBoundParameters();
+        for (const paramName in boundParameters) {
+            const param = boundParameters[paramName];
+            const dependency: ICrossAccountParameterDependency = {
+                ExportAcountId: binding.accountId,
+                ExportRegion: binding.region,
+                ExportName: param.ExportName,
+                ParameterKey: paramName,
+            };
+            if (param.ExportAccountId) { dependency.ExportAcountId = param.ExportAccountId; }
+            if (param.ExportRegion) { dependency.ExportRegion = param.ExportRegion; }
+            dependencies.push(dependency);
+
+            delete param.ExportAccountId;
+            delete param.ExportName;
+            delete param.ExportRegion;
+        }
+
         return {
             accountId: binding.accountId,
             region: binding.region,
@@ -24,26 +43,7 @@ export class CfnTaskProvider {
             action: 'UpdateOrCreate',
             isDependency: () => false,
             perform: async () => {
-                const boundParameters = binding.template.enumBoundParameters();
-                for (const param of boundParameters) {
-                    const site = { accountId: binding.accountId, region: binding.region };
-                    if (param.ExportAccountId) { binding.accountId = param.ExportAccountId; }
-                    if (param.ExportRegion) { binding.region = param.ExportRegion; }
-                    const cfnRetrieveExport = await AwsUtil.GetCloudFormation(site.accountId, site.region);
-                    const listExportsRequest: ListExportsInput = {};
-                    const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
-                    do {
-                        listExportsRequest.NextToken = listExportsResponse.NextToken;
-                        const foundExport = listExportsResponse.Exports.find((x) => x.Name === param.ExportName);
-                        if (foundExport) {
-                            param.Default = foundExport.Value;
-                            delete param.ExportAccountId;
-                            delete param.ExportRegion;
-                            delete param.ExportName;
-                            break;
-                        }
-                    } while (listExportsRequest.NextToken);
-                }
+
                 const templateBody = binding.template.createTemplateBody();
                 const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region);
                 const clientToken = uuid();
@@ -52,9 +52,27 @@ export class CfnTaskProvider {
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
                     ClientRequestToken: clientToken,
+                    Parameters: [],
                 };
+
+                for (const dependency of dependencies) {
+                    const cfnRetrieveExport = await AwsUtil.GetCloudFormation(dependency.ExportAcountId, dependency.ExportRegion);
+                    const listExportsRequest: ListExportsInput = {};
+                    const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
+                    do {
+                        listExportsRequest.NextToken = listExportsResponse.NextToken;
+                        const foundExport = listExportsResponse.Exports.find((x) => x.Name === dependency.ExportName);
+                        if (foundExport) {
+                            stackInput.Parameters.push( {
+                                ParameterKey: dependency.ParameterKey,
+                                ParameterValue: foundExport.Value,
+                            });
+                            break;
+                        }
+                    } while (listExportsRequest.NextToken);
+                }
+
                 if (binding.parameters) {
-                    stackInput.Parameters = [];
                     for (const [key, value] of Object.entries(binding.parameters)) {
                         stackInput.Parameters.push( {
                             ParameterKey: key,
@@ -158,6 +176,13 @@ export class CfnTaskProvider {
         };
     }
 
+}
+
+interface ICrossAccountParameterDependency {
+    ExportAcountId: string;
+    ExportRegion: string;
+    ExportName: string;
+    ParameterKey: string;
 }
 
 export interface ICfnTask {

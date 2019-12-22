@@ -208,12 +208,12 @@ export class CfnTemplate {
         }
     }
 
-    public enumBoundParameters(): ICfnParameter[] {
-        const parameters: ICfnParameter[] = [];
+    public enumBoundParameters(): Record<string, ICfnParameter>  {
+        const parameters: Record<string, ICfnParameter> = {};
         for (const paramName in this.parameters) {
             const parameter = this.parameters[paramName];
             if (parameter.ExportName) {
-                parameters.push(parameter);
+                parameters[paramName] = parameter;
              }
         }
         return parameters;

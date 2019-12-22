@@ -173,8 +173,9 @@ describe('when enumerating bindings on template resource with cross account depe
         const dependent = bindings.find((x) => x.region === 'eu-west-1' &&  x.accountId === '123123123124');
         const dependentTemplateObject = GetTemplate(dependent);
         const boundParameters = dependent.template.enumBoundParameters();
-        expect(boundParameters.length).to.eq(1);
-        expect (boundParameters[0].ExportName).to.eq(dependentTemplateObject.Parameters.resource1.ExportName);
+        const keys = Object.keys(boundParameters);
+        expect(keys.length).to.eq(1);
+        expect (boundParameters[keys[0]].ExportName).to.eq(dependentTemplateObject.Parameters.resource1.ExportName);
     });
 });
 

@@ -19,6 +19,17 @@ export class CfnValidateTaskProvider {
     }
 
     private createValidationTask(binding: ICfnBinding): ICfnTask {
+        const descriptionsOfBoundParameters: string[] = [];
+        const boundParameters = binding.template.enumBoundParameters();
+        for (const paramName in boundParameters) {
+            const param = boundParameters[paramName];
+            delete param.ExportAccountId;
+            delete param.ExportRegion;
+            delete param.ExportName;
+            param.Description = uuid();
+            descriptionsOfBoundParameters.push(param.Description);
+        }
+
         return {
             accountId: binding.accountId,
             region: binding.region,
@@ -26,13 +37,6 @@ export class CfnValidateTaskProvider {
             isDependency: () => false,
             action: 'Validate',
             perform: async () => {
-                const boundParameters = binding.template.enumBoundParameters();
-                for (const param of boundParameters) {
-                    delete param.ExportAccountId;
-                    delete param.ExportRegion;
-                    delete param.ExportName;
-                    param.Description = uuid();
-                }
                 const templateBody = binding.template.createTemplateBody();
                 const validateInput: ValidateTemplateInput =  {
                     TemplateBody: templateBody,
@@ -49,7 +53,7 @@ export class CfnValidateTaskProvider {
                     if (binding.parameters && binding.parameters[param.ParameterKey]) {
                         continue;
                     }
-                    if (boundParameters.find((x) => x.Description === param.Description)) {
+                    if (descriptionsOfBoundParameters.includes(param.Description)) {
                         continue;
                     }
                     missingParameters.push(param.ParameterKey);

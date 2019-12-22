@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.50**
+- Fixed a bug where cross account export values that were resolved where re-used on multiple target parameters
+
 **version 0.0.49**
 - Added validate tasks command (org-formation validate-tasks <task-file>)
 
