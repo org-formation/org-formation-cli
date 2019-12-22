@@ -103,7 +103,7 @@ describe('when executing init pipeline command', () => {
 
     beforeEach(() => {
 
-        getMasterAccountIdStub = sandbox.stub(BaseCliCommand.prototype, 'getMasterAccountId');
+        getMasterAccountIdStub = sandbox.stub(AwsUtil, 'GetMasterAccountId');
         getMasterAccountIdStub.returns(Promise.resolve(masterAccountId));
 
         uploadInitialCommitStub = sandbox.stub(InitPipelineCommand.prototype, 'uploadInitialCommit');

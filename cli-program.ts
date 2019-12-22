@@ -10,6 +10,7 @@ import { PrintStacksCommand } from './src/commands/print-stacks';
 import { UpdateOrganizationCommand } from './src/commands/update-organization';
 import { UpdateStacksCommand } from './src/commands/update-stacks';
 import { ValidateStacksCommand } from './src/commands/validate-stacks';
+import { ValidateTasksCommand } from './src/commands/validate-tasks';
 
 export class CliProgram {
 
@@ -49,6 +50,7 @@ export class CliProgram {
         new UpdateStacksCommand(this.program);
 
         new ValidateStacksCommand(this.program);
+        new ValidateTasksCommand(this.program);
     }
 
     public getCommand(): Command {

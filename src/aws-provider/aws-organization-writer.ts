@@ -4,10 +4,7 @@ import { AwsUtil, passwordPolicEquals } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
-import { OrganizationRootResource } from '../parser/model/organization-root-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
-import { PasswordPolicyResource } from '../parser/model/password-policy-resource';
-import { Reference } from '../parser/model/resource';
 import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
 import { AwsOrganization } from './aws-organization';
 
@@ -217,7 +214,7 @@ export class AwsOrganizationWriter {
         }
 
         if (account.Alias !== resource.alias) {
-            const iam = await AwsUtil.GetIamService(this.organization.organization, accountId);
+            const iam = await AwsUtil.GetIamService(accountId);
             if (account.Alias) {
                 try {
                     await iam.deleteAccountAlias({AccountAlias: account.Alias}).promise();
@@ -234,7 +231,7 @@ export class AwsOrganizationWriter {
         }
 
         if (!passwordPolicEquals(account.PasswordPolicy, resource.passwordPolicy)) {
-            const iam = await AwsUtil.GetIamService(this.organization.organization, accountId);
+            const iam = await AwsUtil.GetIamService(accountId);
             if (account.PasswordPolicy) {
                 try {
                     await iam.deleteAccountPasswordPolicy().promise();

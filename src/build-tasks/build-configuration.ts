@@ -6,33 +6,44 @@ import { IOrganizationBinding } from '../parser/parser';
 import { BuildTaskProvider } from './build-task-provider';
 
 export class BuildConfiguration {
-    private directory: string;
+    public tasks: IBuildTaskConfiguration[];
     private file: string;
 
     constructor(input: string) {
-        if (fs.statSync(input).isDirectory()) {
-            this.directory = input;
-        } else {
-            this.file = input;
-            this.directory = path.dirname(input);
+        this.file = input;
+        this.tasks = this.enumBuildConfiguration(input);
+    }
+
+    public enumValidationTasks(command: ICommandArgs): IBuildTask[] {
+        const result: IBuildTask[] = [];
+        for (const taskConfig of this.tasks) {
+            const task = BuildTaskProvider.createValidationTask(taskConfig, command);
+            result.push(task);
         }
+
+        return result;
     }
 
     public enumBuildTasks(command: ICommandArgs): IBuildTask[] {
-        return this.enumBuildTasksFromFile(this.file, command);
+        const result: IBuildTask[] = [];
+        for (const taskConfig of this.tasks) {
+            const task = BuildTaskProvider.createBuildTask(taskConfig, command);
+            result.push(task);
+        }
+
+        return result;
     }
 
-    private enumBuildTasksFromFile(filePath: string, command: ICommandArgs): IBuildTask[] {
+    private enumBuildConfiguration(filePath: string): IBuildTaskConfiguration[] {
         const buffer = fs.readFileSync(filePath);
         const contents = buffer.toString('utf-8');
         const buildFile = yamlParse(contents) as Record<string, IBuildTaskConfiguration>;
-        const tasks: IBuildTask[] = [];
+        const result: IBuildTaskConfiguration[] = [];
         for (const name in buildFile) {
             const config = buildFile[name];
-            const task = BuildTaskProvider.createBuildTask(filePath, name, config, command);
-            tasks.push(task);
+            result.push({...config, LogicalName: name, FilePath: filePath});
         }
-        return tasks;
+        return result;
     }
 }
 
@@ -41,6 +52,8 @@ export type BuildTaskType = 'update-stacks' | 'update-organization' | 'include' 
 export interface IBuildTaskConfiguration {
     Type: BuildTaskType;
     DependsOn?: string | string[];
+    LogicalName: string;
+    FilePath: string;
 }
 
 export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {

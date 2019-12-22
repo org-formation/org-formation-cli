@@ -1,4 +1,4 @@
-import { IAM, Organizations, STS } from 'aws-sdk/clients/all';
+import { IAM, Organizations } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListAccountsResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../aws-util';
 
@@ -209,7 +209,7 @@ export class AwsOrganizationReader {
 
     private static async getIamAliasForAccount(that: AwsOrganizationReader, accountId: string): Promise<string> {
         const org = await that.organization.getValue();
-        const iamService = await AwsUtil.GetIamService(org, accountId);
+        const iamService = await AwsUtil.GetIamService(accountId);
         const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
         if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
             return response.AccountAliases[0];
@@ -220,7 +220,7 @@ export class AwsOrganizationReader {
 
     private static async getIamPasswordPolicyForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAM.PasswordPolicy> {
         const org = await that.organization.getValue();
-        const iamService = await AwsUtil.GetIamService(org, accountId);
+        const iamService = await AwsUtil.GetIamService(accountId);
         try {
             const response = await iamService.getAccountPasswordPolicy().promise();
             return response.PasswordPolicy;

@@ -3,6 +3,7 @@ import { CreateStackInput, DeleteStackInput, ListExportsInput, UpdateStackInput 
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import md5 = require('md5');
 import uuid = require('uuid');
+import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { PersistedState } from '../state/persisted-state';
 import { ICfnBinding } from './cfn-binder';
@@ -25,10 +26,10 @@ export class CfnTaskProvider {
             perform: async () => {
                 const boundParameters = binding.template.enumBoundParameters();
                 for (const param of boundParameters) {
-                    const site: ICfnSite = { accountId: binding.accountId, region: binding.region };
-                    if (param.ExportAccountId) { site.accountId = param.ExportAccountId; }
-                    if (param.ExportRegion) { site.region = param.ExportRegion; }
-                    const cfnRetrieveExport = await that.createCreateCloudFormationFn(site);
+                    const site = { accountId: binding.accountId, region: binding.region };
+                    if (param.ExportAccountId) { binding.accountId = param.ExportAccountId; }
+                    if (param.ExportRegion) { binding.region = param.ExportRegion; }
+                    const cfnRetrieveExport = await AwsUtil.GetCloudFormation(site.accountId, site.region);
                     const listExportsRequest: ListExportsInput = {};
                     const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
                     do {
@@ -44,7 +45,7 @@ export class CfnTaskProvider {
                     } while (listExportsRequest.NextToken);
                 }
                 const templateBody = binding.template.createTemplateBody();
-                const cfn = await that.createCreateCloudFormationFn(binding);
+                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region);
                 const clientToken = uuid();
                 const stackInput: CreateStackInput | UpdateStackInput = {
                     StackName: binding.stackName,
@@ -140,7 +141,7 @@ export class CfnTaskProvider {
             action: 'Delete',
             perform: async () => {
                 try {
-                    const cfn = await that.createCreateCloudFormationFn(binding);
+                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region);
                     const deleteStackInput: DeleteStackInput = {
                         StackName: binding.stackName,
                     };
@@ -157,30 +158,6 @@ export class CfnTaskProvider {
         };
     }
 
-    private async createCreateCloudFormationFn(site: ICfnSite): Promise<CloudFormation> {
-        if (site.accountId !== this.state.masterAccount) {
-            const sts = new STS();
-            const roleArn = 'arn:aws:iam::' + site.accountId + ':role/OrganizationAccountAccessRole';
-            const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
-
-            const credentialOptions: CredentialsOptions = {
-                accessKeyId: response.Credentials.AccessKeyId,
-                secretAccessKey: response.Credentials.SecretAccessKey,
-                sessionToken: response.Credentials.SessionToken,
-            };
-
-            return new CloudFormation({ credentials: credentialOptions, region: site.region });
-        } else {
-            return new CloudFormation({ region: site.region });
-        }
-
-    }
-
-}
-
-interface ICfnSite {
-    accountId: string;
-    region: string;
 }
 
 export interface ICfnTask {

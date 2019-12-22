@@ -16,6 +16,25 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         await x.performCommand(command);
     }
 
+    public static createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string) {
+        const templateOverrides: ITemplateOverrides = {};
+
+        if (command.stackDescription) {
+            templateOverrides.Description = command.stackDescription;
+        }
+        if (command.organizationBinding) {
+            templateOverrides.OrganizationBinding = command.organizationBinding;
+        }
+        if (command.organizationBindingRegion) {
+            templateOverrides.OrganizationBindingRegion = command.organizationBindingRegion;
+        }
+        if (command.organizationFile) {
+            templateOverrides.OrganizationFile = command.organizationFile;
+        }
+        const template = TemplateRoot.create(templateFile, templateOverrides);
+        return template;
+    }
+
     constructor(command?: Command) {
         super(command, commandName, commandDescription, 'templateFile');
     }
@@ -36,7 +55,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const stackName = command.stackName;
         const templateFile = command.templateFile;
 
-        const template = this.createTemplateUsingOverrides(command, templateFile);
+        const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseStackParameters(command.parameters);
         const state = await this.getState(command);
         const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, terminationProtection);
@@ -50,25 +69,6 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         }
 
         await state.save();
-    }
-
-    private createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string) {
-        const templateOverrides: ITemplateOverrides = {};
-
-        if (command.stackDescription) {
-            templateOverrides.Description = command.stackDescription;
-        }
-        if (command.organizationBinding) {
-            templateOverrides.OrganizationBinding = command.organizationBinding;
-        }
-        if (command.organizationBindingRegion) {
-            templateOverrides.OrganizationBindingRegion = command.organizationBindingRegion;
-        }
-        if (command.organizationFile) {
-            templateOverrides.OrganizationFile = command.organizationFile;
-        }
-        const template = TemplateRoot.create(templateFile, templateOverrides);
-        return template;
     }
 }
 

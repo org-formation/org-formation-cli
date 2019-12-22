@@ -2,6 +2,7 @@ import path from 'path';
 import { ICommandArgs } from '../commands/base-command';
 import { IUpdateOrganizationCommandArgs, UpdateOrganizationCommand } from '../commands/update-organization';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '../commands/update-stacks';
+import { ValidateStacksCommand } from '../commands/validate-stacks';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BuildConfiguration, BuildTaskType, IBuildTask, IBuildTaskConfiguration, IIncludeTaskConfiguration, IUpdateOrganizationTaskConfiguration, IUpdateStackTaskConfiguration } from './build-configuration';
@@ -9,39 +10,52 @@ import { BuildRunner } from './build-runner';
 
 export class BuildTaskProvider {
 
-    public static createBuildTask(filePath: string, name: string, configuration: IBuildTaskConfiguration, command: ICommandArgs): IBuildTask {
+    public static createValidationTask(configuration: IBuildTaskConfiguration, command: ICommandArgs): IBuildTask {
         switch (configuration.Type) {
             case 'update-stacks':
-                return new UpdateStacksTask(filePath, name, configuration as IUpdateStackTaskConfiguration, command);
+                return new ValidateStacksTask(configuration as IUpdateStackTaskConfiguration, command);
 
             case 'update-organization':
-                return new UpdateOrganization(filePath, name, configuration as IUpdateOrganizationTaskConfiguration, command);
+                return new ValidateOrganizationTask(configuration as IUpdateOrganizationTaskConfiguration, command);
 
             case 'include':
-                return new IncludeTaskFile(filePath, name, configuration as IIncludeTaskConfiguration, command);
-
-            case 'include-dir':
-                throw new OrgFormationError('type include-dir not implemented');
+                return new ValidateIncludeTask(configuration as IIncludeTaskConfiguration, command);
 
             default:
-                throw new OrgFormationError(`unable to load file ${filePath}, unknown configuration type ${configuration.Type}`);
+                throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);
+        }
+    }
+
+    public static createBuildTask(configuration: IBuildTaskConfiguration, command: ICommandArgs): IBuildTask {
+        switch (configuration.Type) {
+            case 'update-stacks':
+                return new UpdateStacksTask(configuration as IUpdateStackTaskConfiguration, command);
+
+            case 'update-organization':
+                return new UpdateOrganizationTask(configuration as IUpdateOrganizationTaskConfiguration, command);
+
+            case 'include':
+                return new UpdateIncludeTask(configuration as IIncludeTaskConfiguration, command);
+
+            default:
+                throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);
         }
     }
 }
 
-class IncludeTaskFile implements IBuildTask {
+abstract class BaseIncludeTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
     public dependsOn: string[];
     public taskFilePath: string;
+    protected config: IIncludeTaskConfiguration;
     private command: any;
-    private config: IIncludeTaskConfiguration;
 
-    constructor(filePath: string, name: string, config: IIncludeTaskConfiguration, command: ICommandArgs) {
+    constructor(config: IIncludeTaskConfiguration, command: ICommandArgs) {
+        this.name = config.LogicalName;
         if (config.Path === undefined) {
             throw new OrgFormationError(`Required atrribute Path missing for task ${name}`);
         }
-        this.name = name;
         this.type = config.Type;
         if (typeof config.DependsOn === 'string') {
             this.dependsOn = [config.DependsOn];
@@ -49,7 +63,7 @@ class IncludeTaskFile implements IBuildTask {
             this.dependsOn = config.DependsOn;
         }
         this.config = config;
-        const dir = path.dirname(filePath);
+        const dir = path.dirname(config.FilePath);
         this.taskFilePath = path.join(dir, config.Path);
         this.command = command;
     }
@@ -63,32 +77,46 @@ class IncludeTaskFile implements IBuildTask {
         }
     }
     public async perform(): Promise<void> {
-        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.taskFilePath}`);
-        const buildConfig = new BuildConfiguration(this.taskFilePath);
-        const tasks = buildConfig.enumBuildTasks(this.command);
-        await BuildRunner.RunTasks(tasks, this.config.MaxConcurrentTasks, this.config.FailedTaskTolerance);
+        await this.innerPerform(this.command);
     }
 
+    protected abstract innerPerform(command: ICommandArgs): Promise<void>;
 }
 
-class UpdateStacksTask implements IBuildTask {
+class UpdateIncludeTask extends BaseIncludeTask {
+    protected async innerPerform(command: ICommandArgs): Promise<void> {
+        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.taskFilePath}`);
+        const buildConfig = new BuildConfiguration(this.taskFilePath);
+        const tasks = buildConfig.enumBuildTasks(command);
+        await BuildRunner.RunTasks(tasks, this.config.MaxConcurrentTasks, this.config.FailedTaskTolerance);
+    }
+}
+class ValidateIncludeTask extends BaseIncludeTask {
+    protected async innerPerform(command: ICommandArgs): Promise<void> {
+        const buildConfig = new BuildConfiguration(this.taskFilePath);
+        const tasks = buildConfig.enumValidationTasks(command);
+        await BuildRunner.RunValidationTasks(tasks, 1, 999);
+    }
+}
+
+abstract class BaseStacksTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
     public dependsOn: string[];
     public stackName: string;
     public templatePath: string;
-    private config: IUpdateStackTaskConfiguration;
+    protected config: IUpdateStackTaskConfiguration;
     private command: any;
     private dir: string;
 
-    constructor(filePath: string, name: string, config: IUpdateStackTaskConfiguration, command: ICommandArgs) {
+    constructor(config: IUpdateStackTaskConfiguration, command: ICommandArgs) {
+        this.name = config.LogicalName;
         if (config.Template === undefined) {
             throw new OrgFormationError(`Required atrribute Template missing for task ${name}`);
         }
         if (config.StackName === undefined) {
             throw new OrgFormationError(`Required atrribute StackName missing for task ${name}`);
         }
-        this.name = name;
         if (typeof config.DependsOn === 'string') {
             this.dependsOn = [config.DependsOn];
         } else {
@@ -97,13 +125,12 @@ class UpdateStacksTask implements IBuildTask {
         this.stackName = config.StackName;
         this.type = config.Type;
         this.config = config;
-        this.dir = path.dirname(filePath);
+        this.dir = path.dirname(config.FilePath);
         this.templatePath = path.join(this.dir, config.Template);
         this.command = command;
 
     }
     public async perform(): Promise<void> {
-        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath} ${this.stackName}`);
         const args: IUpdateStacksCommandArgs = {
             ...this.command,
             stackName: this.stackName,
@@ -132,8 +159,11 @@ class UpdateStacksTask implements IBuildTask {
             args.terminationProtection = this.config.TerminationProtection;
         }
 
-        await UpdateStacksCommand.Perform(args);
+        await this.innerPerform(args);
     }
+
+    public abstract async innerPerform(args: IUpdateStacksCommandArgs): Promise<void>;
+
     public isDependency(x: IBuildTask) {
         if (x.type === 'update-organization') {
             return true;
@@ -144,30 +174,93 @@ class UpdateStacksTask implements IBuildTask {
     }
 }
 
-class UpdateOrganization implements IBuildTask {
+export class UpdateStacksTask extends BaseStacksTask {
+
+    public async innerPerform(args: IUpdateStacksCommandArgs) {
+        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath} ${this.stackName}`);
+        await UpdateStacksCommand.Perform(args);
+    }
+
+}
+export class ValidateStacksTask extends BaseStacksTask {
+
+    public async innerPerform(args: IUpdateStacksCommandArgs) {
+        await ValidateStacksCommand.Perform(args);
+    }
+
+}
+
+export class CreateChangeSetStacksTask extends BaseStacksTask {
+
+    public async innerPerform(args: IUpdateStacksCommandArgs) {
+        throw new Error('todo');
+    }
+
+}
+
+export class ExecuteChangeSetStacksTask extends BaseStacksTask {
+
+    public async innerPerform(args: IUpdateStacksCommandArgs) {
+        throw new Error('todo');
+    }
+}
+
+abstract class BaseOrganizationTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
     public templatePath: string;
-    private config: IUpdateOrganizationTaskConfiguration;
+    protected config: IUpdateOrganizationTaskConfiguration;
     private command: any;
 
-    constructor(filePath: string, name: string, config: IUpdateOrganizationTaskConfiguration, command: ICommandArgs) {
-        this.name = name;
+    constructor(config: IUpdateOrganizationTaskConfiguration, command: ICommandArgs) {
+        this.name = config.LogicalName;
         this.type = config.Type;
         this.config = config;
-        const dir = path.dirname(filePath);
+        const dir = path.dirname(config.FilePath);
         this.templatePath = path.join(dir, config.Template);
         this.command = command;
 
     }
     public async perform(): Promise<void> {
-        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath}`);
 
         const updateCommand = this.command as IUpdateOrganizationCommandArgs;
         updateCommand.templateFile = this.templatePath;
-        await UpdateOrganizationCommand.Perform(updateCommand);
+
+        await this.innerPerform(updateCommand);
     }
+
     public isDependency(task: IBuildTask) {
         return false;
     }
+
+    protected abstract async innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void>;
+}
+
+export class UpdateOrganizationTask extends BaseOrganizationTask {
+    protected async innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
+        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath}`);
+        await UpdateOrganizationCommand.Perform(commandArgs);
+    }
+
+}
+
+export class ValidateOrganizationTask extends BaseOrganizationTask {
+    protected async innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
+        // no op.
+    }
+
+}
+
+export class CreateChangeSetOrganizationTask extends BaseOrganizationTask {
+    protected innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
+        throw new Error('Method not implemented.');
+    }
+
+}
+
+export class ExecuteChangeSetOrganizationTask extends BaseOrganizationTask {
+    protected innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
+        throw new Error('Method not implemented.');
+    }
+
 }

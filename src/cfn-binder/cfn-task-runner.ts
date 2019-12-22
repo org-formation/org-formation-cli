@@ -25,14 +25,15 @@ export class CfnTaskRunner {
         await GenericTaskRunner.RunTasks<ICfnTask>(tasks, delegate);
     }
 
-    public static async ValidateTemplates(tasks: ICfnTask[]) {
+    public static async ValidateTemplates(tasks: ICfnTask[], stackName?: string) {
 
         const delegate: ITaskRunnerDelegates<ICfnTask> = {
             onTaskRanFailed: (task, err) => {
                 ConsoleUtil.LogError(`unable to validate template for account ${task.accountId} (${task.region}). Reason: ${err}`);
             },
             onTaskRanSuccessfully: (task) => {
-                ConsoleUtil.LogInfo(`template for account ${task.accountId}/${task.region} valid.`);
+                const stackNmae = stackName ? `stack ${stackName} ` : '';
+                ConsoleUtil.LogInfo(`template for ${stackNmae}account ${task.accountId}/${task.region} valid.`);
             },
             throwCircularDependency: (ts) => {
                 const targets = ts.map((x) => x.accountId + '/' + x.region);

@@ -11,8 +11,8 @@ describe('when creating UpdateStacksTask task', () => {
     let task: IBuildTask;
     let updateStacksResoruces: sinon.SinonStub;
     beforeEach(() => {
-        const config: IUpdateStackTaskConfiguration = {Type: 'update-stacks', StackName: 'stack', Template: 'path.yml'};
-        task = BuildTaskProvider.createBuildTask('./.', 'task', config, {} as ICommandArgs);
+        const config: IUpdateStackTaskConfiguration = {Type: 'update-stacks', StackName: 'stack', Template: 'path.yml', FilePath: './.', LogicalName: 'task'};
+        task = BuildTaskProvider.createBuildTask(config, {} as ICommandArgs);
 
         updateStacksResoruces = sinon.stub(UpdateStacksCommand, 'Perform');
     });
@@ -41,8 +41,8 @@ describe('when creating UpdateStacksTask task with command args', () => {
     let task: IBuildTask;
     let updateStacksResoruces: sinon.SinonStub;
     beforeEach(() => {
-        const config: IUpdateStackTaskConfiguration = {Type: 'update-stacks', StackName: 'stack', Template: 'path.yml'};
-        task = BuildTaskProvider.createBuildTask('./.', 'task', config, {arg: 'Val'} as any);
+        const config: IUpdateStackTaskConfiguration = {Type: 'update-stacks', StackName: 'stack', Template: 'path.yml', FilePath: './.', LogicalName: 'task'};
+        task = BuildTaskProvider.createBuildTask(config, {arg: 'Val'} as any);
         updateStacksResoruces = sinon.stub(UpdateStacksCommand, 'Perform');
     });
 
@@ -72,6 +72,8 @@ describe('when creating UpdateStacksTask task with arguments', () => {
     let updateStacksResoruces: sinon.SinonStub;
     beforeEach(() => {
         const config: IUpdateStackTaskConfiguration = {
+            FilePath: './.',
+            LogicalName: 'task',
             Type: 'update-stacks',
             StackName: 'stack',
             Template: 'path.yml',
@@ -84,7 +86,7 @@ describe('when creating UpdateStacksTask task with arguments', () => {
             OrganizationBindingRegion:  ['eu-central-1', 'us-west-1'],
             TerminationProtection: false,
          };
-        task = BuildTaskProvider.createBuildTask('./.', 'task', config, {arg: 'Val'} as any);
+        task = BuildTaskProvider.createBuildTask(config, {arg: 'Val'} as any);
         updateStacksResoruces = sinon.stub(UpdateStacksCommand, 'Perform');
     });
 

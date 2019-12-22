@@ -7,6 +7,7 @@ import * as ini from 'ini';
 import { AwsOrganization } from '../aws-provider/aws-organization';
 import { AwsOrganizationReader } from '../aws-provider/aws-organization-reader';
 import { AwsOrganizationWriter } from '../aws-provider/aws-organization-writer';
+import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { OrganizationBinder } from '../org-binder/org-binder';
 import { TaskProvider } from '../org-binder/org-tasks-provider';
@@ -20,7 +21,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected command: Command;
     protected firstArg: any;
-    private masterAccountId?: string;
 
     constructor(command?: Command, name?: string, description?: string, firstArgName?: string) {
         if (command !== undefined && name !== undefined) {
@@ -38,15 +38,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             });
         }
     }
-    public async getMasterAccountId(): Promise<string> {
-        if (this.masterAccountId !== undefined) {
-            return this.masterAccountId;
-        }
-        const stsClient = new STS();
-        const caller = await stsClient.getCallerIdentity().promise();
-        this.masterAccountId = caller.Account;
-        return this.masterAccountId;
-    }
 
     public async generateDefaultTemplate(): Promise<DefaultTemplate> {
 
@@ -63,7 +54,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     public async getState(command: ICommandArgs): Promise<PersistedState> {
         const storageProvider = await this.getStateBucket(command);
-        const accountId = await this.getMasterAccountId();
+        const accountId = await AwsUtil.GetMasterAccountId();
 
         try {
             const state = await PersistedState.Load(storageProvider, accountId);
@@ -117,7 +108,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected async GetStateBucketName(command: ICommandArgs): Promise<string> {
         const bucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
-            const accountId = await this.getMasterAccountId();
+            const accountId = await AwsUtil.GetMasterAccountId();
             return bucketName.replace('${AWS::AccountId}', accountId);
         }
         return bucketName;

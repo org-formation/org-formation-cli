@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { Command, Option } from 'commander';
 import Sinon = require('sinon');
+import { AwsUtil } from '../../../src/aws-util';
 import { BaseCliCommand } from '../../../src/commands/base-command';
 import { IInitCommandArgs, InitOrganizationCommand } from '../../../src/commands/init-organization';
 import { FileUtil } from '../../../src/file-util';
@@ -75,7 +76,7 @@ describe('when executing init organization command', () => {
 
     beforeEach(() => {
 
-        getMasterAccountIdStub = sandbox.stub(BaseCliCommand.prototype, 'getMasterAccountId');
+        getMasterAccountIdStub = sandbox.stub(AwsUtil, 'GetMasterAccountId');
         getMasterAccountIdStub.returns(Promise.resolve(masterAccountId));
 
         generateDefaultTemplateStub = sandbox.stub(BaseCliCommand.prototype, 'generateDefaultTemplate');
