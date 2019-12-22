@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description:
+
+Resources:
+
+  Topic:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Account: !Ref Account1
+    Properties:
+      DisplayName: Name

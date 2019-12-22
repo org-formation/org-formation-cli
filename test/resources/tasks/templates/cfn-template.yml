@@ -1,0 +1,8 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+
+Resources:
+  Topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Name

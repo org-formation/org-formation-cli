@@ -1,0 +1,21 @@
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+OrgTemplate:
+  Type: update-stacks
+  Template: ./templates/org-template.yml
+  StackName: stack-name
+
+CfnTemplate:
+  Type: update-stacks
+  Template: ./templates/cfn-template.yml
+  StackName: cfn-template
+
+Include1:
+  Type: include
+  Path: ./include1.yml
+
+Include2:
+  Type: include
+  Path: ./include1.yml

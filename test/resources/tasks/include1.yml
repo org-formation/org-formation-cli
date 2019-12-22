@@ -1,0 +1,10 @@
+
+Template:
+  Type: update-stacks
+  Template: ./templates/org-template.yml
+  StackName: stack-name-2
+
+Template:
+  Type: update-stacks
+  Template: ./templates/org-template.yml
+  StackName: stack-name-3
