@@ -1,11 +1,34 @@
 import { IAccountProperties } from '../../src/parser/model/account-resource';
 import { IOrganizationRootProperties } from '../../src/parser/model/organization-root-resource';
 import { IOrganizationalUnitProperties } from '../../src/parser/model/organizational-unit-resource';
-import { OrgResourceTypes } from '../../src/parser/model/resource-types';
+import { OrgResourceTypes, ResourceTypes } from '../../src/parser/model/resource-types';
 import { IServiceControlPolicyProperties } from '../../src/parser/model/service-control-policy-resource';
 import { IResource, IResources, ITemplate, TemplateRoot } from '../../src/parser/parser';
+import { PersistedState } from '../../src/state/persisted-state';
 
 export class TestTemplates {
+
+    public static createState(template: TemplateRoot): PersistedState {
+        const master = template.organizationSection.masterAccount;
+        const state = PersistedState.CreateEmpty(master.accountId);
+        state.setBinding({
+            type: master.type,
+            logicalId: master.logicalId,
+            physicalId: master.accountId,
+            lastCommittedHash: 'asd',
+        });
+
+        for (const acc of template.organizationSection.accounts) {
+            state.setBinding({
+                type: acc.type,
+                logicalId: acc.logicalId,
+                physicalId: acc.accountId,
+                lastCommittedHash: 'asd',
+            });
+        }
+        return state;
+    }
+
     public static createBasicTemplate(resources?: IResources): TemplateRoot {
         const template: ITemplate  = {
             AWSTemplateFormatVersion: '2010-09-09-OC',

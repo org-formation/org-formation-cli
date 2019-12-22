@@ -9,6 +9,7 @@ import { PerformTasksCommand } from './src/commands/perform-tasks';
 import { PrintStacksCommand } from './src/commands/print-stacks';
 import { UpdateOrganizationCommand } from './src/commands/update-organization';
 import { UpdateStacksCommand } from './src/commands/update-stacks';
+import { ValidateStacksCommand } from './src/commands/validate-stacks';
 
 export class CliProgram {
 
@@ -47,6 +48,7 @@ export class CliProgram {
         new UpdateOrganizationCommand(this.program);
         new UpdateStacksCommand(this.program);
 
+        new ValidateStacksCommand(this.program);
     }
 
     public getCommand(): Command {

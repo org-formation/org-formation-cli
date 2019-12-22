@@ -192,4 +192,4 @@ export interface ICfnTask {
     isDependency: (task: ICfnTask) => boolean;
 
 }
-type CfnBuildTaskAction = 'UpdateOrCreate' | 'Delete';
+type CfnBuildTaskAction = 'UpdateOrCreate' | 'Delete' | 'Validate';

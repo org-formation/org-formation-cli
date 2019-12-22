@@ -60,6 +60,21 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         template.state.setPreviousTemplate(parsedTemplate.source);
         return template;
     }
+
+    public async getState(command: ICommandArgs): Promise<PersistedState> {
+        const storageProvider = await this.getStateBucket(command);
+        const accountId = await this.getMasterAccountId();
+
+        try {
+            const state = await PersistedState.Load(storageProvider, accountId);
+            return state;
+        } catch (err) {
+            if (err && err.code === 'NoSuchBucket') {
+                throw new OrgFormationError(`unable to load previously committed state, reason: bucket '${storageProvider.bucketName}' does not exist in current account.`);
+            }
+            throw err;
+        }
+    }
     protected abstract async performCommand(command: T): Promise<void>;
 
     protected addOptions(command: Command) {
@@ -97,21 +112,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         const stateBucketName = await this.GetStateBucketName(command);
         const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
-    }
-
-    protected async getState(command: ICommandArgs): Promise<PersistedState> {
-        const storageProvider = await this.getStateBucket(command);
-        const accountId = await this.getMasterAccountId();
-
-        try {
-            const state = await PersistedState.Load(storageProvider, accountId);
-            return state;
-        } catch (err) {
-            if (err && err.code === 'NoSuchBucket') {
-                throw new OrgFormationError(`unable to load previously committed state, reason: bucket '${storageProvider.bucketName}' does not exist in current account.`);
-            }
-            throw err;
-        }
     }
 
     protected async GetStateBucketName(command: ICommandArgs): Promise<string> {
