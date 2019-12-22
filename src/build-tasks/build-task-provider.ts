@@ -153,7 +153,7 @@ abstract class BaseStacksTask implements IBuildTask {
         }
 
         if (this.config.OrganizationFile) {
-            args.organizationFile = path.join(this.dir, this.config.OrganizationFile);
+            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationFile which is ingored. The Template specified in the update-organization task is always used as OrganizationFile for update-stacks tasks`);
         }
         if (this.config.TerminationProtection !== undefined) {
             args.terminationProtection = this.config.TerminationProtection;

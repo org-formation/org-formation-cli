@@ -31,7 +31,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         if (command.organizationFile) {
             templateOverrides.OrganizationFile = command.organizationFile;
         }
-        const template = TemplateRoot.create(templateFile, templateOverrides);
+        const template = TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
         return template;
     }
 
@@ -73,7 +73,8 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
 }
 
 export interface IUpdateStacksCommandArgs extends ICommandArgs {
-    organizationFile?: any;
+    organizationFile?: string;
+    organizationFileHash?: string;
     organizationBindingRegion?: any;
     organizationBinding?: any;
     templateFile: string;

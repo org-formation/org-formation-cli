@@ -77,11 +77,11 @@ export interface ITemplateOverrides {
 
 export class TemplateRoot {
 
-    public static create(path: string, overrides: ITemplateOverrides = {}): TemplateRoot {
+    public static create(path: string, overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
         try {
             const contents = fs.readFileSync(path).toString();
             const dirname = Path.dirname(path);
-            return TemplateRoot.createFromContents(contents, dirname, overrides);
+            return TemplateRoot.createFromContents(contents, dirname, overrides, templateImportContentMd5);
         } catch (err) {
             let reason = 'unknown';
             if (err && err.message) {
@@ -91,7 +91,7 @@ export class TemplateRoot {
         }
     }
 
-    public static createFromContents(contents: string, dirname: string = './', overrides: ITemplateOverrides = {}): TemplateRoot {
+    public static createFromContents(contents: string, dirname: string = './', overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
         if (contents === undefined) { throw new OrgFormationError('contents is undefined'); }
         if (contents.trim().length === 0) { throw new OrgFormationError('contents is empty'); }
         const organizationInclude = /Organization:\s*!Include\s*(\S*)/.exec(contents);
@@ -100,9 +100,9 @@ export class TemplateRoot {
         if (organizationInclude) {
             normalizedContentsForParser = normalizedContentsForParser.replace(organizationInclude[0], 'Organization:');
             const includePath = Path.join(dirname, organizationInclude[1]);
-            includedOrganization = TemplateRoot.getIncludedOrganization(includePath);
+            includedOrganization = TemplateRoot.getIncludedOrganization(includePath, templateImportContentMd5);
         } else if (overrides.OrganizationFile) {
-            includedOrganization = TemplateRoot.getIncludedOrganization(overrides.OrganizationFile);
+            includedOrganization = TemplateRoot.getIncludedOrganization(overrides.OrganizationFile, templateImportContentMd5);
 
         }
         delete overrides.OrganizationFile;
@@ -124,8 +124,14 @@ export class TemplateRoot {
         }, './');
     }
 
-    private static getIncludedOrganization(path: string): IOrganization {
+    private static getIncludedOrganization(path: string, templateImportContentMd5?: string): IOrganization {
         const includeContents = fs.readFileSync(path).toString();
+        if (templateImportContentMd5) {
+            const md5Content = md5(includeContents);
+            if (templateImportContentMd5 !== md5Content) {
+                throw new OrgFormationError(`Organization include file (${path}) must be the same as used elsewhere in tasks.`);
+            }
+        }
         const includedTemplate = yamlParse(includeContents) as ITemplate;
         if (!includedTemplate.Organization) {
             throw new OrgFormationError(`Organization include file (${path}) does not contain top level Organization.`);
