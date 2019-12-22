@@ -1,5 +1,7 @@
 import { CloudFormation } from 'aws-sdk';
 import { ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
+import uuid = require('uuid');
+import { OrgFormationError } from '../org-formation-error';
 import { ICfnBinding } from './cfn-binder';
 import { ICfnTask } from './cfn-task-provider';
 
@@ -29,6 +31,7 @@ export class CfnValidateTaskProvider {
                     delete param.ExportAccountId;
                     delete param.ExportRegion;
                     delete param.ExportName;
+                    param.Description = uuid();
                 }
                 const templateBody = binding.template.createTemplateBody();
                 const validateInput: ValidateTemplateInput =  {
@@ -36,7 +39,24 @@ export class CfnValidateTaskProvider {
                 };
 
                 const cfn = new CloudFormation({region: binding.region});
-                await cfn.validateTemplate(validateInput).promise();
+                const result = await cfn.validateTemplate(validateInput).promise();
+                const missingParameters: string[] = [];
+                for (const param of result.Parameters) {
+
+                    if (param.DefaultValue !== undefined) {
+                        continue;
+                    }
+                    if (binding.parameters && binding.parameters[param.ParameterKey]) {
+                        continue;
+                    }
+                    if (boundParameters.find((x) => x.Description === param.Description)) {
+                        continue;
+                    }
+                    missingParameters.push(param.ParameterKey);
+                }
+                if (missingParameters.length > 0)  {
+                    throw new OrgFormationError(`template expects parameter(s) ${missingParameters.join(', ')} which have not been provided`);
+                }
             },
         };
     }
