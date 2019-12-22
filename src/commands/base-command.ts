@@ -53,11 +53,15 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     public async getState(command: ICommandArgs): Promise<PersistedState> {
+        if (command.state) {
+            return command.state;
+        }
         const storageProvider = await this.getStateBucket(command);
         const accountId = await AwsUtil.GetMasterAccountId();
 
         try {
             const state = await PersistedState.Load(storageProvider, accountId);
+            command.state = state;
             return state;
         } catch (err) {
             if (err && err.code === 'NoSuchBucket') {
@@ -222,4 +226,5 @@ export interface ICommandArgs {
     stateBucketName: string;
     stateObject: string;
     profile?: string;
+    state: PersistedState;
 }
