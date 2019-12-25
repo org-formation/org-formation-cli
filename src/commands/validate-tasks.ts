@@ -10,7 +10,7 @@ import { PersistedState } from '../state/persisted-state';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'validate-tasks <templateFile>';
-const commandDescription = 'validates the tasks file, including configured tasks';
+const commandDescription = 'Will validate the tasks file, including configured tasks';
 
 export class ValidateTasksCommand extends BaseCliCommand<IValidateTasksCommandArgs> {
 
