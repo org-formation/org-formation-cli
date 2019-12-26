@@ -4,6 +4,7 @@
   - [DependsOnAccount and DependsOnRegion](#dependsonaccount-and-dependsonregion)
   - [Referencing the account the resource is created in](#referencing-the-account-the-resource-is-created-in)
   - [Foreach: Iterating over accounts when creating resources](#foreach-iterating-over-accounts-when-creating-resources)
+  - [Making templates re-usable](#making-templates-re-usable)
 
 
 ## Managing resources across accounts
@@ -285,3 +286,47 @@ The template above specifies that:
 - The ``MasterAccount`` gets a Member resource for each account that is refered to from the ``Master`` resource in that account.
 
 yes, the creation of ``Master`` resources to 'Members' and ``Member`` ressources to the Master account is confusing. This, unfortunately, is how Guardduty works in CloudFormation.
+
+### Making templates re-usable
+
+Being able to describe patterns and best-practices for resource configuration within an AWS Organization is great.
+
+However: Not every organization will have the exact same logical account names. Some might store their audit log in what they refer to as their `Compliance` account others might have a sepparate `AuditLogginAcccount`.
+
+To bridge these differences you can refer to Accounts from within an OrganizationBinding through a parameter:
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Organization: !Include ./organization.yml
+
+Parameters:
+  usersAccount:
+    Type: String
+    Default: !Ref SharedUsersAccount
+
+  masterAccount:
+    Type: String
+    Default: !Ref MasterAccount
+
+Resources:
+
+  Role:
+    Type: AWS::IAM::Role
+    OrganizationBinding:
+      Region: eu-west-1
+      #Account references a parameter that resolves to !Ref MasterAccount
+      Account: !Ref masterAccount
+    Properties:
+      RoleName: DeveloperRole
+      AssumeRolePolicyDocument:
+       Version: 2012-10-17
+       Statement:
+         - Effect: Allow
+           Action: sts:AssumeRole
+           Principal:
+            # !Ref references a parameter that resolves to !Ref SharedUsersAccount
+            AWS: !Ref usersAccount
+
+
+
+```
