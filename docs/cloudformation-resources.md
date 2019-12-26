@@ -1,6 +1,7 @@
 - [Managing resources across accounts](#managing-resources-across-accounts)
   - [OrganizationBinding: Where to create which resource](#organizationbinding-where-to-create-which-resource)
   - [Creating cross account resource dependencies](#creating-cross-account-resource-dependencies)
+  - [DependsOnAccount and DependsOnRegion](#dependsonaccount-and-dependsonregion)
   - [Referencing the account the resource is created in](#referencing-the-account-the-resource-is-created-in)
   - [Foreach: Iterating over accounts when creating resources](#foreach-iterating-over-accounts-when-creating-resources)
 
@@ -19,6 +20,11 @@ The constraints above can be difficult when managing a baseline of resources acr
 - Variability in resource configuration needs to be managed centranlly and relative to the account resource
 
 Organization Formation allows you to define any CloudFormation resource and annotate this with additional attributes that contain information about how these should be bound to the accounts within your organization.
+
+Org-Formation templates that contain resources can be updated using:
+``> org-formation update-stacks template.yml --stack-name stackName``
+
+More information in the [CLI reference](cli-reference.md)
 
 **example**:
 In this example a IAM Group will be created in the SharedUsersAccount and a IAM Role will be created in all accounts. The IAM Role however can only be assume from the SharedUserAccount and the Group can only assume this specific Role.
@@ -94,22 +100,19 @@ There is a lot of other ways to specify an account binding though:
 ||!Ref or list of !Ref|Resource will be created in [Accounts](#account) that are referred to.|
 |OrganizationalUnit|!Ref or list of !Ref|Resource will be created in all accounts that below to the [OrganizationalUnits](#organizationalunit) that are refered to.|
 |ExcludeAccount|!Ref or list of !Ref|Resource will **not** be created in [Accounts](#account) that are referred to.|
-|IncludeMasterAccount|```true``` or ```false```| If ```true```, resource will be created in the organizational master account.|
+|IncludeMasterAccount|``true`` or ``false``| If ``true``, resource will be created in the organizational master account.|
 |AccountsWithTag|tag-name|Resource will be created in all accounts that have a tag specified with tag-name.|
 
 Attributes can be combined and are **additive** (except for ```ExcludeAccount```).
 
 
-
-
-
 ### Creating cross account resource dependencies
 
-If you have a resource that you need to refer to from within another resource (using ```!Ref``` or ```!GetAtt```) Organization Formation helps you to do this across AWS accounts.
+If you have a resource that you need to refer to from within another resource (using ``!Ref`` or ``!GetAtt``) Organization Formation helps you to do this across AWS accounts.
 
-As every resource has its own ```OrganizationBinding``` and therefore will need to be added to a different set of accounts Organization Formation creates a template specific to every target account refered to from within the template.
+As every resource has its own ``OrganizationBinding`` and therefore will need to be added to a different set of accounts Organization Formation creates a template specific to every target account refered to from within the template.
 
-If, within a template, you use ```!Ref``` ir ```!GetAtt``` to refer to another resource in another account Organization Formation will create an export in the template that exposes the resource and create a parameter in the template that uses the value. It will work exactly how you would expect it to in cloudformation.
+If, within a template, you use ``!Ref`` ir ``!GetAtt`` to refer to another resource in another account Organization Formation will create an export in the template that exposes the resource and create a parameter in the template that uses the value. It will work exactly how you would expect it to in cloudformation.
 
 **example**:
 
@@ -143,12 +146,45 @@ Resources:
 
 ```
 
-**note**: The above will only work if resource ```CloudTrailS3Bucket``` only is bound to 1 account and region. If a resource is deployed to multiple accounts, you can alternatively use the syntax ```!Ref ComplianceAccount.Resources.CloudTrailS3Bucket``` or ```!GetAtt ComplianceAccount.Resources.CloudTrailS3Bucket.Arn```.
+**note**: The above will only work if resource ``CloudTrailS3Bucket`` only is bound to 1 account and region. If a resource is deployed to multiple accounts, you can alternatively use the syntax ``!Ref ComplianceAccount.Resources.CloudTrailS3Bucket`` or ``!GetAtt ComplianceAccount.Resources.CloudTrailS3Bucket.Arn``.
 
+### DependsOnAccount and DependsOnRegion
+
+Sometimes a dependency exists on the sequence in which cloudformation templates are executed - even if there is no cross-account resource dependency.
+
+A dependency to all templates within an account or region can be created manually using ``DependsOnAccount`` or ``DependsOnRegion``.
+
+In the example below all cloudformation templates that contain the ``Master`` resource (Accounts: *) will be executed after the all templates to the ``!Ref MasterAccount`` completed execution.
+
+Note that circular dependencies will fail to execute.
+
+```yaml
+Resources:
+  Master:
+    DependsOnAccount: !Ref MasterAccount
+    Type: AWS::GuardDuty::Master
+    OrganizationBinding:
+      Account: '*'
+    Properties:
+      DetectorId: !Ref Detector
+      MasterId: !Ref MasterAccount
+  Member:
+    Type: AWS::GuardDuty::Member
+    OrganizationBinding:
+      IncludeMasterAccount: true
+    Foreach:
+      Account: '*'
+    Properties:
+      DetectorId: !Ref Detector
+      Email: !GetAtt CurrentAccount.RootEmail
+      MemberId: !Ref CurrentAccount
+      Status: Invited
+      DisableEmailNotification: true
+```
 
 ### Referencing the account the resource is created in
 
-In CloudFormation it is possible to reference the accountId of the account the resource is created in using ```AWS::AccountId``` and the region using ```AWS::Region```. As Organization Formation template are regular cloudformation this remains possible.
+In CloudFormation it is possible to reference the accountId of the account the resource is created in using ``AWS::AccountId`` and the region using ``AWS::Region``. As Organization Formation template are regular cloudformation this remains possible.
 
 Organization Formation adds a way to reference the account resource of the account for which the resource is created using  **AWSAccount**
 
@@ -168,10 +204,22 @@ Organization Formation adds a way to reference the account resource of the accou
         BudgetType: COST
 ```
 
+The list of properties that can be accessed on an ``Account`` resource, be it via ``!GetAtt`` or from within a ``!Sub`` are:
+
+|expression|notes|
+|-------|-------|
+|AccountName|Returns the AccountName of the Account resource.|
+|Alias|Returns the IAM alias of the Account resource.|
+|AccountId|Returns the AccountId of the Account resource.|
+|RootEmail|Returns the RootEmail of the Account resource.|
+|Tags.*&lt;Key&gt;*|Returns the value of tag *&lt;Key&gt;* for the Account resource.|
+
+**!Ref** Returns the AccountId of the Account resource.
+
 
 ### Foreach: Iterating over accounts when creating resources
 
-If, in Organization Formation, you need to create a resource ```for each``` account in a specific selection you can do so with a Foreach attribute.
+If, in Organization Formation, you need to create a resource ``for each`` account in a specific selection you can do so with a Foreach attribute.
 
 **example**
 ```yaml
@@ -189,7 +237,7 @@ If, in Organization Formation, you need to create a resource ```for each``` acco
       DisableEmailNotification: true
 ```
 
-In the example above a ```Member``` resource will be created in the ```Master``` for each account in the selector ```Account: '*'```. The [account](#account) that is iterated over can be accessed using ```CurrentAccount```.
+In the example above a ``Member`` resource will be created in the ``Master`` for each account in the selector ``Account: '*'``. The [account](#account) that is iterated over can be accessed using ``CurrentAccount``.
 
 The ``Foreach`` attribute is has the same expressiveness as the [OrganizationBinding](#organizationbinding-where-to-create-which-resource) but does not support ``Region``.
 
@@ -237,4 +285,3 @@ The template above specifies that:
 - The ``MasterAccount`` gets a Member resource for each account that is refered to from the ``Master`` resource in that account.
 
 yes, the creation of ``Master`` resources to 'Members' and ``Member`` ressources to the Master account is confusing. This, unfortunately, is how Guardduty works in CloudFormation.
-
