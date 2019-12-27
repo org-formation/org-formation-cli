@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.52**
+- Added --parameters option to validate-stacks command.
+
 **version 0.0.51**
 - When running perform-tasks, having an update-organization task is now required. The organization file will be re-used and must be consistent with other tasks.
 
