@@ -22,6 +22,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
     }
 
     public addOptions(command: Command) {
+        command.option('--parameters [parameters]', 'parameter values passed to cloudformation when executing stacks');
         super.addOptions(command);
     }
 

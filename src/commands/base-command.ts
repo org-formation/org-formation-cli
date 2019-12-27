@@ -139,7 +139,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                     if (key === undefined || value === undefined) {
                         throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected ParameterKey=key,ParameterVaue=val`);
                     }
-                    parameters[key] = value;
+                    const paramKey = key.substr(13);
+                    const paramVal = value.substr(15);
+                    parameters[paramKey] = paramVal;
                 }
             }
         }
