@@ -60,7 +60,9 @@ export abstract class Resource {
                         if (paramValue && paramValue.Default && paramValue.Default.Ref) {
                             const refFromParam = paramValue.Default.Ref;
                             const foundElmThroughParam = list.find((x) => x.logicalId === refFromParam);
-                            results.push({TemplateResource: foundElmThroughParam});
+                            if (foundElmThroughParam !== undefined) {
+                                results.push({TemplateResource: foundElmThroughParam});
+                            }
                             continue;
                         }
                     }

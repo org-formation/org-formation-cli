@@ -23,6 +23,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
 
     public addOptions(command: Command) {
         command.option('--parameters [parameters]', 'parameter values passed to cloudformation when executing stacks');
+        command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation', 'validation');
         super.addOptions(command);
     }
 
@@ -31,7 +32,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);
         const parameters = this.parseStackParameters(command.parameters);
-        const cfnBinder = new CloudFormationBinder('validation', template, state, parameters, false);
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, false);
 
         const bindings = cfnBinder.enumBindings();
 
