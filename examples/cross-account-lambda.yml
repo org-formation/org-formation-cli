@@ -1,0 +1,47 @@
+
+
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization: !Include ./organization.yml
+OrganizationBindingRegion: eu-central-1
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+    Default: my
+
+  functionName:
+    Type: String
+
+  functionAccount:
+    Type: String
+    Default: !Ref SharedServicesAccount
+
+Resources:
+
+  InvokeFunctionPolicy:
+    Type: AWS::IAM::Policy
+    OrganizationBinding:
+      Account: '*'
+      ExcludeAccount: !Ref functionAccount
+    Properties:
+      PolicyName: !Sub '${resourcePrefix}-invoke-${functionName}-policy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: lambda:InvokeFunction
+            Resource: !Sub 'arn:aws:lambda:*:${functionAccount}:function:${functionName}'
+
+  InvokePermissions:
+    Type: AWS::Lambda::Permission
+    OrganizationBinding:
+      Account: !Ref functionAccount
+    Foreach:
+      Account: '*'
+      ExcludeAccount: !Ref functionAccount
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref functionName
+      Principal: !Ref CurrentAccount
