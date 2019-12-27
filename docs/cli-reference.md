@@ -92,9 +92,12 @@ Will deploy CloudFormation resources specified in *templateFile*.
 |<nobr>--parameters</nobr> | none | parameters that need to be passed to the cloudformation template.|
 |<nobr>--termination-protection</nobr> | false | If specified the stack will be created with termination protection.
 |
-an example on how to pass parameters:
 
+paramters can be passed in a similar fashion cloudformmation parameters are passed:
 ``> org-formation update-stacks template.yml --stack-name my-stack --parameters ParameterKey=Param1,ParameterValue=Val1 ParameterKey=Param2,ParameterValue=Val2``
+
+or the somewhat more simple fashion:
+``> org-formation update-stacks template.yml --stack-name my-stack --parameters Param1=Val1 Param2=Val2``
 
 
 ### ``org-formation validate-stacks``
@@ -108,7 +111,13 @@ validates the cloudformation templates that will be generated based on *template
 |<nobr>--stack-name</nobr> | 'validation' | The stack name used to deploy cloudformation resources (used in e.g. generated names for output)|
 |<nobr>--parameters</nobr> | none | parameters that need to be passed to the cloudformation template.|
 
+
+paramters can be passed in a similar fashion cloudformmation parameters are passed:
 ``> org-formation validate-stacks template.yml --stack-name my-stack --parameters ParameterKey=Param1,ParameterValue=Val1 ParameterKey=Param2,ParameterValue=Val2``
+
+or the somewhat more simple fashion:
+``> org-formation validate-stacks template.yml --stack-name my-stack --parameters Param1=Val1 Param2=Val2``
+
 
 ### ``org-formation print-stacks``
 
