@@ -105,7 +105,7 @@ validates the cloudformation templates that will be generated based on *template
 
 |option|default|description|
 |---|---|---|
-|<nobr>--stack-name</nobr> | none | **required** <br/>The stack name used to deploy cloudformation resources|
+|<nobr>--stack-name</nobr> | 'validation' | The stack name used to deploy cloudformation resources (used in e.g. generated names for output)|
 |<nobr>--parameters</nobr> | none | parameters that need to be passed to the cloudformation template.|
 
 ``> org-formation validate-stacks template.yml --stack-name my-stack --parameters ParameterKey=Param1,ParameterValue=Val1 ParameterKey=Param2,ParameterValue=Val2``
@@ -118,7 +118,8 @@ Will print out CloudFormation templates generated based on *templateFile*.
 
 |option|default|description|
 |---|---|---|
-|<nobr>--stack-name</nobr> | none | **required** <br/>The stack name used to deploy cloudformation resources|
+|<nobr>--stack-name</nobr> | 'print' | The stack name used to deploy cloudformation resources (used in e.g. generated names for output)|
+|<nobr>--parameters</nobr> | none | parameters that need to be passed to the cloudformation template.|
 
 
 ### ``org-formation describe-stacks``
