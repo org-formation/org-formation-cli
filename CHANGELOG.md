@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.53**
+- Made --stack-name option optional on validate-stack and print-stack.
+- Added --parameters option to print-stacks command. Doesnt really do anything but allows you to use the same options on validate-stack and print-stack.
+
 **version 0.0.52**
 - Added --parameters option to validate-stacks command.
 
