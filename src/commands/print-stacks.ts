@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { CloudFormationBinder } from '../cfn-binder/cfn-binder';
+import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
@@ -30,6 +31,10 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
 
         const bindings = cfnBinder.enumBindings();
         for (const binding of bindings) {
+            if (binding.action === 'Delete') {
+                ConsoleUtil.LogInfo(`stack ${command.stackName} for account ${binding.accountId} and region ${binding.region} will be deleted`);
+                continue;
+            }
             console.log(`template for account ${binding.accountId} and region ${binding.region}`);
             const templateBody = binding.template.createTemplateBody();
             console.log(templateBody);
