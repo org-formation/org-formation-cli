@@ -21,12 +21,12 @@ Parameters:
 Resources:
 
   InvokeFunctionPolicy:
-    Type: AWS::IAM::Policy
+    Type: AWS::IAM::ManagedPolicy
     OrganizationBinding:
       Account: '*'
       ExcludeAccount: !Ref functionAccount
     Properties:
-      PolicyName: !Sub '${resourcePrefix}-invoke-${functionName}-policy'
+      ManagedPolicyName: !Sub '${resourcePrefix}-${functionName}-invoke-policy'
       PolicyDocument:
         Version: 2012-10-17
         Statement:

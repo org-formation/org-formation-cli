@@ -1,3 +1,4 @@
+import Organizations = require('aws-sdk/clients/organizations');
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
@@ -11,8 +12,8 @@ export class CfnTemplate {
 
     private static ResolveBindingForResourceSpecificAccount(bindings: ICfnBinding[], physicalAccountId: string, resourceLogicalId: string, accountLogicalId: string): ICfnBinding {
         const foundBinding = bindings.
-                filter((x) => x.accountId === physicalAccountId).
-                filter((x) => x.template!.resources[resourceLogicalId]);
+            filter((x) => x.accountId === physicalAccountId).
+            filter((x) => x.template!.resources[resourceLogicalId]);
 
         if (foundBinding.length === 0) {
             ConsoleUtil.LogWarning(`Unable to find resource ${resourceLogicalId} on account ${accountLogicalId}`);
@@ -48,7 +49,7 @@ export class CfnTemplate {
             valueType: 'String',
             path: undefined,
             uniqueNameForExport: `${target.stackName}-${resourceLogicalId}`,
-            expressionForExport: {Ref: resourceLogicalId},
+            expressionForExport: { Ref: resourceLogicalId },
             uniqueNameForImport: resourceLogicalId,
         };
     }
@@ -73,7 +74,7 @@ export class CfnTemplate {
 
         if (path && path.endsWith('NameServers')) { // todo: add list of other attributes that are not string;
             result.valueType = 'CommaDelimitedList';
-            result.expressionForExport = {'Fn::Join' : [', ', { 'Fn::GetAtt': [resourceLogicalId, path] }]};
+            result.expressionForExport = { 'Fn::Join': [', ', { 'Fn::GetAtt': [resourceLogicalId, path] }] };
         }
 
         return result;
@@ -186,7 +187,7 @@ export class CfnTemplate {
         const cfnFriendlyName = dependency.outputName.replace(/-/g, 'Dash');
 
         if (!this.outputs[cfnFriendlyName]) {
-            this.outputs[cfnFriendlyName] =  {
+            this.outputs[cfnFriendlyName] = {
                 Value: dependency.outputValueExpression,
                 Description: 'Cross Account dependency',
                 Export: {
@@ -198,7 +199,7 @@ export class CfnTemplate {
 
     public addParameter(dependency: ICfnCrossAccountDependency) {
         if (!this.parameters[dependency.parameterName]) {
-            this.parameters[dependency.parameterName] =  {
+            this.parameters[dependency.parameterName] = {
                 Description: 'Cross Account dependency',
                 Type: dependency.parameterType,
                 ExportAccountId: dependency.outputAccountId,
@@ -208,13 +209,13 @@ export class CfnTemplate {
         }
     }
 
-    public enumBoundParameters(): Record<string, ICfnParameter>  {
+    public enumBoundParameters(): Record<string, ICfnParameter> {
         const parameters: Record<string, ICfnParameter> = {};
         for (const paramName in this.parameters) {
             const parameter = this.parameters[paramName];
             if (parameter.ExportName) {
                 parameters[paramName] = parameter;
-             }
+            }
         }
         return parameters;
     }
@@ -276,7 +277,7 @@ export class CfnTemplate {
                 const [key, val]: [string, unknown] = entries[0];
                 if (key === 'Fn::Sub') {
                     const sub = new SubExpression(val as string | any[]);
-                    const localKeys: string[]  = sub.locals ? Object.keys(sub.locals) : [];
+                    const localKeys: string[] = sub.locals ? Object.keys(sub.locals) : [];
 
                     for (const variable of sub.variables) {
                         if (localKeys.includes(variable.resource)) { continue; }
@@ -297,7 +298,7 @@ export class CfnTemplate {
                             const remoteResourceId = pathParts[1];
                             let remotePath = (pathParts.length > 2) ? pathParts[2] : undefined;
                             if (pathParts.length > 3) {
-                                for (let i  = 3; i < pathParts.length; i++) {
+                                for (let i = 3; i < pathParts.length; i++) {
                                     remotePath += '.' + pathParts[i];
                                 }
                             }
@@ -321,8 +322,8 @@ export class CfnTemplate {
                         if (!target) { continue; }
 
                         const reference = path ?
-                                CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path) :
-                                CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId);
+                            CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path) :
+                            CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId);
 
                         const dependency = CfnTemplate.CreateDependency(binding, reference);
 
@@ -330,7 +331,7 @@ export class CfnTemplate {
                         variable.replace('${' + dependency.parameterName + '}');
                     }
 
-                    parent[parentKey] = { 'Fn::Sub' : sub.getSubValue() };
+                    parent[parentKey] = { 'Fn::Sub': sub.getSubValue() };
 
                 } else if (key === 'Ref') {
                     const resourceId: string = '' + val;
@@ -341,7 +342,7 @@ export class CfnTemplate {
                             const dependency = CfnTemplate.CreateDependency(binding, reference);
 
                             result.push(dependency);
-                            parent[parentKey] = { Ref : dependency.parameterName};
+                            parent[parentKey] = { Ref: dependency.parameterName };
                         }
                     }
                 } else if (key === 'Fn::GetAtt') {
@@ -363,7 +364,7 @@ export class CfnTemplate {
                                 const remoteResourceId = pathParts[1];
                                 let remotePath = (pathParts.length > 2) ? pathParts[2] : undefined;
                                 if (pathParts.length > 3) {
-                                    for (let i  = 3; i < pathParts.length; i++) {
+                                    for (let i = 3; i < pathParts.length; i++) {
                                         remotePath += '.' + pathParts[i];
                                     }
                                 }
@@ -388,13 +389,13 @@ export class CfnTemplate {
 
                             if (target && !processed) {
                                 const reference = path ?
-                                                    CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path, val[0]) :
-                                                    CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId);
+                                    CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path, val[0]) :
+                                    CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId);
 
-                                const dependency = CfnTemplate.CreateDependency(binding,  reference);
+                                const dependency = CfnTemplate.CreateDependency(binding, reference);
 
                                 result.push(dependency);
-                                parent[parentKey] = { Ref : dependency.parameterName};
+                                parent[parentKey] = { Ref: dependency.parameterName };
                             }
                         }
                     }
@@ -416,11 +417,11 @@ export class CfnTemplate {
             if (entries.length === 1) {
                 const [key, val]: [string, unknown] = entries[0];
                 if (key === 'Ref' && val === keyword) {
-                    return {Ref : replacement };
+                    return { Ref: replacement };
                 } else if (key === 'Fn::GetAtt') {
                     if (Array.isArray(val) && val.length === 2) {
                         if (val[0] === keyword) {
-                            return {'Fn::GetAtt' : [replacement, val[1]]};
+                            return { 'Fn::GetAtt': [replacement, val[1]] };
                         }
                     }
                 } else if (key === 'Fn::Sub') {
@@ -438,7 +439,7 @@ export class CfnTemplate {
                         expressionWithReplacement = '${' + expressionWithReplacement + '}';
                         variableWithKeyword.replace(expressionWithReplacement);
                     }
-                    return {'Fn::Sub': sub.getSubValue()};
+                    return { 'Fn::Sub': sub.getSubValue() };
 
                 }
             }
@@ -474,7 +475,7 @@ export class CfnTemplate {
                     const sub = new SubExpression(val as string | any[]);
 
                     if (!sub.hasVariables()) {
-                        return {'Fn::Sub': sub.getSubValue()};
+                        return { 'Fn::Sub': sub.getSubValue() };
                     }
 
                     for (const variable of sub.variables) {
@@ -498,20 +499,83 @@ export class CfnTemplate {
                     }
 
                     if (sub.hasVariables()) {
-                        return {'Fn::Sub': sub.getSubValue()};
+                        return { 'Fn::Sub': sub.getSubValue() };
                     }
 
                     return sub.getSubValue();
                 }
             }
+
             for (const [key, val] of entries) {
                 if (val !== null && typeof val === 'object') {
                     resource[key] = this._resolveOrganizationFunctions(val, accountResource);
+                }
+
+                if (val !== null && typeof val === 'string') {
+                    if (val.startsWith('Fn::EnumTargetAccounts ')) {
+                        resource[key] = this.resolveEnumExpression('EnumTargetAccounts', val, accountResource, 'account');
+                    } else if (val.startsWith('Fn::EnumTargetRegions')) {
+                        resource[key] = this.resolveEnumExpression('EnumTargetRegions', val, accountResource, 'region');
+                    }
                 }
             }
 
         }
         return resource;
+    }
+
+    private resolveEnumExpression(which: 'EnumTargetAccounts' | 'EnumTargetRegions', val: string, accountResource: AccountResource, replacementParameter: string) {
+        const parts = val.split(' ');
+        if (parts.length < 2 || parts.length > 3) {
+            throw new OrgFormationError(`invalid ${parts[0]} expression ${parts.slice(1)}`);
+        }
+        const resourceId = parts[1];
+        const cfnResource = this.templateRoot.resourcesSection.resources.find((x) => x.logicalId === resourceId);
+        if (cfnResource === undefined) {
+            throw new OrgFormationError(`unable to find resource ${resourceId} from  ${parts[0]} expression`);
+        }
+        const enumUnderlyingValues = [];
+        if (which === 'EnumTargetAccounts') {
+            const normalizedLogicalAccountIds = cfnResource.normalizedBoundAccounts;
+            for (const logicalAccountId of normalizedLogicalAccountIds) {
+
+                const physicalId = this.getOrgResourceAtt(logicalAccountId, 'AccountId', accountResource);
+                enumUnderlyingValues.push(physicalId);
+            }
+        } else if (which === 'EnumTargetRegions') {
+            enumUnderlyingValues.push(...cfnResource.regions);
+        }
+
+        let expression = '${' + replacementParameter + '}';
+        if (parts.length === 3) {
+            expression = parts[2];
+        }
+        const converted = this.convertExpression(enumUnderlyingValues, expression, replacementParameter);
+        const result: any[] = [];
+        for (const element of converted) {
+            if (element.hasVariables()) {
+                result.push({ 'Fn::Sub': element.getSubValue() });
+            } else {
+                result.push(element.getSubValue());
+            }
+        }
+        if (result.length === 1) {
+            return result[0];
+        }
+        return result;
+    }
+
+    private convertExpression(values: string[], expression: string, resourceId: string): SubExpression[] {
+        const result: SubExpression[] = [];
+        for (const val of values) {
+            const x = new SubExpression(expression);
+            const accountVar = x.variables.find((x) => x.resource === resourceId);
+            if (accountVar) {
+                accountVar.replace(val);
+            }
+            result.push(x);
+        }
+        return result;
     }
 
     private getOrgResourceRef(logicalId: any): string {
@@ -577,7 +641,7 @@ class SubExpression {
             if (subValue.length > 1) {
                 this.locals = subValue[1];
             }
-        } else  {
+        } else {
             throw new OrgFormationError('unable to parse !Sub expression');
         }
 
@@ -607,7 +671,7 @@ class SubExpression {
     private createSubExpressionVariable(match: string, that: SubExpression): ISubExpressionVeriable {
         const expression = match.substr(2, match.length - 3);
         const parts = expression.split('.');
-        const result: ISubExpressionVeriable =  {
+        const result: ISubExpressionVeriable = {
             replace: (replacement: string) => {
                 that.expression = that.expression.replace(match, replacement);
             },
@@ -617,7 +681,7 @@ class SubExpression {
         if (parts.length > 1) {
             result.path = parts[1];
             if (parts.length > 2) {
-                for (let i  = 2; i < parts.length; i++) {
+                for (let i = 2; i < parts.length; i++) {
                     result.path += '.' + parts[i];
                 }
             }

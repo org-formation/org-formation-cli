@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization: !Include ./organization.yml
+OrganizationBindingRegion: eu-central-1
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+    Default: my
+
+  bucketName:
+    Type: String
+
+  bucketAccount:
+    Type: String
+    Default: !Ref SharedServicesAccount
+
+Resources:
+
+  Bucket:
+    Type: AWS::S3::Bucket
+    OrganizationBinding:
+      Account: !Ref bucketAccount
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub '${bucketName}'
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    OrganizationBinding:
+      Account: !Ref bucketAccount
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Statement:
+          - Sid: 'Read operations on bucket'
+            Action:
+            - s3:Get*
+            - s3:List*
+            Effect: "Allow"
+            Resource:
+            - !Sub '${Bucket.Arn}'
+            - !Sub '${Bucket.Arn}/*'
+            Principal:
+              AWS: Fn::EnumTargetAccounts S3BucketReadAccessPolicy arn:aws:iam::${account}:root
+          - Sid: 'Write operations on bucket'
+            Action:
+            - s3:Put*
+            Effect: "Allow"
+            Resource:
+            - !Sub '${Bucket.Arn}'
+            - !Sub '${Bucket.Arn}/*'
+            Principal:
+              AWS: Fn::EnumTargetAccounts S3BucketWriteAccessPolicy arn:aws:iam::${account}:root
+          - Sid: 'Any operation on bucket'
+            Action:
+            - s3:*
+            Effect: "Allow"
+            Resource:
+            - !Sub '${Bucket.Arn}'
+            - !Sub '${Bucket.Arn}/*'
+            Principal:
+              AWS: Fn::EnumTargetAccounts S3BucketFullAccessPolicy arn:aws:iam::${account}:root
+
+  S3BucketReadAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    OrganizationBinding:
+      Account: '*'
+      ExcludeAccount: !Ref bucketAccount
+    Properties:
+      ManagedPolicyName: !Sub '${resourcePrefix}-${bucketName}-read-policy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+            - s3:Get*
+            - s3:List*
+            Resource:
+            - !Sub '${Bucket.Arn}'
+            - !Sub '${Bucket.Arn}/*'
+
+  S3BucketWriteAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    OrganizationBinding:
+      Account: '*'
+      ExcludeAccount: !Ref bucketAccount
+    Properties:
+      ManagedPolicyName: !Sub '${resourcePrefix}-${bucketName}-write-policy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+            - s3:Put*
+            Resource:
+            - !Sub '${Bucket.Arn}'
+            - !Sub '${Bucket.Arn}/*'
+
+  S3BucketFullAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    OrganizationBinding:
+      Account: '*'
+      ExcludeAccount: !Ref bucketAccount
+    Properties:
+      ManagedPolicyName: !Sub '${resourcePrefix}-${bucketName}-fullaccess-policy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+            - s3:*
+            Resource:
+            - !Sub '${Bucket.Arn}'
+            - !Sub '${Bucket.Arn}/*'
