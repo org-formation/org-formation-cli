@@ -39,8 +39,8 @@ export class CfnTemplate {
         return foundBinding[0];
     }
 
-    private static CreateCrossAccountReferenceForRef(target: ICfnBinding, resourceLogicalId: string): ICfnCrossAccountReference {
-        return {
+    private static CreateCrossAccountReferenceForRef(target: ICfnBinding, resourceLogicalId: string, accountLogicalId?: string): ICfnCrossAccountReference {
+        const result: ICfnCrossAccountReference = {
             accountId: target.accountId,
             stackName: target.stackName,
             region: target.region,
@@ -52,6 +52,11 @@ export class CfnTemplate {
             expressionForExport: { Ref: resourceLogicalId },
             uniqueNameForImport: resourceLogicalId,
         };
+
+        if (accountLogicalId) {
+            result.uniqueNameForImport = accountLogicalId + 'DotResourcesDot' + result.uniqueNameForImport;
+        }
+        return result;
     }
 
     private static CreateCrossAccountReferenceForGetAtt(target: ICfnBinding, resourceLogicalId: string, path: string, accountLogicalId?: string): ICfnCrossAccountReference {
@@ -71,7 +76,6 @@ export class CfnTemplate {
         if (accountLogicalId) {
             result.uniqueNameForImport = accountLogicalId + 'DotResourcesDot' + result.uniqueNameForImport;
         }
-
         if (path && path.endsWith('NameServers')) { // todo: add list of other attributes that are not string;
             result.valueType = 'CommaDelimitedList';
             result.expressionForExport = { 'Fn::Join': [', ', { 'Fn::GetAtt': [resourceLogicalId, path] }] };
@@ -101,6 +105,7 @@ export class CfnTemplate {
     private parameters: Record<string, ICfnParameter>;
     private resourceIdsForTarget: string[];
     private allResourceIds: string[];
+    private accountResource: AccountResource;
 
     constructor(target: IResourceTarget, private templateRoot: TemplateRoot, private state: PersistedState) {
         this.resourceIdsForTarget = target.resources.map((x) => x.logicalId);
@@ -118,7 +123,7 @@ export class CfnTemplate {
             Outputs: this.outputs,
         };
 
-        const accountResource = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
+        this.accountResource = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
 
         for (const resource of target.resources) {
             const clonedResource = JSON.parse(JSON.stringify(resource.resourceForTemplate));
@@ -128,10 +133,10 @@ export class CfnTemplate {
                 for (const accountName of resource.normalizedForeachAccounts) {
                     const resourceForAccount = JSON.parse(JSON.stringify(resource.resourceForTemplate));
                     const keywordReplaced = this._replaceKeyword(resourceForAccount, 'CurrentAccount', accountName);
-                    this.resources[resource.logicalId + accountName] = this._resolveOrganizationFunctions(keywordReplaced, accountResource);
+                    this.resources[resource.logicalId + accountName] = this._resolveOrganizationFunctions(keywordReplaced, this.accountResource);
                 }
             } else {
-                this.resources[resource.logicalId] = this._resolveOrganizationFunctions(clonedResource, accountResource);
+                this.resources[resource.logicalId] = this._resolveOrganizationFunctions(clonedResource, this.accountResource);
             }
         }
 
@@ -139,29 +144,29 @@ export class CfnTemplate {
             const output = this.templateRoot.contents.Outputs[outputName];
             if (!this._containsRefToOtherTarget(output, this.resourceIdsForTarget, this.allResourceIds)) {
                 const clonedOutput = JSON.parse(JSON.stringify(output));
-                this.outputs[outputName] = this._resolveOrganizationFunctions(clonedOutput, accountResource);
+                this.outputs[outputName] = this._resolveOrganizationFunctions(clonedOutput, this.accountResource);
             }
         }
 
         for (const paramName in this.templateRoot.contents.Parameters) {
             const param = this.templateRoot.contents.Parameters[paramName];
             const clonedParam = JSON.parse(JSON.stringify(param));
-            this.parameters[paramName] = this._resolveOrganizationFunctions(clonedParam, accountResource);
+            this.parameters[paramName] = this._resolveOrganizationFunctions(clonedParam, this.accountResource);
         }
 
         if (this.templateRoot.contents.Metadata) {
             const clonedMetadata = JSON.parse(JSON.stringify(this.templateRoot.contents.Metadata));
-            this.resultingTemplate.Metadata = this._resolveOrganizationFunctions(clonedMetadata, accountResource);
+            this.resultingTemplate.Metadata = this._resolveOrganizationFunctions(clonedMetadata, this.accountResource);
 
         }
         if (this.templateRoot.contents.Conditions) {
             const clonedConditions = JSON.parse(JSON.stringify(this.templateRoot.contents.Conditions));
-            this.resultingTemplate.Conditions = this._resolveOrganizationFunctions(clonedConditions, accountResource);
+            this.resultingTemplate.Conditions = this._resolveOrganizationFunctions(clonedConditions, this.accountResource);
         }
 
         if (this.templateRoot.contents.Mappings) {
             const clonedMappings = JSON.parse(JSON.stringify(this.templateRoot.contents.Mappings));
-            this.resultingTemplate.Mappings = this._resolveOrganizationFunctions(clonedMappings, accountResource);
+            this.resultingTemplate.Mappings = this._resolveOrganizationFunctions(clonedMappings, this.accountResource);
         }
 
         for (const prop in this.resultingTemplate) {
@@ -287,7 +292,12 @@ export class CfnTemplate {
                         let target: ICfnBinding | undefined;
                         let resourceId = variable.resource;
                         let path = variable.path;
+                        let logicalAccountId: string;
                         if (variable.path && variable.path.startsWith('Resources')) {
+                            if (resourceId === 'AWSAccount') {
+                                resourceId = this.accountResource.logicalId;
+                            }
+
                             const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === resourceId);
                             if (!targetAccount) { throw new OrgFormationError(`unable to find account ${resourceId} for cross account dependency`); }
 
@@ -306,6 +316,8 @@ export class CfnTemplate {
                             resourceId = remoteResourceId;
                             target = CfnTemplate.ResolveBindingForResourceSpecificAccount(others, accountState.physicalId, resourceId, targetAccount.logicalId);
 
+                            if (!target) { continue; }
+
                             if (target.accountId === binding.accountId && target.region === binding.region) {
                                 // rewrite to local reference, todo: add tests
                                 if (remotePath) {
@@ -315,15 +327,15 @@ export class CfnTemplate {
                                 }
                                 continue;
                             }
-
+                            logicalAccountId = targetAccount.logicalId;
                         } else {
                             target = CfnTemplate.ResolveBindingForResource(others, resourceId);
                         }
                         if (!target) { continue; }
 
                         const reference = path ?
-                            CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path) :
-                            CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId);
+                            CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path, logicalAccountId) :
+                            CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId, logicalAccountId);
 
                         const dependency = CfnTemplate.CreateDependency(binding, reference);
 
@@ -334,11 +346,41 @@ export class CfnTemplate {
                     parent[parentKey] = { 'Fn::Sub': sub.getSubValue() };
 
                 } else if (key === 'Ref') {
-                    const resourceId: string = '' + val;
+                    let resourceId: string = '' + val;
+                    let logicalAccountId: string;
                     if (!this.resources[resourceId]) {
-                        const target = CfnTemplate.ResolveBindingForResource(others, resourceId);
-                        if (target) {
-                            const reference = CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId);
+                        let processed = false;
+                        let target;
+                        if (resourceId.includes('.Resources.')) {
+                            const parts = resourceId.split('.');
+                            logicalAccountId = parts[0];
+                            if (logicalAccountId === 'AWSAccount') {
+                                logicalAccountId = this.accountResource.logicalId;
+                            }
+                            if (parts[1] !== 'Resources' || parts.length !== 3) {
+                                throw new OrgFormationError(`invalid cross account ref expression ${resourceId}`);
+                            }
+                            const remoteResourceId = parts[2];
+                            const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === logicalAccountId);
+                            if (!targetAccount) { throw new OrgFormationError(`unable to find account ${logicalAccountId} for cross account dependency`); }
+
+                            const accountState = this.state.getBinding(targetAccount.type, targetAccount.logicalId);
+                            if (!accountState) { throw new OrgFormationError(`unable to find account ${resourceId} in state. Is your organization up to date?`); }
+
+                            target = CfnTemplate.ResolveBindingForResourceSpecificAccount(others, accountState.physicalId, remoteResourceId, logicalAccountId);
+                            if (target) {
+                                if (target.accountId === binding.accountId && target.region === binding.region) {
+                                    parent[parentKey] = { Ref: remoteResourceId };
+                                    processed = true;
+                                } else {
+                                    resourceId = remoteResourceId;
+                                }
+                            }
+                        } else {
+                            target = CfnTemplate.ResolveBindingForResource(others, resourceId);
+                        }
+                        if (target && !processed) {
+                            const reference = CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId, logicalAccountId);
                             const dependency = CfnTemplate.CreateDependency(binding, reference);
 
                             result.push(dependency);
@@ -349,18 +391,23 @@ export class CfnTemplate {
                     if (Array.isArray(val)) {
                         let resourceId: string = val[0];
                         let path: string = val[1];
+                        let logicalAccountId: string;
                         if (!this.resources[resourceId]) {
                             let processed = false;
                             let target;
                             if (path.startsWith('Resources.')) {
-                                const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === resourceId);
-                                if (!targetAccount) { throw new OrgFormationError(`unable to find account ${resourceId} for cross account dependency`); }
+                                logicalAccountId = resourceId;
+                                if (logicalAccountId === 'AWSAccount') {
+                                    logicalAccountId = this.accountResource.logicalId;
+                                }
+
+                                const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === logicalAccountId);
+                                if (!targetAccount) { throw new OrgFormationError(`unable to find account ${logicalAccountId} for cross account dependency`); }
 
                                 const accountState = this.state.getBinding(targetAccount.type, targetAccount.logicalId);
-                                if (!accountState) { throw new OrgFormationError(`unable to find account ${resourceId} in state. Is your organization up to date?`); }
+                                if (!accountState) { throw new OrgFormationError(`unable to find account ${logicalAccountId} in state. Is your organization up to date?`); }
 
                                 const pathParts = path.split('.');
-                                const accountLogicalId = resourceId;
                                 const remoteResourceId = pathParts[1];
                                 let remotePath = (pathParts.length > 2) ? pathParts[2] : undefined;
                                 if (pathParts.length > 3) {
@@ -369,19 +416,19 @@ export class CfnTemplate {
                                     }
                                 }
 
-                                target = CfnTemplate.ResolveBindingForResourceSpecificAccount(others, accountState.physicalId, remoteResourceId, accountLogicalId);
+                                target = CfnTemplate.ResolveBindingForResourceSpecificAccount(others, accountState.physicalId, remoteResourceId, logicalAccountId);
                                 if (target) {
                                     if (target.accountId === binding.accountId && target.region === binding.region) {
-                                        // rewrite to local reference, todo: add tests
                                         if (remotePath) {
                                             parent[parentKey] = { 'Fn::GetAtt': [remoteResourceId, remotePath] };
                                         } else {
                                             parent[parentKey] = { Ref: remoteResourceId };
                                         }
                                         processed = true;
+                                    } else {
+                                        resourceId = remoteResourceId;
+                                        path = remotePath;
                                     }
-                                    resourceId = remoteResourceId;
-                                    path = remotePath;
                                 }
                             } else {
                                 target = CfnTemplate.ResolveBindingForResource(others, resourceId);
@@ -389,8 +436,8 @@ export class CfnTemplate {
 
                             if (target && !processed) {
                                 const reference = path ?
-                                    CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path, val[0]) :
-                                    CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId);
+                                    CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path, logicalAccountId) :
+                                    CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId, logicalAccountId);
 
                                 const dependency = CfnTemplate.CreateDependency(binding, reference);
 

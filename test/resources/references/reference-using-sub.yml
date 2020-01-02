@@ -89,3 +89,33 @@ Resources:
       BucketName: !Sub
       - '${var}-bucket'
       - { var: !GetAtt MasterAccount.RootEmail }
+
+  S3Bucket12:
+    OrganizationBinding:
+      Account: !Ref Account1
+    Type: AWS::S3::Bucket
+    Properties:
+      SameAccountResourcesRef: !Ref Account1.Resources.Topic
+      SameAccountResourcesGetAtt: !GetAtt Account1.Resources.Topic.Arn
+      SameAccountResourcesSubRef: !Sub '${Account1.Resources.Topic}'
+      SameAccountResourcesSubGetAtt: !Sub '${Account1.Resources.Topic.Arn}'
+
+  S3Bucket13:
+    OrganizationBinding:
+      Account: !Ref Account1
+    Type: AWS::S3::Bucket
+    Properties:
+      AWSAccountResourcesRef: !Ref AWSAccount.Resources.Topic
+      AWSAccountResourcesGetAtt: !GetAtt AWSAccount.Resources.Topic.Arn
+      AWSAccountResourcesSubRef: !Sub '${AWSAccount.Resources.Topic}'
+      AWSAccountResourcesSubGetAtt: !Sub '${AWSAccount.Resources.Topic.Arn}'
+
+  S3Bucket14:
+    OrganizationBinding:
+      Account: !Ref Account2
+    Type: AWS::S3::Bucket
+    Properties:
+      OtherAccountResourcesRef: !Ref Account1.Resources.Topic
+      OtherAccountResourcesGetAtt: !GetAtt Account1.Resources.Topic.Arn
+      OtherAccountResourcesSubRef: !Sub '${Account1.Resources.Topic}'
+      OtherAccountResourcesSubGetAtt: !Sub '${Account1.Resources.Topic.Arn}'

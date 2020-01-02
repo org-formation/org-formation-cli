@@ -20,5 +20,3 @@ Resources:
       OrganizationalUnit: !Ref OU1
     Properties:
       BucketName: !GetAtt Topic.TopicName
-#      BucketName: !Sub '${Topic.TopicName}-bucket' //todo: support this
-

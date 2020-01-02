@@ -61,9 +61,8 @@ describe('when loading cross account references through sub', () => {
         expect(keys[0]).to.eq('TopicMaster');
     });
 
-    it('template 1 has topic as only resource', () => {
+    it('template 1 has topic as first resource', () => {
         const keys = Object.keys(templateAccount1.Resources);
-        expect(keys.length).to.eq(1);
         expect(keys[0]).to.eq('Topic');
     });
 
@@ -104,7 +103,7 @@ describe('when loading cross account references through sub', () => {
     it('Account 2 S3Bucket 2 Bucketname gets rewritten to parameter reference', () => {
         const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket2.Properties.BucketName;
         expect(bucketName['Fn::Sub']).to.not.contain('Account1.Resource');
-        expect(bucketName['Fn::Sub']).to.eq('${TopicDotTopicName}-bucket');
+        expect(bucketName['Fn::Sub']).to.eq('${Account1DotResourcesDotTopicDotTopicName}-bucket');
     });
 
     it('Account 2 S3Bucket 3 Bucketname gets rewritten to parameter reference', () => {
@@ -140,7 +139,7 @@ describe('when loading cross account references through sub', () => {
         const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
 
         expect(refExpression.Ref).to.not.be.undefined;
-        expect(refExpression.Ref).to.eq('Topic');
+        expect(refExpression.Ref).to.eq('Account1DotResourcesDotTopic');
     });
 
     it('Account 2 S3Bucket 7 Bucketname gets rewritten to local GetAtt reference', () => {
@@ -155,7 +154,7 @@ describe('when loading cross account references through sub', () => {
     it('Account 2 S3Bucket 9 Bucketname gets rewritten to parameter', () => {
         const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket9.Properties.BucketName;
         expect(bucketName['Fn::Sub']).to.not.contain('MasterAccount.Resource');
-        expect(bucketName['Fn::Sub']).to.eq('${TopicMasterDotTopicName}-bucket');
+        expect(bucketName['Fn::Sub']).to.eq('${MasterAccountDotResourcesDotTopicMasterDotTopicName}-bucket');
     });
 
     it('Account 2 S3Bucket 10 Bucketname gets rewritten to local GetAtt reference', () => {
@@ -163,7 +162,7 @@ describe('when loading cross account references through sub', () => {
         const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
 
         expect(refExpression.Ref).to.not.be.undefined;
-        expect(refExpression.Ref).to.eq('TopicMaster');
+        expect(refExpression.Ref).to.eq('MasterAccountDotResourcesDotTopicMaster');
     });
 
     it('Account 2 S3Bucket 11 Bucketname gets rewritten to value', () => {
@@ -172,6 +171,95 @@ describe('when loading cross account references through sub', () => {
 
         expect(refExpression).to.not.be.undefined;
         expect(refExpression).to.eq('root@mail.com');
+    });
+
+    it('Account 1 S3Bucket 12 Attributes to local !Ref using Resources resolves to !Ref', () => {
+        const val: ICfnRefValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesRef;
+
+        expect(val.Ref).to.not.be.undefined;
+        expect(val.Ref).to.eq('Topic');
+    });
+    it('Account 1 S3Bucket 12 Attributes to local !GetAtt using Resources resolves to !GetAtt', () => {
+        const  val: ICfnGetAttValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesGetAtt;
+
+        expect(val['Fn::GetAtt']).to.not.be.undefined;
+        expect(val['Fn::GetAtt'][0]).to.eq('Topic');
+        expect(val['Fn::GetAtt'][1]).to.eq('Arn');
+    });
+    it('Account 1 S3Bucket 12 Attributes to local !Sub using Resources resolves to !Sub', () => {
+        const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubRef;
+
+        expect(val['Fn::Sub']).to.not.be.undefined;
+        expect(val['Fn::Sub']).to.contain('${Topic}');
+    });
+    it('Account 1 S3Bucket 12 Attributes to local !Sub using Resources resolves to !Sub with path', () => {
+        const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubGetAtt;
+
+        expect(val['Fn::Sub']).to.not.be.undefined;
+        expect(val['Fn::Sub']).to.contain('${Topic.Arn}');
+    });
+
+    it('Account 1 S3Bucket 13 Attributes to AWSAccount !Ref using Resources resolves to !Ref', () => {
+        const val: ICfnRefValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesRef;
+
+        expect(val.Ref).to.not.be.undefined;
+        expect(val.Ref).to.eq('Topic');
+    });
+
+    it('Account 1 S3Bucket 13 Attributes to AWSAccount !GetAtt using Resources resolves to !GetAtt', () => {
+        const  val: ICfnGetAttValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesGetAtt;
+
+        expect(val['Fn::GetAtt']).to.not.be.undefined;
+        expect(val['Fn::GetAtt'][0]).to.eq('Topic');
+        expect(val['Fn::GetAtt'][1]).to.eq('Arn');
+    });
+
+    it('Account 1 S3Bucket 13 Attributes to AWSAccount !Sub using Resources resolves to !Sub', () => {
+        const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubRef;
+
+        expect(val['Fn::Sub']).to.not.be.undefined;
+        expect(val['Fn::Sub']).to.contain('${Topic}');
+    });
+
+    it('Account 1 S3Bucket 13 Attributes to AWSAccount !Sub using Resources resolves to !Sub with path', () => {
+        const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubGetAtt;
+
+        expect(val['Fn::Sub']).to.not.be.undefined;
+        expect(val['Fn::Sub']).to.contain('${Topic.Arn}');
+    });
+
+    it('Account 2 S3Bucket 14 Attributes to other account !Ref using Resources resolves to !Ref', () => {
+        const val: ICfnRefValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesRef;
+
+        expect(val.Ref).to.not.be.undefined;
+        expect(val.Ref).to.eq('Account1DotResourcesDotTopic');
+
+        expect(templateAccount2.Parameters.Account1DotResourcesDotTopic).to.not.be.undefined;
+        expect(templateAccount2.Parameters.Account1DotResourcesDotTopic.ExportAccountId).to.eq('111111111111');
+    });
+
+    it('Account 2 S3Bucket 14 Attributes to other account !GetAtt using Resources resolves to !GetAtt', () => {
+        const  val: ICfnRefValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesGetAtt;
+
+        expect(val.Ref).to.not.be.undefined;
+        expect(val.Ref).to.eq('Account1DotResourcesDotTopicDotArn');
+
+        expect(templateAccount2.Parameters.Account1DotResourcesDotTopicDotArn).to.not.be.undefined;
+        expect(templateAccount2.Parameters.Account1DotResourcesDotTopicDotArn.ExportAccountId).to.eq('111111111111');
+    });
+
+    it('Account 2 S3Bucket 14 Attributes to other account !Sub using Resources resolves to !Sub', () => {
+        const val: ICfnSubValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubRef;
+
+        expect(val['Fn::Sub']).to.not.be.undefined;
+        expect(val['Fn::Sub']).to.contain('${Account1DotResourcesDotTopic}');
+    });
+
+    it('Account 2 S3Bucket 14 Attributes to other account !Sub using Resources resolves to !Sub with path', () => {
+        const val: ICfnSubValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubGetAtt;
+
+        expect(val['Fn::Sub']).to.not.be.undefined;
+        expect(val['Fn::Sub']).to.contain('${Account1DotResourcesDotTopicDotArn}');
     });
 });
 
