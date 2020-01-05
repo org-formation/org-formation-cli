@@ -230,7 +230,12 @@ export class CfnTemplate {
     }
 
     private _removeCrossAccountDependsOn(resource: any, resourceIdsForTarget: string[], allResourceIds: string[]) {
+
         if (resource !== null && typeof resource === 'object') {
+            const dependsOnType = typeof resource.DependsOn;
+            if (dependsOnType === 'string') {
+                resource.DependsOn = [resource.DependsOn];
+            }
             if (resource.DependsOn !== null && Array.isArray(resource.DependsOn)) {
                 const dependsOn = resource.DependsOn as string[];
                 const unresolvedDependency = dependsOn.find((x) => !allResourceIds.includes(x));
@@ -239,6 +244,9 @@ export class CfnTemplate {
                 }
 
                 resource.DependsOn = dependsOn.filter((x) => resourceIdsForTarget.includes(x));
+            }
+            if (dependsOnType === 'string' && resource.DependsOn.length === 1) {
+                resource.DependsOn = resource.DependsOn[0];
             }
         }
     }

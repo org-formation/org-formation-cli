@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description:
+
+Organization: !Include ./organization.yml
+OrganizationBindingRegion: 'eu-west-1'
+
+Resources:
+
+  Resource1:
+    Type: AWS::Any::Resource
+    DependsOn: Dependency
+    OrganizationBinding:
+      Account: '*'
+    Properties:
+      DisplayName: Resource in all accounts
+
+  Resource2:
+    Type: AWS::Any::Resource
+    DependsOn:
+    - Dependency
+    OrganizationBinding:
+      Account: '*'
+    Properties:
+      DisplayName: Resource in all accounts
+
+  Dependency:
+    Type: AWS::Any::Resource
+    OrganizationBinding:
+      Account: !Ref Account1
+    Properties:
+      BucketName: Resource in only account1
