@@ -3,7 +3,6 @@ import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-b
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
-import { ICfnRefValue, ICfnTemplate } from '../cfn-types';
 
 describe('when resolving organization binding through parameter', () => {
     let template: TemplateRoot;
