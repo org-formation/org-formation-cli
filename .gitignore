@@ -5,3 +5,4 @@ dist
 .vscode
 temp
 chainslayer
+.nyc_output
