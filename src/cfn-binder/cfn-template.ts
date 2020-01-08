@@ -386,21 +386,20 @@ export class CfnTemplate {
         if (parts.length < 2 || parts.length > 3) {
             throw new OrgFormationError(`invalid ${parts[0]} expression ${parts.slice(1)}`);
         }
-        const resourceId = parts[1];
-        const cfnResource = this.templateRoot.resourcesSection.resources.find((x) => x.logicalId === resourceId);
-        if (cfnResource === undefined) {
-            throw new OrgFormationError(`unable to find resource ${resourceId} from  ${parts[0]} expression`);
-        }
+        const bindingId = parts[1];
+        const organizationBinding = this.templateRoot.bindingSection.getBinding(bindingId);
+
         const enumUnderlyingValues = [];
         if (which === 'EnumTargetAccounts') {
-            const normalizedLogicalAccountIds = cfnResource.normalizedBoundAccounts;
+            const normalizedLogicalAccountIds = this.templateRoot.resolveNormalizedLogicalAccountIds(organizationBinding);
             for (const logicalAccountId of normalizedLogicalAccountIds) {
                 const otherAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === logicalAccountId);
                 const physicalId = this.resolveAccountGetAtt(otherAccount, 'AccountId');
                 enumUnderlyingValues.push(physicalId);
             }
         } else if (which === 'EnumTargetRegions') {
-            enumUnderlyingValues.push(...cfnResource.regions);
+            const normalizedRegions = this.templateRoot.resolveNormalizedRegions(organizationBinding);
+            enumUnderlyingValues.push(...normalizedRegions);
         }
 
         let expression = '${' + replacementParameter + '}';

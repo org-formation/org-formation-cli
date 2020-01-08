@@ -34,7 +34,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 if (firstArgName && (typeof firstArg !== 'object')) {
                     this.command[firstArgName] = firstArg;
                 }
-                this.handleErrors();
+                this.invoke();
             });
         }
     }
@@ -68,6 +68,26 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 throw new OrgFormationError(`unable to load previously committed state, reason: bucket '${storageProvider.bucketName}' does not exist in current account.`);
             }
             throw err;
+        }
+    }
+
+    public async invoke() {
+        try {
+            await this.initialize(this.command as any as ICommandArgs);
+            await this.performCommand(this.command as any as T);
+        } catch (err) {
+            if (err instanceof OrgFormationError) {
+                ConsoleUtil.LogError(err.message);
+            } else {
+                if (err.code && err.requestId) {
+                    ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
+                    ConsoleUtil.LogError(err.message);
+
+                } else {
+                    ConsoleUtil.LogError(`unexpected error occurred...`, err);
+                }
+            }
+            process.exitCode = 1;
         }
     }
     protected abstract async performCommand(command: T): Promise<void>;
@@ -183,6 +203,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     private async initialize(command: ICommandArgs) {
+        if (command.initialized === true) return;
         try {
             await this.customInitializationIncludingMFASupport(command);
         } catch (err) {
@@ -201,26 +222,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (credentials.accessKeyId) {
             AWS.config.credentials = credentials;
         }
-    }
-
-    private async handleErrors() {
-        try {
-            await this.initialize(this.command as any as ICommandArgs);
-            await this.performCommand(this.command as any as T);
-        } catch (err) {
-            if (err instanceof OrgFormationError) {
-                ConsoleUtil.LogError(err.message);
-            } else {
-                if (err.code && err.requestId) {
-                    ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
-                    ConsoleUtil.LogError(err.message);
-
-                } else {
-                    ConsoleUtil.LogError(`unexpected error occurred...`, err);
-                }
-            }
-            process.exitCode = 1;
-        }
+        command.initialized = true;
     }
 }
 
@@ -228,5 +230,6 @@ export interface ICommandArgs {
     stateBucketName: string;
     stateObject: string;
     profile?: string;
-    state: PersistedState;
+    state?: PersistedState;
+    initialized?: boolean;
 }

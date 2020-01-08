@@ -18,13 +18,22 @@ Parameters:
     Type: String
     Default: !Ref SharedServicesAccount
 
+
+OrganizationBindings:
+
+  FunctionAccountBinding:
+    Account: !Ref functionAccount
+
+  InvokePermissionAccountBinding:
+    Account: '*'
+    ExcludeAccount: !Ref functionAccount
+
+
 Resources:
 
   InvokeFunctionPolicy:
     Type: AWS::IAM::ManagedPolicy
-    OrganizationBinding:
-      Account: '*'
-      ExcludeAccount: !Ref functionAccount
+    OrganizationBinding: !Ref InvokePermissionAccountBinding
     Properties:
       ManagedPolicyName: !Sub '${resourcePrefix}-${functionName}-invoke-policy'
       PolicyDocument:
@@ -36,11 +45,8 @@ Resources:
 
   InvokePermissions:
     Type: AWS::Lambda::Permission
-    OrganizationBinding:
-      Account: !Ref functionAccount
-    Foreach:
-      Account: '*'
-      ExcludeAccount: !Ref functionAccount
+    OrganizationBinding: !Ref FunctionAccountBinding
+    Foreach: !Ref InvokePermissionAccountBinding
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref functionName

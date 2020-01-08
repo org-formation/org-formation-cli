@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.55**
+- Support for toplevel OrganizationBindings section to list organization bindings
+- Changed EnumTargetAccounts and EnumTargetRegions to only work with organization bindings from OrganizationBindings section
+
 **version 0.0.54**
 - Fixed issue with explicit cross account !Ref and !GetAtt to local account (e.g. !GetAtt AWSAccount.Resources.Topic.arn)
 

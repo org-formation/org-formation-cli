@@ -1,18 +1,15 @@
 import { IOrganizationBinding, IResource, IResources, TemplateRoot } from '../parser';
 import { CloudFormationResource } from './cloudformation-resource';
+import { OrganizationBindingsSection } from './organization-bindings-section';
 
 export class ResourcesSection {
     public readonly resources: CloudFormationResource[] = [];
     private readonly root: TemplateRoot;
     private readonly contents?: IResources;
-    private readonly defaultBinding?: IOrganizationBinding;
-    private readonly defaultRegion?: string | string[];
 
-    constructor(root: TemplateRoot, contents?: IResources, defaultBinding?: IOrganizationBinding, defaultRegion?: string | string[]) {
+    constructor(root: TemplateRoot, contents?: IResources) {
         this.root = root;
         this.contents = contents;
-        this.defaultBinding = defaultBinding;
-        this.defaultRegion = defaultRegion;
 
         if (!this.contents) { return; }
 
@@ -54,7 +51,7 @@ export class ResourcesSection {
     public createResource(id: string, resource: IResource): CloudFormationResource {
         switch (resource.Type) {
             default:
-                return new CloudFormationResource(this.root, id, resource, this.defaultBinding, this.defaultRegion);
+                return new CloudFormationResource(this.root, id, resource);
         }
     }
 }

@@ -81,5 +81,4 @@ describe('when resolving enum-expressions', () => {
         expect(val[0]).to.eq('111111111111');
         expect(val[3]).to.eq('444444444444');
     });
-
 });

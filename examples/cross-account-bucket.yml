@@ -3,6 +3,7 @@ AWSTemplateFormatVersion: '2010-09-09-OC'
 Organization: !Include ./organization.yml
 OrganizationBindingRegion: eu-central-1
 
+
 Parameters:
 
   resourcePrefix:
@@ -16,12 +17,28 @@ Parameters:
     Type: String
     Default: !Ref SharedServicesAccount
 
+OrganizationBindings:
+
+  BucketAccountBinding:
+    Account: !Ref bucketAccount
+
+  ReadAccessAccountBinding:
+    Account: '*'
+    ExcludeAccount: !Ref bucketAccount
+
+  WriteAccessAccountBinding:
+    Account: '*'
+    ExcludeAccount: !Ref bucketAccount
+
+  FullAccessAccountBinding:
+    Account: '*'
+    ExcludeAccount: !Ref bucketAccount
+
 Resources:
 
   Bucket:
     Type: AWS::S3::Bucket
-    OrganizationBinding:
-      Account: !Ref bucketAccount
+    OrganizationBinding: !Ref BucketAccountBinding
     DeletionPolicy: Retain
     Properties:
       BucketName: !Sub '${bucketName}'
@@ -53,7 +70,7 @@ Resources:
             - !Sub '${Bucket.Arn}'
             - !Sub '${Bucket.Arn}/*'
             Principal:
-              AWS: Fn::EnumTargetAccounts S3BucketReadAccessPolicy arn:aws:iam::${account}:root
+              AWS: Fn::EnumTargetAccounts ReadAccessAccountBinding arn:aws:iam::${account}:root
           - Sid: 'Write operations on bucket'
             Action:
             - s3:Put*
@@ -62,7 +79,7 @@ Resources:
             - !Sub '${Bucket.Arn}'
             - !Sub '${Bucket.Arn}/*'
             Principal:
-              AWS: Fn::EnumTargetAccounts S3BucketWriteAccessPolicy arn:aws:iam::${account}:root
+              AWS: Fn::EnumTargetAccounts WriteAccessAccountBinding arn:aws:iam::${account}:root
           - Sid: 'Any operation on bucket'
             Action:
             - s3:*
@@ -71,13 +88,11 @@ Resources:
             - !Sub '${Bucket.Arn}'
             - !Sub '${Bucket.Arn}/*'
             Principal:
-              AWS: Fn::EnumTargetAccounts S3BucketFullAccessPolicy arn:aws:iam::${account}:root
+              AWS: Fn::EnumTargetAccounts FullAccessAccountBinding arn:aws:iam::${account}:root
 
   S3BucketReadAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
-    OrganizationBinding:
-      Account: '*'
-      ExcludeAccount: !Ref bucketAccount
+    OrganizationBinding: !Ref ReadAccessAccountBinding
     Properties:
       ManagedPolicyName: !Sub '${resourcePrefix}-${bucketName}-read-policy'
       PolicyDocument:
@@ -93,9 +108,7 @@ Resources:
 
   S3BucketWriteAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
-    OrganizationBinding:
-      Account: '*'
-      ExcludeAccount: !Ref bucketAccount
+    OrganizationBinding: !Ref WriteAccessAccountBinding
     Properties:
       ManagedPolicyName: !Sub '${resourcePrefix}-${bucketName}-write-policy'
       PolicyDocument:
@@ -110,9 +123,7 @@ Resources:
 
   S3BucketFullAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
-    OrganizationBinding:
-      Account: '*'
-      ExcludeAccount: !Ref bucketAccount
+    OrganizationBinding: !Ref FullAccessAccountBinding
     Properties:
       ManagedPolicyName: !Sub '${resourcePrefix}-${bucketName}-fullaccess-policy'
       PolicyDocument:

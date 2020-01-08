@@ -7,6 +7,19 @@ Parameters:
   someParam:
     Type: string
 
+
+OrganizationBindings:
+
+  AllAccountsBinding:
+    Account: '*'
+    Region:
+      - eu-west-1
+      - eu-central-1
+
+  OU1Binding:
+    Region: eu-west-1
+    OrganizationalUnit: !Ref OU1
+
 Resources:
 
   Resource:
@@ -15,27 +28,9 @@ Resources:
       Region: eu-west-1
       IncludeMasterAccount: true
     Properties:
-      EnumAllTargetAccounts: Fn::EnumTargetAccounts AllAccountsResource blabla-${account}-blabla
-      EnumOU1TargetAccounts: Fn::EnumTargetAccounts OU1Resource blabla-${account}-blabla
-      EnumAllTargetRegions: Fn::EnumTargetRegions AllAccountsResource blabla-${region}-blabla
-      EnumOU1TargetRegions: Fn::EnumTargetRegions OU1Resource blabla-${region}-blabla
-      EnumWithOtherParameter: Fn::EnumTargetAccounts OU1Resource blabla-${account}-${something}-blabla
-      EnumAllTargetAccountsWithoutExpression: Fn::EnumTargetAccounts AllAccountsResource
-
-  AllAccountsResource:
-    Type: AWS::SNS::Topic
-    OrganizationBinding:
-      Region:
-        - eu-west-1
-        - eu-central-1
-      Account: '*'
-    Properties:
-      Name: name
-
-  OU1Resource:
-    Type: AWS::SNS::Topic
-    OrganizationBinding:
-      Region: eu-west-1
-      OrganizationalUnit: !Ref OU1
-    Properties:
-      Name: name
+      EnumAllTargetAccounts: Fn::EnumTargetAccounts AllAccountsBinding blabla-${account}-blabla
+      EnumOU1TargetAccounts: Fn::EnumTargetAccounts OU1Binding blabla-${account}-blabla
+      EnumAllTargetRegions: Fn::EnumTargetRegions AllAccountsBinding blabla-${region}-blabla
+      EnumOU1TargetRegions: Fn::EnumTargetRegions OU1Binding blabla-${region}-blabla
+      EnumWithOtherParameter: Fn::EnumTargetAccounts OU1Binding blabla-${account}-${something}-blabla
+      EnumAllTargetAccountsWithoutExpression: Fn::EnumTargetAccounts AllAccountsBinding

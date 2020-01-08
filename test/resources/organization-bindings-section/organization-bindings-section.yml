@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description:
+
+Organization: !Include ./organization.yml
+
+OrganizationBindings:
+
+  AllAccountsBinding:
+    Account: '*'
+    IncludeMasterAccount: true
+    Region: 'eu-central-1'
+
+  OnlyMasterBinding:
+    IncludeMasterAccount: true
+    Region: 'eu-central-1'
+
+Resources:
+
+  Resource1:
+    Type: AWS::ANYTHING::GOES
+    OrganizationBinding: !Ref AllAccountsBinding
+    Properties:
+      Name: Test resource
+
+  Resource2:
+    Type: AWS::ANYTHING::GOES
+    OrganizationBinding: !Ref OnlyMasterBinding
+    Properties:
+      Name: Test resource
+
+  Resource3:
+    Type: AWS::ANYTHING::GOES
+    OrganizationBinding: !Ref OnlyMasterBinding
+    Foreach: !Ref AllAccountsBinding
+    Properties:
+      Name: Test resource

@@ -6,12 +6,30 @@ Organization: !Include ./organization.yml
 # default region used when exe.
 OrganizationBindingRegion: eu-central-1
 
+Parameters:
+
+  resourcePrefix:
+    Type: String
+    Default: my
+
+  usersAccount:
+    Type: String
+    Default: !Ref SharedUsersAccount
+
+OrganizationBindings:
+
+  UsersAccountBinding:
+    Account: !Ref usersAccount
+
+  RoleAccountBinding:
+    Account: '*'
+    ExcludeAccount: !Ref usersAccount
+
 Resources:
 
   # this resource will only be created in the SharedUsersAccount
   DeveloperGroup:
-    OrganizationBinding:
-      Account: !Ref SharedUsersAccount
+    OrganizationBinding: !Ref UsersAccountBinding
     Type: AWS::IAM::Group
     Properties:
       GroupName: DevelopersGroup
@@ -22,12 +40,11 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sts:AssumeRole
-                Resource: arn:aws:iam::*:role/DeveloperRole
+                Resource: Fn::EnumTargetAccounts RoleAccountBinding arn:aws:iam::${account}:role/DeveloperRole
 
   # this resource will only be created in all accounts (except the organizational master)
   DeveloperRole:
-    OrganizationBinding:
-      Account: '*'
+    OrganizationBinding: !Ref RoleAccountBinding
     Type: AWS::IAM::Role
     Properties:
       ManagedPolicyArns:
@@ -39,4 +56,4 @@ Resources:
          - Effect: Allow
            Action: sts:AssumeRole
            Principal:
-            AWS: !Ref SharedUsersAccount # role can only be assumed from SharedUsersAccount
+            AWS: Fn::EnumTargetAccounts UsersAccountBinding # role can only be assumed from SharedUsersAccount

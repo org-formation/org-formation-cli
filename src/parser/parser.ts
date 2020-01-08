@@ -3,7 +3,9 @@ import md5 = require('md5');
 import * as Path from 'path';
 import { yamlParse } from 'yaml-cfn';
 import { OrgFormationError } from '../org-formation-error';
+import { OrganizationBindingsSection } from './model/organization-bindings-section';
 import { OrganizationSection } from './model/organization-section';
+import { Reference, Resource } from './model/resource';
 import { OrgResourceTypes, ResourceTypes } from './model/resource-types';
 import { ResourcesSection } from './model/resources-section';
 import { Validator } from './validator';
@@ -15,6 +17,7 @@ export interface ITemplate {
     StackName?: string;
     Description?: string;
     Organization?: IOrganization;
+    OrganizationBindings?: Record<string, IOrganizationBinding>;
     OrganizationBinding?: IOrganizationBinding;
     OrganizationBindingRegion?: string | string[];
     Metadata?: any;
@@ -42,8 +45,8 @@ export interface IResourcesMap extends Record<string, IResource> {
 export interface IResource {
     Type: OrgResourceTypes | ResourceTypes | string;
     Properties?: IPropertiesMap;
-    OrganizationBinding?: IOrganizationBinding & IPropertiesMap;
-    Foreach?: IOrganizationBinding & IPropertiesMap;
+    OrganizationBinding?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap);
+    Foreach?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap);
     DependsOnAccount?: IResourceRef | IResourceRef[];
     DependsOnRegion?: string | string[];
 }
@@ -142,7 +145,10 @@ export class TemplateRoot {
     public readonly contents: ITemplate;
     public readonly dirname: string;
     public readonly organizationSection: OrganizationSection;
+    public readonly defautOrganizationBinding: IOrganizationBinding;
+    public readonly defaultOrganizationBindingRegion: string | string[];
     public readonly resourcesSection: ResourcesSection;
+    public readonly bindingSection: OrganizationBindingsSection;
     public readonly source: string;
     public readonly hash: string;
 
@@ -158,15 +164,18 @@ export class TemplateRoot {
         }
 
         Validator.ThrowForUnknownAttribute(contents, 'template root',
-            'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'OrganizationBindingRegion',
+            'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'OrganizationBindings', 'OrganizationBindingRegion',
             'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs');
 
         this.contents = contents;
         this.dirname = dirname;
         this.source = JSON.stringify(contents);
         this.hash = md5(this.source);
+        this.defaultOrganizationBindingRegion = contents.OrganizationBindingRegion;
+        this.defautOrganizationBinding = contents.OrganizationBinding;
         this.organizationSection = new OrganizationSection(this, contents.Organization);
-        this.resourcesSection = new ResourcesSection(this, contents.Resources, contents.OrganizationBinding, contents.OrganizationBindingRegion);
+        this.bindingSection = new OrganizationBindingsSection(this, contents.OrganizationBindings);
+        this.resourcesSection = new ResourcesSection(this, contents.Resources);
 
         this.organizationSection.resolveRefs();
         this.resourcesSection.resolveRefs();
@@ -174,6 +183,110 @@ export class TemplateRoot {
     public clone(): TemplateRoot {
         const clonedContents = JSON.parse(JSON.stringify(this.contents));
         return new TemplateRoot(clonedContents, this.dirname);
+    }
+
+    public resolveNormalizedRegions(binding: IOrganizationBinding): string[] {
+        if (typeof binding.Region === 'string') {
+            return [binding.Region];
+        }
+        return binding.Region;
+    }
+
+    public resolveNormalizedLogicalAccountIds(binding: IOrganizationBinding): string[] {
+        this.throwForAccountIDs(binding.Account);
+        this.throwForAccountIDs(binding.ExcludeAccount);
+
+        const organizationAccountsAndMaster = [this.organizationSection.masterAccount, ...this.organizationSection.accounts];
+        const accounts = this.resolve(binding.Account, binding.Account === '*' ? this.organizationSection.accounts : organizationAccountsAndMaster);
+        const excludeAccounts = this.resolve(binding.ExcludeAccount, binding.ExcludeAccount === '*' ? this.organizationSection.accounts : organizationAccountsAndMaster);
+        const organizationalUnits = this.resolve(binding.OrganizationalUnit, this.organizationSection.organizationalUnits);
+
+        const accountLogicalIds = accounts.map((x) => x.TemplateResource!.logicalId);
+        const result = new Set<string>(accountLogicalIds);
+        for (const unit of organizationalUnits) {
+            const accountsForUnit = unit.TemplateResource!.accounts.map((x) => x.TemplateResource!.logicalId);
+            for (const logicalId of accountsForUnit) {
+                result.add(logicalId);
+            }
+        }
+        if (binding.IncludeMasterAccount) {
+            if (this.organizationSection.masterAccount) {
+                result.add(this.organizationSection.masterAccount.logicalId);
+            } else {
+                new OrgFormationError('unable to include master account if master account is not part of the template');
+            }
+        }
+
+        if (binding.AccountsWithTag) {
+            const tagToMatch = binding.AccountsWithTag;
+            const accountsWithTag = this.organizationSection.findAccounts((x) => (x.tags !== undefined) && Object.keys(x.tags).indexOf(tagToMatch) !== -1);
+            for (const account of accountsWithTag.map((x) => x.logicalId)) {
+                result.add(account);
+            }
+        }
+
+        for (const account of excludeAccounts.map((x) => x.TemplateResource!.logicalId)) {
+            result.delete(account);
+        }
+
+        return [...result];
+    }
+
+    public resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[] ): Array<Reference<T>> {
+        if (val === undefined) {
+            return [];
+        }
+        if (val === '*') {
+            return list.map((x) => ({TemplateResource: x}));
+        }
+        const results: Array<Reference<T>> = [];
+        if (!Array.isArray(val)) {
+            val = [val];
+        }
+        for (const elm of val) {
+            if (typeof elm === 'string' || typeof elm === 'number') {
+                results.push({PhysicalId: '' + elm});
+            } else if (elm instanceof Object) {
+                const ref = (elm as IResourceRefExpression).Ref;
+                const foundElm = list.find((x) => x.logicalId === ref);
+                if (foundElm === undefined) {
+                    if (this.contents.Parameters) {
+                        const paramValue = this.contents.Parameters[ref];
+                        if (paramValue && paramValue.Default && paramValue.Default.Ref) {
+                            const refFromParam = paramValue.Default.Ref;
+                            const foundElmThroughParam = list.find((x) => x.logicalId === refFromParam);
+                            if (foundElmThroughParam !== undefined) {
+                                results.push({TemplateResource: foundElmThroughParam});
+                            }
+                            continue;
+                        }
+                    }
+                    throw new OrgFormationError(`unable to find resource named ${ref}`);
+                }
+                results.push({TemplateResource: foundElm});
+            }
+        }
+        return results;
+    }
+
+    private throwForAccountIDs(resourceRefs: IResourceRef | IResourceRef[]) {
+
+        if (resourceRefs) {
+            if (typeof resourceRefs === 'string') {
+                if (resourceRefs.match(/\d{12}/)) {
+                    throw new OrgFormationError(`error with account binding on ${resourceRefs}. Directly binding on accountid is not supported, use !Ref logicalId instead.`);
+                }
+                if (Array.isArray(resourceRefs)) {
+                    for (const elm of resourceRefs) {
+                        if (typeof elm === 'string') {
+                            if (elm.match(/\d{12}/)) {
+                                throw new OrgFormationError(`error with account binding on ${elm}. Directly binding on accountid is not supported, use !Ref logicalId instead.`);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }

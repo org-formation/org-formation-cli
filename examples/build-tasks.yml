@@ -8,7 +8,6 @@ CloudformationSetup:
   Template: ./cloudformation-setup.yml
   StackName: cloudformation-setup
   StackDescription: 'Cloudformation setup used by stacksets'
-  OrganizationFile: ./organization.yml
   TerminationProtection: true
   OrganizationBindingRegion: eu-central-1
   OrganizationBinding:
@@ -30,6 +29,27 @@ BudgetAlarms:
   OrganizationBindingRegion: eu-central-1
   Parameters:
     resourcePrefix: my
+
+CrossAccountBuckets:
+  Type: update-stacks
+  Template: ./cross-account-bucket.yml
+  StackName: MyBucket
+  Parameters:
+    bucketName: myBucket
+
+CrossAccountSecret:
+  Type: update-stacks
+  Template: ./cross-account-secret.yml
+  StackName: MySecret
+  Parameters:
+    secretName: myBucket
+
+CrossAccountLambda:
+  Type: update-stacks
+  Template: ./cross-account-lambda.yml
+  StackName: MyLambda
+  Parameters:
+    functionName: myLambda
 
 HostedZone:
   Type: update-stacks
