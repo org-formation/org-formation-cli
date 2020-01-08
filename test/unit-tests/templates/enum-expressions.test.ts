@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
+import { CloudFormationBinder, ICfnBinding, ICfnSubValue } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
@@ -64,6 +64,22 @@ describe('when resolving enum-expressions', () => {
         const resource = masterAccountTemplate.Resources.Resource;
         const val = resource.Properties.EnumOU1TargetRegions;
         expect(val).to.eq('blabla-eu-west-1-blabla');
+    });
+
+    it('enum accounts for results in Sub expression if variables are found', () => {
+        const resource = masterAccountTemplate.Resources.Resource;
+        const val: ICfnSubValue = resource.Properties.EnumWithOtherParameter;
+        expect(val['Fn::Sub']).to.not.be.undefined;
+        expect(val['Fn::Sub']).to.eq('blabla-111111111111-${something}-blabla');
+    });
+
+    it('enum accounts can be used without template', () => {
+        const resource = masterAccountTemplate.Resources.Resource;
+        const val = resource.Properties.EnumAllTargetAccountsWithoutExpression;
+        expect(Array.isArray(val)).to.be.true;
+        expect(val.length).to.eq(4);
+        expect(val[0]).to.eq('111111111111');
+        expect(val[3]).to.eq('444444444444');
     });
 
 });

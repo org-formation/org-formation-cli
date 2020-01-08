@@ -19,6 +19,8 @@ Resources:
       EnumOU1TargetAccounts: Fn::EnumTargetAccounts OU1Resource blabla-${account}-blabla
       EnumAllTargetRegions: Fn::EnumTargetRegions AllAccountsResource blabla-${region}-blabla
       EnumOU1TargetRegions: Fn::EnumTargetRegions OU1Resource blabla-${region}-blabla
+      EnumWithOtherParameter: Fn::EnumTargetAccounts OU1Resource blabla-${account}-${something}-blabla
+      EnumAllTargetAccountsWithoutExpression: Fn::EnumTargetAccounts AllAccountsResource
 
   AllAccountsResource:
     Type: AWS::SNS::Topic
