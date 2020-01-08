@@ -2,42 +2,15 @@ import Organizations = require('aws-sdk/clients/organizations');
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
+import { Resource } from '../parser/model/resource';
 import { IResourceTarget } from '../parser/model/resources-section';
 import { TemplateRoot } from '../parser/parser';
 import { ResourceUtil } from '../resource-util';
 import { PersistedState } from '../state/persisted-state';
 import { ICfnBinding, ICfnCrossAccountDependency, ICfnSubValue, ICfnValue } from './cfn-binder';
+import { SubExpression } from './cfn-sub-expression';
 
 export class CfnTemplate {
-
-    private static ResolveBindingForResourceSpecificAccount(bindings: ICfnBinding[], physicalAccountId: string, resourceLogicalId: string, accountLogicalId: string): ICfnBinding {
-        const foundBinding = bindings.
-            filter((x) => x.accountId === physicalAccountId).
-            filter((x) => x.template!.resources[resourceLogicalId]);
-
-        if (foundBinding.length === 0) {
-            ConsoleUtil.LogWarning(`Unable to find resource ${resourceLogicalId} on account ${accountLogicalId}`);
-            return undefined;
-        }
-        if (foundBinding.length > 1) {
-            const list = foundBinding.map((x) => `${x.accountId}/${x.region}`).join(', ');
-            throw new OrgFormationError(`Found multiple targets for reference to ${accountLogicalId} ${resourceLogicalId}. e.g: ${list}`);
-        }
-        return foundBinding[0];
-    }
-
-    private static ResolveBindingForResource(bindings: ICfnBinding[], resourceLogicalId: string): ICfnBinding {
-        const foundBinding = bindings.filter((x) => x.template!.resources[resourceLogicalId]);
-        if (foundBinding.length === 0) {
-            ConsoleUtil.LogDebug(`Unable to find resource with logicalId ${resourceLogicalId}.`);
-            return undefined;
-        }
-        if (foundBinding.length > 1) {
-            const list = foundBinding.map((x) => `${x.accountId}/${x.region}`).join(', ');
-            throw new OrgFormationError(`Found multiple targets for reference to ${resourceLogicalId}. e.g: ${list}`);
-        }
-        return foundBinding[0];
-    }
 
     private static CreateCrossAccountReferenceForRef(target: ICfnBinding, resourceLogicalId: string, accountLogicalId?: string): ICfnCrossAccountReference {
         const result: ICfnCrossAccountReference = {
@@ -105,11 +78,16 @@ export class CfnTemplate {
     private parameters: Record<string, ICfnParameter>;
     private resourceIdsForTarget: string[];
     private allResourceIds: string[];
+    private resourceIdsNotInTarget: string[];
+    private otherAccountsLogicalIds: string[];
     private accountResource: AccountResource;
 
     constructor(target: IResourceTarget, private templateRoot: TemplateRoot, private state: PersistedState) {
         this.resourceIdsForTarget = target.resources.map((x) => x.logicalId);
         this.allResourceIds = this.templateRoot.resourcesSection.resources.map((x) => x.logicalId);
+        this.resourceIdsNotInTarget = this.allResourceIds.filter((x) => !this.resourceIdsForTarget.includes(x));
+        this.accountResource = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
+        this.otherAccountsLogicalIds = [this.templateRoot.organizationSection.masterAccount.logicalId, ...this.templateRoot.organizationSection.accounts.map((x) => x.logicalId).filter((x) => x !== target.accountLogicalId)];
 
         this.resources = {};
         this.outputs = {};
@@ -122,8 +100,6 @@ export class CfnTemplate {
             Resources: this.resources,
             Outputs: this.outputs,
         };
-
-        this.accountResource = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
 
         for (const resource of target.resources) {
             const clonedResource = JSON.parse(JSON.stringify(resource.resourceForTemplate));
@@ -140,10 +116,12 @@ export class CfnTemplate {
             }
         }
 
-        for (const outputName in this.templateRoot.contents.Outputs) {
-            const output = this.templateRoot.contents.Outputs[outputName];
-            if (!this._containsRefToOtherTarget(output, this.resourceIdsForTarget, this.allResourceIds)) {
-                const clonedOutput = JSON.parse(JSON.stringify(output));
+        const outputs = this.templateRoot.contents.Outputs;
+        for (const outputName in outputs) {
+
+            const hasExpressionsToResourcesOutsideTarget = ResourceUtil.HasExpressions(outputs, outputName, this.resourceIdsNotInTarget);
+            if (!hasExpressionsToResourcesOutsideTarget) {
+                const clonedOutput = JSON.parse(JSON.stringify(outputs[outputName]));
                 this.outputs[outputName] = this._resolveOrganizationFunctions(clonedOutput, this.accountResource);
             }
         }
@@ -177,6 +155,7 @@ export class CfnTemplate {
     }
 
     public listDependencies(binding: ICfnBinding, others: ICfnBinding[]): ICfnCrossAccountDependency[] {
+
         const result: ICfnCrossAccountDependency[] = [];
         for (const logicalId in this.resources) {
             const resource = this.resources[logicalId];
@@ -251,332 +230,155 @@ export class CfnTemplate {
         }
     }
 
-    private _containsRefToOtherTarget(resource: any, resourceIdsForTarget: string[], allResourceIds: string[]) {
-        if (resource !== null && typeof resource === 'object') {
-
-            const entries = Object.entries(resource);
-            if (entries.length === 1) {
-                const [key, val]: [string, unknown] = entries[0];
-                if (key === 'Ref') {
-                    const resourceId = '' + val;
-                    if (allResourceIds.includes(resourceId) && !resourceIdsForTarget.includes(resourceId)) {
-                        return true;
-                    }
-                } else if (key === 'Fn::GetAtt') {
-                    if (Array.isArray(val)) {
-                        const resourceId: string = val[0];
-                        if (allResourceIds.includes(resourceId) && !resourceIdsForTarget.includes(resourceId)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            for (const [key, val] of entries) {
-                if (val !== null && typeof val === 'object') {
-                    if (this._containsRefToOtherTarget(val, resourceIdsForTarget, allResourceIds)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
     private _listDependencies(resource: any, binding: ICfnBinding, others: ICfnBinding[], parent: any, parentKey: string): ICfnCrossAccountDependency[] {
         const result: ICfnCrossAccountDependency[] = [];
-        if (resource !== null && typeof resource === 'object') {
-            const entries = Object.entries(resource);
-            if (entries.length === 1) {
-                const [key, val]: [string, unknown] = entries[0];
-                if (key === 'Fn::Sub') {
-                    const sub = new SubExpression(val as string | any[]);
-                    const localKeys: string[] = sub.locals ? Object.keys(sub.locals) : [];
 
-                    for (const variable of sub.variables) {
-                        if (localKeys.includes(variable.resource)) { continue; }
-                        if (this.resources[variable.resource]) { continue; }
-                        if (this.parameters[variable.resource]) { continue; }
+        const expressionsToOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, this.otherAccountsLogicalIds);
+        for (const expression of expressionsToOtherAccounts) {
+            const otherAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === expression.resource);
 
-                        let target: ICfnBinding | undefined;
-                        let resourceId = variable.resource;
-                        let path = variable.path;
-                        let logicalAccountId: string;
-                        if (variable.path && variable.path.startsWith('Resources')) {
-                            if (resourceId === 'AWSAccount') {
-                                resourceId = this.accountResource.logicalId;
-                            }
+            // OtherAccount.Resources.LogicalResourceName[.Arn]?
+            if (expression.path && expression.path.startsWith('Resources.')) {
+                const remoteExpression = expression.path.substring(10);
+                let remoteResource: string;
+                let remotePath: string;
 
-                            const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === resourceId);
-                            if (!targetAccount) { throw new OrgFormationError(`unable to find account ${resourceId} for cross account dependency`); }
-
-                            const accountState = this.state.getBinding(targetAccount.type, targetAccount.logicalId);
-                            if (!accountState) { throw new OrgFormationError(`unable to find account ${resourceId} in state. Is your organization up to date?`); }
-
-                            const pathParts = variable.path.split('.');
-                            const remoteResourceId = pathParts[1];
-                            let remotePath = (pathParts.length > 2) ? pathParts[2] : undefined;
-                            if (pathParts.length > 3) {
-                                for (let i = 3; i < pathParts.length; i++) {
-                                    remotePath += '.' + pathParts[i];
-                                }
-                            }
-                            path = remotePath;
-                            resourceId = remoteResourceId;
-                            target = CfnTemplate.ResolveBindingForResourceSpecificAccount(others, accountState.physicalId, resourceId, targetAccount.logicalId);
-
-                            if (!target) { continue; }
-
-                            if (target.accountId === binding.accountId && target.region === binding.region) {
-                                // rewrite to local reference, todo: add tests
-                                if (remotePath) {
-                                    variable.replace('${' + remoteResourceId + '.' + remotePath + '}');
-                                } else {
-                                    variable.replace('${' + remoteResourceId + '}');
-                                }
-                                continue;
-                            }
-                            logicalAccountId = targetAccount.logicalId;
-                        } else {
-                            target = CfnTemplate.ResolveBindingForResource(others, resourceId);
-                        }
-                        if (!target) { continue; }
-
-                        const reference = path ?
-                            CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path, logicalAccountId) :
-                            CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId, logicalAccountId);
-
-                        const dependency = CfnTemplate.CreateDependency(binding, reference);
-
-                        result.push(dependency);
-                        variable.replace('${' + dependency.parameterName + '}');
-                    }
-
-                    parent[parentKey] = { 'Fn::Sub': sub.getSubValue() };
-
-                } else if (key === 'Ref') {
-                    let resourceId: string = '' + val;
-                    let logicalAccountId: string;
-                    if (!this.resources[resourceId]) {
-                        let processed = false;
-                        let target;
-                        if (resourceId.includes('.Resources.')) {
-                            const parts = resourceId.split('.');
-                            logicalAccountId = parts[0];
-                            if (logicalAccountId === 'AWSAccount') {
-                                logicalAccountId = this.accountResource.logicalId;
-                            }
-                            if (parts[1] !== 'Resources' || parts.length !== 3) {
-                                throw new OrgFormationError(`invalid cross account ref expression ${resourceId}`);
-                            }
-                            const remoteResourceId = parts[2];
-                            const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === logicalAccountId);
-                            if (!targetAccount) { throw new OrgFormationError(`unable to find account ${logicalAccountId} for cross account dependency`); }
-
-                            const accountState = this.state.getBinding(targetAccount.type, targetAccount.logicalId);
-                            if (!accountState) { throw new OrgFormationError(`unable to find account ${resourceId} in state. Is your organization up to date?`); }
-
-                            target = CfnTemplate.ResolveBindingForResourceSpecificAccount(others, accountState.physicalId, remoteResourceId, logicalAccountId);
-                            if (target) {
-                                if (target.accountId === binding.accountId && target.region === binding.region) {
-                                    parent[parentKey] = { Ref: remoteResourceId };
-                                    processed = true;
-                                } else {
-                                    resourceId = remoteResourceId;
-                                }
-                            }
-                        } else {
-                            target = CfnTemplate.ResolveBindingForResource(others, resourceId);
-                        }
-                        if (target && !processed) {
-                            const reference = CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId, logicalAccountId);
-                            const dependency = CfnTemplate.CreateDependency(binding, reference);
-
-                            result.push(dependency);
-                            parent[parentKey] = { Ref: dependency.parameterName };
-                        }
-                    }
-                } else if (key === 'Fn::GetAtt') {
-                    if (Array.isArray(val)) {
-                        let resourceId: string = val[0];
-                        let path: string = val[1];
-                        let logicalAccountId: string;
-                        if (!this.resources[resourceId]) {
-                            let processed = false;
-                            let target;
-                            if (path.startsWith('Resources.')) {
-                                logicalAccountId = resourceId;
-                                if (logicalAccountId === 'AWSAccount') {
-                                    logicalAccountId = this.accountResource.logicalId;
-                                }
-
-                                const targetAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === logicalAccountId);
-                                if (!targetAccount) { throw new OrgFormationError(`unable to find account ${logicalAccountId} for cross account dependency`); }
-
-                                const accountState = this.state.getBinding(targetAccount.type, targetAccount.logicalId);
-                                if (!accountState) { throw new OrgFormationError(`unable to find account ${logicalAccountId} in state. Is your organization up to date?`); }
-
-                                const pathParts = path.split('.');
-                                const remoteResourceId = pathParts[1];
-                                let remotePath = (pathParts.length > 2) ? pathParts[2] : undefined;
-                                if (pathParts.length > 3) {
-                                    for (let i = 3; i < pathParts.length; i++) {
-                                        remotePath += '.' + pathParts[i];
-                                    }
-                                }
-
-                                target = CfnTemplate.ResolveBindingForResourceSpecificAccount(others, accountState.physicalId, remoteResourceId, logicalAccountId);
-                                if (target) {
-                                    if (target.accountId === binding.accountId && target.region === binding.region) {
-                                        if (remotePath) {
-                                            parent[parentKey] = { 'Fn::GetAtt': [remoteResourceId, remotePath] };
-                                        } else {
-                                            parent[parentKey] = { Ref: remoteResourceId };
-                                        }
-                                        processed = true;
-                                    } else {
-                                        resourceId = remoteResourceId;
-                                        path = remotePath;
-                                    }
-                                }
-                            } else {
-                                target = CfnTemplate.ResolveBindingForResource(others, resourceId);
-                            }
-
-                            if (target && !processed) {
-                                const reference = path ?
-                                    CfnTemplate.CreateCrossAccountReferenceForGetAtt(target, resourceId, path, logicalAccountId) :
-                                    CfnTemplate.CreateCrossAccountReferenceForRef(target, resourceId, logicalAccountId);
-
-                                const dependency = CfnTemplate.CreateDependency(binding, reference);
-
-                                result.push(dependency);
-                                parent[parentKey] = { Ref: dependency.parameterName };
-                            }
-                        }
-                    }
+                if (remoteExpression.includes('.')) {
+                    const allParts = remoteExpression.split('.');
+                    remotePath = allParts.splice(1).join('.');
+                    remoteResource = allParts[0];
+                } else  {
+                    remoteResource = remoteExpression;
                 }
+
+                const bindingForResource = this.resolveBindingForResourceSpecificAccount(otherAccount, remoteResource, others);
+                if (bindingForResource === undefined) {throw new OrgFormationError(`unable to find resource ${remoteResource} on account ${otherAccount}`); }
+
+                const reference = remotePath ?
+                    CfnTemplate.CreateCrossAccountReferenceForGetAtt(bindingForResource, remoteResource, remotePath, otherAccount.logicalId) :
+                    CfnTemplate.CreateCrossAccountReferenceForRef(bindingForResource, remoteResource, otherAccount.logicalId);
+
+                const dependency = CfnTemplate.CreateDependency(binding, reference);
+
+                result.push(dependency);
+                expression.rewriteExpression(dependency.parameterName);
             }
-            for (const [key, val] of entries) {
-                if (val !== null && typeof val === 'object') {
-                    result.push(...this._listDependencies(val, binding, others, resource, key));
-                }
-            }
+        }
+
+        const expressionsToResourcesInOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, this.resourceIdsNotInTarget);
+        for (const expression of expressionsToResourcesInOtherAccounts) {
+
+            // LogicalResourceName[.Arn]?
+            const bindingForResource = this.resolveBindingForResource(others, expression.resource);
+
+            const reference = expression.path ?
+                CfnTemplate.CreateCrossAccountReferenceForGetAtt(bindingForResource, expression.resource, expression.path) :
+                CfnTemplate.CreateCrossAccountReferenceForRef(bindingForResource, expression.resource);
+
+            const dependency = CfnTemplate.CreateDependency(binding, reference);
+
+            result.push(dependency);
+            expression.rewriteExpression(dependency.parameterName);
 
         }
         return result;
     }
 
     private _replaceKeyword(resource: any, keyword: string, replacement: string) {
-        if (resource !== null && typeof resource === 'object') {
-            const entries = Object.entries(resource);
-            if (entries.length === 1) {
-                const [key, val]: [string, unknown] = entries[0];
-                if (key === 'Ref' && val === keyword) {
-                    return { Ref: replacement };
-                } else if (key === 'Fn::GetAtt') {
-                    if (Array.isArray(val) && val.length === 2) {
-                        if (val[0] === keyword) {
-                            return { 'Fn::GetAtt': [replacement, val[1]] };
-                        }
-                    }
-                } else if (key === 'Fn::Sub') {
-                    const sub = new SubExpression(val as string | any[]);
-                    const variablesWithKeyword = sub.variables.filter((x) => x.resource === keyword);
-                    if (variablesWithKeyword.length === 0) {
-                        return { 'Fn::Sub': val };
-                    }
-
-                    for (const variableWithKeyword of variablesWithKeyword) {
-                        let expressionWithReplacement = replacement;
-                        if (variableWithKeyword.path) {
-                            expressionWithReplacement = expressionWithReplacement + '.' + variableWithKeyword.path;
-                        }
-                        expressionWithReplacement = '${' + expressionWithReplacement + '}';
-                        variableWithKeyword.replace(expressionWithReplacement);
-                    }
-                    return { 'Fn::Sub': sub.getSubValue() };
-
-                }
-            }
-            for (const [key, val] of entries) {
-                if (val !== null && typeof val === 'object') {
-                    resource[key] = this._replaceKeyword(val, keyword, replacement);
-                }
-            }
-
+        const expressions = ResourceUtil.EnumExpressionsForResource(resource, [keyword]);
+        for (const expression of expressions) {
+            expression.rewriteExpression(replacement, expression.path);
         }
         return resource;
-
     }
 
-    private _resolveOrganizationFunctions(resource: any, accountResource: AccountResource) {
-        if (resource !== null && typeof resource === 'object') {
-            const entries = Object.entries(resource);
-            if (entries.length === 1) {
-                const [key, val]: [string, unknown] = entries[0];
-                if (key === 'Ref') {
-                    const physicalId = this.getOrgResourceRef(val);
-                    if (physicalId) {
-                        return physicalId;
-                    }
-                } else if (key === 'Fn::GetAtt') {
-                    if (Array.isArray(val) && val.length === 2) {
-                        const att = this.getOrgResourceAtt(val[0], val[1], accountResource);
-                        if (att !== undefined) {
-                            return att;
-                        }
-                    }
-                } else if (key === 'Fn::Sub') {
-                    const sub = new SubExpression(val as string | any[]);
+    private _resolveOrganizationFunctions(resource: any, account: AccountResource) {
+        const expressionsToSelf = ResourceUtil.EnumExpressionsForResource(resource, [account.logicalId, 'AWSAccount']);
+        for (const expression of expressionsToSelf) {
+            // AWSAccount[.Alias]?
+            const val = this.resolveAccountGetAtt(account, expression.path);
+            if (val !== undefined) {
+                expression.resolveToValue(val);
+                continue;
+            }
 
-                    if (!sub.hasVariables()) {
-                        return { 'Fn::Sub': sub.getSubValue() };
-                    }
-
-                    for (const variable of sub.variables) {
-                        if (variable.path) { // GetAtt
-                            const resolvedValue = this.getOrgResourceAtt(variable.resource, variable.path, accountResource);
-                            if (resolvedValue !== undefined) {
-                                variable.replace(resolvedValue);
-                            }
-                        } else { // Ref
-                            const resolvedValue = this.getOrgResourceRef(variable.resource);
-                            if (resolvedValue) {
-                                variable.replace(resolvedValue);
-                            }
-                        }
-                    }
-
-                    for (const [key, val] of entries) {
-                        if (val !== null && typeof val === 'object') {
-                            resource[key] = this._resolveOrganizationFunctions(val, accountResource);
-                        }
-                    }
-
-                    if (sub.hasVariables()) {
-                        return { 'Fn::Sub': sub.getSubValue() };
-                    }
-
-                    return sub.getSubValue();
+            // AWSAccount.Resources.LogicalRsourceId[.Arn]?
+            if (expression.path && expression.path.startsWith('Resources.')) {
+                const localExpression = expression.path.substring(10);
+                if (localExpression.includes('.')) {
+                    const allParts = localExpression.split('.');
+                    const path = allParts.splice(1).join('.');
+                    expression.rewriteExpression(allParts[0], path);
+                } else  {
+                    expression.rewriteExpression(localExpression);
                 }
             }
+        }
+
+        const expressionsToOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, this.otherAccountsLogicalIds);
+        for (const expression of expressionsToOtherAccounts) {
+            const otherAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === expression.resource);
+
+            const val = this.resolveAccountGetAtt(otherAccount, expression.path);
+
+            // OtherAccount[.Alias]?
+            if (val !== undefined) {
+                expression.resolveToValue(val);
+                continue;
+            }
+        }
+
+        if (resource !== null && typeof resource === 'object') {
+            const entries = Object.entries(resource);
 
             for (const [key, val] of entries) {
                 if (val !== null && typeof val === 'object') {
-                    resource[key] = this._resolveOrganizationFunctions(val, accountResource);
+                    resource[key] = this._resolveOrganizationFunctions(val, account);
                 }
 
                 if (val !== null && typeof val === 'string') {
                     if (val.startsWith('Fn::EnumTargetAccounts ')) {
-                        resource[key] = this.resolveEnumExpression('EnumTargetAccounts', val, accountResource, 'account');
+                        resource[key] = this.resolveEnumExpression('EnumTargetAccounts', val, account, 'account');
                     } else if (val.startsWith('Fn::EnumTargetRegions')) {
-                        resource[key] = this.resolveEnumExpression('EnumTargetRegions', val, accountResource, 'region');
+                        resource[key] = this.resolveEnumExpression('EnumTargetRegions', val, account, 'region');
                     }
                 }
             }
 
         }
         return resource;
+    }
+
+    private resolveBindingForResourceSpecificAccount(account: AccountResource, resourceLogicalId: string, others: ICfnBinding[]): ICfnBinding {
+        const otherAccountState = this.state.getBinding(account.type, account.logicalId);
+        if (!otherAccountState) { throw new OrgFormationError(`unable to find account ${account.logicalId} in state. Is your organization up to date?`); }
+
+        const foundBinding = others.
+            filter((x) => x.accountId === otherAccountState.physicalId).
+            filter((x) => x.template!.resources[resourceLogicalId]);
+
+        if (foundBinding.length === 0) {
+            ConsoleUtil.LogWarning(`Unable to find resource ${resourceLogicalId} on account ${account.logicalId}`);
+            return undefined;
+        }
+        if (foundBinding.length > 1) {
+            const list = foundBinding.map((x) => `${x.accountId}/${x.region}`).join(', ');
+            throw new OrgFormationError(`Found multiple targets for reference to ${account.logicalId} ${resourceLogicalId}. e.g: ${list}`);
+        }
+        return foundBinding[0];
+    }
+
+    private resolveBindingForResource(bindings: ICfnBinding[], resourceLogicalId: string): ICfnBinding {
+        const foundBinding = bindings.filter((x) => x.template!.resources[resourceLogicalId]);
+        if (foundBinding.length === 0) {
+            ConsoleUtil.LogDebug(`Unable to find resource with logicalId ${resourceLogicalId}.`);
+            return undefined;
+        }
+        if (foundBinding.length > 1) {
+            const list = foundBinding.map((x) => `${x.accountId}/${x.region}`).join(', ');
+            throw new OrgFormationError(`Found multiple targets for reference to ${resourceLogicalId}. e.g: ${list}`);
+        }
+        return foundBinding[0];
     }
 
     private resolveEnumExpression(which: 'EnumTargetAccounts' | 'EnumTargetRegions', val: string, accountResource: AccountResource, replacementParameter: string) {
@@ -593,8 +395,8 @@ export class CfnTemplate {
         if (which === 'EnumTargetAccounts') {
             const normalizedLogicalAccountIds = cfnResource.normalizedBoundAccounts;
             for (const logicalAccountId of normalizedLogicalAccountIds) {
-
-                const physicalId = this.getOrgResourceAtt(logicalAccountId, 'AccountId', accountResource);
+                const otherAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === logicalAccountId);
+                const physicalId = this.resolveAccountGetAtt(otherAccount, 'AccountId');
                 enumUnderlyingValues.push(physicalId);
             }
         } else if (which === 'EnumTargetRegions') {
@@ -624,7 +426,7 @@ export class CfnTemplate {
         const result: SubExpression[] = [];
         for (const val of values) {
             const x = new SubExpression(expression);
-            const accountVar = x.variables.find((x) => x.resource === resourceId);
+            const accountVar = x.variables.find((v) => v.resource === resourceId);
             if (accountVar) {
                 accountVar.replace(val);
             }
@@ -633,124 +435,43 @@ export class CfnTemplate {
         return result;
     }
 
-    private getOrgResourceRef(logicalId: any): string {
-        const orgResource = this.templateRoot.organizationSection.resources.find((x) => x.logicalId === logicalId);
-        if (orgResource) {
-            const binding = this.state.getBinding(orgResource.type, orgResource.logicalId);
+    private resolveResourceRef(resource: Resource): string {
+        const binding = this.state.getBinding(resource.type, resource.logicalId);
+        return binding.physicalId;
+    }
+
+    private resolveAccountGetAtt(account: AccountResource, path?: string): string | undefined {
+        if (path === undefined) {
+            return this.resolveResourceRef(account);
+        }
+        if (path.startsWith('Tags.')) {
+            const tagName = path.substring(5);
+            if (!account.tags) {
+                throw new OrgFormationError(`unable to resolve account attribute ${account.logicalId}.${path}. Account has no Tags`);
+            }
+            const tagValue = account.tags[tagName];
+            if (tagValue === undefined) {
+                throw new OrgFormationError(`unable to resolve account attribute ${account.logicalId}.${path}. Tag ${tagName} not found on account`);
+            }
+            return tagValue;
+        } else if (path === 'AccountName') {
+            if (!account.accountName) { return ''; }
+            return account.accountName;
+        } else if (path === 'Alias') {
+            if (!account.alias) { return ''; }
+            return account.alias;
+        } else if (path === 'AccountId') {
+            const binding = this.state.getBinding(account.type, account.logicalId);
             return binding.physicalId;
+        } else if (path === 'RootEmail') {
+            if (!account.rootEmail) { return ''; }
+            return account.rootEmail;
+        }
+        if (!path.startsWith('Resources.')) {
+            throw new OrgFormationError(`unable to resolve account attribute ${account.logicalId}.${path}`);
         }
         return undefined;
     }
-
-    private getOrgResourceAtt(logicalId: string, path: string, accountResource: AccountResource): string {
-        let account = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === logicalId);
-        if (!account && logicalId === 'AWSAccount') {
-            account = accountResource;
-        }
-        if (account) {
-            if (path.indexOf('Tags.') === 0) {
-                const tagName = path.substr(5); // Tags.
-                if (!account.tags) {
-                    throw new OrgFormationError(`unable to resolve account attribute ${logicalId}.${path}. Account has no Tags`);
-                }
-                const tagValue = account.tags[tagName];
-                if (tagValue === undefined) {
-                    throw new OrgFormationError(`unable to resolve account attribute ${logicalId}.${path}. Tag ${tagName} not found on account`);
-                }
-                return tagValue;
-            } else if (path === 'AccountName') {
-                if (!account.accountName) { return ''; }
-                return account.accountName;
-            } else if (path === 'Alias') {
-                if (!account.alias) { return ''; }
-                return account.alias;
-            } else if (path === 'AccountId') {
-                const binding = this.state.getBinding(account.type, account.logicalId);
-                return binding.physicalId;
-            } else if (path === 'RootEmail') {
-                if (!account.rootEmail) { return ''; }
-                return account.rootEmail;
-            }
-            if (!path.startsWith('Resources')) {
-                throw new OrgFormationError(`unable to resolve account attribute ${logicalId}.${path}`);
-            }
-        }
-
-        return undefined;
-    }
-}
-
-class SubExpression {
-
-    public variables: ISubExpressionVeriable[];
-    public expression: string;
-    public locals?: any;
-    constructor(subValue: string | any[]) {
-        if (!subValue) { throw new OrgFormationError('!Sub Value must not be undefined'); }
-        if (typeof subValue === 'string') {
-            this.expression = subValue;
-        } else if (Array.isArray(subValue)) {
-            if (subValue.length === 0) { throw new OrgFormationError('!Sub Value must not be empty array'); }
-            if (typeof subValue[0] !== 'string') { throw new OrgFormationError('!Sub first element must be string'); }
-            this.expression = subValue[0];
-            if (subValue.length > 1) {
-                this.locals = subValue[1];
-            }
-        } else {
-            throw new OrgFormationError('unable to parse !Sub expression');
-        }
-
-        const matches = this.expression.match(/\${([\w\.]*)}/g);
-        if (!matches) {
-            this.variables = [];
-        } else {
-            this.variables = matches.map((match) => this.createSubExpressionVariable(match, this));
-        }
-    }
-
-    public hasVariables() {
-        return this.expression.indexOf('$') > -1;
-    }
-
-    public getSubValue() {
-        if (!this.locals) {
-            return this.expression;
-        } else {
-            return [
-                this.expression,
-                this.locals,
-            ];
-        }
-    }
-
-    private createSubExpressionVariable(match: string, that: SubExpression): ISubExpressionVeriable {
-        const expression = match.substr(2, match.length - 3);
-        const parts = expression.split('.');
-        const result: ISubExpressionVeriable = {
-            replace: (replacement: string) => {
-                that.expression = that.expression.replace(match, replacement);
-            },
-            resource: parts[0],
-        };
-
-        if (parts.length > 1) {
-            result.path = parts[1];
-            if (parts.length > 2) {
-                for (let i = 2; i < parts.length; i++) {
-                    result.path += '.' + parts[i];
-                }
-            }
-        }
-
-        return result;
-    }
-
-}
-
-interface ISubExpressionVeriable {
-    resource: string;
-    path?: string;
-    replace(replacement: string): void;
 }
 
 export interface ICfnParameter {

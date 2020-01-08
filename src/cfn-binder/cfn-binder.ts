@@ -86,11 +86,13 @@ export class CloudFormationBinder {
                 regionDependencies: [],
                 accountDependencies: [],
             };
+
+            /* move elsewhere */
             const dependsOnAccounts = new Set<string>();
             const dependsOnRegions = new Set<string>();
             for (const resource of target.resources) {
-                for (const accountLogiocalId of resource.dependsOnAccount) {
-                    dependsOnAccounts.add(accountLogiocalId);
+                for (const accountLogicalId of resource.dependsOnAccount) {
+                    dependsOnAccounts.add(accountLogicalId);
                 }
             }
             for (const resource of target.resources) {
@@ -108,6 +110,7 @@ export class CloudFormationBinder {
                 }
                 binding.accountDependencies.push(dependsOnAccountBinding.physicalId);
             }
+            /* end move elsewhere */
 
             if (!stored || stored.lastCommittedHash !== this.invocationHash) {
                 binding.action = 'UpdateOrCreate';
