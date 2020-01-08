@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization:
+
+  #============================================#
+  # Accounts
+  #============================================#
+
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountId: '000000000000'
+      AccountName: 'master account'
+      RootEmail: 'root@mail.com'
+
+  Account1:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: acc1@my.org
+      AccountName: Account1
+      Tags:
+        subdomain: acc1
+
+  Account2:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: acc2@my.org
+      AccountName: Account2
+      Tags:
+        subdomain: acc2
+
+
+  Account3:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: acc3@my.org
+      AccountName: Account3
+      Tags:
+        subdomain: acc2
+
+  Account4:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: acc4@my.org
+      AccountName: Account4
+      Tags:
+        subdomain: acc2
+
+  #============================================#
+  # Organizational Units
+  #============================================#
+
+
+  OU1:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: ou1
+      Accounts:
+        - !Ref Account1
+
+  OU2:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: ou2
+      Accounts:
+        - !Ref Account2
+        - !Ref Account3
+
+  OU3:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: ou3
+      Accounts:
+        - !Ref Account4

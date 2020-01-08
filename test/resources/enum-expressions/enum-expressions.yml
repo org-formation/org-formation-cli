@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization: !Include ./organization.yml
+
+Parameters:
+
+  someParam:
+    Type: string
+
+Resources:
+
+  Resource:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      EnumAllTargetAccounts: Fn::EnumTargetAccounts AllAccountsResource blabla-${account}-blabla
+      EnumOU1TargetAccounts: Fn::EnumTargetAccounts OU1Resource blabla-${account}-blabla
+      EnumAllTargetRegions: Fn::EnumTargetRegions AllAccountsResource blabla-${region}-blabla
+      EnumOU1TargetRegions: Fn::EnumTargetRegions OU1Resource blabla-${region}-blabla
+
+  AllAccountsResource:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region:
+        - eu-west-1
+        - eu-central-1
+      Account: '*'
+    Properties:
+      Name: name
+
+  OU1Resource:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region: eu-west-1
+      OrganizationalUnit: !Ref OU1
+    Properties:
+      Name: name
