@@ -7,6 +7,10 @@ Parameters:
   someParam:
     Type: string
 
+OrganizationBindingRegion: eu-west-1
+
+OrganizationBinding:
+  Account: !Ref Account2
 
 OrganizationBindings:
 
@@ -33,4 +37,17 @@ Resources:
       EnumAllTargetRegions: Fn::EnumTargetRegions AllAccountsBinding blabla-${region}-blabla
       EnumOU1TargetRegions: Fn::EnumTargetRegions OU1Binding blabla-${region}-blabla
       EnumWithOtherParameter: Fn::EnumTargetAccounts OU1Binding blabla-${account}-${something}-blabla
-      EnumAllTargetAccountsWithoutExpression: Fn::EnumTargetAccounts AllAccountsBinding
+      EnumWithDefaultAccountBinding: Fn::EnumTargetAccounts blabla-${account}-blabla
+
+  Resource2:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      EnumAllTargetAccounts: Fn::EnumTargetAccounts AllAccountsBinding 'blabla ${account} blabla'
+      EnumOU1TargetAccounts: Fn::EnumTargetAccounts OU1Binding 'blabla ${account} blabla'
+      EnumAllTargetRegions: Fn::EnumTargetRegions AllAccountsBinding 'blabla ${region} blabla'
+      EnumOU1TargetRegions: Fn::EnumTargetRegions OU1Binding 'blabla ${region} blabla'
+      EnumWithOtherParameter: Fn::EnumTargetAccounts OU1Binding 'blabla ${account} ${something} blabla'
+      EnumWithDefaultAccountBinding: Fn::EnumTargetAccounts 'blabla ${account} blabla'

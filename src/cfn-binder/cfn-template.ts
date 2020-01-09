@@ -338,9 +338,9 @@ export class CfnTemplate {
 
                 if (val !== null && typeof val === 'string') {
                     if (val.startsWith('Fn::EnumTargetAccounts ')) {
-                        resource[key] = this.resolveEnumExpression('EnumTargetAccounts', val, account, 'account');
+                        resource[key] = this.resolveEnumExpression('EnumTargetAccounts', val, 'account');
                     } else if (val.startsWith('Fn::EnumTargetRegions')) {
-                        resource[key] = this.resolveEnumExpression('EnumTargetRegions', val, account, 'region');
+                        resource[key] = this.resolveEnumExpression('EnumTargetRegions', val, 'region');
                     }
                 }
             }
@@ -381,14 +381,33 @@ export class CfnTemplate {
         return foundBinding[0];
     }
 
-    private resolveEnumExpression(which: 'EnumTargetAccounts' | 'EnumTargetRegions', val: string, accountResource: AccountResource, replacementParameter: string) {
-        const parts = val.split(' ');
-        if (parts.length < 2 || parts.length > 3) {
-            throw new OrgFormationError(`invalid ${parts[0]} expression ${parts.slice(1)}`);
-        }
-        const bindingId = parts[1];
-        const organizationBinding = this.templateRoot.bindingSection.getBinding(bindingId);
+    private resolveEnumExpression(which: 'EnumTargetAccounts' | 'EnumTargetRegions', val: string, replacementParameter: string) {
+        const value = val.trim();
+        let expr: string;
+        let bindingId: string;
 
+        if (value.endsWith('\'')) {
+            const firstIndex = value.indexOf('\'');
+            if (firstIndex === value.length) { throw new OrgFormationError(`invalid ${which} expression ${value}. missing a qoute?`); }
+            expr = value.substring(firstIndex + 1, value.length - 1);
+            const parts = val.split(/\s+/);
+            if (!parts[1].startsWith('\'')) {
+                bindingId = parts[1];
+            }
+        } else {
+            const parts = val.split(/\s+/);
+            if (parts.length === 2) {
+                expr = parts[1];
+            } else if (parts.length === 3) {
+                bindingId = parts[1];
+                expr = parts[2];
+            } else {
+                throw new OrgFormationError(`invalid ${which} expression ${parts.slice(1)}. if you need to use spaces in your expression wrap this in single qoutes`);
+            }
+        }
+        const organizationBinding = bindingId !== undefined ?
+            this.templateRoot.bindingSection.getBinding(bindingId) :
+            this.templateRoot.bindingSection.defaultBinding;
         const enumUnderlyingValues = [];
         if (which === 'EnumTargetAccounts') {
             const normalizedLogicalAccountIds = this.templateRoot.resolveNormalizedLogicalAccountIds(organizationBinding);
@@ -403,8 +422,8 @@ export class CfnTemplate {
         }
 
         let expression = '${' + replacementParameter + '}';
-        if (parts.length === 3) {
-            expression = parts[2];
+        if (expr !== undefined) {
+            expression = expr;
         }
         const converted = this.convertExpression(enumUnderlyingValues, expression, replacementParameter);
         const result: any[] = [];
