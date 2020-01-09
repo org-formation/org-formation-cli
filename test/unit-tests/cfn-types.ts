@@ -25,6 +25,7 @@ export interface ICfnOutput {
 
 export interface ICfnResource {
     Type: string;
+    DependsOn: string;
     Properties: Record<string, any>;
 }
 

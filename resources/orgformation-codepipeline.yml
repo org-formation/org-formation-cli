@@ -7,7 +7,6 @@ Parameters:
     Type: String
     Default: orgformation
 
-
   repositoryName:
     Type: String
     Default: organization-formation

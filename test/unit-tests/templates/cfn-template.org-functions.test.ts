@@ -44,7 +44,7 @@ describe('when using Ref on account', () => {
                             OtherAccountRef: { Ref : otherAccountLogicalId },
                             NonAccountRef: { Ref : 'something' },
                         },
-                    }, templateRoot.contents.OrganizationBinding),
+                    }),
             ],
         };
 

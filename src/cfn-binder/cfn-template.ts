@@ -436,6 +436,9 @@ export class CfnTemplate {
 
     private resolveResourceRef(resource: Resource): string {
         const binding = this.state.getBinding(resource.type, resource.logicalId);
+        if (binding === undefined) {
+            throw new OrgFormationError(`unable to find ${resource.logicalId} in state. Is your organization up to date?`);
+        }
         return binding.physicalId;
     }
 
@@ -460,8 +463,7 @@ export class CfnTemplate {
             if (!account.alias) { return ''; }
             return account.alias;
         } else if (path === 'AccountId') {
-            const binding = this.state.getBinding(account.type, account.logicalId);
-            return binding.physicalId;
+            return this.resolveResourceRef(account);
         } else if (path === 'RootEmail') {
             if (!account.rootEmail) { return ''; }
             return account.rootEmail;

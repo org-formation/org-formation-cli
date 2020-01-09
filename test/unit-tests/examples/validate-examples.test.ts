@@ -26,5 +26,5 @@ describe('when validating examples', () => {
         }
         expect(logErrorStub.callCount).to.eq(0);
 
-    }).timeout(10000);
+    }).timeout(50000);
 });
