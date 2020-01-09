@@ -3,7 +3,7 @@ import { CloudFormationBinder } from '../cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '../cfn-binder/cfn-task-runner';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { ITemplateOverrides, TemplateRoot } from '../parser/parser';
+import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'update-stacks <templateFile>';
@@ -30,6 +30,9 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         }
         if (command.organizationFile) {
             templateOverrides.OrganizationFile = command.organizationFile;
+        }
+        if (command.organizationFile) {
+            templateOverrides.OrganizationBindings = command.organizationBindings;
         }
         const template = TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
         return template;
@@ -77,6 +80,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     organizationFileHash?: string;
     organizationBindingRegion?: any;
     organizationBinding?: any;
+    organizationBindings?: Record<string, IOrganizationBinding>;
     templateFile: string;
     stackName: string;
     stackDescription?: string;

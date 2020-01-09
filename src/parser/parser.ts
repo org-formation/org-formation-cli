@@ -76,6 +76,7 @@ export interface ITemplateOverrides {
     OrganizationFile?: string;
     OrganizationBinding?: IOrganizationBinding;
     OrganizationBindingRegion?: string | string[];
+    OrganizationBindings?: Record<string, IOrganizationBinding>;
 }
 
 export class TemplateRoot {
@@ -114,6 +115,10 @@ export class TemplateRoot {
         if (includedOrganization && !obj.Organization) {
             obj.Organization = includedOrganization;
         }
+        if (overrides.OrganizationBindings) {
+            obj.OrganizationBindings = {...obj.OrganizationBindings, ...overrides.OrganizationBindings};
+        }
+        delete overrides.OrganizationBindings;
 
         const mergedWithOverrides = { ...obj, ...overrides };
         return new TemplateRoot(mergedWithOverrides, dirname);

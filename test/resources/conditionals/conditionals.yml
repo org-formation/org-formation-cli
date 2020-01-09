@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization: !Include ./organization.yml
+
+
+Parameters:
+
+  parameter:
+    Type: String
+    AllowedValues: [ true, false ]
+
+Conditions:
+
+  createDev: !Equals [ !Ref parameter, true ]
+
+Resources:
+
+  BucketWithCondition:
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: !Ref SharedComplianceAccount
+    DeletionPolicy: Retain
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'cloudtrail-${SharedComplianceAccount}'
+
+  CloudTrailS3BucketPolicy:
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: !Ref SharedComplianceAccount
+    Type: AWS::S3::BucketPolicy
+    DependsOn: CloudTrailS3Bucket
+    Properties:
+      Bucket: !Ref CloudTrailS3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: 'AWSCloudTrailAclCheck'
+            Effect: 'Allow'
+            Principal: { Service: 'cloudtrail.amazonaws.com' }
+            Action: 's3:GetBucketAcl'
+            Resource: !Sub 'arn:aws:s3:::${CloudTrailS3Bucket}'
+          - Sid: 'AWSCloudTrailWrite'
+            Effect: 'Allow'
+            Principal: { Service: 'cloudtrail.amazonaws.com' }
+            Action: 's3:PutObject'
+            Resource: !Sub 'arn:aws:s3:::${CloudTrailS3Bucket}/AWSLogs/*/*'
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: 'bucket-owner-full-control'
+
+  CloudTrailLogGroup:
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: '*'
+      IncludeMasterAccount: true
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: CloudTrail/audit-log
+
+  CloudTrailLogGroupRole:
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: '*'
+      IncludeMasterAccount: true
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: AWSCloudTrailLogGroupRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AssumeRole1
+          Effect: Allow
+          Principal:
+            Service: 'cloudtrail.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      Policies:
+      - PolicyName: 'cloudtrail-policy'
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Sid: AWSCloudTrailCreateLogStream
+            Effect: Allow
+            Action:
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource: !GetAtt 'CloudTrailLogGroup.Arn'
+
+  CloudTrail:
+    OrganizationBinding:
+      Region: eu-central-1
+      Account: '*'
+      IncludeMasterAccount: true
+    Type: AWS::CloudTrail::Trail
+    DependsOn:
+      - CloudTrailS3BucketPolicy
+      - CloudTrailLogGroup
+      - CloudTrailLogGroupRole
+    Properties:
+      S3BucketName: !Ref CloudTrailS3Bucket
+      IsLogging: false
+      IncludeGlobalServiceEvents: true
+      IsMultiRegionTrail: true
+      CloudWatchLogsLogGroupArn: !GetAtt 'CloudTrailLogGroup.Arn'
+      CloudWatchLogsRoleArn: !GetAtt 'CloudTrailLogGroupRole.Arn'

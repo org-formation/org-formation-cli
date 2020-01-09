@@ -152,6 +152,10 @@ abstract class BaseStacksTask implements IBuildTask {
             args.organizationBindingRegion = this.config.OrganizationBindingRegion;
         }
 
+        if (this.config.OrganizationBindings) {
+            args.organizationBindings = this.config.OrganizationBindings;
+        }
+
         if (this.config.OrganizationFile) {
             ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationFile which is ingored. The Template specified in the update-organization task is always used as OrganizationFile for update-stacks tasks`);
         }
