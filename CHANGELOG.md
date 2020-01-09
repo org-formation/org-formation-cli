@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.56**
+- Support for qouted expressions in EnumTargetRegions and EnumTargetAccounts, e.g. Fn::EnumTargetAccounts RoleAccountBinding 'arn:aws:iam::${account}:role/DeveloperRole'
+- Support for adding OrganizationBindings in update-stack tasks.
+
 **version 0.0.55**
 - Support for toplevel OrganizationBindings section to list organization bindings
 - Changed EnumTargetAccounts and EnumTargetRegions to only work with organization bindings from OrganizationBindings section

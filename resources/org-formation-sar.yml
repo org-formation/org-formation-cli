@@ -1,0 +1,311 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: 'Organization Formation Setup for Serverless Application Repository'
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: aws-organization-formation
+    Description: xxx
+    Author: aws-organization-formation team
+    SpdxLicenseId: 	MIT
+    LicenseUrl: ../LICENSE
+    ReadmeUrl: ../README.MD
+    Labels: ['organizations', 'iac', 'organization', 'governance', 'devops', 'cloudformation']
+    HomePageUrl: https://github.com/OlafConijn/AwsOrganizationFormation
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/OlafConijn/AwsOrganizationFormation
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+    Default: orgformation
+
+  repositoryName:
+    Type: String
+    Default: organization-formation
+
+  stateBucketName:
+    Type: String
+    Default: !Sub 'organization-formation-${AWS::AccountId}'
+
+Resources:
+
+  StateBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub stateBucketName
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  StateBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref stateBucketName
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AccessFromAccount
+            Principal:
+              AWS: !Ref 'AWS::AccountId'
+            Effect: Allow
+            Action:
+              - s3:*
+            Resource:
+              - !Sub 'arn:aws:s3:::${stateBucketName}'
+              - !Sub 'arn:aws:s3:::${stateBucketName}/*'
+
+  OrgBuildLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      RetentionInDays: 7
+      LogGroupName: !Sub '/codebuild/${resourcePrefix}-build'
+
+  OrgBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${resourcePrefix}-build-service-role'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+      Policies:
+        - PolicyName: !Sub '${resourcePrefix}-build-service-role-policy'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+            - Effect: Allow
+              Resource:
+              - !GetAtt OrgBuildLogGroup.Arn
+              - !Sub '${OrgBuildLogGroup.Arn}:*'
+              Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            - Effect: Allow
+              Resource:
+                - !Sub 'arn:aws:s3:::${stateBucketName}'
+                - !Sub 'arn:aws:s3:::${stateBucketName}/*'
+              Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:GetBucketAcl
+              - s3:GetBucketLocation
+            - Effect: Allow
+              Resource:
+              - !GetAtt OrgRepo.Arn
+              Action:
+              - codecommit:GitPull
+
+  OrgPipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${resourcePrefix}-codepipeline-service-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: !Sub '${resourcePrefix}-codepipeline-service-role-policy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Action:
+              - iam:PassRole
+              Resource: "*"
+              Effect: Allow
+              Condition:
+                StringEqualsIfExists:
+                  iam:PassedToService:
+                  - cloudformation.amazonaws.com
+                  - elasticbeanstalk.amazonaws.com
+                  - ec2.amazonaws.com
+                  - ecs-tasks.amazonaws.com
+            - Action:
+              - codecommit:CancelUploadArchive
+              - codecommit:GetBranch
+              - codecommit:GetCommit
+              - codecommit:GetUploadArchiveStatus
+              - codecommit:UploadArchive
+              Resource: "*"
+              Effect: Allow
+            - Action:
+              - codedeploy:CreateDeployment
+              - codedeploy:GetApplication
+              - codedeploy:GetApplicationRevision
+              - codedeploy:GetDeployment
+              - codedeploy:GetDeploymentConfig
+              - codedeploy:RegisterApplicationRevision
+              Resource: "*"
+              Effect: Allow
+            - Action:
+              - elasticbeanstalk:*
+              - ec2:*
+              - elasticloadbalancing:*
+              - autoscaling:*
+              - cloudwatch:*
+              - s3:*
+              - sns:*
+              - cloudformation:*
+              - rds:*
+              - sqs:*
+              - ecs:*
+              Resource: "*"
+              Effect: Allow
+            - Action:
+              - lambda:InvokeFunction
+              - lambda:ListFunctions
+              Resource: "*"
+              Effect: Allow
+            - Action:
+              - opsworks:CreateDeployment
+              - opsworks:DescribeApps
+              - opsworks:DescribeCommands
+              - opsworks:DescribeDeployments
+              - opsworks:DescribeInstances
+              - opsworks:DescribeStacks
+              - opsworks:UpdateApp
+              - opsworks:UpdateStack
+              Resource: "*"
+              Effect: Allow
+            - Action:
+              - cloudformation:CreateStack
+              - cloudformation:DeleteStack
+              - cloudformation:DescribeStacks
+              - cloudformation:UpdateStack
+              - cloudformation:CreateChangeSet
+              - cloudformation:DeleteChangeSet
+              - cloudformation:DescribeChangeSet
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:SetStackPolicy
+              - cloudformation:ValidateTemplate
+              Resource: "*"
+              Effect: Allow
+            - Action:
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              Resource: "*"
+              Effect: Allow
+            - Effect: Allow
+              Action:
+              - devicefarm:ListProjects
+              - devicefarm:ListDevicePools
+              - devicefarm:GetRun
+              - devicefarm:GetUpload
+              - devicefarm:CreateUpload
+              - devicefarm:ScheduleRun
+              Resource: "*"
+            - Effect: Allow
+              Action:
+              - servicecatalog:ListProvisioningArtifacts
+              - servicecatalog:CreateProvisioningArtifact
+              - servicecatalog:DescribeProvisioningArtifact
+              - servicecatalog:DeleteProvisioningArtifact
+              - servicecatalog:UpdateProduct
+              Resource: "*"
+            - Effect: Allow
+              Action:
+              - cloudformation:ValidateTemplate
+              Resource: "*"
+            - Effect: Allow
+              Action:
+              - ecr:DescribeImages
+              Resource: "*"
+
+  # OrgRepo:
+  #   Type: AWS::CodeCommit::Repository
+  #   Properties:
+  #     RepositoryName: !Ref repositoryName
+  #     RepositoryDescription: AWS Organization Formation repository
+  #     Code:
+  #       S3:
+  #         Bucket: !Ref stateBucketName
+  #         Key: 'initial-commit.zip'
+
+  OrgPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Type: S3
+        Location: !Ref stateBucketName
+      Name: !Sub '${resourcePrefix}-pipeline'
+      RoleArn : !GetAtt OrgPipelineRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+          - InputArtifacts: []
+            Name: Source
+            Region: !Ref AWS::Region
+            ActionTypeId:
+              Category: Source
+              Owner: AWS
+              Provider: CodeCommit
+              Version: 1
+            OutputArtifacts:
+            - Name: SourceArtifact
+            Configuration:
+              PollForSourceChanges: 'false'
+              BranchName: master
+              RepositoryName: !GetAtt OrgRepo.Name
+            RunOrder: 1
+        - Name: Build
+          Actions:
+          - InputArtifacts:
+            - Name: SourceArtifact
+            Name: Build
+            Region: !Ref AWS::Region
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: 1
+            OutputArtifacts:
+            - Name: BuildArtifact
+            Configuration:
+              ProjectName: !Ref OrgBuildProject
+            RunOrder: 1
+
+  OrgBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub '${resourcePrefix}-build'
+      Description: AWS Organization Formation Build Project
+      Artifacts: { Type: NO_ARTIFACTS }
+      Environment:
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:1.0
+        ComputeType: BUILD_GENERAL1_SMALL
+        ImagePullCredentialsType: CODEBUILD
+      QueuedTimeoutInMinutes: 480
+      ServiceRole: !Ref OrgBuildRole
+      Source:
+        Type: NO_SOURCE
+        BuildSpec: |
+          echo hi
+      LogsConfig:
+        CloudWatchLogs:
+          GroupName: !Ref OrgBuildLogGroup
+          Status: ENABLED
+      TimeoutInMinutes: 60
