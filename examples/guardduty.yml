@@ -23,7 +23,7 @@ Resources:
     Type: AWS::GuardDuty::Member
     OrganizationBinding:
       IncludeMasterAccount: true
-    Foreach:
+    ForeachAccount:
       Account: '*'
     Properties:
       DetectorId: !Ref Detector

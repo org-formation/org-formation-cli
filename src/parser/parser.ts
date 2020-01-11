@@ -49,7 +49,8 @@ export interface IResource {
     Type: OrgResourceTypes | ResourceTypes | string;
     Properties?: IPropertiesMap;
     OrganizationBinding?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap);
-    Foreach?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap);
+    Foreach?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap); //old: do not use
+    ForeachAccount?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap);
     DependsOnAccount?: IResourceRef | IResourceRef[];
     DependsOnRegion?: string | string[];
 }

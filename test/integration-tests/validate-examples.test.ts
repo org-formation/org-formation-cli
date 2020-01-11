@@ -9,9 +9,11 @@ describe('when validating examples', () => {
 
     const sandbox = Sinon.createSandbox();
     let logErrorStub: Sinon.SinonStub;
+    let logWarnStub: Sinon.SinonStub;
 
     beforeEach(() => {
         logErrorStub = sandbox.stub(ConsoleUtil, 'LogError');
+        logWarnStub = sandbox.stub(ConsoleUtil, 'LogWarning');
         sandbox.stub(ConsoleUtil, 'LogInfo');
         AwsUtil.ClearCache();
     });
@@ -26,7 +28,11 @@ describe('when validating examples', () => {
         for (const call of logErrorStub.getCalls()) {
             console.log(call.args[0]);
         }
+        for (const call of logWarnStub.getCalls()) {
+            console.log(call.args[0]);
+        }
         expect(logErrorStub.callCount).to.eq(0);
+        expect(logWarnStub.callCount).to.eq(0);
 
     }).timeout(999999999);
 });

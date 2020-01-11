@@ -45,7 +45,7 @@ Resources:
     OrganizationBinding:
       Account: !Ref SharedServicesAccount
       Region: eu-central-1
-    Foreach:
+    ForeachAccount:
       Account: '*'
       ExcludeAccount: !Ref SharedServicesAccount
     Properties:

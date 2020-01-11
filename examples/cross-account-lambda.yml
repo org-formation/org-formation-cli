@@ -46,7 +46,7 @@ Resources:
   InvokePermissions:
     Type: AWS::Lambda::Permission
     OrganizationBinding: !Ref FunctionAccountBinding
-    Foreach: !Ref InvokePermissionAccountBinding
+    ForeachAccount: !Ref InvokePermissionAccountBinding
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref functionName

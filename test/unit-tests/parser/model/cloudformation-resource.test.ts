@@ -427,7 +427,7 @@ describe('when declaring foreach on element level', () => {
     });
 
     it('copies properties from resource', () => {
-        const foreachBinding = (account as any).foreach as IOrganizationBinding;
+        const foreachBinding = (account as any).foreachAccount as IOrganizationBinding;
         expect(Array.isArray(foreachBinding.OrganizationalUnit)).to.eq(true);
         expect((foreachBinding.OrganizationalUnit as any)[0].Ref).to.eq('OU');
     });
@@ -487,7 +487,7 @@ describe('when adding attribute that is not supported to foreach', () => {
 
     it('resolving references throws', () => {
         try {
-            new CloudFormationResource(template, 'logical-id', resource, template.contents.OrganizationBinding);
+            new CloudFormationResource(template, 'logical-id', resource);
         } catch (err) {
             expect(err.message).to.contain('Something');
             expect(err.message).to.contain('logical-id');
@@ -515,7 +515,7 @@ describe('when adding region which is not supported to foreach', () => {
 
     it('resolving references throws', () => {
         try {
-            new CloudFormationResource(template, 'logical-id', resource, template.contents.OrganizationBinding);
+            new CloudFormationResource(template, 'logical-id', resource);
         } catch (err) {
             expect(err.message).to.contain('Region');
             expect(err.message).to.contain('logical-id');

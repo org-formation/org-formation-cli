@@ -15,7 +15,7 @@ export class CloudFormationResource extends Resource {
     public dependsOnRegion: string[] = [];
     private dependsOnAccountRef?: IResourceRef | IResourceRef[];
     private dependsOnRegionRef?: string | string[];
-    private foreach: IOrganizationBinding;
+    private foreachAccount: IOrganizationBinding;
     private binding: IOrganizationBinding;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
@@ -49,14 +49,19 @@ export class CloudFormationResource extends Resource {
 
         super.throwForUnknownAttributes(this.binding, id + '.OrganizationBinding', 'OrganizationalUnit', 'Account', 'ExcludeAccount', 'Region', 'IncludeMasterAccount', 'AccountsWithTag');
 
-        const foreachExpression = this.resource.Foreach;
-        if (foreachExpression && foreachExpression.Ref) {
-            this.foreach = bindingsSection.getBinding(foreachExpression.Ref);
-        } else {
-            this.foreach = this.resource.Foreach as IOrganizationBinding;
+        if (this.resource.Foreach !== undefined) {
+            ConsoleUtil.LogWarning(`resource ${id} specifies an attribute Foreach wich is depricated. use ForeachAccount instead`);
+            this.resource.ForeachAccount = this.resource.Foreach;
+            delete this.resource.Foreach;
         }
-        if (this.foreach) {
-            super.throwForUnknownAttributes(this.foreach, id + '.Foreach', 'OrganizationalUnit', 'Account', 'ExcludeAccount',  'Region', 'IncludeMasterAccount', 'AccountsWithTag');
+        const foreachExpression = this.resource.ForeachAccount;
+        if (foreachExpression && foreachExpression.Ref) {
+            this.foreachAccount = bindingsSection.getBinding(foreachExpression.Ref);
+        } else {
+            this.foreachAccount = this.resource.ForeachAccount as IOrganizationBinding;
+        }
+        if (this.foreachAccount) {
+            super.throwForUnknownAttributes(this.foreachAccount, id + '.Foreach', 'OrganizationalUnit', 'Account', 'ExcludeAccount',  'Region', 'IncludeMasterAccount', 'AccountsWithTag');
         }
 
         if (this.binding && this.binding.Region) {
@@ -89,8 +94,8 @@ export class CloudFormationResource extends Resource {
         if (this.binding) {
             this.normalizedBoundAccounts = this.root.resolveNormalizedLogicalAccountIds(this.binding);
         }
-        if (this.foreach) {
-            this.normalizedForeachAccounts = this.root.resolveNormalizedLogicalAccountIds(this.foreach);
+        if (this.foreachAccount) {
+            this.normalizedForeachAccounts = this.root.resolveNormalizedLogicalAccountIds(this.foreachAccount);
         }
 
         if (this.dependsOnAccountRef) {

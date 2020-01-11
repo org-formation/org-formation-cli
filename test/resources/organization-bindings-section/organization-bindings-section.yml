@@ -31,6 +31,6 @@ Resources:
   Resource3:
     Type: AWS::ANYTHING::GOES
     OrganizationBinding: !Ref OnlyMasterBinding
-    Foreach: !Ref AllAccountsBinding
+    ForeachAccount: !Ref AllAccountsBinding
     Properties:
       Name: Test resource

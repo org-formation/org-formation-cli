@@ -41,7 +41,7 @@ Resources:
     OrganizationBinding:
       Region: eu-west-1
       IncludeMasterAccount: true
-    Foreach:
+    ForeachAccount:
       AccountsWithTag: 'subdomain'
     Properties:
       Type: NS
