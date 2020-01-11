@@ -25,6 +25,10 @@ export class CfnTemplate {
             expressionForExport: { Ref: resourceLogicalId },
             uniqueNameForImport: resourceLogicalId,
         };
+        const resource = target.template!.resources[resourceLogicalId];
+        if (resource.Condition !== undefined) {
+            result.conditionForExport = resource.Condition;
+        }
 
         if (accountLogicalId) {
             result.uniqueNameForImport = accountLogicalId + 'DotResourcesDot' + result.uniqueNameForImport;
@@ -45,7 +49,10 @@ export class CfnTemplate {
             expressionForExport: { 'Fn::GetAtt': [resourceLogicalId, path] },
             uniqueNameForImport: (resourceLogicalId + 'Dot' + path).replace(/\./g, 'Dot'),
         };
-
+        const resource = target.template!.resources[resourceLogicalId];
+        if (resource.Condition !== undefined) {
+            result.conditionForExport = resource.Condition;
+        }
         if (accountLogicalId) {
             result.uniqueNameForImport = accountLogicalId + 'DotResourcesDot' + result.uniqueNameForImport;
         }
@@ -57,7 +64,7 @@ export class CfnTemplate {
         return result;
     }
 
-    private static CreateDependency(source: ICfnBinding, target: ICfnCrossAccountReference) {
+    private static CreateDependency(source: ICfnBinding, target: ICfnCrossAccountReference): ICfnCrossAccountDependency {
         return {
             parameterAccountId: source.accountId,
             parameterRegion: source.region,
@@ -69,6 +76,7 @@ export class CfnTemplate {
             outputStackName: target.stackName,
             outputName: target.uniqueNameForExport,
             outputValueExpression: target.expressionForExport,
+            outputCondition: target.conditionForExport,
         };
     }
 
@@ -173,6 +181,7 @@ export class CfnTemplate {
         if (!this.outputs[cfnFriendlyName]) {
             this.outputs[cfnFriendlyName] = {
                 Value: dependency.outputValueExpression,
+                Condition: dependency.outputCondition,
                 Description: 'Cross Account dependency',
                 Export: {
                     Name: dependency.outputName,
@@ -509,6 +518,7 @@ export interface ICfnOutput {
     Export: ICfnExport;
     Value: ICfnValue;
     Description: string;
+    Conditiion: string;
 }
 
 interface ICfnCrossAccountReference {
@@ -522,4 +532,5 @@ interface ICfnCrossAccountReference {
     uniqueNameForExport: string;
     expressionForExport: ICfnValue;
     uniqueNameForImport: string;
+    conditionForExport?: string;
 }

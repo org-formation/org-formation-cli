@@ -19,12 +19,14 @@ export interface ICfnParameter {
 
 export interface ICfnOutput {
     Description: string;
+    Condition: string;
     Value: ICfnValue;
     Export: { Name: ICfnValue; };
 }
 
 export interface ICfnResource {
     Type: string;
+    Condition: string;
     DependsOn: string;
     Properties: Record<string, any>;
 }

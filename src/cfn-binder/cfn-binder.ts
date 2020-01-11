@@ -200,6 +200,7 @@ export interface ICfnCrossAccountDependency {
     outputStackName: string;
     outputName: string;
     outputValueExpression: ICfnValue;
+    outputCondition: string;
 }
 
 type CfnBindingAction = 'UpdateOrCreate' | 'Delete' | 'None';
