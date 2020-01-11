@@ -32,7 +32,7 @@ export class TestTemplates {
     public static createBasicTemplate(resources?: IResources): TemplateRoot {
         const template: ITemplate  = {
             AWSTemplateFormatVersion: '2010-09-09-OC',
-            OrganizationBinding : {
+            DefaultOrganizationBinding : {
                 Account: [{Ref: 'Account'}],
             },
             Organization: {
