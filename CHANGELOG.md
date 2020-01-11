@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.60**
+- Ranamed Foreach to ForeachElement for resource foreach  (old attribute logs warning)
 
 **version 0.0.59**
 - Ranamed OrganizationBinding to DefaultOrganizationBinding in template (old attribute logs warning)
