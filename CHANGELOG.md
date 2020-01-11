@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+
+**version 0.0.59**
+- Ranamed OrganizationBinding to DefaultOrganizationBinding in template (old attribute logs warning)
+- Ranamed OrganizationBindingRegion to DefaultOrganizationBindingRegion in template (old attribute logs warning)
+- Ranamed OrganizationBinding to DefaultOrganizationBinding in update-stack tasks (old attribute logs warning)
+- Ranamed OrganizationBindingRegion to DefaultOrganizationBindingRegion in update-stack tasks (old attribute logs warning)
+
 **version 0.0.58**
 - Support for cross account dependencies with conditions (condition gets copied to export)
 
