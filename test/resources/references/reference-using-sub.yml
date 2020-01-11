@@ -5,7 +5,7 @@ Organization: !Include ./organization.yml
 
 OrganizationBinding: { Account: !Ref Account2 }
 
-OrganizationBindingRegion: eu-west-1
+DefaultOrganizationBindingRegion: eu-west-1
 
 Resources:
 

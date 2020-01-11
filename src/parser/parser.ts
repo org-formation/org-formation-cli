@@ -182,13 +182,15 @@ export class TemplateRoot {
         if (contents.OrganizationBinding !== undefined) {
             ConsoleUtil.LogWarning('template specifies toplevel OrganizationBinding which is depricated. Use DefaultOrganizationBinding instead.');
             contents.DefaultOrganizationBinding = contents.OrganizationBinding;
+            delete contents.OrganizationBinding;
         }
         if (contents.OrganizationBindingRegion !== undefined) {
             ConsoleUtil.LogWarning('template specifies toplevel OrganizationBindingRegion which is depricated. Use DefaultOrganizationBinding instead.');
             contents.DefaultOrganizationBindingRegion = contents.OrganizationBindingRegion;
+            delete contents.OrganizationBindingRegion;
         }
-        this.defaultOrganizationBindingRegion = contents.OrganizationBindingRegion;
-        this.defautOrganizationBinding = contents.OrganizationBinding;
+        this.defaultOrganizationBindingRegion = contents.DefaultOrganizationBindingRegion;
+        this.defautOrganizationBinding = contents.DefaultOrganizationBinding;
         this.organizationSection = new OrganizationSection(this, contents.Organization);
         this.bindingSection = new OrganizationBindingsSection(this, contents.OrganizationBindings);
         this.resourcesSection = new ResourcesSection(this, contents.Resources);

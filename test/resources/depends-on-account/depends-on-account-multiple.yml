@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09-OC'
 Description:
 
 Organization: !Include ./organization.yml
-OrganizationBindingRegion: 'eu-west-1'
+DefaultOrganizationBindingRegion: 'eu-west-1'
 
 Resources:
 
