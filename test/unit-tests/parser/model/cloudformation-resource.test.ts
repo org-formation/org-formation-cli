@@ -415,7 +415,7 @@ describe('when declaring foreach on element level', () => {
             OrganizationBinding: {
                 IncludeMasterAccount: true,
             },
-            Foreach: {
+            ForeachAccount: {
                 OrganizationalUnit: [{Ref: 'OU'}],
             },
             Properties: {
@@ -476,7 +476,7 @@ describe('when adding attribute that is not supported to foreach', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            Foreach: {
+            ForeachAccount: {
                 Something: [{Ref: 'XXX'}],
             },
             Properties: {
@@ -504,7 +504,7 @@ describe('when adding region which is not supported to foreach', () => {
 
         resource = {
             Type : 'AWS::S3::Bucket',
-            Foreach: {
+            ForeachAccount: {
                 Region: 'eu-central-1',
             },
             Properties: {

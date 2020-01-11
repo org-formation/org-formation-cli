@@ -70,7 +70,7 @@ describe('when validate stacks command', () => {
                 IncludeMasterAccount: true,
                 Region: ['eu-west-1', 'us-east-1'],
             },
-            Foreach: {
+            ForeachAccount: {
                 Account: '*',
             },
             Properties: {
