@@ -59,6 +59,7 @@ export class CfnTaskProvider {
                     const cfnRetrieveExport = await AwsUtil.GetCloudFormation(dependency.ExportAcountId, dependency.ExportRegion);
                     const listExportsRequest: ListExportsInput = {};
                     const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
+                    let didFindExport = false;
                     do {
                         listExportsRequest.NextToken = listExportsResponse.NextToken;
                         const foundExport = listExportsResponse.Exports.find((x) => x.Name === dependency.ExportName);
@@ -67,9 +68,22 @@ export class CfnTaskProvider {
                                 ParameterKey: dependency.ParameterKey,
                                 ParameterValue: foundExport.Value,
                             });
+                            didFindExport = true;
                             break;
                         }
                     } while (listExportsRequest.NextToken);
+
+                    if (!didFindExport) {
+                        // this is somewhat lame, but is here to support cross account references where the dependency has a condition.
+                        // the depdendency and dependee both have conditions
+                        // the generated export has a condition
+                        // the parameter used in the template of dependee cannot have a condition.
+                        //  so we use an empty valu instead :(
+                        stackInput.Parameters.push( {
+                            ParameterKey: dependency.ParameterKey,
+                            ParameterValue: '',
+                        });
+                    }
                 }
 
                 if (binding.parameters) {
