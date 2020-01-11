@@ -145,15 +145,14 @@ abstract class BaseStacksTask implements IBuildTask {
         }
 
         if (this.config.OrganizationBinding) {
-            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBinding wich is depricated. use DefaultOrganizationBinding instead`);
+            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBinding wich is deprecated. use DefaultOrganizationBinding instead`);
             args.defaultOrganizationBinding = this.config.OrganizationBinding;
         }
 
         if (this.config.OrganizationBindingRegion) {
-            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBindingRegion wich is depricated. use DefaultOrganizationBindingRegion instead`);
+            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBindingRegion wich is deprecated. use DefaultOrganizationBindingRegion instead`);
             args.defaultOrganizationBindingRegion = this.config.OrganizationBindingRegion;
         }
-
 
         if (this.config.DefaultOrganizationBinding) {
             args.defaultOrganizationBinding = this.config.DefaultOrganizationBinding;

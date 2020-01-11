@@ -102,8 +102,8 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     Parameters?: Record<string, string>;
     DeletionProtection?: boolean;
     OrganizationFile?: string;
-    OrganizationBinding?: IOrganizationBinding; //old: dont use
-    OrganizationBindingRegion?: string | string[]; //old: dont use
+    OrganizationBinding?: IOrganizationBinding; // old: dont use
+    OrganizationBindingRegion?: string | string[]; // old: dont use
     DefaultOrganizationBinding?: IOrganizationBinding;
     DefaultOrganizationBindingRegion?: string | string[];
     OrganizationBindings?: Record<string, IOrganizationBinding>;

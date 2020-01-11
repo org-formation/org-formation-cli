@@ -49,7 +49,7 @@ export interface IResource {
     Type: OrgResourceTypes | ResourceTypes | string;
     Properties?: IPropertiesMap;
     OrganizationBinding?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap);
-    Foreach?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap); //old: do not use
+    Foreach?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap); // old: do not use
     ForeachAccount?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap);
     DependsOnAccount?: IResourceRef | IResourceRef[];
     DependsOnRegion?: string | string[];
@@ -181,12 +181,12 @@ export class TemplateRoot {
         this.source = JSON.stringify(contents);
         this.hash = md5(this.source);
         if (contents.OrganizationBinding !== undefined) {
-            ConsoleUtil.LogWarning('template specifies toplevel OrganizationBinding which is depricated. Use DefaultOrganizationBinding instead.');
+            ConsoleUtil.LogWarning('template specifies toplevel OrganizationBinding which is deprecated. Use DefaultOrganizationBinding instead.');
             contents.DefaultOrganizationBinding = contents.OrganizationBinding;
             delete contents.OrganizationBinding;
         }
         if (contents.OrganizationBindingRegion !== undefined) {
-            ConsoleUtil.LogWarning('template specifies toplevel OrganizationBindingRegion which is depricated. Use DefaultOrganizationBinding instead.');
+            ConsoleUtil.LogWarning('template specifies toplevel OrganizationBindingRegion which is deprecated. Use DefaultOrganizationBinding instead.');
             contents.DefaultOrganizationBindingRegion = contents.OrganizationBindingRegion;
             delete contents.OrganizationBindingRegion;
         }

@@ -50,7 +50,7 @@ export class CloudFormationResource extends Resource {
         super.throwForUnknownAttributes(this.binding, id + '.OrganizationBinding', 'OrganizationalUnit', 'Account', 'ExcludeAccount', 'Region', 'IncludeMasterAccount', 'AccountsWithTag');
 
         if (this.resource.Foreach !== undefined) {
-            ConsoleUtil.LogWarning(`resource ${id} specifies an attribute Foreach wich is depricated. use ForeachAccount instead`);
+            ConsoleUtil.LogWarning(`resource ${id} specifies an attribute Foreach wich is deprecated. use ForeachAccount instead`);
             this.resource.ForeachAccount = this.resource.Foreach;
             delete this.resource.Foreach;
         }
@@ -81,7 +81,7 @@ export class CloudFormationResource extends Resource {
         this.resourceHash = md5(resourceString);
         this.resourceForTemplate = JSON.parse(JSON.stringify(resource));
         delete this.resourceForTemplate.OrganizationBinding;
-        delete this.resourceForTemplate.Foreach;
+        delete this.resourceForTemplate.ForeachAccount;
         delete this.resourceForTemplate.DependsOnAccount;
         delete this.resourceForTemplate.DependsOnRegion;
     }
