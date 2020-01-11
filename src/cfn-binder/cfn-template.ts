@@ -7,7 +7,7 @@ import { IResourceTarget } from '../parser/model/resources-section';
 import { TemplateRoot } from '../parser/parser';
 import { ResourceUtil } from '../resource-util';
 import { PersistedState } from '../state/persisted-state';
-import { ICfnBinding, ICfnCrossAccountDependency, ICfnSubValue, ICfnValue } from './cfn-binder';
+import { ICfnBinding, ICfnCrossAccountDependency, ICfnValue } from './cfn-binder';
 import { SubExpression } from './cfn-sub-expression';
 
 export class CfnTemplate {

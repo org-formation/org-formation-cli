@@ -28,7 +28,7 @@ describe('when creating a cross account depedency on a resource that has a condi
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
         account1CfnTemplate = JSON.parse(account1Binding.template.createTemplateBody()) as ICfnTemplate;
         account2Binding = bindings.find((x) => x.accountId === '222222222222');
-        account2CfnTemplate = JSON.parse(account1Binding.template.createTemplateBody()) as ICfnTemplate;
+        account2CfnTemplate = JSON.parse(account2Binding.template.createTemplateBody()) as ICfnTemplate;
     });
 
     it('can create cfn bindings for template', () => {
@@ -51,8 +51,8 @@ describe('when creating a cross account depedency on a resource that has a condi
         expect(bucket.Condition).to.not.be.undefined;
         expect(output.Condition).to.eq(bucket.Condition);
     });
-    // it('output is removed where in template that does not have resoruce', () => {
-    //     expect(account2CfnTemplate.Outputs).to.not.be.undefined;
-    //     expect(account1CfnTemplate.Outputs.Bucket).to.be.undefined;
-    // });
+    it('output is removed where in template that does not have resoruce', () => {
+        expect(account2CfnTemplate.Outputs).to.not.be.undefined;
+        expect(account2CfnTemplate.Outputs.Bucket).to.be.undefined;
+    });
 });
