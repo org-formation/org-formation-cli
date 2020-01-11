@@ -14,7 +14,7 @@ describe('when validating examples', () => {
         sandbox.stub(ConsoleUtil, 'LogInfo');
     });
     afterEach(() => {
-        sandbox.reset();
+        sandbox.restore();
     });
 
     it('will return no errors', async () => {
@@ -26,5 +26,30 @@ describe('when validating examples', () => {
         }
         expect(logErrorStub.callCount).to.eq(0);
 
-    }).timeout(50000);
+    }).timeout(999999999);
+});
+
+describe('when validating work', () => {
+
+    const sandbox = Sinon.createSandbox();
+    let logErrorStub: Sinon.SinonStub;
+
+    beforeEach(() => {
+        logErrorStub = sandbox.stub(ConsoleUtil, 'LogError');
+        sandbox.stub(ConsoleUtil, 'LogInfo');
+    });
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    it('will return no errors', async () => {
+        const command = new ValidateTasksCommand();
+        (command as any).command = {tasksFile: './work/orgformation-tasks.yml', stateBucketName: 'organization-formation-${AWS::AccountId}', stateObject: 'state.json', profile: 'work'};
+        await command.invoke();
+        for (const call of logErrorStub.getCalls()) {
+            console.log(call.args[0]);
+        }
+        expect(logErrorStub.callCount).to.eq(0);
+
+    }).timeout(999999999);
 });
