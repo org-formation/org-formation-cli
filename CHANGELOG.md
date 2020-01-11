@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.57**
+- Support for cross account dependencies with conditions (condition gets copied to export)
+
 **version 0.0.56**
 - Support for qouted expressions in EnumTargetRegions and EnumTargetAccounts, e.g. Fn::EnumTargetAccounts RoleAccountBinding 'arn:aws:iam::${account}:role/DeveloperRole'
 - Support for adding OrganizationBindings in update-stack tasks.
