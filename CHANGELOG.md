@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**version 0.0.57**
+**version 0.0.58**
 - Support for cross account dependencies with conditions (condition gets copied to export)
 
 **version 0.0.56**
