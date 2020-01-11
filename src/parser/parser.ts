@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import md5 = require('md5');
 import * as Path from 'path';
 import { yamlParse } from 'yaml-cfn';
+import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { OrganizationBindingsSection } from './model/organization-bindings-section';
 import { OrganizationSection } from './model/organization-section';
@@ -18,8 +19,10 @@ export interface ITemplate {
     Description?: string;
     Organization?: IOrganization;
     OrganizationBindings?: Record<string, IOrganizationBinding>;
-    OrganizationBinding?: IOrganizationBinding;
-    OrganizationBindingRegion?: string | string[];
+    OrganizationBindingRegion?: string | string[]; // old: dont use
+    OrganizationBinding?: IOrganizationBinding;  // old: dont use
+    DefaultOrganizationBindingRegion?: string | string[];
+    DefaultOrganizationBinding?: IOrganizationBinding;
     Metadata?: any;
     Parameters?: any;
     Mappings?: any;
@@ -169,13 +172,21 @@ export class TemplateRoot {
         }
 
         Validator.ThrowForUnknownAttribute(contents, 'template root',
-            'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'OrganizationBindings', 'OrganizationBindingRegion',
+            'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'DefaultOrganizationBinding', 'OrganizationBindings', 'DefaultOrganizationBindingRegion', 'OrganizationBindingRegion',
             'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs');
 
         this.contents = contents;
         this.dirname = dirname;
         this.source = JSON.stringify(contents);
         this.hash = md5(this.source);
+        if (contents.OrganizationBinding !== undefined) {
+            ConsoleUtil.LogWarning('template specifies toplevel OrganizationBinding which is depricated. Use DefaultOrganizationBinding instead.');
+            contents.DefaultOrganizationBinding = contents.OrganizationBinding;
+        }
+        if (contents.OrganizationBindingRegion !== undefined) {
+            ConsoleUtil.LogWarning('template specifies toplevel OrganizationBindingRegion which is depricated. Use DefaultOrganizationBinding instead.');
+            contents.DefaultOrganizationBindingRegion = contents.OrganizationBindingRegion;
+        }
         this.defaultOrganizationBindingRegion = contents.OrganizationBindingRegion;
         this.defautOrganizationBinding = contents.OrganizationBinding;
         this.organizationSection = new OrganizationSection(this, contents.Organization);

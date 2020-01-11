@@ -3,7 +3,7 @@
 AWSTemplateFormatVersion: '2010-09-09-OC'
 
 Organization: !Include ./organization.yml
-OrganizationBindingRegion: eu-central-1
+DefaultOrganizationBindingRegion: eu-central-1
 
 Parameters:
 

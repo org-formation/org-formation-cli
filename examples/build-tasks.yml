@@ -9,8 +9,8 @@ CloudformationSetup:
   StackName: cloudformation-setup
   StackDescription: 'Cloudformation setup used by stacksets'
   TerminationProtection: true
-  OrganizationBindingRegion: eu-central-1
-  OrganizationBinding:
+  DefaultOrganizationBindingRegion: eu-central-1
+  DefaultOrganizationBinding:
     Account: '*'
 
 Roles:
@@ -24,9 +24,9 @@ BudgetAlarms:
   Type: update-stacks
   Template: ./budget-alarms.yml
   StackName: budget-alarms
-  OrganizationBinding:
+  DefaultOrganizationBinding:
     AccountsWithTag: budget-alarm-threshold
-  OrganizationBindingRegion: eu-central-1
+  DefaultOrganizationBindingRegion: eu-central-1
   Parameters:
     resourcePrefix: my
 

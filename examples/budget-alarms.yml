@@ -2,10 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09-OC'
 
 Organization: !Include ./organization.yml
 
-OrganizationBinding:
+DefaultOrganizationBindingRegion: eu-central-1
+DefaultOrganizationBinding:
   AccountsWithTag: budget-alarm-threshold
 
-OrganizationBindingRegion: eu-central-1
 
 Parameters:
 
