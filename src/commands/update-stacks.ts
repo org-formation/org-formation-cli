@@ -22,11 +22,11 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         if (command.stackDescription) {
             templateOverrides.Description = command.stackDescription;
         }
-        if (command.organizationBinding) {
-            templateOverrides.OrganizationBinding = command.organizationBinding;
+        if (command.defaultOrganizationBinding) {
+            templateOverrides.OrganizationBinding = command.defaultOrganizationBinding;
         }
-        if (command.organizationBindingRegion) {
-            templateOverrides.OrganizationBindingRegion = command.organizationBindingRegion;
+        if (command.defaultOrganizationBindingRegion) {
+            templateOverrides.OrganizationBindingRegion = command.defaultOrganizationBindingRegion;
         }
         if (command.organizationFile) {
             templateOverrides.OrganizationFile = command.organizationFile;
@@ -78,8 +78,8 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
 export interface IUpdateStacksCommandArgs extends ICommandArgs {
     organizationFile?: string;
     organizationFileHash?: string;
-    organizationBindingRegion?: any;
-    organizationBinding?: any;
+    defaultOrganizationBindingRegion?: any;
+    defaultOrganizationBinding?: any;
     organizationBindings?: Record<string, IOrganizationBinding>;
     templateFile: string;
     stackName: string;
