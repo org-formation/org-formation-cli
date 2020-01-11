@@ -203,7 +203,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     private async initialize(command: ICommandArgs) {
-        if (command.initialized === true) return;
+        if (command.initialized) { return; }
         try {
             await this.customInitializationIncludingMFASupport(command);
         } catch (err) {

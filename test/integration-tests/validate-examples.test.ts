@@ -1,8 +1,9 @@
 
 import { expect } from 'chai';
 import Sinon = require('sinon');
-import { ValidateTasksCommand } from '../../../src/commands/validate-tasks';
-import { ConsoleUtil } from '../../../src/console-util';
+import { AwsUtil } from '../../src/aws-util';
+import { ValidateTasksCommand } from '../../src/commands/validate-tasks';
+import { ConsoleUtil } from '../../src/console-util';
 
 describe('when validating examples', () => {
 
@@ -12,6 +13,7 @@ describe('when validating examples', () => {
     beforeEach(() => {
         logErrorStub = sandbox.stub(ConsoleUtil, 'LogError');
         sandbox.stub(ConsoleUtil, 'LogInfo');
+        AwsUtil.ClearCache();
     });
     afterEach(() => {
         sandbox.restore();
@@ -37,6 +39,7 @@ describe('when validating work', () => {
     beforeEach(() => {
         logErrorStub = sandbox.stub(ConsoleUtil, 'LogError');
         sandbox.stub(ConsoleUtil, 'LogInfo');
+        AwsUtil.ClearCache();
     });
     afterEach(() => {
         sandbox.restore();
@@ -45,6 +48,32 @@ describe('when validating work', () => {
     it('will return no errors', async () => {
         const command = new ValidateTasksCommand();
         (command as any).command = {tasksFile: './work/orgformation-tasks.yml', stateBucketName: 'organization-formation-${AWS::AccountId}', stateObject: 'state.json', profile: 'work'};
+        await command.invoke();
+        for (const call of logErrorStub.getCalls()) {
+            console.log(call.args[0]);
+        }
+        expect(logErrorStub.callCount).to.eq(0);
+
+    }).timeout(999999999);
+});
+
+describe('when validating chainslayer', () => {
+
+    const sandbox = Sinon.createSandbox();
+    let logErrorStub: Sinon.SinonStub;
+
+    beforeEach(() => {
+        logErrorStub = sandbox.stub(ConsoleUtil, 'LogError');
+        sandbox.stub(ConsoleUtil, 'LogInfo');
+        AwsUtil.ClearCache();
+    });
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    it('will return no errors', async () => {
+        const command = new ValidateTasksCommand();
+        (command as any).command = {tasksFile: './chainslayer/orgformation-tasks.yml', stateBucketName: 'organization-formation-${AWS::AccountId}', stateObject: 'state.json', profile: 'chainslayer'};
         await command.invoke();
         for (const call of logErrorStub.getCalls()) {
             console.log(call.args[0]);

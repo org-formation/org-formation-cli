@@ -5,6 +5,12 @@ import { Reference } from './parser/model/resource';
 
 export class AwsUtil {
 
+    public static ClearCache() {
+        AwsUtil.masterAccountId = undefined;
+        AwsUtil.CfnServiceCache = {};
+        AwsUtil.IamServiceCache = {};
+    }
+
     public static async GetMasterAccountId(): Promise<string> {
         if (AwsUtil.masterAccountId !== undefined) {
             return AwsUtil.masterAccountId;
