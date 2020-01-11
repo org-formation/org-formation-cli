@@ -23,10 +23,10 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
             templateOverrides.Description = command.stackDescription;
         }
         if (command.defaultOrganizationBinding) {
-            templateOverrides.OrganizationBinding = command.defaultOrganizationBinding;
+            templateOverrides.DefaultOrganizationBinding = command.defaultOrganizationBinding;
         }
         if (command.defaultOrganizationBindingRegion) {
-            templateOverrides.OrganizationBindingRegion = command.defaultOrganizationBindingRegion;
+            templateOverrides.DefaultOrganizationBindingRegion = command.defaultOrganizationBindingRegion;
         }
         if (command.organizationFile) {
             templateOverrides.OrganizationFile = command.organizationFile;

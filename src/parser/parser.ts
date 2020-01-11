@@ -80,6 +80,8 @@ export interface ITemplateOverrides {
     OrganizationFile?: string;
     OrganizationBinding?: IOrganizationBinding;
     OrganizationBindingRegion?: string | string[];
+    DefaultOrganizationBindingRegion?: string | string[];
+    DefaultOrganizationBinding?: IOrganizationBinding;
     OrganizationBindings?: Record<string, IOrganizationBinding>;
 }
 
@@ -89,7 +91,8 @@ export class TemplateRoot {
         try {
             const contents = fs.readFileSync(path).toString();
             const dirname = Path.dirname(path);
-            return TemplateRoot.createFromContents(contents, dirname, overrides, templateImportContentMd5);
+            const filename = Path.basename(path);
+            return TemplateRoot.createFromContents(contents, dirname, filename, overrides, templateImportContentMd5);
         } catch (err) {
             let reason = 'unknown';
             if (err && err.message) {
@@ -99,7 +102,7 @@ export class TemplateRoot {
         }
     }
 
-    public static createFromContents(contents: string, dirname: string = './', overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
+    public static createFromContents(contents: string, dirname: string = './', filename: string = 'n/a', overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
         if (contents === undefined) { throw new OrgFormationError('contents is undefined'); }
         if (contents.trim().length === 0) { throw new OrgFormationError('contents is empty'); }
         const organizationInclude = /Organization:\s*!Include\s*(\S*)/.exec(contents);
@@ -125,7 +128,7 @@ export class TemplateRoot {
         delete overrides.OrganizationBindings;
 
         const mergedWithOverrides = { ...obj, ...overrides };
-        return new TemplateRoot(mergedWithOverrides, dirname);
+        return new TemplateRoot(mergedWithOverrides, dirname, filename);
 
     }
 
@@ -161,7 +164,7 @@ export class TemplateRoot {
     public readonly source: string;
     public readonly hash: string;
 
-    constructor(contents: ITemplate, dirname: string) {
+    constructor(contents: ITemplate, dirname: string, filename?: string) {
         if (!contents.AWSTemplateFormatVersion) {
             throw new OrgFormationError('AWSTemplateFormatVersion is missing');
         }
@@ -181,12 +184,12 @@ export class TemplateRoot {
         this.source = JSON.stringify(contents);
         this.hash = md5(this.source);
         if (contents.OrganizationBinding !== undefined) {
-            ConsoleUtil.LogWarning('template specifies toplevel OrganizationBinding which is deprecated. Use DefaultOrganizationBinding instead.');
+            ConsoleUtil.LogWarning(`template ${filename} specifies toplevel OrganizationBinding which is deprecated. Use DefaultOrganizationBinding instead.`);
             contents.DefaultOrganizationBinding = contents.OrganizationBinding;
             delete contents.OrganizationBinding;
         }
         if (contents.OrganizationBindingRegion !== undefined) {
-            ConsoleUtil.LogWarning('template specifies toplevel OrganizationBindingRegion which is deprecated. Use DefaultOrganizationBinding instead.');
+            ConsoleUtil.LogWarning(`template ${filename} specifies toplevel OrganizationBindingRegion which is deprecated. Use DefaultOrganizationBinding instead.`);
             contents.DefaultOrganizationBindingRegion = contents.OrganizationBindingRegion;
             delete contents.OrganizationBindingRegion;
         }
