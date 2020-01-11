@@ -518,7 +518,7 @@ export interface ICfnOutput {
     Export: ICfnExport;
     Value: ICfnValue;
     Description: string;
-    Conditiion: string;
+    Condition: string;
 }
 
 interface ICfnCrossAccountReference {
