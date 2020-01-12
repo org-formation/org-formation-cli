@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.61**
+- Added quite a bit of validation logic (notably to OrganizationalBindings and tasks)
+
 **version 0.0.60**
 - Ranamed Foreach to ForeachElement for resource foreach  (old attribute logs warning)
 
