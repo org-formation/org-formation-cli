@@ -31,10 +31,6 @@ export class Validator {
             'LogicalName', 'FilePath');
     }
 
-    public static ValidateTasksFile(tasks: IBuildTaskConfiguration[], id: string) {
-
-    }
-
     public static ValidateTemplateRoot(root: ITemplate) {
 
         if (root.AWSTemplateFormatVersion === undefined) {

@@ -16,7 +16,6 @@ export class BuildConfiguration {
     constructor(input: string) {
         this.file = input;
         this.tasks = this.enumBuildConfiguration(this.file);
-        Validator.ValidateTasksFile(this.tasks, this.file);
     }
 
     public enumValidationTasks(command: ICommandArgs): IBuildTask[] {
