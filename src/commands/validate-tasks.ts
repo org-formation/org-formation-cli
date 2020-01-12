@@ -1,12 +1,6 @@
 import { Command } from 'commander';
 import { BuildConfiguration } from '../build-tasks/build-configuration';
 import { BuildRunner } from '../build-tasks/build-runner';
-import { CloudFormationBinder } from '../cfn-binder/cfn-binder';
-import { CfnTaskRunner } from '../cfn-binder/cfn-task-runner';
-import { CfnValidateTaskProvider } from '../cfn-binder/cfn-validate-task-provider';
-import { ConsoleUtil } from '../console-util';
-import { TemplateRoot } from '../parser/parser';
-import { PersistedState } from '../state/persisted-state';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'validate-tasks <templateFile>';

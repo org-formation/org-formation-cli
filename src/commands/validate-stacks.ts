@@ -3,9 +3,7 @@ import { CloudFormationBinder } from '../cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '../cfn-binder/cfn-task-runner';
 import { CfnValidateTaskProvider } from '../cfn-binder/cfn-validate-task-provider';
 import { ConsoleUtil } from '../console-util';
-import { TemplateRoot } from '../parser/parser';
-import { PersistedState } from '../state/persisted-state';
-import { BaseCliCommand, ICommandArgs } from './base-command';
+import { BaseCliCommand } from './base-command';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from './update-stacks';
 
 const commandName = 'validate-stacks <templateFile>';

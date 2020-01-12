@@ -6,10 +6,8 @@ export class OrganizationBindingsSection {
     public readonly bindings: Record<string, IOrganizationBinding> = {};
     public readonly defaultBinding?: IOrganizationBinding;
     public readonly defaultRegion?: string | string[];
-    private readonly root: TemplateRoot;
 
     constructor(root: TemplateRoot, bindings?: Record<string, IOrganizationBinding>) {
-        this.root = root;
         this.bindings = bindings;
         this.defaultBinding = root.defautOrganizationBinding;
         this.defaultRegion = root.defaultOrganizationBindingRegion;

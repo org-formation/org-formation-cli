@@ -7,7 +7,7 @@ import { OrgFormationError } from '../org-formation-error';
 import { OrganizationBindingsSection } from './model/organization-bindings-section';
 import { OrganizationSection } from './model/organization-section';
 import { Reference, Resource } from './model/resource';
-import { OrgResourceTypes, ResourceTypes } from './model/resource-types';
+import { OrgResourceTypes } from './model/resource-types';
 import { ResourcesSection } from './model/resources-section';
 import { Validator } from './validator';
 
@@ -46,7 +46,7 @@ export interface IResourcesMap extends Record<string, IResource> {
 }
 
 export interface IResource {
-    Type: OrgResourceTypes | ResourceTypes | string;
+    Type: OrgResourceTypes | string;
     Properties?: IPropertiesMap;
     OrganizationBinding?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap);
     Foreach?: IResourceRefExpression | (IOrganizationBinding & IPropertiesMap); // old: do not use

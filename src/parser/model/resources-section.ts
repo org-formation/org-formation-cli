@@ -1,6 +1,5 @@
-import { IOrganizationBinding, IResource, IResources, TemplateRoot } from '../parser';
+import { IResource, IResources, TemplateRoot } from '../parser';
 import { CloudFormationResource } from './cloudformation-resource';
-import { OrganizationBindingsSection } from './organization-bindings-section';
 
 export class ResourcesSection {
     public readonly resources: CloudFormationResource[] = [];

@@ -1,4 +1,3 @@
-import Organizations = require('aws-sdk/clients/organizations');
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';

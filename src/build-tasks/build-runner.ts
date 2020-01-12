@@ -18,7 +18,7 @@ export class BuildRunner {
     public static async RunValidationTasks(tasks: IBuildTask[], maxConcurrentTasks: number = 1, failedTasksTolerance: number = 1) {
         const delegate: ITaskRunnerDelegates<IBuildTask> = {
             onTaskRanFailed: (task, err) => { ConsoleUtil.LogError(`task ${task.name} failed. Reason: ${err}`); },
-            onTaskRanSuccessfully: (task) => { },
+            onTaskRanSuccessfully: () => { },
             throwCircularDependency: (ts) => { throw new OrgFormationError(`circular dependency detected with tasks: ${ts.map((t) => t.name).join(', ')}`); },
             throwDependencyOnSelfException: (task) => { throw new OrgFormationError(`task ${task.name} has a dependency on itself.`); },
             maxConcurrentTasks,

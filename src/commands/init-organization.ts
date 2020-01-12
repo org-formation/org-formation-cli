@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import { FileUtil } from '../file-util';
 import { OrgFormationError } from '../org-formation-error';
-import { IStorageProvider } from '../state/storage-provider';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'init <file>';

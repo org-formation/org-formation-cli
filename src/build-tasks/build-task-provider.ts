@@ -204,21 +204,6 @@ export class ValidateStacksTask extends BaseStacksTask {
 
 }
 
-export class CreateChangeSetStacksTask extends BaseStacksTask {
-
-    public async innerPerform(args: IUpdateStacksCommandArgs) {
-        throw new Error('todo');
-    }
-
-}
-
-export class ExecuteChangeSetStacksTask extends BaseStacksTask {
-
-    public async innerPerform(args: IUpdateStacksCommandArgs) {
-        throw new Error('todo');
-    }
-}
-
 abstract class BaseOrganizationTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;

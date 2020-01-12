@@ -14,7 +14,7 @@ import { TaskProvider } from '../org-binder/org-tasks-provider';
 import { OrgFormationError } from '../org-formation-error';
 import { TemplateRoot } from '../parser/parser';
 import { PersistedState } from '../state/persisted-state';
-import { IStorageProvider, S3StorageProvider } from '../state/storage-provider';
+import { S3StorageProvider } from '../state/storage-provider';
 import { DefaultTemplate, DefaultTemplateWriter } from '../writer/default-template-writer';
 
 export abstract class BaseCliCommand<T extends ICommandArgs> {

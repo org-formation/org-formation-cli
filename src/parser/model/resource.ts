@@ -2,7 +2,7 @@ import md5 = require('md5');
 import { OrgFormationError } from '../../org-formation-error';
 import { IResource, IResourceRef, IResourceRefExpression, TemplateRoot } from '../parser';
 import { Validator } from '../validator';
-import { OrgResourceTypes, ResourceTypes } from './resource-types';
+import { OrgResourceTypes } from './resource-types';
 
 export interface Reference<TResource extends Resource> {
    PhysicalId?: string;
@@ -11,7 +11,7 @@ export interface Reference<TResource extends Resource> {
 
 export abstract class Resource {
     public readonly logicalId: string;
-    public readonly type: OrgResourceTypes | ResourceTypes | string;
+    public readonly type: OrgResourceTypes | string;
     protected readonly root: TemplateRoot;
     protected readonly resource: IResource;
 

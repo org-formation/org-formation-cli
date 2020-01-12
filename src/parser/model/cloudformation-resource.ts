@@ -2,7 +2,6 @@ import md5 = require('md5');
 import { ConsoleUtil } from '../../console-util';
 import { OrgFormationError } from '../../org-formation-error';
 import { IOrganizationBinding, IResource, IResourceRef, TemplateRoot } from '../parser';
-import { OrganizationBindingsSection } from './organization-bindings-section';
 import { Resource } from './resource';
 
 export class CloudFormationResource extends Resource {

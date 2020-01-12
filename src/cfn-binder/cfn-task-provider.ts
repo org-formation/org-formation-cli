@@ -1,8 +1,4 @@
-import { CloudFormation, STS } from 'aws-sdk/clients/all';
 import { CreateStackInput, DeleteStackInput, ListExportsInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
-import md5 = require('md5');
-import { stringify } from 'querystring';
 import uuid = require('uuid');
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
