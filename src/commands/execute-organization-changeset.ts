@@ -5,7 +5,7 @@ import { TaskRunner } from '../org-binder/org-task-runner';
 import { TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
-const commandName = 'cexecute-change-set <change-set-name>';
+const commandName = 'execute-change-set <change-set-name>';
 const commandDescription = 'execute previously created change set';
 
 export class ExecuteChangeSetCommand extends BaseCliCommand<IExecuteChangeSetCommandArgs> {
