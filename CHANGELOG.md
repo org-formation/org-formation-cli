@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.62**
+- Fixed issue with execute change set CLI command
+
 **version 0.0.61**
 - Added quite a bit of validation logic (notably to OrganizationalBindings and tasks)
 
