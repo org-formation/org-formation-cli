@@ -2,6 +2,7 @@ import md5 = require('md5');
 import { ConsoleUtil } from '../../console-util';
 import { OrgFormationError } from '../../org-formation-error';
 import { IOrganizationBinding, IResource, IResourceRef, TemplateRoot } from '../parser';
+import { Validator } from '../validator';
 import { Resource } from './resource';
 
 export class CloudFormationResource extends Resource {
@@ -46,7 +47,11 @@ export class CloudFormationResource extends Resource {
             this.binding.Region = bindingsSection.defaultRegion;
         }
 
-        super.throwForUnknownAttributes(this.binding, id + '.OrganizationBinding', 'OrganizationalUnit', 'Account', 'ExcludeAccount', 'Region', 'IncludeMasterAccount', 'AccountsWithTag');
+        if (this.binding.Region === undefined) {
+            ConsoleUtil.LogWarning(`Resource ${id} has binding without region. This means it will not be deployed to any account.`);
+        }
+
+        Validator.ValidateOrganizationBinding(this.binding, id + '.OrganizationBinding');
 
         if (this.resource.Foreach !== undefined) {
             ConsoleUtil.LogWarning(`resource ${id} specifies an attribute Foreach wich is deprecated. use ForeachAccount instead`);
@@ -60,7 +65,7 @@ export class CloudFormationResource extends Resource {
             this.foreachAccount = this.resource.ForeachAccount as IOrganizationBinding;
         }
         if (this.foreachAccount) {
-            super.throwForUnknownAttributes(this.foreachAccount, id + '.Foreach', 'OrganizationalUnit', 'Account', 'ExcludeAccount',  'Region', 'IncludeMasterAccount', 'AccountsWithTag');
+            Validator.ValidateOrganizationBinding(this.foreachAccount, id + '.Foreach');
         }
 
         if (this.binding && this.binding.Region) {

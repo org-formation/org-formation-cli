@@ -36,6 +36,12 @@ describe('when calling org-formation init', () => {
     });
 
     it('does not return error', () => {
+        if (initResponse.stderr) {
+            const error = initResponse.stderr.toString();
+            if (error && error !== '') {
+                console.error(error);
+            }
+        }
         expect(initResponse).to.not.be.undefined;
         expect(initResponse.status).to.eq(0);
         expect(initResponse.stderr.toString()).eq('');

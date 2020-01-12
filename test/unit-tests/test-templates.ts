@@ -1,7 +1,7 @@
 import { IAccountProperties } from '../../src/parser/model/account-resource';
 import { IOrganizationRootProperties } from '../../src/parser/model/organization-root-resource';
 import { IOrganizationalUnitProperties } from '../../src/parser/model/organizational-unit-resource';
-import { OrgResourceTypes, ResourceTypes } from '../../src/parser/model/resource-types';
+import { OrgResourceTypes } from '../../src/parser/model/resource-types';
 import { IServiceControlPolicyProperties } from '../../src/parser/model/service-control-policy-resource';
 import { IResource, IResources, ITemplate, TemplateRoot } from '../../src/parser/parser';
 import { PersistedState } from '../../src/state/persisted-state';

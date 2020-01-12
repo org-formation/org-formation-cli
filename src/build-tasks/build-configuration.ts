@@ -6,6 +6,7 @@ import { ICommandArgs } from '../commands/base-command';
 import { IUpdateStacksCommandArgs } from '../commands/update-stacks';
 import { OrgFormationError } from '../org-formation-error';
 import { IOrganizationBinding } from '../parser/parser';
+import { Validator } from '../parser/validator';
 import { BuildTaskProvider } from './build-task-provider';
 
 export class BuildConfiguration {
@@ -15,6 +16,7 @@ export class BuildConfiguration {
     constructor(input: string) {
         this.file = input;
         this.tasks = this.enumBuildConfiguration(this.file);
+        Validator.ValidateTasksFile(this.tasks, this.file);
     }
 
     public enumValidationTasks(command: ICommandArgs): IBuildTask[] {
@@ -66,6 +68,7 @@ export class BuildConfiguration {
         const buffer = fs.readFileSync(filePath);
         const contents = buffer.toString('utf-8');
         const buildFile = yamlParse(contents) as Record<string, IBuildTaskConfiguration>;
+
         const result: IBuildTaskConfiguration[] = [];
         for (const name in buildFile) {
             const config = buildFile[name];
@@ -81,7 +84,7 @@ export interface IBuildTaskConfiguration {
     Type: BuildTaskType;
     DependsOn?: string | string[];
     LogicalName: string;
-    FilePath: string;
+    FilePath?: string;
 }
 
 export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {

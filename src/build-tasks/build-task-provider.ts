@@ -5,6 +5,7 @@ import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '../commands/updat
 import { ValidateStacksCommand } from '../commands/validate-stacks';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
+import { Validator } from '../parser/validator';
 import { BuildConfiguration, BuildTaskType, IBuildTask, IBuildTaskConfiguration, IIncludeTaskConfiguration, IUpdateOrganizationTaskConfiguration, IUpdateStackTaskConfiguration } from './build-configuration';
 import { BuildRunner } from './build-runner';
 
@@ -111,12 +112,9 @@ abstract class BaseStacksTask implements IBuildTask {
 
     constructor(config: IUpdateStackTaskConfiguration, command: ICommandArgs) {
         this.name = config.LogicalName;
-        if (config.Template === undefined) {
-            throw new OrgFormationError(`Required atrribute Template missing for task ${name}`);
-        }
-        if (config.StackName === undefined) {
-            throw new OrgFormationError(`Required atrribute StackName missing for task ${name}`);
-        }
+
+        Validator.ValidateUpdateStacksTask(config, this.name);
+
         if (typeof config.DependsOn === 'string') {
             this.dependsOn = [config.DependsOn];
         } else {

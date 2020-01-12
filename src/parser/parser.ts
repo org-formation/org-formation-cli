@@ -165,19 +165,8 @@ export class TemplateRoot {
     public readonly hash: string;
 
     constructor(contents: ITemplate, dirname: string, filename?: string) {
-        if (!contents.AWSTemplateFormatVersion) {
-            throw new OrgFormationError('AWSTemplateFormatVersion is missing');
-        }
-        if (contents.AWSTemplateFormatVersion !== '2010-09-09-OC' && contents.AWSTemplateFormatVersion !== '2010-09-09') {
-            throw new OrgFormationError(`Unexpected AWSTemplateFormatVersion version ${contents.AWSTemplateFormatVersion}, expected '2010-09-09-OC or 2010-09-09'`);
-        }
-        if (!contents.Organization) {
-            throw new OrgFormationError('Top level Organization attribute is missing');
-        }
 
-        Validator.ThrowForUnknownAttribute(contents, 'template root',
-            'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'DefaultOrganizationBinding', 'OrganizationBindings', 'DefaultOrganizationBindingRegion', 'OrganizationBindingRegion',
-            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs');
+        Validator.ValidateTemplateRoot(contents);
 
         this.contents = contents;
         this.dirname = dirname;
@@ -292,7 +281,6 @@ export class TemplateRoot {
     }
 
     private throwForAccountIDs(resourceRefs: IResourceRef | IResourceRef[]) {
-
         if (resourceRefs) {
             if (typeof resourceRefs === 'string') {
                 if (resourceRefs.match(/\d{12}/)) {
