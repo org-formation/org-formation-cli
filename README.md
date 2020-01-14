@@ -10,6 +10,7 @@ Organization Formation allows you to manage AWS Organization resources and accou
     - [I already have an AWS Organization](#i-already-have-an-aws-organization)
     - [I would like to create a new AWS Organization from scratch](#i-would-like-to-create-a-new-aws-organization-from-scratch)
 
+  - [Examples](examples/readme.md)
   - [Managing AWS Organizations as code](docs/organization-resources.md)
   - [Managing resources across accounts](docs/cloudformation-resources.md)
   - [Updating multiple templates at once](docs/task-files.md)
