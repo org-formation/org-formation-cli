@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.63**
+- Fixed issue when deleting stacks state wasnt updated properly.
+
 **version 0.0.62**
 - Fixed issue with execute change set CLI command
 
