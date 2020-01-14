@@ -1,30 +1,48 @@
 AWSTemplateFormatVersion: '2010-09-09-OC'
 
+# Include file that contains Organization Section.
+# The Organization Section describes Accounts, Organizational Units, etc.
 Organization: !Include ./organization.yml
+
+# Any Binding that does not explicitly specify a region will default to this.
+# Value can be either string or list
 DefaultOrganizationBindingRegion: eu-central-1
+
+# Section contains a named set of Bindings.
+# Bindings determine what resources are deployed where
+# These bindings can be !Ref'd from the Resources in the resource section
+OrganizationBindings:
+
+  # Binding for: Detector (needs to be MasterAccount + MemberAccounts)
+  DetectorAccountBinding:
+    Account: '*'
+    IncludeMasterAccount: true
+
+  # Binding for: Master
+  MemberAccountBinding:
+    Account: '*'
+
+  # Binding for: Member
+  MasterAccountBinding:
+    IncludeMasterAccount: true
 
 Resources:
   Detector:
     Type: AWS::GuardDuty::Detector
-    OrganizationBinding:
-      Account: '*'
-      IncludeMasterAccount: true
+    OrganizationBinding: !Ref DetectorAccountBinding
     Properties:
       Enable: 'true'
   Master:
     DependsOnAccount: !Ref MasterAccount
     Type: AWS::GuardDuty::Master
-    OrganizationBinding:
-      Account: '*'
+    OrganizationBinding: !Ref MemberAccountBinding
     Properties:
       DetectorId: !Ref Detector
       MasterId: !Ref MasterAccount
   Member:
     Type: AWS::GuardDuty::Member
-    OrganizationBinding:
-      IncludeMasterAccount: true
-    ForeachAccount:
-      Account: '*'
+    OrganizationBinding: !Ref MasterAccountBinding
+    ForeachAccount: !Ref MemberAccountBinding
     Properties:
       DetectorId: !Ref Detector
       Email: !GetAtt CurrentAccount.RootEmail

@@ -1,22 +1,38 @@
 AWSTemplateFormatVersion: '2010-09-09-OC'
 
+# Include file that contains Organization Section.
+# The Organization Section describes Accounts, Organizational Units, etc.
 Organization: !Include ./organization.yml
+
+# Any Binding that does not explicitly specify a region will default to this.
+# Value can be either string or list
+DefaultOrganizationBindingRegion: eu-central-1
+
+# Section that contains a named list of Bindings.
+# Bindings determine what resources are deployed where
+# These bindings can be !Ref'd from the Resources in the resource section
+OrganizationBindings:
+
+  # Binding for: S3Bucket, S3BucketPolicy
+  CloudTrailBucketBinding:
+    Account: !Ref SharedComplianceAccount
+
+  # Binding for: CloudTrail, CloudTrailLogGroup, CloudTrailLogGroupRole
+  CloudTrailBinding:
+    Account: '*'
+    IncludeMasterAccount: true
 
 Resources:
 
   CloudTrailS3Bucket:
-    OrganizationBinding:
-      Region: eu-central-1
-      Account: !Ref SharedComplianceAccount
+    OrganizationBinding: !Ref CloudTrailBucketBinding
     DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub 'cloudtrail-${SharedComplianceAccount}'
 
   CloudTrailS3BucketPolicy:
-    OrganizationBinding:
-      Region: eu-central-1
-      Account: !Ref SharedComplianceAccount
+    OrganizationBinding: !Ref CloudTrailBucketBinding
     Type: AWS::S3::BucketPolicy
     DependsOn: CloudTrailS3Bucket
     Properties:
@@ -39,20 +55,14 @@ Resources:
                 s3:x-amz-acl: 'bucket-owner-full-control'
 
   CloudTrailLogGroup:
-    OrganizationBinding:
-      Region: eu-central-1
-      Account: '*'
-      IncludeMasterAccount: true
+    OrganizationBinding: !Ref CloudTrailBinding
     Type: 'AWS::Logs::LogGroup'
     Properties:
       RetentionInDays: 14
       LogGroupName: CloudTrail/audit-log
 
   CloudTrailLogGroupRole:
-    OrganizationBinding:
-      Region: eu-central-1
-      Account: '*'
-      IncludeMasterAccount: true
+    OrganizationBinding: !Ref CloudTrailBinding
     Type: 'AWS::IAM::Role'
     Properties:
       RoleName: AWSCloudTrailLogGroupRole
@@ -77,10 +87,7 @@ Resources:
             Resource: !GetAtt 'CloudTrailLogGroup.Arn'
 
   CloudTrail:
-    OrganizationBinding:
-      Region: eu-central-1
-      Account: '*'
-      IncludeMasterAccount: true
+    OrganizationBinding: !Ref CloudTrailBinding
     Type: AWS::CloudTrail::Trail
     DependsOn:
       - CloudTrailS3BucketPolicy

@@ -1,9 +1,13 @@
-
-
 AWSTemplateFormatVersion: '2010-09-09-OC'
 
+# Include file that contains Organization Section.
+# The Organization Section describes Accounts, Organizational Units, etc.
 Organization: !Include ./organization.yml
+
+# Any Binding that does not explicitly specify a region will default to this.
+# Value can be either string or list
 DefaultOrganizationBindingRegion: eu-central-1
+
 
 Parameters:
 
@@ -18,12 +22,17 @@ Parameters:
     Type: String
     Default: !Ref SharedServicesAccount
 
-
+# Section contains a named set of Bindings.
+# Bindings determine what resources are deployed where
+# These bindings can be !Ref'd from the Resources in the resource section
 OrganizationBindings:
 
+  # Binding for: InvokeFunctionPolicy
+  # Function assumed to already be present in account
   FunctionAccountBinding:
     Account: !Ref functionAccount
 
+  # Binding for: InvokePermissions
   InvokePermissionAccountBinding:
     Account: '*'
     ExcludeAccount: !Ref functionAccount
