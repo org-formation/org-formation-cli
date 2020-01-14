@@ -122,7 +122,7 @@ export class PersistedState {
         }
 
         delete regions[region];
-
+        this.dirty = true;
         if (Object.keys(regions).length === 0) {
             delete accounts[accountId];
 
