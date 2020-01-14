@@ -26,11 +26,13 @@ export class CloudFormationBinder {
 
         this.parameters = {};
         for (const [key, val] of Object.entries(parameters)) {
-            if (typeof val  === 'object') {
+            if (Array.isArray(val)) {
+                this.parameters[key] = val.join(',');
+            } else  if (typeof val  === 'object') {
                 throw new OrgFormationError(`parameter ${key} has invalid value, value must not be an object`);
+            } else {
+                this.parameters[key] = '' + val;
             }
-
-            this.parameters[key] = '' + val;
         }
 
         this.terminationProtection = terminationProtection;
