@@ -22,7 +22,7 @@ Basic example on how to create budget alarms based on tags that are defined on t
 
 [budget-alarms.yml](budget-alarms.yml)
 
-![budget alarms](budget-alarms.png)
+![budget alarms](img/budget-alarms.png)
 
 ## cloudtrail
 
@@ -30,7 +30,7 @@ Example on how to do a basic cloud trail implementation. Demonstrates cross acco
 
 [cloudtrail.yml](cloudtrail.yml)
 
-![cloudtrail](cloudtrail.png)
+![cloudtrail](img/cloudtrail.png)
 
 
 ## guardduty
@@ -39,7 +39,7 @@ Example on how to do a basic guardduty implementation. Demonstrates cross accoun
 
 [guardduty.yml](guardduty.yml)
 
-![guardduty](guardduty.png)
+![guardduty](img/guardduty.png)
 
 
 ## cross account bucket
@@ -48,7 +48,7 @@ Reusable template to do cross account access to S3 bucket.
 
 [cross-account-bucket.yml](cross-account-bucket.yml)
 
-![cross-account-bucket](cross-account-bucket.png)
+![cross-account-bucket](img/cross-account-bucket.png)
 
 
 ## cross account role
@@ -57,7 +57,7 @@ Reusable template to do cross account IAM roles.
 
 [cross-account-role.yml](cross-account-role.yml)
 
-![cross-account-role](cross-account-role.png)
+![cross-account-role](img/cross-account-role.png)
 
 
 ## cross account secret
@@ -66,7 +66,7 @@ Reusable template to do cross account secretsmanager secrets.
 
 [cross-account-secret.yml](cross-account-secret.yml)
 
-![cross-account-secret](cross-account-secret.png)
+![cross-account-secret](img/cross-account-secret.png)
 
 ## cross account lambda
 
@@ -74,4 +74,4 @@ Reusable template to do cross account lambdas. Assumes the lambda is deployed by
 
 [cross-account-lambda.yml](cross-account-lambda.yml)
 
-![cross-account-lambda](cross-account-lambda.png)
+![cross-account-lambda](img/cross-account-lambda.png)
