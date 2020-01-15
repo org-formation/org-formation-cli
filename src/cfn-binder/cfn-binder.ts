@@ -1,4 +1,5 @@
 import md5 = require('md5');
+import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { OrgResourceTypes } from '../parser/model/resource-types';
 import { IResourceTarget } from '../parser/model/resources-section';
@@ -54,6 +55,9 @@ export class CloudFormationBinder {
         const result: ICfnBinding[] = [];
         const targetsInTemplate = [];
         const targets = this.template.resourcesSection.enumTemplateTargets();
+        if (this.template.resourcesSection.resources.length > 0 && targets.length === 0) {
+            ConsoleUtil.LogWarning('Template does not contain any resource with binding. Remember: bindings need both Account(s) and Region(s)');
+        }
 
         for (const target of targets) {
             let accountId = '';

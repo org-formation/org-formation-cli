@@ -23,7 +23,7 @@ describe('when validating examples', () => {
 
     it('will return no errors or warnings', async () => {
         const command = new ValidateTasksCommand();
-        (command as any).command = {tasksFile: './examples/build-tasks.yml', stateBucketName: 'organization-formation-${AWS::AccountId}', stateObject: 'state.json', profile: 'org-formation'};
+        (command as any).command = {tasksFile: './examples/organization_tasks.yml', stateBucketName: 'organization-formation-${AWS::AccountId}', stateObject: 'state.json', profile: 'org-formation'};
         await command.invoke();
         for (const call of logErrorStub.getCalls()) {
             console.log(call.args[0]);

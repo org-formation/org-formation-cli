@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.64**
+- Improved logic to select resource in cross target !Ref. If target resource exists in same account but different region AWSAccount.Resources.LogicalResourceId can now be used to refer to resource in different region.
+
 **version 0.0.63**
 - Fixed issue when deleting stacks state wasnt updated properly.
 

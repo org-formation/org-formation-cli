@@ -241,7 +241,7 @@ export class CfnTemplate {
     private _listDependencies(resource: any, binding: ICfnBinding, others: ICfnBinding[], parent: any, parentKey: string): ICfnCrossAccountDependency[] {
         const result: ICfnCrossAccountDependency[] = [];
 
-        const expressionsToOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, this.otherAccountsLogicalIds);
+        const expressionsToOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, [...this.otherAccountsLogicalIds, this.accountResource.logicalId]);
         for (const expression of expressionsToOtherAccounts) {
             const otherAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === expression.resource);
 
@@ -316,10 +316,18 @@ export class CfnTemplate {
                 if (localExpression.includes('.')) {
                     const allParts = localExpression.split('.');
                     const path = allParts.splice(1).join('.');
-                    expression.rewriteExpression(allParts[0], path);
+                    if (this.resourceIdsForTarget.includes(allParts[0])) {
+                        expression.rewriteExpression(allParts[0], path);
+                        continue;
+                    }
                 } else  {
-                    expression.rewriteExpression(localExpression);
+                    if (this.resourceIdsForTarget.includes(localExpression)) {
+                        expression.rewriteExpression(localExpression);
+                        continue;
+                    }
                 }
+
+                expression.rewriteExpression(account.logicalId, expression.path);
             }
         }
 
