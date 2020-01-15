@@ -3,22 +3,22 @@ OrganizationUpdate:
   Type: update-organization
   Template: ./organization.yml
 
-CloudformationSetup:
-  Type: update-stacks
-  Template: ./cloudformation-setup.yml
-  StackName: cloudformation-setup
-  StackDescription: 'Cloudformation setup used by stacksets'
-  TerminationProtection: true
-  DefaultOrganizationBindingRegion: eu-central-1
-  DefaultOrganizationBinding:
-    Account: '*'
-
 Roles:
   Type: update-stacks
-  Template: ./roles.yml
+  Template: ./cross-account-role.yml
   StackName: roles
   StackDescription: 'Roles example template'
   TerminationProtection: false
+  Parameters:
+    resourcePrefix: my
+    roleName: my
+    rolePolicyArns:
+      - arn:aws:iam::aws:policy/PowerUserAccess
+  OrganizationBindings:
+    RoleAccountBinding:
+      Account:
+        !Ref SharedServicesAccount
+
 
 BudgetAlarms:
   Type: update-stacks
@@ -30,38 +30,38 @@ BudgetAlarms:
   Parameters:
     resourcePrefix: my
 
-CrossAccountBuckets:
-  Type: update-stacks
-  Template: ./cross-account-bucket.yml
-  StackName: MyBucket
-  Parameters:
-    bucketName: myBucket
+# CrossAccountBuckets:
+#   Type: update-stacks
+#   Template: ./cross-account-bucket.yml
+#   StackName: MyBucket
+#   Parameters:
+#     bucketName: myBucket
 
-CrossAccountSecret:
-  Type: update-stacks
-  Template: ./cross-account-secret.yml
-  StackName: MySecret
-  Parameters:
-    secretName: myBucket
+# CrossAccountSecret:
+#   Type: update-stacks
+#   Template: ./cross-account-secret.yml
+#   StackName: MySecret
+#   Parameters:
+#     secretName: myBucket
 
-CrossAccountLambda:
-  Type: update-stacks
-  Template: ./cross-account-lambda.yml
-  StackName: MyLambda
-  Parameters:
-    functionName: myLambda
+# CrossAccountLambda:
+#   Type: update-stacks
+#   Template: ./cross-account-lambda.yml
+#   StackName: MyLambda
+#   Parameters:
+#     functionName: myLambda
 
-HostedZone:
-  Type: update-stacks
-  Template: ./hosted-zone.yml
-  StackName: hosted-zone
-  StackDescription: 'Hosted Zone example template'
+# HostedZone:
+#   Type: update-stacks
+#   Template: ./hosted-zone.yml
+#   StackName: hosted-zone
+#   StackDescription: 'Hosted Zone example template'
 
-CloudTrail:
-  Type: update-stacks
-  Template: ./cloudtrail.yml
-  StackName: cloudtrail
-  StackDescription: 'Cloudtrail example template'
+# CloudTrail:
+#   Type: update-stacks
+#   Template: ./cloudtrail.yml
+#   StackName: cloudtrail
+#   StackDescription: 'Cloudtrail example template'
 
 # Include:
 #   Type: include

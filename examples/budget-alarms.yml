@@ -27,9 +27,9 @@ Resources:
     Type: AWS::Budgets::Budget
     Properties:
       Budget:
-        BudgetName: !Sub '${resourcePrefix}-budget-${AWSAccount.Alias}'
+        BudgetName: !Sub '${resourcePrefix}-budget-${AWSAccount.Alias}' # AWSAccount.Alias resolves to IAM Alias of current account
         BudgetLimit:
-          Amount: !GetAtt AWSAccount.Tags.budget-alarm-threshold
+          Amount: !GetAtt AWSAccount.Tags.budget-alarm-threshold # Resolves to value of tag of current account
           Unit: USD
         TimeUnit: MONTHLY
         BudgetType: COST
@@ -40,5 +40,5 @@ Resources:
             Threshold: 1
           Subscribers:
             - SubscriptionType: EMAIL
-              Address: !GetAtt AWSAccount.Tags.account-owner-email
+              Address: !GetAtt AWSAccount.RootEmail # Resolves to root email of current account
 
