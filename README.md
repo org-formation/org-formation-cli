@@ -5,20 +5,25 @@ AWS Organization Formation is an Infrastructure as Code (IaC) tool for AWS Organ
 AWS Organization Formation (also: ``org-formation``) has 3 main features:
 
 1. Infrastructure as Code for AWS Organizations:
-![Infrastructure as Code for AWS Organizations](docs/feature-1-update-org.png)
+[![Infrastructure as Code for AWS Organizations](docs/img/feature-1-update-org.png)](docs/organization-resources.md)
+[Organization resources reference](docs/organization-resources.md)
 
 
 &nbsp;
 
 2. CloudFormation annotations to provision resources cross account:
-![CloudFormation annotations to provision resources cross account](docs/feature-2-update-stacks.png)
+[![CloudFormation annotations to provision resources cross account](docs/img/feature-2-update-stacks.png)](docs/cloudformation-resources.md)
+[Organization Annotated CloudFormation reference](docs/organization-resources.md)
+
 
 
 &nbsp;
 
 
 3. Automation of account creation and resource provisioning:
-![Automation of account creation and resource provisioning](docs/feature-3-perform-tasks.png)
+[![Automation of account creation and resource provisioning](docs/img/feature-3-perform-tasks.png)](docs/task-files.md)
+[Automation tasks file reference](docs/organization-resources.md)
+
 
 
 ## Installation
