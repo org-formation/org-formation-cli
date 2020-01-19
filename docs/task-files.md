@@ -98,11 +98,9 @@ Roles:
       - arn:aws:iam::aws:policy/PowerUserAccess
   OrganizationBindings:
     RoleAccountBinding:
-      OrganizationalUnit:
-        !Ref DevelopmentOU
+      OrganizationalUnit: !Ref DevelopmentOU
     AssumeRoleBinding:
-      Account:
-        !Ref SharedUsersAccount
+      Account: !Ref SharedUsersAccount
 ```
 
 ### include

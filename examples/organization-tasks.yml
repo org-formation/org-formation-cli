@@ -3,32 +3,50 @@ OrganizationUpdate:
   Type: update-organization
   Template: ./organization.yml
 
-Roles:
-  Type: update-stacks
-  Template: ./cross-account-role.yml
-  StackName: roles
-  StackDescription: 'Roles example template'
-  TerminationProtection: false
-  Parameters:
-    resourcePrefix: my
-    roleName: my
-    rolePolicyArns:
-      - arn:aws:iam::aws:policy/PowerUserAccess
-  OrganizationBindings:
-    RoleAccountBinding:
-      Account:
-        !Ref SharedServicesAccount
-
-
 BudgetAlarms:
   Type: update-stacks
   Template: ./budget-alarms.yml
   StackName: budget-alarms
+  DefaultOrganizationBindingRegion: eu-central-1
   DefaultOrganizationBinding:
     AccountsWithTag: budget-alarm-threshold
-  DefaultOrganizationBindingRegion: eu-central-1
   Parameters:
     resourcePrefix: my
+
+DeveloperRole:
+  Type: update-stacks
+  Template: ./cross-account-role.yml
+  StackName: my-developer-role
+  StackDescription: Developer Role Example
+  TerminationProtection: true
+  Parameters:
+    resourcePrefix: my
+    roleName: developer-role
+    rolePolicyArns:
+      - arn:aws:iam::aws:policy/PowerUserAccess
+  OrganizationBindings:
+    AssumeRoleBinding:
+      Account: !Ref SharedUsersAccount
+    RoleBinding:
+      OrganizationalUnit: !Ref DevelopmentOU
+      ExcludeAccount: !Ref SharedUsersAccount
+
+FinanceRole:
+  Type: update-stacks
+  Template: ./cross-account-role.yml
+  StackName: my-finance-role
+  StackDescription: Finance Role Example
+  TerminationProtection: true
+  Parameters:
+    resourcePrefix: my
+    roleName: finance-role
+    rolePolicyArns:
+      - arn:aws:iam::aws:policy/Billing
+  OrganizationBindings:
+    AssumeRoleBinding:
+      Account: !Ref SharedUsersAccount
+    RoleBinding:
+      IncludeMasterAccount: true
 
 # CrossAccountBuckets:
 #   Type: update-stacks

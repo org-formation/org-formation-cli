@@ -20,26 +20,22 @@ Parameters:
   rolePolicyArns:
     Type: CommaDelimitedList
 
-  usersAccount:
-    Type: String
-    Default: !Ref SharedUsersAccount
-
 # Section contains a named set of Bindings.
 # Bindings determine what resources are deployed where
 # These bindings can be !Ref'd from the Resources in the resource section
 OrganizationBindings:
 
-  UsersAccountBinding:
-    Account: !Ref usersAccount
+  AssumeRoleBinding:
+    Account: !Ref SharedUsersAccount
 
-  RoleAccountBinding:
+  RoleBinding:
     Account: '*'
-    ExcludeAccount: !Ref usersAccount
+    ExcludeAccount: !Ref SharedUsersAccount
 
 Resources:
 
   Role:
-    OrganizationBinding: !Ref RoleAccountBinding
+    OrganizationBinding: !Ref RoleBinding
     Type: AWS::IAM::Role
     Properties:
       ManagedPolicyArns: !Ref rolePolicyArns
@@ -50,11 +46,11 @@ Resources:
          - Effect: Allow
            Action: sts:AssumeRole
            Principal:
-            AWS: Fn::EnumTargetAccounts UsersAccountBinding '${account}' # role can only be assumed from SharedUsersAccount
+            AWS: Fn::EnumTargetAccounts AssumeRoleBinding '${account}' # role can only be assumed from SharedUsersAccount
 
   AssumeRolePolicy:
     Type: AWS::IAM::ManagedPolicy
-    OrganizationBinding: !Ref UsersAccountBinding
+    OrganizationBinding: !Ref AssumeRoleBinding
     Properties:
       ManagedPolicyName: !Sub '${resourcePrefix}-${roleName}-assume-role-policy'
       PolicyDocument:

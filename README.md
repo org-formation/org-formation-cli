@@ -24,7 +24,7 @@ AWS Organization Formation (also: ``org-formation``) has 3 main features:
 
 3. Automation of account creation and resource provisioning:
 [![Automation of account creation and resource provisioning](docs/img/feature-3-perform-tasks.png)](docs/task-files.md)
-[Automation task file reference](docs/organization-resources.md) | [Example tasks file](examples/organization_tasks.yml) | [CLI Reference](docs/cli-reference.md)
+[Automation task file reference](docs/organization-resources.md) | [Example tasks file](examples/organization-tasks.yml) | [CLI Reference](docs/cli-reference.md)
 
 
 Want more? here a [list of 50+ features](docs/features.pdf) 😎😎😎

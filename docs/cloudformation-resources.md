@@ -80,7 +80,7 @@ Resources:
          - Effect: Allow
            Action: sts:AssumeRole
            Principal:
-            AWS: Fn::EnumTargetAccounts UsersAccountBinding '${account}' # role can only be assumed from SharedUsersAccount
+            AWS: Fn::EnumTargetAccounts AssumeRoleBinding '${account}' # role can only be assumed from accounts in AssumeRoleBinding
 
   AssumeRolePolicy:
     Type: AWS::IAM::ManagedPolicy
