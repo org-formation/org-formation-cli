@@ -23,6 +23,8 @@ Organization:
     Type: OC::ORG::OrganizationalUnit
     Properties:
       OrganizationalUnitName: production
+      Accounts:
+        - !Ref Production1Account
 
   DevelopmentOU:
     Type: OC::ORG::OrganizationalUnit
@@ -111,6 +113,16 @@ Organization:
       RootEmail: dev-account-4@olafconijn.awsapps.com
       Tags:
         budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  Production1Account:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Production 1 Account
+      RootEmail: production1@olafconijn.awsapps.com
+      Alias: my-production1
+      Tags:
+        budget-alarm-threshold: '100'
         account-owner-email: olaf@email.com
 
   DenyChangeOfOrgRoleSCP:

@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.65**
+- Fixed issue where account creation had to be retried after timing issue accessing the account for the first time.
+- When calling org-formation without args it will display help.
+
 **version 0.0.64**
 - Improved logic to select resource in cross target !Ref. If target resource exists in same account but different region AWSAccount.Resources.LogicalResourceId can now be used to refer to resource in different region.
 
