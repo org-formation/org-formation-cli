@@ -2,6 +2,8 @@
 
 AWS Organization Formation is an Infrastructure as Code (IaC) tool for AWS Organizations.
 
+## Features
+
 AWS Organization Formation (also: ``org-formation``) has 3 main features:
 
 1. Infrastructure as Code for AWS Organizations:
