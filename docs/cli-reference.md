@@ -1,7 +1,9 @@
 
 # ``org-formation`` cli reference
 
-In general: org-formation needs to be ran in the context of the organization master account. The IAM account needs to be broadly provisioned (happy to specify what in more detail)
+In general: ``org-formation`` needs to be ran in the context of the organization master account. The IAM account needs to be broadly provisioned (happy to specify what in more detail)
+
+Typing ``help`` after any command in the commandline will print documentation.
 
 - [org-formation cli reference](#org-formation-cli-reference)
   - [Operations on organization resources](#operations-on-organization-resources)

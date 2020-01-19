@@ -1,19 +1,25 @@
-- [Managing resources across accounts](#managing-resources-across-accounts)
-  - [OrganizationBinding: Where to create which resource](#organizationbinding-where-to-create-which-resource)
-  - [Creating cross account resource dependencies](#creating-cross-account-resource-dependencies)
-  - [DependsOnAccount and DependsOnRegion](#dependsonaccount-and-dependsonregion)
-  - [Referencing the account the resource is created in](#referencing-the-account-the-resource-is-created-in)
-  - [Foreach: Iterating over accounts when creating resources](#foreach-iterating-over-accounts-when-creating-resources)
-  - [Making templates re-usable](#making-templates-re-usable)
 
+<!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
 
-## Managing resources across accounts
+<!-- code_chunk_output -->
+
+- [OrganizationBinding: Where to create which resource](#organizationbinding-where-to-create-which-resource)
+- [Creating cross account resource dependencies](#creating-cross-account-resource-dependencies)
+- [DependsOnAccount and DependsOnRegion](#dependsonaccount-and-dependsonregion)
+- [Referencing the account the resource is created in](#referencing-the-account-the-resource-is-created-in)
+- [Foreach: Iterating over accounts when creating resources](#foreach-iterating-over-accounts-when-creating-resources)
+
+<!-- /code_chunk_output -->
+
+For Examples see: [examples folder](../examples/readme.md)
+
+# Organization Annotated CloudFormation
 
 [CloudFormation](https://aws.amazon.com/cloudformation/) is the infrastructure as code solution native to AWS. It works great when managing resources within a single organization but doesnt contain syntax to manage resources across multiple accounts.
 
 examples:
-- In CloudFormation it is not possible to specify a !Ref to another resource in another account or region.
-- In CloudFormation it is not possible to reference organization resource attributes
+- In CloudFormation it is not possible to specify a !Ref to a resource in another account or region.
+- In CloudFormation it is not possible to reference organization resource attributes such as Account tags.
 - In CloudFormation it is possible to deploy stacks to multiple accounts (using [StackSets](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html)) but only a subset of Cloudformation features can be used.
 
 The constraints above can be difficult when managing a baseline of resources across different accounts in an AWS Organization:
@@ -27,56 +33,73 @@ Org-Formation templates that contain resources can be updated using:
 
 More information in the [CLI reference](cli-reference.md)
 
-**example**:
-In this example a IAM Group will be created in the SharedUsersAccount and a IAM Role will be created in all accounts. The IAM Role however can only be assume from the SharedUserAccount and the Group can only assume this specific Role.
+**example**: In this example an IAM Role will be created in accounts enumerable by `RoleBinding` (all accounts except the `*` from which `SharedUsersAccount` is exluded). Only principals from accounts enumerable by `AssumeRoleBinding` (only `SharedUsersAccount`) can assume the Role.
 
 ```yaml
-AWSTemplateFormatVersion: 2010-09-09-OC
+AWSTemplateFormatVersion: '2010-09-09-OC'
 
-# include organization template.
+# Include file that contains Organization Section.
+# The Organization Section describes Accounts, Organizational Units, etc.
 Organization: !Include ./organization.yml
 
-# default region (can be list)
-OrganizationBindingRegion: eu-central-1
+# Any Binding that does not explicitly specify a region will default to this.
+# Value can be either string or list
+DefaultOrganizationBindingRegion: eu-central-1
+
+Parameters:
+
+  roleName:
+    Type: String
+
+  rolePolicyArns:
+    Type: CommaDelimitedList
+
+# Section contains a named set of Bindings.
+# Bindings determine what resources are deployed where
+# These bindings can be !Ref'd from the Resources in the resource section
+OrganizationBindings:
+
+  AssumeRoleBinding:
+    Account: !Ref SharedUsersAccount
+
+  RoleBinding:
+    Account: '*'
+    ExcludeAccount: !Ref SharedUsersAccount
 
 Resources:
 
-  # this resource will only be created in the SharedUsersAccount
-  DeveloperGroup:
-    OrganizationBinding:
-      Account: !Ref SharedUsersAccount
-    Type: AWS::IAM::Group
-    Properties:
-      GroupName: DevelopersGroup
-      Policies:
-        - PolicyName: assume-roles
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: sts:AssumeRole
-                Resource: arn:aws:iam::*:role/DeveloperRole
-
-  # this resource will only be created in all accounts (except the organizational master)
-  DeveloperRole:
-    OrganizationBinding:
-      Account: '*'
+  Role:
+    OrganizationBinding: !Ref RoleBinding
     Type: AWS::IAM::Role
     Properties:
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/PowerUserAccess
-      RoleName: DeveloperRole
+      ManagedPolicyArns: !Ref rolePolicyArns
+      RoleName: !Ref roleName
       AssumeRolePolicyDocument:
        Version: 2012-10-17
        Statement:
          - Effect: Allow
            Action: sts:AssumeRole
            Principal:
-            AWS: !Ref SharedUsersAccount # role can only be assumed from SharedUsersAccount
+            AWS: Fn::EnumTargetAccounts UsersAccountBinding '${account}' # role can only be assumed from SharedUsersAccount
+
+  AssumeRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    OrganizationBinding: !Ref AssumeRoleBinding
+    Properties:
+      ManagedPolicyName: !Sub '${resourcePrefix}-${roleName}-assume-role-policy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Resource: !GetAtt Role.Arn
 ```
 
 ### OrganizationBinding: Where to create which resource
-In Orgnization Formation every resource can have an ```OrganizationBinding``` attribute. This attribute specifies in which accounts the resource must be created. The ```OrganizationBinding``` atribute looks like:
+In Orgnization Formation, in order to create resources, these resources should have an `OrganizationBinding` attribute.
+
+The `OrganizationBinding` can be specified as a toplevel `DefaultOrganizationBinding`, within a `OrganizationBindings` section or directly on the CloudFormation Resource.
+
 
 ```yaml
 Resources:
@@ -121,7 +144,7 @@ If, within a template, you use ``!Ref`` ir ``!GetAtt`` to refer to another resou
 AWSTemplateFormatVersion: '2010-09-09-OC'
 
 Organization: !Include ./organization.yml
-OrganizationBindingRegion: eu-central-1
+DefaultOrganizationBindingRegion: eu-central-1
 
 Resources:
 
@@ -155,7 +178,7 @@ Sometimes a dependency exists on the sequence in which cloudformation templates 
 
 A dependency to all templates within an account or region can be created manually using ``DependsOnAccount`` or ``DependsOnRegion``.
 
-In the example below all cloudformation templates that contain the ``Master`` resource (Accounts: *) will be executed after the all templates to the ``!Ref MasterAccount`` completed execution.
+In the example below all CloudFormation templates that contain the ``Master`` resource (Accounts: `*`) will be executed after all templates bound to ``!Ref MasterAccount`` completed execution.
 
 Note that circular dependencies will fail to execute.
 
@@ -248,7 +271,7 @@ Please consider the following template for some more context. It sets up [GuardD
 AWSTemplateFormatVersion: '2010-09-09-OC'
 
 Organization: !Include ./organization.yml
-OrganizationBindingRegion: eu-central-1
+DefaultOrganizationBindingRegion: eu-central-1
 
 Resources:
   Detector:
@@ -286,47 +309,3 @@ The template above specifies that:
 - The ``MasterAccount`` gets a Member resource for each account that is refered to from the ``Master`` resource in that account.
 
 yes, the creation of ``Master`` resources to 'Members' and ``Member`` ressources to the Master account is confusing. This, unfortunately, is how Guardduty works in CloudFormation.
-
-### Making templates re-usable
-
-Being able to describe patterns and best-practices for resource configuration within an AWS Organization is great.
-
-However: Not every organization will have the exact same logical account names. Some might store their audit log in what they refer to as their `Compliance` account others might have a sepparate `AuditLogginAcccount`.
-
-To bridge these differences you can refer to Accounts from within an OrganizationBinding through a parameter:
-
-```yaml
-AWSTemplateFormatVersion: '2010-09-09-OC'
-Organization: !Include ./organization.yml
-
-Parameters:
-  usersAccount:
-    Type: String
-    Default: !Ref SharedUsersAccount
-
-  masterAccount:
-    Type: String
-    Default: !Ref MasterAccount
-
-Resources:
-
-  Role:
-    Type: AWS::IAM::Role
-    OrganizationBinding:
-      Region: eu-west-1
-      #Account references a parameter that resolves to !Ref MasterAccount
-      Account: !Ref masterAccount
-    Properties:
-      RoleName: DeveloperRole
-      AssumeRolePolicyDocument:
-       Version: 2012-10-17
-       Statement:
-         - Effect: Allow
-           Action: sts:AssumeRole
-           Principal:
-            # !Ref references a parameter that resolves to !Ref SharedUsersAccount
-            AWS: !Ref usersAccount
-
-
-
-```

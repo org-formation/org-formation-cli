@@ -1,11 +1,17 @@
 
-- [Updating multiple templates at once](#updating-multiple-templates-at-once)
+<!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
 - [Task types](#task-types)
   - [update-organization](#update-organization)
   - [update-stacks](#update-stacks)
   - [include](#include)
 
-## Updating multiple templates at once
+<!-- /code_chunk_output -->
+
+
+# Automating deployments
 
 You might well have multiple templates you would like to provision within your organization and manage centrally. Additionally might want to have a code repository set up with these templates and run them using a CI/CD solution.
 
@@ -53,15 +59,16 @@ The ``update-stacks`` task will provision all resources in all accounts specifie
 
 |Attribute |Value|Remarks|
 |:---|:---|:---|
-|Template|relative path|This property is required. <br/><br/>Specifies the Organization Formation template of which the resources must be updated]
+|Template|relative path|This property is required. <br/><br/>Specifies the Organization Formation template of which the resources must be updated
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |StackName|string|This property is required.<br/><br/>Specifies the name of the stack that will be created in all accounts/regions.|
-|StackDescription|string|If specified value will be set as the description of the created stacks<br/><br/> note: this value can be overridden by a Description attribute within the stack|
-|Parameters|Dictionary|Specifies parameters that must be used when executing the stacks.|
-|TerminationProtection|true or false|If true termination protection will be enabled on all stacks created for this template|
-|OrganizationBindingRegion|String or list of String|Default region or regions used when executing templates.<br/><br/> note: this value can be overridden within the template or resources|
-|OrganizationBinding|[OrganizationBinding](#organizationbinding-where-to-create-which-resource)| organization binding used when executing templates.<br/><br/> note: this value can be overridden within the template or resources|
-|OrganizationFile|relative path|organization file used when executing templates.<br/><br/> note: when specified the template being executed could be a Cloudformation compatible template (without any organization formation specific attributes).|
+|StackDescription|string|If specified, value will be set as the description of the created stacks<br/><br/> **note**: This value can be overridden by a Description attribute within the template (value in template is leading). |
+|Parameters|Dictionary|Specifies parameters that must be used when executing the template.|
+|OrganizationFile|relative path|Organization file used when executing templates.<br/><br/>**note**: This value can be overridden within the template or resources (value in template is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
+|TerminationProtection|true or false|If `true` termination protection will be enabled on all stacks created for this template|
+|DefaultOrganizationBindingRegion|String or list of String|Region or regions that will be used for any binding without Region specified.<br/><br/> **note**: This value can be overridden within the template or resources (value in template is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
+|DefaultOrganizationBinding|[OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Organization binding used for any resource that has no binding specified.<br/><br/> **note**: This value can be overridden within the template or resources (value in template is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
+|OrganizationBindings|Dictionary of Strign, [OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Set of named OrganizationBindings that can be `!Ref`'d by Resources.<br/><br/> **note**: This value overriddes values within the template or resources (**value in taskfile is leading**).|
 
 **example**
 ```yaml
@@ -70,24 +77,32 @@ BudgetAlarms:
   Template: ./budget-alarms.yml
   StackName: budget-alarms
   TerminationProtection: true
-  OrganizationBinding:
-    AccountsWithTag: budget-alarm-threshold
-  OrganizationBindingRegion: eu-central-1
+  DefaultOrganizationBindingRegion: eu-central-1
+  OrganizationBindings:
+    BudgetAlarmBinding:
+      AccountsWithTag: budget-alarm-threshold
   Parameters:
     resourcePrefix: my
 ```
 
 ```yaml
-CloudformationSetup:
+Roles:
   Type: update-stacks
-  Template: ./cloudformation-setup.yml
-  StackName: cloudformation-setup
-  StackDescription: 'Cloudformation setup used by stacksets'
-  OrganizationFile: ./organization.yml
-  TerminationProtection: true
-  OrganizationBindingRegion: eu-central-1
-  OrganizationBinding:
-    Account: '*'
+  Template: ./cross-account-role.yml
+  StackName: developer-role
+  StackDescription: 'Developer Role'
+  TerminationProtection: false
+  Parameters:
+    roleName: DeveloperRole
+    rolePolicyArns:
+      - arn:aws:iam::aws:policy/PowerUserAccess
+  OrganizationBindings:
+    RoleAccountBinding:
+      OrganizationalUnit:
+        !Ref DevelopmentOU
+    AssumeRoleBinding:
+      Account:
+        !Ref SharedUsersAccount
 ```
 
 ### include
@@ -98,8 +113,8 @@ The ``include`` include another taskfile with tasks to be executed.
 |:---|:---|:---|
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |Path|relative path|This property is required.<br/><br/> Specifies the Path of the taskfile that should be included.|
-|MaxConcurrentTasks|number|The number of tasks within the imported file that should be executed concurrently.|
-|FailedTaskTolerance|number|The number of failed tasks within the imported file that will cause the tasks to fail.|
+|MaxConcurrentTasks|number|The number of tasks within the imported file that should be executed concurrently.<br/><br/> Default = 1|
+|FailedTaskTolerance|number|The number of failed tasks within the imported file that will cause the tasks to fail.<br/><br/> Default = 1|
 
 **example**
 ```yaml

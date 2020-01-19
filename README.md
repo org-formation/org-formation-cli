@@ -1,21 +1,25 @@
 # AWS Organization Formation
 
-Makes managing [AWS Organizations](https://aws.amazon.com/organizations/) easy!
+AWS Organization Formation is an Infrastructure as Code (IaC) tool for AWS Organizations.
 
-Organization Formation allows you to manage AWS Organization resources and accounts using CloudFormation syntax.
+AWS Organization Formation (also: ``org-formation``) has 3 main features:
 
-- [AWS Organization Formation](#aws-organization-formation)
-  - [Installation](#installation)
-  - [Getting started](#getting-started)
-    - [I already have an AWS Organization](#i-already-have-an-aws-organization)
-    - [I would like to create a new AWS Organization from scratch](#i-would-like-to-create-a-new-aws-organization-from-scratch)
+1. Infrastructure as Code for AWS Organizations:
+![Infrastructure as Code for AWS Organizations](docs/feature-1-update-org.png)
 
-  - [Examples](examples/readme.md)
-  - [Managing AWS Organizations as code](docs/organization-resources.md)
-  - [Managing resources across accounts](docs/cloudformation-resources.md)
-  - [Updating multiple templates at once](docs/task-files.md)
-  - [CLI reference](docs/cli-reference.md)
-  - [Changelog](CHANGELOG.md)
+
+&nbsp;
+
+2. CloudFormation annotations to provision resources cross account:
+![CloudFormation annotations to provision resources cross account](docs/feature-2-update-stacks.png)
+
+
+&nbsp;
+
+
+3. Automation of account creation and resource provisioning:
+![Automation of account creation and resource provisioning](docs/feature-3-perform-tasks.png)
+
 
 ## Installation
 
@@ -24,11 +28,6 @@ Organization Formation allows you to manage AWS Organization resources and accou
 ```
 
 ## Getting started
-The intended user for this tool is anyone that manages an [AWS Organizations](https://aws.amazon.com/organizations/). You might already have an Organization set up using a different tool (e.g. landingzone, control tower) or you might want to start from scratch. Either way: this tool helps you manage you AWS Organizations resources and Cloudformation templates across your AWS Accounts.
-
-### I already have an AWS Organization
-
-Great! you might not only already have an AWS Organization but also know some of the challanges when managing other resources (CoudTrail, GuardDuty, centralized logging, shared services) across your accounts.
 
 To get started you first need an ``org-formation`` template that describes all your Organization resources such as [Accounts](./docs/organization-resources.md#account), [OUs](./docs/organization-resources.md#organizationalunit) and [SCPs](docs/organization-resources.md#servicecontrolpolicy).
 
@@ -120,16 +119,25 @@ Organization:
 
 </details>
 
+&nbsp;
+Note: If you prefer to set up CI/CD run ``org-formation init-pipeline`` instead. It will create a CodeCommit repository and CodePipeline that will update your organization upon every commit!
 
 You can make changes to the file you generated  and upate your organization using the ``update`` commmand. Alternatively you can run ``create-change-set`` and ``update-change-set``. Read more in the [cli reference](docs/cli-reference.md)
 
 Once you got the hang of managing organization resources, use these organization resources to write smarter cloudformation that allows you to provision resources across your organization. Read more [about managing resources across accounts](docs/cloudformation-resources.md).
 
-###
+## Why is this important?
 
+Just like with the resources within your AWS Account, managing AWS Organization resources **as code** allows you to apply changes automatically, reducing manual work, inconsistencies and mistakes.
 
-### I would like to create a new AWS Organization from scratch
+If you are considering to use an account vending machine (e.g. [AWS Control Tower](https://aws.amazon.com/controltower/)) to create and manage new accounts within your organization: Do realize that the account vending machine allows you to quickly create organization resources but only has limited facilities when it comes to updating and maintaining these resoruces.
 
-```java
-//todo: effectively create an AWS Organization and follow steps above.
-```
+## More docs
+
+- [Examples](examples/readme.md)
+- [List of 60+ features](docs/features.pdf)
+- [Managing AWS Organizations as code](docs/organization-resources.md)
+- [Organization Annotated CloudFormation](docs/cloudformation-resources.md)
+- [Automating deployments](docs/task-files.md)
+- [CLI reference](docs/cli-reference.md)
+- [Changelog](CHANGELOG.md)
