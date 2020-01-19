@@ -256,7 +256,7 @@ export class TemplateRoot {
         }
         for (const elm of val) {
             if (typeof elm === 'string' || typeof elm === 'number') {
-                results.push({PhysicalId: '' + elm});
+                throw new Error(`value ${elm} expected to be a reference. did you mean to use !Ref ${elm} instead?`);
             } else if (elm instanceof Object) {
                 const ref = (elm as IResourceRefExpression).Ref;
                 const foundElm = list.find((x) => x.logicalId === ref);
