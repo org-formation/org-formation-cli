@@ -202,7 +202,21 @@ export class AwsOrganizationWriter {
 
         accountId = await this._createAccount(resource);
 
-        await this.updateAccount(resource, accountId);
+        let retryCountAccessDenied = 0;
+        let shouldRetry = false;
+        do {
+            try {
+                await this.updateAccount(resource, accountId);
+            } catch (err) {
+                if (err.code === 'AccessDenied' && retryCountAccessDenied === 0)  {
+                    shouldRetry = true;
+                    retryCountAccessDenied = retryCountAccessDenied + 1;
+                    await sleep(1000);
+                    continue;
+                }
+                throw err;
+            }
+        }while (shouldRetry);
         return accountId;
     }
 
