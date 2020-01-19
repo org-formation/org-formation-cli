@@ -28,6 +28,11 @@ Organization:
     Type: OC::ORG::OrganizationalUnit
     Properties:
       OrganizationalUnitName: development
+      Accounts:
+        - !Ref DevelopmentAccount
+        - !Ref Development2Account
+        - !Ref Development3Account
+        - !Ref Development4Account
 
   SharedOU:
     Type: OC::ORG::OrganizationalUnit
@@ -64,6 +69,46 @@ Organization:
       Alias: org-formation-compliance
       AccountName: Shared Compliance Account
       RootEmail: shared-compliance-2@olafconijn.awsapps.com
+      Tags:
+        budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  DevelopmentAccount:
+    Type: OC::ORG::Account
+    Properties:
+      Alias: org-formation-dev
+      AccountName: Development Account
+      RootEmail: dev-account-1@olafconijn.awsapps.com
+      Tags:
+        budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  Development2Account:
+    Type: OC::ORG::Account
+    Properties:
+      Alias: org-formation-dev2
+      AccountName: Development Account 2
+      RootEmail: dev-account-2@olafconijn.awsapps.com
+      Tags:
+        budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  Development3Account:
+    Type: OC::ORG::Account
+    Properties:
+      Alias: org-formation-dev3
+      AccountName: Development Account 3
+      RootEmail: dev-account-3@olafconijn.awsapps.com
+      Tags:
+        budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  Development4Account:
+    Type: OC::ORG::Account
+    Properties:
+      Alias: org-formation-dev4
+      AccountName: Development Account 4
+      RootEmail: dev-account-4@olafconijn.awsapps.com
       Tags:
         budget-alarm-threshold: '200'
         account-owner-email: olaf@email.com
