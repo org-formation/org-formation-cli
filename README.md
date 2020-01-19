@@ -24,7 +24,7 @@ AWS Organization Formation (also: ``org-formation``) has 3 main features:
 
 3. Automation of account creation and resource provisioning:
 [![Automation of account creation and resource provisioning](docs/img/feature-3-perform-tasks.png)](docs/task-files.md)
-[Automation tasks file reference](docs/organization-resources.md)
+[Automation task file reference](docs/organization-resources.md)
 
 
 
@@ -126,8 +126,7 @@ Organization:
 
 </details>
 
-&nbsp;
-Note: If you prefer to set up CI/CD run ``org-formation init-pipeline`` instead. It will create a CodeCommit repository and CodePipeline that will update your organization upon every commit!
+**Note**: If you prefer to set up CI/CD run ``org-formation init-pipeline`` instead. It will create a CodeCommit repository and CodePipeline that will update your organization upon every commit!
 
 You can make changes to the file you generated  and upate your organization using the ``update`` commmand. Alternatively you can run ``create-change-set`` and ``update-change-set``. Read more in the [cli reference](docs/cli-reference.md)
 
@@ -141,7 +140,7 @@ If you are considering to use an account vending machine (e.g. [AWS Control Towe
 
 ## More docs
 
-- [Examples](examples/readme.md)
+- [Examples](examples/)
 - [List of 60+ features](docs/features.pdf)
 - [Managing AWS Organizations as code](docs/organization-resources.md)
 - [Organization Annotated CloudFormation](docs/cloudformation-resources.md)
