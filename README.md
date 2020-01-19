@@ -19,7 +19,6 @@ AWS Organization Formation (also: ``org-formation``) has 3 main features:
 
 
 
-
 &nbsp;
 
 
@@ -28,11 +27,18 @@ AWS Organization Formation (also: ``org-formation``) has 3 main features:
 [Automation task file reference](docs/organization-resources.md) | [Example tasks file](examples/organization_tasks.yml) | [CLI Reference](docs/cli-reference.md)
 
 
+Want more? here a [list of 50+ features](docs/features.pdf) 😎😎😎
 
 ## Installation
+With [npm](https://npmjs.org/) installed, run
+```
+> npm install -g aws-organization-formation
+```
+
+You can now execute the commandline program `org-formation`. try:
 
 ```
-> npm i aws-organization-formation
+> org-formation --help
 ```
 
 ## Getting started
@@ -142,7 +148,7 @@ If you are considering to use an account vending machine (e.g. [AWS Control Towe
 ## More docs
 
 - [Examples](examples/)
-- [List of 60+ features](docs/features.pdf)
+- [List of 50+ features](docs/features.pdf)
 - [Managing AWS Organizations as code](docs/organization-resources.md)
 - [Organization Annotated CloudFormation](docs/cloudformation-resources.md)
 - [Automating deployments](docs/task-files.md)
