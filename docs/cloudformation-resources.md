@@ -92,7 +92,7 @@ Resources:
         Statement:
           - Effect: Allow
             Action: sts:AssumeRole
-            Resource: !GetAtt Role.Arn
+            Resource: Fn::EnumTargetAccounts RoleBinding 'arn:aws:iam::${account}:role/${roleName}'
 ```
 
 ### OrganizationBinding: Where to create which resource
