@@ -17,10 +17,6 @@ Parameters:
   bucketName:
     Type: String
 
-  bucketAccount:
-    Type: String
-    Default: !Ref SharedServicesAccount
-
 # Section contains a named set of Bindings.
 # Bindings determine what resources are deployed where
 # These bindings can be !Ref'd from the Resources in the resource section
@@ -28,7 +24,7 @@ OrganizationBindings:
 
   # Binding for: Bucket, BucketPolicy
   BucketAccountBinding:
-    Account: !Ref bucketAccount
+    Account: !Ref SharedServicesAccount
 
   # Binding for: S3BucketReadAccessPolicy
   ReadAccessAccountBinding:
@@ -66,8 +62,7 @@ Resources:
 
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
-    OrganizationBinding:
-      Account: !Ref bucketAccount
+    OrganizationBinding: !Ref BucketAccountBinding
     Properties:
       Bucket: !Ref Bucket
       PolicyDocument:

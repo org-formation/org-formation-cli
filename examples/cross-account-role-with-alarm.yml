@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+# Include file that contains Organization Section.
+# The Organization Section describes Accounts, Organizational Units, etc.
+Organization: !Include ./organization.yml
+
+# Any Binding that does not explicitly specify a region will default to this.
+# Value can be either string or list
+DefaultOrganizationBindingRegion: eu-central-1
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+    Default: my
+
+  roleName:
+    Type: String
+
+  rolePolicyArns:
+    Type: CommaDelimitedList
+
+  cloudTrailLogGroup:
+    Type: String
+
+  alarmSubscriptionProtocol:
+    Type: String
+    AllowedValues: [ 'email', 'https' ]
+    Default: 'email'
+
+  alarmSubscriptionEndpoint:
+    Type: String
+    Default: !GetAtt AWSAccount.RootEmail
+
+# Section contains a named set of Bindings.
+# Bindings determine what resources are deployed where
+# These bindings can be !Ref'd from the Resources in the resource section
+OrganizationBindings:
+
+  AssumeRoleBinding:
+    Account: !Ref SharedUsersAccount
+
+  RoleBinding:
+    Account: '*'
+    ExcludeAccount: !Ref SharedUsersAccount
+
+Resources:
+
+  Role:
+    Type: AWS::IAM::Role
+    OrganizationBinding: !Ref RoleBinding
+    Properties:
+      ManagedPolicyArns: !Ref rolePolicyArns
+      RoleName: !Ref roleName
+      AssumeRolePolicyDocument:
+       Version: 2012-10-17
+       Statement:
+         - Effect: Allow
+           Action: sts:AssumeRole
+           Principal:
+            AWS: Fn::EnumTargetAccounts AssumeRoleBinding '${account}' # role can only be assumed from SharedUsersAccount
+           Condition:
+            Bool:
+              aws:MultiFactorAuthPresent: 'true'
+
+  AssumeRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    OrganizationBinding: !Ref AssumeRoleBinding
+    Properties:
+      ManagedPolicyName: !Sub '${resourcePrefix}-${roleName}-assume-role-policy'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Resource: Fn::EnumTargetAccounts RoleBinding 'arn:aws:iam::${account}:role/${roleName}'
+
+  RoleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    OrganizationBinding: !Ref RoleBinding
+    Properties:
+      AlarmName: !Sub '${roleName} used on account: ${AWSAccount.Alias}'
+      AlarmDescription: !Sub 'Alarm on usage of ''${AWSAccount.Alias}'' in this account'
+      MetricName: !Sub '${resourcePrefix}-${roleName}-event-count'
+      Namespace: CloudTrailMetrics
+      Statistic: Sum
+      Period: 10
+      EvaluationPeriods: 1
+      Threshold: 1
+      TreatMissingData: notBreaching
+      AlarmActions:
+      - !Ref AlarmNotificationTopic
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+
+  ProductionSupportRoleLoginsFilter:
+    Type: AWS::Logs::MetricFilter
+    OrganizationBinding: !Ref RoleBinding
+    Properties:
+      LogGroupName: !Ref cloudTrailLogGroup
+      FilterPattern: !Sub
+        - '{
+            ($.eventName = "AssumeRole") &&
+            ($.requestParameters.roleArn = "${RoleArn}")
+           }'
+        - { RoleArn: !GetAtt Role.Arn }
+      MetricTransformations:
+      - MetricValue: '1'
+        MetricNamespace: CloudTrailMetrics
+        MetricName: !Sub '${resourcePrefix}-${roleName}-event-count'
+
+  AlarmNotificationTopic:
+    Type: AWS::SNS::Topic
+    OrganizationBinding: !Ref RoleBinding
+    Properties:
+      DisplayName: !Sub 'Notifies when alarm on usage of ${roleName} goes off'
+      TopicName: !Sub '${resourcePrefix}-assume-${roleName}-alarm-notification'
+      Subscription:
+        - Endpoint: !Ref alarmSubscriptionEndpoint
+          Protocol: !Ref alarmSubscriptionProtocol

@@ -3,6 +3,18 @@ OrganizationUpdate:
   Type: update-organization
   Template: ./organization.yml
 
+CloudTrail:
+  Type: update-stacks
+  Template: ./cloudtrail.yml
+  StackName: cloudtrail
+  StackDescription: Cloudtrail example template
+
+GuardDuty:
+  Type: update-stacks
+  Template: ./guardduty.yml
+  StackName: guardduty
+  StackDescription: Guardduty example template
+
 BudgetAlarms:
   Type: update-stacks
   Template: ./budget-alarms.yml
@@ -29,7 +41,6 @@ DeveloperRole:
       Account: !Ref SharedUsersAccount
     RoleBinding:
       OrganizationalUnit: !Ref DevelopmentOU
-      ExcludeAccount: !Ref SharedUsersAccount
 
 FinanceRole:
   Type: update-stacks
@@ -41,19 +52,47 @@ FinanceRole:
     resourcePrefix: my
     roleName: finance-role
     rolePolicyArns:
-      - arn:aws:iam::aws:policy/Billing
+      - arn:aws:iam::aws:policy/job-function/Billing
   OrganizationBindings:
     AssumeRoleBinding:
       Account: !Ref SharedUsersAccount
     RoleBinding:
       IncludeMasterAccount: true
 
-# CrossAccountBuckets:
-#   Type: update-stacks
-#   Template: ./cross-account-bucket.yml
-#   StackName: MyBucket
-#   Parameters:
-#     bucketName: myBucket
+DevOpsRoleWithAlarm:
+  Type: update-stacks
+  Template: ./cross-account-role-with-alarm.yml
+  StackName: my-devops-role
+  StackDescription: DevOps Role with Alarm Example
+  TerminationProtection: true
+  Parameters:
+    resourcePrefix: my
+    roleName: develops-role
+    cloudTrailLogGroup: CloudTrail/audit-log
+    rolePolicyArns:
+      - arn:aws:iam::aws:policy/AdministratorAccess
+  OrganizationBindings:
+    AssumeRoleBinding:
+      Account: !Ref SharedUsersAccount
+    RoleBinding:
+      OrganizationalUnit: !Ref ProductionOU
+
+
+CrossAccountBucket:
+  Type: update-stacks
+  Template: ./cross-account-bucket.yml
+  StackName: MyBucket
+  Parameters:
+    bucketName: mybucket-516455415878
+  OrganizationBindings:
+    BucketAccountBinding:
+      Account: !Ref SharedServicesAccount
+    ReadAccessAccountBinding:
+      OrganizationalUnit: !Ref DevelopmentOU
+    WriteAccessAccountBinding:
+      IncludeMasterAccount: false # no binding
+    FullAccessAccountBinding:
+      IncludeMasterAccount: false # no binding
 
 # CrossAccountSecret:
 #   Type: update-stacks
@@ -74,12 +113,6 @@ FinanceRole:
 #   Template: ./hosted-zone.yml
 #   StackName: hosted-zone
 #   StackDescription: 'Hosted Zone example template'
-
-# CloudTrail:
-#   Type: update-stacks
-#   Template: ./cloudtrail.yml
-#   StackName: cloudtrail
-#   StackDescription: 'Cloudtrail example template'
 
 # Include:
 #   Type: include

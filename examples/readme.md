@@ -10,6 +10,7 @@
 - [guardduty](#guardduty)
 - [cross account bucket](#cross-account-bucket)
 - [cross account role](#cross-account-role)
+- [cross account role with alarm](#cross-account-role-with-alarm)
 - [cross account secret](#cross-account-secret)
 - [cross account lambda](#cross-account-lambda)
 
@@ -19,59 +20,58 @@
 ## budget alarms
 
 Basic example on how to create budget alarms based on tags that are defined on the account.
-
+![budget alarms](img/budget-alarms.png)
 [budget-alarms.yml](budget-alarms.yml)
 
-![budget alarms](img/budget-alarms.png)
 
 ## cloudtrail
 
 Example on how to do a basic cloud trail implementation. Demonstrates cross account references
-
+![cloudtrail](img/cloudtrail.png)
 [cloudtrail.yml](cloudtrail.yml)
 
-![cloudtrail](img/cloudtrail.png)
 
 
 ## guardduty
 
 Example on how to do a basic guardduty implementation. Demonstrates cross account references / ForeachElement / DependsOnAccount
-
 [guardduty.yml](guardduty.yml)
-
 ![guardduty](img/guardduty.png)
+
 
 
 ## cross account bucket
 
 Reusable template to do cross account access to S3 bucket.
-
+![cross-account-bucket](img/cross-account-bucket.png)
 [cross-account-bucket.yml](cross-account-bucket.yml)
 
-![cross-account-bucket](img/cross-account-bucket.png)
 
 
 ## cross account role
 
 Reusable template to do cross account IAM roles.
-
+![cross-account-role](img/cross-account-role.png)
 [cross-account-role.yml](cross-account-role.yml)
 
-![cross-account-role](img/cross-account-role.png)
+
+## cross account role with alarm
+
+Reusable template to do cross account IAM roles with an alarm (based on CloudTrail)
+![cross-account-role-with-alarm](img/cross-account-role-with-alarm.png)
+[cross-account-role-with-alarm.yml](cross-account-role-with-alarm.yml)
+
 
 
 ## cross account secret
 
 Reusable template to do cross account secretsmanager secrets.
-
+![cross-account-secret](img/cross-account-secret.png)
 [cross-account-secret.yml](cross-account-secret.yml)
 
-![cross-account-secret](img/cross-account-secret.png)
 
 ## cross account lambda
 
 Reusable template to do cross account lambdas. Assumes the lambda is deployed by another means (serverless? SAM?)
-
-[cross-account-lambda.yml](cross-account-lambda.yml)
-
 ![cross-account-lambda](img/cross-account-lambda.png)
+[cross-account-lambda.yml](cross-account-lambda.yml)

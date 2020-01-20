@@ -40,5 +40,5 @@ Resources:
             Threshold: 1
           Subscribers:
             - SubscriptionType: EMAIL
-              Address: !GetAtt AWSAccount.RootEmail # Resolves to root email of current account
+              Address: !GetAtt AWSAccount.Tags.account-owner-email # Resolves to root email of current account
 
