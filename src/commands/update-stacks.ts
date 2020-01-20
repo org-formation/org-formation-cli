@@ -54,6 +54,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         if (!command.stackName) {
             throw new OrgFormationError(`argument --stack-name is missing`);
         }
+
         const terminationProtection = command.terminationProtection === true;
         const stackName = command.stackName;
         const templateFile = command.templateFile;
@@ -67,11 +68,14 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         if (cfnTasks.length === 0) {
             ConsoleUtil.LogInfo(`stack ${stackName} already up to date.`);
         } else {
-            await CfnTaskRunner.RunTasks(cfnTasks, stackName);
+            try {
+                await CfnTaskRunner.RunTasks(cfnTasks, stackName);
+            } finally {
+                await state.save();
+            }
             ConsoleUtil.LogInfo('done');
         }
 
-        await state.save();
     }
 }
 
