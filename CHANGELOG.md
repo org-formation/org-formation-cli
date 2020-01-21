@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.67**
+- Added support for empty/null bindings.
+- Added Fn:TargetCount function which returns the amount of target for a binding. Can be used in Conditions, e.g: CreateResoruce: !Not [ !Equals [ Fn:TargetCount MyBinding, 0 ] ]
+
 **version 0.0.65**
 - Fixed issue where account creation had to be retried after timing issue accessing the account for the first time.
 - When calling org-formation without args it will display help.
