@@ -62,13 +62,13 @@ The ``update-stacks`` task will provision all resources in all accounts specifie
 |Template|relative path|This property is required. <br/><br/>Specifies the Organization Formation template of which the resources must be updated
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |StackName|string|This property is required.<br/><br/>Specifies the name of the stack that will be created in all accounts/regions.|
-|StackDescription|string|If specified, value will be set as the description of the created stacks<br/><br/> **note**: This value can be overridden by a Description attribute within the template (value in template is leading). |
+|StackDescription|string|If specified, value will be set as the description of the created stacks<br/><br/> **note**:  This value overriddes values within the template or resources (value in taskfile is leading). |
 |Parameters|Dictionary|Specifies parameters that must be used when executing the template.|
-|OrganizationFile|relative path|Organization file used when executing templates.<br/><br/>**note**: This value can be overridden within the template or resources (value in template is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
+|OrganizationFile|relative path|Organization file used when executing templates.<br/><br/>**note**: This value overriddes values within the template or resources (value in taskfile is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
 |TerminationProtection|true or false|If `true` termination protection will be enabled on all stacks created for this template|
-|DefaultOrganizationBindingRegion|String or list of String|Region or regions that will be used for any binding without Region specified.<br/><br/> **note**: This value can be overridden within the template or resources (value in template is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
-|DefaultOrganizationBinding|[OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Organization binding used for any resource that has no binding specified.<br/><br/> **note**: This value can be overridden within the template or resources (value in template is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
-|OrganizationBindings|Dictionary of Strign, [OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Set of named OrganizationBindings that can be `!Ref`'d by Resources.<br/><br/> **note**: This value overriddes values within the template or resources (**value in taskfile is leading**).|
+|DefaultOrganizationBindingRegion|String or list of String|Region or regions that will be used for any binding without Region specified.<br/><br/> **note**:  This value overriddes values within the template or resources (value in taskfile is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
+|DefaultOrganizationBinding|[OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Organization binding used for any resource that has no binding specified.<br/><br/> **note**:  This value overriddes values within the template or resources (value in taskfile is leading). <br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
+|OrganizationBindings|Dictionary of Strign, [OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Set of named OrganizationBindings that can be `!Ref`'d by Resources.<br/><br/> **note**: This value overriddes values within the template or resources (value in taskfile is leading).|
 
 **example**
 ```yaml
