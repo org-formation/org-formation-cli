@@ -98,7 +98,7 @@ export class TemplateRoot {
             if (err && err.message) {
                 reason = err.message;
             }
-            throw new OrgFormationError(`unable to load file ${path}, reason: ${reason}`);
+            throw new OrgFormationError(`unable to load file ${path}, reason: ${reason}, stack: ${err.stack}`);
         }
     }
 
@@ -197,6 +197,10 @@ export class TemplateRoot {
     }
 
     public resolveNormalizedRegions(binding: IOrganizationBinding): string[] {
+        if (binding === null || binding === undefined) {
+            return [];
+        }
+
         if (typeof binding.Region === 'string') {
             return [binding.Region];
         }
@@ -204,6 +208,10 @@ export class TemplateRoot {
     }
 
     public resolveNormalizedLogicalAccountIds(binding: IOrganizationBinding): string[] {
+        if (binding === null || binding === undefined) {
+            return [];
+        }
+
         this.throwForAccountIDs(binding.Account);
         this.throwForAccountIDs(binding.ExcludeAccount);
 

@@ -14,6 +14,8 @@ OrganizationBindings:
     IncludeMasterAccount: true
     Region: 'eu-central-1'
 
+  EmptyBinding: #empty
+
 Resources:
 
   Resource1:
@@ -23,6 +25,7 @@ Resources:
       Name: Test resource
       AllCount: Fn:TargetCount AllAccountsBinding
       MasterCount: Fn:TargetCount OnlyMasterBinding
+      EmptyCount: Fn:TargetCount EmptyBinding
 
   Resource2:
     Type: AWS::ANYTHING::GOES

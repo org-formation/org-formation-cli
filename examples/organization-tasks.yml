@@ -89,10 +89,8 @@ CrossAccountBucket:
       Account: !Ref SharedServicesAccount
     ReadAccessAccountBinding:
       OrganizationalUnit: !Ref DevelopmentOU
-    WriteAccessAccountBinding:
-      IncludeMasterAccount: false # no binding
-    FullAccessAccountBinding:
-      IncludeMasterAccount: false # no binding
+    WriteAccessAccountBinding: # null = empty binding
+    FullAccessAccountBinding: # null = empty binding
 
 # CrossAccountSecret:
 #   Type: update-stacks

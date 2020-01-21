@@ -63,6 +63,9 @@ export class Validator {
     }
 
     public static ValidateOrganizationBinding(binding: IOrganizationBinding, id: string) {
+        if (binding === undefined || binding === null) {
+            return;
+        }
         if (binding.Account !== undefined) {
             Validator.validateReferenceToAccount(binding.Account, id);
         }

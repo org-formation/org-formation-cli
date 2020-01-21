@@ -19,6 +19,7 @@ export class OrganizationBindingsSection {
 
         for (const bindingName in bindings) {
             const binding = bindings[bindingName];
+            if (binding === null || binding === undefined) { continue; }
             if (binding.Region === undefined) {
                 binding.Region = this.defaultRegion;
             }

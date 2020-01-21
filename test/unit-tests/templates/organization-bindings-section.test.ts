@@ -28,22 +28,27 @@ describe('when  using organization bindings section', () => {
     });
 
     it('Resource 1 AllCount attribute resolves to 5', () => {
-
-        const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
-        const resource1 = masterTemplate.Resources.Resource1;
-        expect(resource1.Properties.AllCount).to.eq(5);
+        const resource1 = template.resourcesSection.resources.find((x) => x.logicalId === 'Resource1');
+        expect(resource1.normalizedBoundAccounts).to.not.be.undefined;
+        expect(resource1.normalizedBoundAccounts.length).to.eq(5);
     });
 
-    it('Resource 1 MasterCount attribute resolves to 1', () => {
+    it('Fn:TargetCount MasterBinding resolves to 1', () => {
         const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
         const resource1 = masterTemplate.Resources.Resource1;
         expect(resource1.Properties.MasterCount).to.eq(1);
     });
 
     it('Fn:TargetCount AllAccountsBinding resolves to 5', () => {
-        const resource1 = template.resourcesSection.resources.find((x) => x.logicalId === 'Resource1');
-        expect(resource1.normalizedBoundAccounts).to.not.be.undefined;
-        expect(resource1.normalizedBoundAccounts.length).to.eq(5);
+        const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
+        const resource1 = masterTemplate.Resources.Resource1;
+        expect(resource1.Properties.AllCount).to.eq(5);
+    });
+
+    it('Fn:TargetCount EmptyBinding resolves to 0', () => {
+        const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
+        const resource1 = masterTemplate.Resources.Resource1;
+        expect(resource1.Properties.EmptyCount).to.eq(0);
     });
 
     it('Resource 2 has binding to only master', () => {

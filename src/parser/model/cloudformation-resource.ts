@@ -34,20 +34,20 @@ export class CloudFormationResource extends Resource {
             this.binding = this.resource.OrganizationBinding as IOrganizationBinding;
         }
 
-        if (!this.binding) {
+        if (this.binding === undefined) {
             this.binding = bindingsSection.defaultBinding;
             this.resource.OrganizationBinding = bindingsSection.defaultBinding;
         }
 
-        if (!this.binding) {
+        if (this.binding === undefined) {
             throw new OrgFormationError(`Resource ${id} is missing OrganizationBinding attribute and no top level OrganizationBinding found.`);
         }
 
-        if (!this.binding.Region) {
+        if (this.binding != null && !this.binding.Region) {
             this.binding.Region = bindingsSection.defaultRegion;
         }
 
-        if (this.binding.Region === undefined) {
+        if (this.binding != null && this.binding.Region === undefined) {
             ConsoleUtil.LogWarning(`Resource ${id} has binding without region. This means it will not be deployed to any account.`);
         }
 
@@ -76,7 +76,9 @@ export class CloudFormationResource extends Resource {
             }
         } else {
             this.regions = [];
-            ConsoleUtil.LogWarning(`No binding found for resource ${id}. Either add defaults globally or OrganizationBinding to the resource attributes.`);
+            if (this.binding === undefined) {
+                ConsoleUtil.LogWarning(`No binding found for resource ${id}. Either add defaults globally or OrganizationBinding to the resource attributes.`);
+            }
         }
         this.dependsOnAccountRef = this.resource.DependsOnAccount;
         this.dependsOnRegionRef = this.resource.DependsOnRegion;
