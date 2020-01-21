@@ -41,6 +41,12 @@ OrganizationBindings:
     Account: '*'
     ExcludeAccount: !Ref bucketAccount
 
+
+Conditions:
+  CreateReadBucketPolicy: !Not [ !Equals [ Fn:TargetCount ReadAccessAccountBinding, 0 ] ]
+  CreateWriteBucketPolicy: !Not [ !Equals [ Fn:TargetCount WriteAccessAccountBinding, 0 ] ]
+  CreateFullAccessBucketPolicy: !Not [ !Equals [ Fn:TargetCount FullAccessAccountBinding, 0 ] ]
+
 Resources:
 
   Bucket:
@@ -60,9 +66,10 @@ Resources:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
 
-  BucketPolicy:
+  BucketReadPolicy:
     Type: AWS::S3::BucketPolicy
     OrganizationBinding: !Ref BucketAccountBinding
+    Condition: CreateReadBucketPolicy
     Properties:
       Bucket: !Ref Bucket
       PolicyDocument:
@@ -77,6 +84,15 @@ Resources:
             - !Sub '${Bucket.Arn}/*'
             Principal:
               AWS: Fn::EnumTargetAccounts ReadAccessAccountBinding arn:aws:iam::${account}:root
+
+  BucketWritePolicy:
+    Type: AWS::S3::BucketPolicy
+    OrganizationBinding: !Ref BucketAccountBinding
+    Condition: CreateWriteBucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Statement:
           - Sid: 'Write operations on bucket'
             Action:
             - s3:Put*
@@ -86,6 +102,15 @@ Resources:
             - !Sub '${Bucket.Arn}/*'
             Principal:
               AWS: Fn::EnumTargetAccounts WriteAccessAccountBinding arn:aws:iam::${account}:root
+
+  BucketFullAccessPolicy:
+    Type: AWS::S3::BucketPolicy
+    OrganizationBinding: !Ref BucketAccountBinding
+    Condition: CreateFullAccessBucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Statement:
           - Sid: 'Any operation on bucket'
             Action:
             - s3:*
@@ -99,6 +124,7 @@ Resources:
   S3BucketReadAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
     OrganizationBinding: !Ref ReadAccessAccountBinding
+    Condition: CreateReadBucketPolicy
     Properties:
       ManagedPolicyName: !Sub '${resourcePrefix}-${bucketName}-read-policy'
       PolicyDocument:
@@ -115,6 +141,7 @@ Resources:
   S3BucketWriteAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
     OrganizationBinding: !Ref WriteAccessAccountBinding
+    Condition: CreateWriteBucketPolicy
     Properties:
       ManagedPolicyName: !Sub '${resourcePrefix}-${bucketName}-write-policy'
       PolicyDocument:
@@ -130,6 +157,7 @@ Resources:
   S3BucketFullAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
     OrganizationBinding: !Ref FullAccessAccountBinding
+    Condition: CreateFullAccessBucketPolicy
     Properties:
       ManagedPolicyName: !Sub '${resourcePrefix}-${bucketName}-fullaccess-policy'
       PolicyDocument:

@@ -21,6 +21,8 @@ Resources:
     OrganizationBinding: !Ref AllAccountsBinding
     Properties:
       Name: Test resource
+      AllCount: Fn:TargetCount AllAccountsBinding
+      MasterCount: Fn:TargetCount OnlyMasterBinding
 
   Resource2:
     Type: AWS::ANYTHING::GOES
