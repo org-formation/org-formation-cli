@@ -21,6 +21,14 @@ Parameters:
     Type: String
     Default: my
 
+  alarmSubscriberProtocol:
+    Type: String
+    Default: email
+
+  alarmSubscriberEndpoint:
+    Type: String
+    Default: !GetAtt AWSAccount.Tags.account-owner-email
+
 Resources:
 
   Budget:
@@ -39,6 +47,31 @@ Resources:
             ComparisonOperator: GREATER_THAN
             Threshold: 1
           Subscribers:
-            - SubscriptionType: EMAIL
-              Address: !GetAtt AWSAccount.Tags.account-owner-email # Resolves to root email of current account
+            - SubscriptionType: SNS
+              Address: !Ref BudgetAlarmTopic
 
+  BudgetAlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${resourcePrefix}-budget-alarm-${AWSAccount.Alias}'
+      DisplayName: !Sub
+      - 'Budget Alarm for ${AWSAccount.AccountName} (forecastd threshold greater than ${threshold}'
+      - { threshold: !GetAtt AWSAccount.Tags.budget-alarm-threshold}
+      Subscription:
+        - Protocol: !Ref alarmSubscriberProtocol
+          Endpoint: !Ref alarmSubscriberEndpoint
+
+  AlarmTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref BudgetAlarmTopic
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowBudgetPublish
+            Effect: Allow
+            Principal:
+              Service: budgets.amazonaws.com
+            Action: sns:publish
+            Resource: !Ref BudgetAlarmTopic
