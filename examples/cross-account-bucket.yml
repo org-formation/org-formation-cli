@@ -27,19 +27,13 @@ OrganizationBindings:
     Account: !Ref SharedServicesAccount
 
   # Binding for: S3BucketReadAccessPolicy
-  ReadAccessAccountBinding:
-    Account: '*'
-    ExcludeAccount: !Ref bucketAccount
+  ReadAccessAccountBinding: # null = empty binding
 
   # Binding for: S3BucketWriteAccessPolicy
-  WriteAccessAccountBinding:
-    Account: '*'
-    ExcludeAccount: !Ref bucketAccount
+  WriteAccessAccountBinding: # null = empty binding
 
   # Binding for: S3BucketFullAccessPolicy
-  FullAccessAccountBinding:
-    Account: '*'
-    ExcludeAccount: !Ref bucketAccount
+  FullAccessAccountBinding: # null = empty binding
 
 
 Conditions:
