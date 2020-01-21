@@ -1,6 +1,5 @@
 import { OrgFormationError } from '../../org-formation-error';
-import { IOrganizationBinding, IResource, IResources, TemplateRoot } from '../parser';
-import { CloudFormationResource } from './cloudformation-resource';
+import { IOrganizationBinding, TemplateRoot } from '../parser';
 
 export class OrganizationBindingsSection {
     public readonly bindings: Record<string, IOrganizationBinding> = {};
