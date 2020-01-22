@@ -67,7 +67,8 @@ DevOpsRoleWithAlarm:
   TerminationProtection: true
   Parameters:
     resourcePrefix: my
-    roleName: develops-role
+    roleName: DevopsRole
+    requireMfa: false
     cloudTrailLogGroup: CloudTrail/audit-log
     rolePolicyArns:
       - arn:aws:iam::aws:policy/AdministratorAccess

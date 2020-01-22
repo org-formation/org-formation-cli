@@ -21,11 +21,11 @@ Parameters:
     Type: String
     Default: my
 
-  alarmSubscriberProtocol:
+  alarmSubscriptionProtocol:
     Type: String
     Default: email
 
-  alarmSubscriberEndpoint:
+  alarmSubscriptionEndpoint:
     Type: String
     Default: !GetAtt AWSAccount.Tags.account-owner-email
 
@@ -53,13 +53,13 @@ Resources:
   BudgetAlarmTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: !Sub '${resourcePrefix}-budget-alarm-${AWSAccount.Alias}'
+      TopicName: !Sub '${resourcePrefix}-budget-alarm-notification'
       DisplayName: !Sub
       - 'Budget Alarm for ${AWSAccount.AccountName} (forecastd threshold greater than ${threshold}'
       - { threshold: !GetAtt AWSAccount.Tags.budget-alarm-threshold}
       Subscription:
-        - Protocol: !Ref alarmSubscriberProtocol
-          Endpoint: !Ref alarmSubscriberEndpoint
+        - Protocol: !Ref alarmSubscriptionProtocol
+          Endpoint: !Ref alarmSubscriptionEndpoint
 
   AlarmTopicPolicy:
     Type: AWS::SNS::TopicPolicy
