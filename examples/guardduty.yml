@@ -14,35 +14,53 @@ DefaultOrganizationBindingRegion: eu-central-1
 OrganizationBindings:
 
   # Binding for: Detector (needs to be MasterAccount + MemberAccounts)
-  DetectorAccountBinding:
+  GuardDutyAllBinding:
     Account: '*'
     IncludeMasterAccount: true
 
   # Binding for: Master
-  MemberAccountBinding:
+  GuardDutyMemberBinding:
     Account: '*'
 
-  # Binding for: Member
-  MasterAccountBinding:
+  # Binding for: Member, FindingRule, FindingTopic, FindingTopicPolicy
+  GuardDutyMasterBinding:
     IncludeMasterAccount: true
+
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+    Default: my
+
+  findingSubscriptionProtocol:
+    Type: String
+    Default: email
+
+  findingSubscriptionEndpoint:
+    Type: String
+    Default: !GetAtt AWSAccount.RootEmail
 
 Resources:
   Detector:
     Type: AWS::GuardDuty::Detector
-    OrganizationBinding: !Ref DetectorAccountBinding
+    OrganizationBinding: !Ref GuardDutyAllBinding
     Properties:
-      Enable: 'true'
+      Enable: true
+      FindingPublishingFrequency: FIFTEEN_MINUTES
+
   Master:
     DependsOnAccount: !Ref MasterAccount
     Type: AWS::GuardDuty::Master
-    OrganizationBinding: !Ref MemberAccountBinding
+    OrganizationBinding: !Ref GuardDutyMemberBinding
     Properties:
       DetectorId: !Ref Detector
       MasterId: !Ref MasterAccount
+
   Member:
     Type: AWS::GuardDuty::Member
-    OrganizationBinding: !Ref MasterAccountBinding
-    ForeachAccount: !Ref MemberAccountBinding
+    OrganizationBinding: !Ref GuardDutyMasterBinding
+    ForeachAccount: !Ref GuardDutyMemberBinding
     Properties:
       DetectorId: !Ref Detector
       Email: !GetAtt CurrentAccount.RootEmail
@@ -50,3 +68,42 @@ Resources:
       Status: Invited
       DisableEmailNotification: true
 
+  FindingRule:
+    Type: AWS::Events::Rule
+    DependsOn: FindingsTopicPolicy
+    OrganizationBinding: !Ref GuardDutyMasterBinding
+    Properties:
+      Name: !Sub '${resourcePrefix}-guardduty-findings-rule'
+      EventPattern:
+        source:
+          - aws.guardduty
+      Targets:
+        - Id: FindingsTopic
+          Arn: !Ref FindingsTopic
+      State: ENABLED
+
+  FindingsTopic:
+    Type: AWS::SNS::Topic
+    OrganizationBinding: !Ref GuardDutyMasterBinding
+    Properties:
+      DisplayName: GuardDuty Findings
+      TopicName: !Sub '${resourcePrefix}-guardduty-findings-notification'
+      Subscription:
+        - Protocol: !Ref findingSubscriptionProtocol
+          Endpoint: !Ref findingSubscriptionEndpoint
+
+  FindingsTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    OrganizationBinding: !Ref GuardDutyMasterBinding
+    Properties:
+      Topics:
+        - !Ref FindingsTopic
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowEventsPublish
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref FindingsTopic
