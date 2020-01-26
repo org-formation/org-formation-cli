@@ -55,7 +55,7 @@ Resources:
     Properties:
       TopicName: !Sub '${resourcePrefix}-budget-alarm-notification'
       DisplayName: !Sub
-      - 'Budget Alarm for ${AWSAccount.AccountName} (forecastd threshold greater than ${threshold}'
+      - 'Budget Alarm for ${AWSAccount.AccountName} (forecasted threshold greater than ${threshold})'
       - { threshold: !GetAtt AWSAccount.Tags.budget-alarm-threshold}
       Subscription:
         - Protocol: !Ref alarmSubscriptionProtocol
