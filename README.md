@@ -168,7 +168,10 @@ After running `update-stacks` any stack that was deployed to this account using 
 
 Obviously: having a task file will do both `update` and `update-stacks` in the right sequence and you're done!
 
-If you removed and account and want to readd it: just add it back to the organization.yml. Make sure you run `update` and `update-stacks` (or `perform-tasks`) and your account will particapate in all bindings and the stacks will be re-deployed to the account.
+If you removed and account and want to re-add it:
+Just add it back to the organization.yml. Make sure you run `update` and `update-stacks` (or `perform-tasks`) and your account will particapate in all bindings and the stacks will be re-deployed to the account.
+
+As long as the account was not deleted in full `org-formation` will identify it by the `RootEmail` (or `AccountId`) attribute in the organization.yml
 
 </details>
 
