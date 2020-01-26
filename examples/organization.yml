@@ -86,6 +86,7 @@ Organization:
       Tags:
         budget-alarm-threshold: '200'
         account-owner-email: olaf@email.com
+        subdomain: development1
 
   Development2Account:
     Type: OC::ORG::Account
@@ -126,6 +127,7 @@ Organization:
       Tags:
         budget-alarm-threshold: '100'
         account-owner-email: olaf@email.com
+        subdomain: production1
 
   DenyChangeOfOrgRoleSCP:
     Type: OC::ORG::ServiceControlPolicy

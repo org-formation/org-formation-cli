@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization: !Include ../organization.yml
+
+OrganizationBindings:
+  CertificateBinding:
+    Region:
+      - eu-central-1
+      - eu-west-1
+    AccountsWithTag: subdomain
+
+  CertificateBindingUsEast:
+    Region:
+      - us-east-1
+    AccountsWithTag: subdomain
+
+Parameters:
+
+  orgPrefix:
+    Type: String
+
+  rootHostedZoneName:
+    Type: String
+
+Resources:
+
+  LocalCert1:
+    Type: AWS::CertificateManager::Certificate
+    OrganizationBinding: !Ref CertificateBinding
+    Properties:
+      DomainName: !Sub '*.${AWSAccount.Tags.subdomain}.${rootHostedZoneName}'
+      SubjectAlternativeNames:
+        - !Sub '${AWSAccount.Tags.subdomain}.${rootHostedZoneName}'
+      ValidationMethod: EMAIL
+      DomainValidationOptions:
+        - DomainName: !Sub '${AWSAccount.Tags.subdomain}.${rootHostedZoneName}'
+          ValidationDomain: !Ref rootHostedZoneName
+        - DomainName: !Sub '*.${AWSAccount.Tags.subdomain}.${rootHostedZoneName}'
+          ValidationDomain: !Ref rootHostedZoneName
+
+  LocalCert1ArnParam:
+    Type: AWS::SSM::Parameter
+    OrganizationBinding: !Ref CertificateBinding
+    Properties:
+      Name: !Sub '${orgPrefix}-certs-wildcard-cert1-arn'
+      Type: String
+      Value: !Ref LocalCert1
+
+  UsEastCert1:
+    Type: AWS::CertificateManager::Certificate
+    OrganizationBinding: !Ref CertificateBindingUsEast
+    Properties:
+      DomainName: !Sub '*.${AWSAccount.Tags.subdomain}.${rootHostedZoneName}'
+      SubjectAlternativeNames:
+        - !Sub '${AWSAccount.Tags.subdomain}.${rootHostedZoneName}'
+      ValidationMethod: EMAIL
+      DomainValidationOptions:
+        - DomainName: !Sub '${AWSAccount.Tags.subdomain}.${rootHostedZoneName}'
+          ValidationDomain: !Ref rootHostedZoneName
+        - DomainName: !Sub '*.${AWSAccount.Tags.subdomain}.${rootHostedZoneName}'
+          ValidationDomain: !Ref rootHostedZoneName
+
+  UsEastCert1ArnParam:
+    Type: AWS::SSM::Parameter
+    OrganizationBinding: !Ref CertificateBindingUsEast
+    Properties:
+      Name: !Sub '${orgPrefix}-certs-wildcard-cert1-arn'
+      Type: String
+      Value: !GetAtt AWSAccount.Resources.UsEastCert1
+
+  LocalUsEastCert1ArnParam:
+    Type: AWS::SSM::Parameter
+    OrganizationBinding: !Ref CertificateBinding
+    Properties:
+      Name: !Sub '${orgPrefix}-certs-us-east-1-wildcard-cert1-arn'
+      Type: String
+      Value: !GetAtt AWSAccount.Resources.UsEastCert1
