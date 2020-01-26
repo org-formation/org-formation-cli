@@ -175,6 +175,48 @@ As long as the account was not deleted in full `org-formation` will identify it 
 
 </details>
 
+&nbsp;
+
+<details>
+<summary>
+What happens when I rename an account (AccountName attribute) in org-formation?
+</summary>
+
+Renaming accounts is not possible using API's. You will have to log into the account as root to change the account name in AWS.
+
+If you change the AccountName attribute in org-formation this will warn you about the above and will, when resolving references to the account, use the account name from the organization.yml file.
+
+</details>
+
+&nbsp;
+
+
+<details>
+<summary>
+What happens when I rename an account (logical name) in org-formation?
+</summary>
+
+The logical name, just like with CloudFormation is how you refer to the account from within your templates. The logical account is also used as an identifier within org-formation.
+
+If you rename an account, by its logical name, org-formation will first notice that the resource by the old logical name has gone and `forget` it. Later it will discover the new same account by its new logical name and match it with the physical account that already exists in AWS. It will match the two thus completing the rename.
+
+</details>
+
+
+&nbsp;
+
+
+<details>
+<summary>
+Why is nesting OU's or a custom OrganizationAccessRole not supported?
+</summary>
+
+No reason other than not bumping into this usecase so far.
+
+Really happy to implement this based on someone else's usecase.
+
+</details>
+
 ## More docs
 
 - [Examples](examples/)
