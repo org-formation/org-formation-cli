@@ -145,6 +145,33 @@ Just like with the resources within your AWS Account, managing AWS Organization 
 
 If you are considering to use an account vending machine (e.g. [AWS Control Tower](https://aws.amazon.com/controltower/)) to create and manage new accounts within your organization: Do realize that the account vending machine allows you to quickly create organization resources but only has limited facilities when it comes to updating and maintaining these resources.
 
+
+## Questions and Answers
+
+<details>
+<summary>
+What happens when I remove an account from the organization.yml?
+</summary>
+
+If you remove an account from the organization it will not be deleted. Deleting accounts using api calls is not supported by AWS.
+
+After running `update` the account that is removed from the organization will be not be able to be part of organization bindings.
+
+```
+\> org-formation update ./examples/organization.yml --profile org-formation
+OC::ORG::Account              | Development4Account           | Forget
+OC::ORG::OrganizationalUnit   | DevelopmentOU                 | Detach Account (Development4Account)
+OC::ORG::OrganizationalUnit   | DevelopmentOU                 | CommitHash
+```
+
+After running `update-stacks` any stack that was deployed to this account using org-formation will be deleted from the target account. Stacks that have been created by other means will not be affected.
+
+Obviously: having a task file will do both `update` and `update-stacks` in the right sequence and you're done!
+
+If you removed and account and want to readd it: just add it back to the organization.yml. Make sure you run `update` and `update-stacks` (or `perform-tasks`) and your account will particapate in all bindings and the stacks will be re-deployed to the account.
+
+</details>
+
 ## More docs
 
 - [Examples](examples/)
