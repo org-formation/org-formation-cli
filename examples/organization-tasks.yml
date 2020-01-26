@@ -91,25 +91,19 @@ CrossAccountBucket:
     ReadAccessAccountBinding:
       OrganizationalUnit: !Ref DevelopmentOU
 
-# CrossAccountSecret:
-#   Type: update-stacks
-#   Template: ./cross-account-secret.yml
-#   StackName: MySecret
-#   Parameters:
-#     secretName: myBucket
+CrossAccountSecret:
+  Type: update-stacks
+  Template: ./cross-account-secret.yml
+  StackName: MySecret
+  Parameters:
+    secretName: mySecret
 
-# CrossAccountLambda:
-#   Type: update-stacks
-#   Template: ./cross-account-lambda.yml
-#   StackName: MyLambda
-#   Parameters:
-#     functionName: myLambda
-
-# HostedZone:
-#   Type: update-stacks
-#   Template: ./hosted-zone.yml
-#   StackName: hosted-zone
-#   StackDescription: 'Hosted Zone example template'
+CrossAccountLambda:
+  Type: update-stacks
+  Template: ./cross-account-lambda.yml
+  StackName: MyLambda
+  Parameters:
+    functionName: myLambda
 
 # Include:
 #   Type: include
