@@ -104,13 +104,6 @@ Resources:
       HostedZoneConfig:
         Comment: Shared Services domain
       Name: !Sub 'services.${hostedZoneName}'
-      HostedZoneTags:
-        - Key: Application
-          Value: cso
-        - Key: Component
-          Value: domains
-        - Key: Aspect
-          Value: addressing
 
   DataDevNsRecord:
     Type: AWS::Route53::RecordSet
