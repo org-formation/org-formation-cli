@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+# Include file that contains Organization Section.
+# The Organization Section describes Accounts, Organizational Units, etc.
+Organization: !Include ./organization.yml
+
+# Section that contains a named list of Bindings.
+# Bindings determine what resources are deployed where
+# These bindings can be !Ref'd from the Resources in the resource section
+OrganizationBindings:
+
+  # Binding for: OriginBucket, OriginBucketPolicy, CloudFrontIdentity, CloudFrontDistribution, CloudFrontAliasRecordSet
+  OriginBucketBinding:
+    Region: eu-central-1
+    Account: !Ref Production1Account
+
+  # Binding for: CloudTrail, CloudTrailLogGroup, CloudTrailLogGroupRole
+  CloudFrontCertificateBinding:
+    Region: us-east-1
+    IncludeMasterAccount: true
+
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+
+  siteName:
+    Type: String
+
+  hostedZoneName:
+    Type: String
+
+  defaultRootObject:
+    Type: String
+    Default: index.html
+
+  hostedZoneIdExportName:
+    Type: String
+
+Resources:
+
+  OriginBucket:
+    Type: AWS::S3::Bucket
+    OrganizationBinding: !Ref OriginBucketBinding
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub '${resourcePrefix}-sites-${siteName}.${hostedZoneName}'
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Application
+          Value: !Ref resourcePrefix
+        - Key: Component
+          Value: sites
+        - Key: Aspect
+          Value: content
+
+  OriginBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    OrganizationBinding: !Ref OriginBucketBinding
+    Properties:
+      Bucket: !Ref OriginBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${OriginBucket}/*'
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontIdentity.S3CanonicalUserId
+
+  CloudFrontIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    OrganizationBinding: !Ref OriginBucketBinding
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref OriginBucket
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    OrganizationBinding: !Ref OriginBucketBinding
+    DependsOn:
+      - OriginBucket
+      - CloudFrontCertificate
+    Properties:
+      DistributionConfig:
+        Comment: !Sub '${siteName}.${hostedZoneName}'
+        Aliases:
+          - !Sub '${siteName}.${hostedZoneName}'
+        DefaultRootObject: !Ref defaultRootObject
+        HttpVersion: http2
+        IPV6Enabled: false
+        Enabled: true
+        Origins:
+          - Id: OriginBucket
+            DomainName: !GetAtt OriginBucket.DomainName
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontIdentity}'
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CloudFrontCertificate
+          MinimumProtocolVersion: TLSv1.2_2018
+          SslSupportMethod: sni-only
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          DefaultTTL: 0
+          TargetOriginId: OriginBucket
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+
+  CloudFrontAliasRecordSet:
+    Type: AWS::Route53::RecordSet
+    OrganizationBinding: !Ref OriginBucketBinding
+    Properties:
+      Name: !Sub '${siteName}.${hostedZoneName}'
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+      HostedZoneId:
+        Fn::ImportValue: !Ref hostedZoneIdExportName
+
+  CloudFrontCertificate:
+    Type: AWS::CertificateManager::Certificate
+    OrganizationBinding: !Ref CloudFrontCertificateBinding
+    Properties:
+      DomainName: !Sub '${siteName}.${hostedZoneName}'
+      ValidationMethod: EMAIL
+      DomainValidationOptions:
+        - DomainName: !Sub '${siteName}.${hostedZoneName}'
+          ValidationDomain: !Ref hostedZoneName
