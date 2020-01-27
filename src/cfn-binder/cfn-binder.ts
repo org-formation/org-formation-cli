@@ -29,8 +29,27 @@ export class CloudFormationBinder {
         for (const [key, val] of Object.entries(parameters)) {
             if (Array.isArray(val)) {
                 this.parameters[key] = val.join(',');
-            } else  if (typeof val  === 'object') {
+            } else if (typeof val  === 'object') {
+                const entries = Object.entries(val);
+                if (entries.length === 1) {
+                    const [valKey, logicalId] = entries[0];
+                    if (valKey === 'Ref') {
+                        const account = template.organizationSection.findAccount((x) => x.logicalId === logicalId);
+                        if (!account) {
+                            throw new OrgFormationError(`unable to resolve reference to account ${logicalId}`);
+                        }
+                        const binding = state.getBinding(account.type, account.logicalId);
+                        if (!binding) {
+                            throw new OrgFormationError(`unable to find binding for account ${logicalId}. is your organization up to date?`);
+
+                        }
+                        this.parameters[key] = binding.physicalId;
+                        continue;
+                    }
+                }
+
                 throw new OrgFormationError(`parameter ${key} has invalid value, value must not be an object`);
+
             } else {
                 this.parameters[key] = '' + val;
             }

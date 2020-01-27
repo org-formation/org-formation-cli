@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { BuildConfiguration } from '../../../src/build-tasks/build-configuration';
-import { BaseOrganizationTask } from '../../../src/build-tasks/build-task-provider';
+import { BuildConfiguration, IBuildTask } from '../../../src/build-tasks/build-configuration';
+import { BaseOrganizationTask, BaseStacksTask } from '../../../src/build-tasks/build-task-provider';
 import { ICommandArgs } from '../../../src/commands/base-command';
 
 describe('when loading task file configuration', () => {
@@ -125,4 +125,27 @@ describe('when including task file without update-organization', () => {
         expect(command.organizationFile as string).to.contain((updateOrgTask as BaseOrganizationTask).templatePath);
 
     });
+});
+
+describe('when referencing account on parameter', () => {
+    let buildconfig: BuildConfiguration;
+    let tasks: IBuildTask[];
+
+    beforeEach(() => {
+        buildconfig = new BuildConfiguration('./test/resources/tasks/build-tasks-param-account-ref.yml');
+        tasks = buildconfig.enumBuildTasks({} as any);
+    });
+
+    it('file is loaded without errors', () => {
+        expect(tasks).to.not.be.undefined;
+        expect(tasks.length).to.eq(3);
+        const updateStacks = tasks.filter((x) => x.type === 'update-stacks');
+        expect(updateStacks.length).to.eq(2);
+    });
+
+    // it('physical id of account is copied to parameter value', () => {
+    //     const updateStacksAccount1 = tasks.filter((x) => x.type === 'update-stacks' && x.name === 'StackParamAccount1Ref')[0] as BaseStacksTask;
+
+    //     expect(updateStacksAccount1);
+    // });
 });

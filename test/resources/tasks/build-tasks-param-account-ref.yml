@@ -1,0 +1,18 @@
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+StackParamAccount1Ref:
+  Type: update-stacks
+  Template: ./templates/cfn-template-param.yml
+  StackName: stack-name
+  Parameters:
+    param: !Ref Account1
+
+
+StackParamMasterAccountRef:
+  Type: update-stacks
+  Template: ./templates/cfn-template-param.yml
+  StackName: stack-name-2
+  Parameters:
+    param: !Ref MasterAccount

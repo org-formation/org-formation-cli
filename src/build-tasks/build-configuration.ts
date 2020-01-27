@@ -6,8 +6,7 @@ import { ICommandArgs } from '../commands/base-command';
 import { IUpdateStacksCommandArgs } from '../commands/update-stacks';
 import { OrgFormationError } from '../org-formation-error';
 import { IOrganizationBinding } from '../parser/parser';
-import { Validator } from '../parser/validator';
-import { BaseOrganizationTask, BaseStacksTask, BuildTaskProvider } from './build-task-provider';
+import { BaseStacksTask, BuildTaskProvider } from './build-task-provider';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
