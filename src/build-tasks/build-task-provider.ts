@@ -100,7 +100,7 @@ class ValidateIncludeTask extends BaseIncludeTask {
     }
 }
 
-abstract class BaseStacksTask implements IBuildTask {
+export abstract class BaseStacksTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
     public dependsOn: string[];
@@ -202,7 +202,7 @@ export class ValidateStacksTask extends BaseStacksTask {
 
 }
 
-abstract class BaseOrganizationTask implements IBuildTask {
+export abstract class BaseOrganizationTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
     public templatePath: string;

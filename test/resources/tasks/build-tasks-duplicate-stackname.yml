@@ -1,0 +1,13 @@
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+OrgTemplate:
+  Type: update-stacks
+  Template: ./templates/org-template.yml
+  StackName: stack-name
+
+OrgTemplate2:
+  Type: update-stacks
+  Template: ./templates/org-template.yml
+  StackName: stack-name

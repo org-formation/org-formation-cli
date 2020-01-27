@@ -7,7 +7,7 @@ import { IUpdateStacksCommandArgs } from '../commands/update-stacks';
 import { OrgFormationError } from '../org-formation-error';
 import { IOrganizationBinding } from '../parser/parser';
 import { Validator } from '../parser/validator';
-import { BuildTaskProvider } from './build-task-provider';
+import { BaseOrganizationTask, BaseStacksTask, BuildTaskProvider } from './build-task-provider';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -26,6 +26,8 @@ export class BuildConfiguration {
             result.push(task);
         }
 
+        this.validateTasksFile(result);
+
         return result;
     }
 
@@ -37,7 +39,22 @@ export class BuildConfiguration {
             result.push(task);
         }
 
+        this.validateTasksFile(result);
+
         return result;
+    }
+    private validateTasksFile(tasks: IBuildTask[]) {
+        const updateOrganizationTasks = tasks.filter((x) => x.type === 'update-organization');
+        if (updateOrganizationTasks.length === 0) {
+            throw new OrgFormationError(`tasks file does not contain update-organization task.`);
+        }
+        if (updateOrganizationTasks.length > 1) {
+            throw new OrgFormationError(`tasks file contains more than 1 update-organization task.`);
+        }
+
+        const updateStackTasks = tasks.filter((x) => x.type === 'update-stacks') as BaseStacksTask[];
+        const stackNames = updateStackTasks.map((x) => x.stackName);
+        this.throwForDuplicateVale(stackNames, (x) => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
     }
 
     private fixateOrganizationFile(command: ICommandArgs) {
@@ -74,6 +91,16 @@ export class BuildConfiguration {
             result.push({...config, LogicalName: name, FilePath: filePath});
         }
         return result;
+    }
+
+    private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error) {
+        const sortedArr = arr.sort();
+        for (let i = 0; i < sortedArr.length - 1; i++) {
+            if (sortedArr[i + 1] === sortedArr[i]) {
+                const duplicate = sortedArr[i];
+                throw fnError(duplicate);
+            }
+        }
     }
 }
 

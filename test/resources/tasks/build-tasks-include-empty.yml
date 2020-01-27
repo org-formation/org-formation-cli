@@ -1,0 +1,7 @@
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+Include:
+  Type: include
+  Path: ./build-tasks-empty.yml

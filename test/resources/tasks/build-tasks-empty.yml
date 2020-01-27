@@ -1,0 +1,5 @@
+
+OrgTemplate:
+  Type: update-stacks
+  Template: ./templates/org-template.yml
+  StackName: stack-name

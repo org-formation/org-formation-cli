@@ -104,6 +104,7 @@ CrossAccountLambda:
   StackName: MyLambda
   Parameters:
     functionName: myLambda
+    functionAccount: !Ref SharedServicesAccount
 
 # Include:
 #   Type: include

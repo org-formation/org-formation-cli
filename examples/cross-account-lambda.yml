@@ -30,12 +30,12 @@ OrganizationBindings:
   # Binding for: InvokeFunctionPolicy
   # Function assumed to already be present in account
   FunctionAccountBinding:
-    Account: !Ref functionAccount
+    Account: !Ref SharedServicesAccount
 
   # Binding for: InvokePermissions
   InvokePermissionAccountBinding:
     Account: '*'
-    ExcludeAccount: !Ref functionAccount
+    ExcludeAccount: !Ref SharedServicesAccount
 
 
 Resources:
