@@ -43,6 +43,8 @@ You can now execute the commandline program `org-formation`. try:
 
 ## Getting started
 
+💡Need help getting started? [Get some on slack!](https://join.slack.com/t/org-formation/shared_invite/enQtOTA5NjM3Mzc4ODUwLTMxZjYxYzljZTE5YWUzODE2MTNmYjM5NTY5Nzc3MzljNjVlZGQ1ODEzZDgyMWVkMDg3Mzk1ZjQ1ZjM4MDhlOGM)
+
 To get started you first need an ``org-formation`` template that describes all your Organization resources such as [Accounts](./docs/organization-resources.md#account), [OUs](./docs/organization-resources.md#organizationalunit) and [SCPs](docs/organization-resources.md#servicecontrolpolicy).
 
 After [Installation](#installation) you can generate this file using the following command:
@@ -175,7 +177,6 @@ As long as the account was not deleted in full `org-formation` will identify it 
 
 </details>
 
-&nbsp;
 
 <details>
 <summary>
@@ -188,8 +189,6 @@ If you change the AccountName attribute in org-formation this will warn you abou
 
 </details>
 
-&nbsp;
-
 
 <details>
 <summary>
@@ -201,9 +200,6 @@ The logical name, just like with CloudFormation is how you refer to the account 
 If you rename an account, by its logical name, org-formation will first notice that the resource by the old logical name has gone and `forget` it. Later it will discover the new same account by its new logical name and match it with the physical account that already exists in AWS. It will match the two thus completing the rename.
 
 </details>
-
-
-&nbsp;
 
 
 <details>
