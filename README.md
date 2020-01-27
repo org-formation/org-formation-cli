@@ -228,6 +228,7 @@ Really happy to implement this based on someone else's usecase.
 Special thanks to the following companies:
 
 [![Moneyou](./docs/img/moneyou.svg)](https://www.moneyou.nl)
+
 [![ChainSlayer](./docs/img/chainslayer.png)](https://www.https://www.chainslayer.io/)
 
 Special thanks to the following individuals:
