@@ -222,3 +222,12 @@ Really happy to implement this based on someone else's usecase.
 - [Automating deployments](docs/task-files.md)
 - [CLI reference](docs/cli-reference.md)
 - [Changelog](CHANGELOG.md)
+
+## Sponsors & collaborators
+
+Special thanks to the following companies:
+[![Moneyou](./docs/img/moneyou.svg)](https://www.moneyou.nl)
+[![ChainSlayer](./docs/img/chainslayer.png)](https://www.https://www.chainslayer.io/)
+
+Special thanks to the following individuals:
+- [Tjerk Stroband](https://github.com/tstroband)
