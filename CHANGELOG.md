@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**not released**
+- Added support for passing !Ref account in update-stacks parameters (tasks file).
+- Added validation on the tasks in tasks file: top level file must have exactly 1 update-organization task
+- Added validation on the tasks in tasks file: no 2 update-stacks tasks can have the same stackName
+
 **version 0.0.67**
 - Added support for empty/null bindings.
 - Added Fn:TargetCount function which returns the amount of target for a binding. Can be used in Conditions, e.g: CreateResoruce: !Not [ !Equals [ Fn:TargetCount MyBinding, 0 ] ]
