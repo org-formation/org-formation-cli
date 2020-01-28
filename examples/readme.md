@@ -8,6 +8,7 @@
 - [budget alarms](#budget-alarms)
 - [cloudtrail](#cloudtrail)
 - [guardduty](#guardduty)
+- [subdomains](#subdomains)
 - [cross account bucket](#cross-account-bucket)
 - [cross account role](#cross-account-role)
 - [cross account role with alarm](#cross-account-role-with-alarm)
