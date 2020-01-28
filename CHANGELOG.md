@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**not released**
+**version 0.0.68**
 - Added support for passing !Ref account in update-stacks parameters (tasks file).
 - Added validation on the tasks in tasks file: top level file must have exactly 1 update-organization task
 - Added validation on the tasks in tasks file: no 2 update-stacks tasks can have the same stackName
