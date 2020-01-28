@@ -34,14 +34,6 @@ export class ConsoleUtil {
         }
     }
 
-    public static GetStackTrace(err: Error): string {
-        if (ConsoleUtil.printStacktraces) {
-            return `\nstack:\n ${err.stack}`;
-        } else {
-            return 'use option --print-stack to print stack';
-        }
-    }
-
     public static async Readline(message: string): Promise<string> {
 
         const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
