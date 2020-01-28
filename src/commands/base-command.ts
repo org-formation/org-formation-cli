@@ -96,6 +96,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}');
         command.option('--state-object [state-object]', 'key for object used to store state', 'state.json');
         command.option('--profile [profile]', 'aws profile to use');
+        command.option('--print-stack', 'will print stacktraces for errors');
     }
 
     protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState) {
@@ -204,6 +205,11 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     private async initialize(command: ICommandArgs) {
         if (command.initialized) { return; }
+
+        if (command.printStack === true) {
+            ConsoleUtil.printStacktraces = true;
+        }
+
         try {
             await this.customInitializationIncludingMFASupport(command);
         } catch (err) {
@@ -232,4 +238,5 @@ export interface ICommandArgs {
     profile?: string;
     state?: PersistedState;
     initialized?: boolean;
+    printStack?: boolean;
 }

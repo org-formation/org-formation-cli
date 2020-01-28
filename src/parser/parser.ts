@@ -98,7 +98,7 @@ export class TemplateRoot {
             if (err && err.message) {
                 reason = err.message;
             }
-            throw new OrgFormationError(`unable to load file ${path}, reason: ${reason}, stack: ${err.stack}`);
+            throw new OrgFormationError(`unable to load file ${path}, reason: ${reason}. ${ConsoleUtil.GetStackTrace(err)}`);
         }
     }
 

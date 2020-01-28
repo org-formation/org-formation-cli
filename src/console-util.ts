@@ -2,6 +2,7 @@
 import * as readline from 'readline';
 
 export class ConsoleUtil {
+    public static printStacktraces = false;
     public static verbose = false;
 
     public static LogDebug(message: string) {
@@ -21,10 +22,23 @@ export class ConsoleUtil {
         console.warn(`WARN: ${message}`);
     }
 
-    public static LogError(message: string, err?: Error ) {
+    public static LogError(message: string, err?: Error) {
         console.error(`ERROR: ${message}`);
-        if (err) {
-            console.error(err);
+
+        if (err !== undefined) {
+            if (ConsoleUtil.printStacktraces) {
+                console.error(err);
+            } else {
+                console.error(`${err.message} (use option --print-stack to print stack)`);
+            }
+        }
+    }
+
+    public static GetStackTrace(err: Error): string {
+        if (ConsoleUtil.printStacktraces) {
+            return `\nstack:\n ${err.stack}`;
+        } else {
+            return 'use option --print-stack to print stack';
         }
     }
 
