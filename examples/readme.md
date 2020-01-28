@@ -46,6 +46,16 @@ Example on how to do a basic guardduty implementation. Demonstrates cross accoun
 ![guardduty](img/guardduty.png)
 
 
+## subdomains
+
+Example on how to provision route 53 subdomains for all accounts within your organization based on a tag and including a root hosted zone in the organization master account.
+
+[subdomains.yml](subdomains.yml)
+
+![subdomains](img/subdomains.png)
+
+
+
 
 ## cross account bucket
 
@@ -54,7 +64,6 @@ Reusable template to do cross account access to S3 bucket.
 ![cross-account-bucket](img/cross-account-bucket.png)
 
 [cross-account-bucket.yml](cross-account-bucket.yml)
-
 
 
 ## cross account role
@@ -73,7 +82,6 @@ Reusable template to do cross account IAM roles with an alarm (based on CloudTra
 ![cross-account-role-with-alarm](img/cross-account-role-with-alarm.png)
 
 [cross-account-role-with-alarm.yml](cross-account-role-with-alarm.yml)
-
 
 
 ## cross account secret

@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+# Include file that contains Organization Section.
+# The Organization Section describes Accounts, Organizational Units, etc.
+Organization: !Include ./organization.yml
+
+# Any Binding that does not explicitly specify a region will default to this.
+# Value can be either string or list
+DefaultOrganizationBindingRegion: eu-central-1
+
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+    Default: my
+
+  rootHostedZoneName:
+    Type: String
+
+# Section contains a named set of Bindings.
+# Bindings determine what resources are deployed where
+# These bindings can be !Ref'd from the Resources in the resource section
+OrganizationBindings:
+
+  # binding for HostedZone, HostedZoneIdParam, HostedZoneNameParam
+  HostedZoneBinding:
+    AccountsWithTag: subdomain
+
+  # binding for RootHostedZone, ParentNsRecord
+  RootHostedZoneBinding:
+    IncludeMasterAccount: true
+
+Resources:
+
+  #=========================================#
+  # Zone
+  #=========================================#
+
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    OrganizationBinding: !Ref HostedZoneBinding
+    Properties:
+      HostedZoneConfig:
+        Comment: Domain Hosted Zone
+      Name: !Sub '${AWSAccount.Tags.subdomain}.${rootHostedZoneName}.'
+
+  HostedZoneIdParam:
+    Type: AWS::SSM::Parameter
+    OrganizationBinding: !Ref HostedZoneBinding
+    Properties:
+      Name: !Sub '${resourcePrefix}-domains-hosted-zone-id'
+      Type: String
+      Value: !Ref HostedZone
+
+  HostedZoneNameParam:
+    Type: AWS::SSM::Parameter
+    OrganizationBinding: !Ref HostedZoneBinding
+    Properties:
+      Name: !Sub '${resourcePrefix}-domains-hosted-zone-name'
+      Type: String
+      Value: !Sub '${AWSAccount.Tags.subdomain}.${rootHostedZoneName}.'
+
+  #=========================================#
+  # Parent Record
+  #=========================================#
+
+  RootHostedZone:
+    Type: AWS::Route53::HostedZone
+    OrganizationBinding: !Ref RootHostedZoneBinding
+    Properties:
+      HostedZoneConfig:
+        Comment: Root domain
+      Name: !Ref rootHostedZoneName
+
+  ParentNsRecord:
+    DependsOn: RootHostedZone
+    Type: AWS::Route53::RecordSet
+    OrganizationBinding: !Ref RootHostedZoneBinding
+    ForeachAccount: !Ref HostedZoneBinding
+    Properties:
+      Type: NS
+      HostedZoneName: !Sub '${rootHostedZoneName}.'
+      Name: !Sub '${CurrentAccount.Tags.subdomain}.${rootHostedZoneName}.'
+      TTL: 86400
+      ResourceRecords: !GetAtt CurrentAccount.Resources.HostedZone.NameServers
+
