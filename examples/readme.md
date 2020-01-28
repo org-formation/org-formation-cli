@@ -37,25 +37,21 @@ Example on how to do a basic cloud trail implementation. Demonstrates cross acco
 [cloudtrail.yml](cloudtrail.yml)
 
 
-
 ## guardduty
 
 Example on how to do a basic guardduty implementation. Demonstrates cross account references / ForeachElement / DependsOnAccount
 
-[guardduty.yml](guardduty.yml)
-
 ![guardduty](img/guardduty.png)
 
+[guardduty.yml](guardduty.yml)
 
 ## subdomains
 
 Example on how to provision route 53 subdomains for all accounts within your organization based on a tag and including a root hosted zone in the organization master account.
 
-[subdomains.yml](subdomains.yml)
-
 ![subdomains](img/subdomains.png)
 
-
+[subdomains.yml](subdomains.yml)
 
 
 ## cross account bucket
