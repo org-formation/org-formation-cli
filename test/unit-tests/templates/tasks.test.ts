@@ -124,6 +124,7 @@ describe('when including task file without update-organization', () => {
         expect(command.organizationFile).to.not.be.undefined;
         expect(command.organizationFile as string).to.contain((updateOrgTask as BaseOrganizationTask).templatePath);
 
+
     });
 });
 

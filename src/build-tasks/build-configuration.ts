@@ -43,14 +43,6 @@ export class BuildConfiguration {
         return result;
     }
     private validateTasksFile(tasks: IBuildTask[]) {
-        const updateOrganizationTasks = tasks.filter((x) => x.type === 'update-organization');
-        if (updateOrganizationTasks.length === 0) {
-            throw new OrgFormationError(`tasks file does not contain update-organization task.`);
-        }
-        if (updateOrganizationTasks.length > 1) {
-            throw new OrgFormationError(`tasks file contains more than 1 update-organization task.`);
-        }
-
         const updateStackTasks = tasks.filter((x) => x.type === 'update-stacks') as BaseStacksTask[];
         const stackNames = updateStackTasks.map((x) => x.stackName);
         this.throwForDuplicateVale(stackNames, (x) => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
