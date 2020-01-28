@@ -3,20 +3,22 @@ AWSTemplateFormatVersion: '2010-09-09-OC'
 Organization: !Include ../organization.yml
 
 OrganizationBindings:
+
+  # binding for LocalCert1, LocalCert1ArnParam, LocalUsEastCert1ArnParam
   CertificateBinding:
     Region:
       - eu-central-1
       - eu-west-1
     AccountsWithTag: subdomain
 
+  # binding for UsEastCert1, UsEastCert1ArnParam
   CertificateBindingUsEast:
-    Region:
-      - us-east-1
+    Region: us-east-1
     AccountsWithTag: subdomain
 
 Parameters:
 
-  orgPrefix:
+  resourcePrefix:
     Type: String
 
   rootHostedZoneName:
@@ -42,7 +44,7 @@ Resources:
     Type: AWS::SSM::Parameter
     OrganizationBinding: !Ref CertificateBinding
     Properties:
-      Name: !Sub '${orgPrefix}-certs-wildcard-cert1-arn'
+      Name: !Sub '${resourcePrefix}-certs-wildcard-cert1-arn'
       Type: String
       Value: !Ref LocalCert1
 
@@ -64,7 +66,7 @@ Resources:
     Type: AWS::SSM::Parameter
     OrganizationBinding: !Ref CertificateBindingUsEast
     Properties:
-      Name: !Sub '${orgPrefix}-certs-wildcard-cert1-arn'
+      Name: !Sub '${resourcePrefix}-certs-wildcard-cert1-arn'
       Type: String
       Value: !GetAtt AWSAccount.Resources.UsEastCert1
 
@@ -72,6 +74,6 @@ Resources:
     Type: AWS::SSM::Parameter
     OrganizationBinding: !Ref CertificateBinding
     Properties:
-      Name: !Sub '${orgPrefix}-certs-us-east-1-wildcard-cert1-arn'
+      Name: !Sub '${resourcePrefix}-certs-us-east-1-wildcard-cert1-arn'
       Type: String
       Value: !GetAtt AWSAccount.Resources.UsEastCert1
