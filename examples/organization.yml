@@ -45,6 +45,7 @@ Organization:
       Accounts:
         - !Ref SharedUsersAccount
         - !Ref SharedServicesAccount
+        - !Ref SharedComplianceAccount
 
   SharedUsersAccount:
     Type: OC::ORG::Account

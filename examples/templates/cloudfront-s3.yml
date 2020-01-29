@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 
 # Include file that contains Organization Section.
 # The Organization Section describes Accounts, Organizational Units, etc.
-Organization: !Include ./organization.yml
+Organization: !Include ../organization.yml
 
 # Section that contains a named list of Bindings.
 # Bindings determine what resources are deployed where

@@ -207,7 +207,7 @@ If you rename an account, by its logical name, org-formation will first notice t
 Why is nesting OU's or a custom OrganizationAccessRole not supported?
 </summary>
 
-No reason other than not bumping into this usecase so far.
+No reason other than not running into this usecase so far.
 
 Really happy to implement this based on someone else's usecase.
 

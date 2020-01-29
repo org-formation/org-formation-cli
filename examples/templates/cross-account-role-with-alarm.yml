@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09-OC'
 
 # Include file that contains Organization Section.
-# The Organization Section describes Accounts, Organizational Units, etc.
-Organization: !Include ./organization.yml
+# The Organization Section describes Accounts, Organizational Units, etc
+Organization: !Include ../organization.yml
 
 # Any Binding that does not explicitly specify a region will default to this.
 # Value can be either string or list

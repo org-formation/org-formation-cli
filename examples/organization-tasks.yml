@@ -5,19 +5,19 @@ OrganizationUpdate:
 
 CloudTrail:
   Type: update-stacks
-  Template: ./cloudtrail.yml
+  Template: ./templates/cloudtrail.yml
   StackName: cloudtrail
   StackDescription: Cloudtrail example template
 
 GuardDuty:
   Type: update-stacks
-  Template: ./guardduty.yml
+  Template: ./templates/guardduty.yml
   StackName: guardduty
   StackDescription: Guardduty example template
 
 BudgetAlarms:
   Type: update-stacks
-  Template: ./budget-alarms.yml
+  Template: ./templates/budget-alarms.yml
   StackName: budget-alarms
   DefaultOrganizationBindingRegion: eu-central-1
   DefaultOrganizationBinding:
@@ -25,63 +25,22 @@ BudgetAlarms:
   Parameters:
     resourcePrefix: my
 
-DeveloperRole:
+SubDomains:
   Type: update-stacks
-  Template: ./cross-account-role.yml
-  StackName: my-developer-role
-  StackDescription: Developer Role Example
-  TerminationProtection: true
+  Template: ./templates/subdomains.yml
+  StackName: SubDomains
   Parameters:
-    resourcePrefix: my
-    roleName: developer-role
-    rolePolicyArns:
-      - arn:aws:iam::aws:policy/PowerUserAccess
-  OrganizationBindings:
-    AssumeRoleBinding:
-      Account: !Ref SharedUsersAccount
-    RoleBinding:
-      OrganizationalUnit: !Ref DevelopmentOU
+    rootHostedZoneName: olafconijn.com
 
-FinanceRole:
-  Type: update-stacks
-  Template: ./cross-account-role.yml
-  StackName: my-finance-role
-  StackDescription: Finance Role Example
-  TerminationProtection: true
-  Parameters:
-    resourcePrefix: my
-    roleName: finance-role
-    rolePolicyArns:
-      - arn:aws:iam::aws:policy/job-function/Billing
-  OrganizationBindings:
-    AssumeRoleBinding:
-      Account: !Ref SharedUsersAccount
-    RoleBinding:
-      IncludeMasterAccount: true
-
-DevOpsRoleWithAlarm:
-  Type: update-stacks
-  Template: ./cross-account-role-with-alarm.yml
-  StackName: my-devops-role
-  StackDescription: DevOps Role with Alarm Example
-  TerminationProtection: true
-  Parameters:
-    resourcePrefix: my
-    roleName: DevopsRole
-    requireMfa: false
-    cloudTrailLogGroup: CloudTrail/audit-log
-    rolePolicyArns:
-      - arn:aws:iam::aws:policy/AdministratorAccess
-  OrganizationBindings:
-    AssumeRoleBinding:
-      Account: !Ref SharedUsersAccount
-    RoleBinding:
-      OrganizationalUnit: !Ref ProductionOU
-
+Include:
+  Type: include
+  Path: ./organization-iam-tasks.yml
+  MaxConcurrentTasks: 10
+  FailedTaskTolerance: 10
 
 CrossAccountBucket:
   Type: update-stacks
-  Template: ./cross-account-bucket.yml
+  Template: ./templates/cross-account-bucket.yml
   StackName: MyBucket
   Parameters:
     bucketName: mybucket-516455415878
@@ -93,29 +52,16 @@ CrossAccountBucket:
 
 CrossAccountSecret:
   Type: update-stacks
-  Template: ./cross-account-secret.yml
+  Template: ./templates/cross-account-secret.yml
   StackName: MySecret
   Parameters:
     secretName: mySecret
 
 CrossAccountLambda:
   Type: update-stacks
-  Template: ./cross-account-lambda.yml
+  Template: ./templates/cross-account-lambda.yml
   StackName: MyLambda
   Parameters:
     functionName: myLambda
     functionAccount: !Ref SharedServicesAccount
 
-SubDomains:
-  Type: update-stacks
-  Template: ./subdomains.yml
-  StackName: SubDomains
-  Parameters:
-    rootHostedZoneName: olafconijn.com
-
-
-# Include:
-#   Type: include
-#   Path: ./build-tasks-include.yml
-#   MaxConcurrentTasks: 10
-#   FailedTaskTolerance: 10

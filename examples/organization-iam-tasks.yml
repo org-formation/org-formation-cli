@@ -1,0 +1,53 @@
+
+DeveloperRole:
+  Type: update-stacks
+  Template: ./templates/cross-account-role.yml
+  StackName: my-developer-role
+  StackDescription: Developer Role Example
+  TerminationProtection: true
+  Parameters:
+    resourcePrefix: my
+    roleName: developer-role
+    rolePolicyArns:
+      - arn:aws:iam::aws:policy/PowerUserAccess
+  OrganizationBindings:
+    AssumeRoleBinding:
+      Account: !Ref SharedUsersAccount
+    RoleBinding:
+      OrganizationalUnit: !Ref DevelopmentOU
+
+FinanceRole:
+  Type: update-stacks
+  Template: ./templates/cross-account-role.yml
+  StackName: my-finance-role
+  StackDescription: Finance Role Example
+  TerminationProtection: true
+  Parameters:
+    resourcePrefix: my
+    roleName: finance-role
+    rolePolicyArns:
+      - arn:aws:iam::aws:policy/job-function/Billing
+  OrganizationBindings:
+    AssumeRoleBinding:
+      Account: !Ref SharedUsersAccount
+    RoleBinding:
+      IncludeMasterAccount: true
+
+DevOpsRoleWithAlarm:
+  Type: update-stacks
+  Template: ./templates/cross-account-role-with-alarm.yml
+  StackName: my-devops-role
+  StackDescription: DevOps Role with Alarm Example
+  TerminationProtection: true
+  Parameters:
+    resourcePrefix: my
+    roleName: devops-role
+    requireMfa: false
+    cloudTrailLogGroup: CloudTrail/audit-log
+    rolePolicyArns:
+      - arn:aws:iam::aws:policy/AdministratorAccess
+  OrganizationBindings:
+    AssumeRoleBinding:
+      Account: !Ref SharedUsersAccount
+    RoleBinding:
+      OrganizationalUnit: !Ref ProductionOU

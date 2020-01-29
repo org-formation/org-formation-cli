@@ -5,6 +5,8 @@
 
 <!-- code_chunk_output -->
 
+- [organization](#organization)
+- [organization tasks](#organization-tasks)
 - [budget alarms](#budget-alarms)
 - [cloudtrail](#cloudtrail)
 - [guardduty](#guardduty)
@@ -14,9 +16,21 @@
 - [cross account role with alarm](#cross-account-role-with-alarm)
 - [cross account secret](#cross-account-secret)
 - [cross account lambda](#cross-account-lambda)
-- [wildcard carts (2 regions)](#wild-card-carts-2-regions)
+- [wildcard carts (2 regions)](#wildcard-carts-2-regions)
 
 <!-- /code_chunk_output -->
+
+## organization
+
+Basic organization that demonstrates most of the IaC features for AWS Organizations: [organization.yml](organization.yml)
+
+[![organization](img/organization.png)](organization.yml)
+
+
+## organization tasks
+
+Basic taskfile that contains all examples below: [organization-tasks.yml](organization-tasks.yml). Includes another taskfile [organization-iam-tasks.yml](organization-iam-tasks.yml) which contains roles.
+
 
 
 ## budget alarms
@@ -25,7 +39,7 @@ Basic example on how to create budget alarms based on tags that are defined on t
 
 ![budget alarms](img/budget-alarms.png)
 
-[budget-alarms.yml](budget-alarms.yml)
+[templates/budget-alarms.yml](templates/budget-alarms.yml)
 
 
 ## cloudtrail
@@ -34,7 +48,7 @@ Example on how to do a basic cloud trail implementation. Demonstrates cross acco
 
 ![cloudtrail](img/cloudtrail.png)
 
-[cloudtrail.yml](cloudtrail.yml)
+[templates/cloudtrail.yml](templates/cloudtrail.yml)
 
 
 ## guardduty
@@ -43,7 +57,7 @@ Example on how to do a basic guardduty implementation. Demonstrates cross accoun
 
 ![guardduty](img/guardduty.png)
 
-[guardduty.yml](guardduty.yml)
+[templates/guardduty.yml](templates/guardduty.yml)
 
 ## subdomains
 
@@ -51,7 +65,7 @@ Example on how to provision route 53 subdomains for all accounts within your org
 
 ![subdomains](img/subdomains.png)
 
-[subdomains.yml](subdomains.yml)
+[templates/subdomains.yml](templates/subdomains.yml)
 
 
 ## cross account bucket
@@ -60,7 +74,7 @@ Reusable template to do cross account access to S3 bucket.
 
 ![cross-account-bucket](img/cross-account-bucket.png)
 
-[cross-account-bucket.yml](cross-account-bucket.yml)
+[templates/cross-account-bucket.yml](templates/cross-account-bucket.yml)
 
 
 ## cross account role
@@ -69,7 +83,7 @@ Reusable template to do cross account IAM roles.
 
 ![cross-account-role](img/cross-account-role.png)
 
-[cross-account-role.yml](cross-account-role.yml)
+[templates/cross-account-role.yml](templates/cross-account-role.yml)
 
 
 ## cross account role with alarm
@@ -78,7 +92,7 @@ Reusable template to do cross account IAM roles with an alarm (based on CloudTra
 
 ![cross-account-role-with-alarm](img/cross-account-role-with-alarm.png)
 
-[cross-account-role-with-alarm.yml](cross-account-role-with-alarm.yml)
+[ctemplates/ross-account-role-with-alarm.yml](templates/cross-account-role-with-alarm.yml)
 
 
 ## cross account secret
@@ -87,7 +101,7 @@ Reusable template to do cross account secretsmanager secrets.
 
 ![cross-account-secret](img/cross-account-secret.png)
 
-[cross-account-secret.yml](cross-account-secret.yml)
+[templates/cross-account-secret.yml](templates/cross-account-secret.yml)
 
 
 ## cross account lambda
@@ -96,7 +110,7 @@ Reusable template to do cross account lambdas. Assumes the lambda is deployed by
 
 ![cross-account-lambda](img/cross-account-lambda.png)
 
-[cross-account-lambda.yml](cross-account-lambda.yml)
+[templates/cross-account-lambda.yml](templates/cross-account-lambda.yml)
 
 ## wildcard carts (2 regions)
 
@@ -104,4 +118,4 @@ Template that demonstrates provisioning wildcard certificates in both us-east-1 
 
 ![wildcard-certs](img/wildcard-certs.png)
 
-[wildcard-certs.yml](wildcard-certs.yml)
+[templates/wildcard-certs.yml](templates/wildcard-certs.yml)
