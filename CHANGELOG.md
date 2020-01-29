@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**not released**
+**version 0.0.69**
 - Added --stack-trace flag to print stack traces for errors. stacktraces are now hidden by default.
 
 **version 0.0.68**
