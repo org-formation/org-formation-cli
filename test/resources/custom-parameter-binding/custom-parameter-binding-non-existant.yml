@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization: !Include ./organization.yml
+
+OrganizationBinding:
+  Region: eu-west-1
+  Account: !Ref Account1
+
+Parameters:
+  Param:
+    Type: String
+    ExportName: export-name
+    ExportAccountId: !Ref UnkownAccount
+    ExportRegion: eu-central-1
+
+
+Resources:
+  Topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Topic in Account 1
