@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**unreleased**
+- Added descriptive error when !Ref on parameter.ExportAccountId cannot be resolved.
+
+
 **version 0.0.69**
 - Added --stack-trace flag to print stack traces for errors. stacktraces are now hidden by default.
 
