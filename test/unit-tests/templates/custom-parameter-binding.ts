@@ -44,7 +44,9 @@ describe('when specifying !Ref in custom parameter binding to unknown account', 
             persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
             const cloudformationBinder = new CloudFormationBinder('custom-parameter-binding', template, persistedState);
-            cloudformationBinder.enumBindings();
+            const bindings = cloudformationBinder.enumBindings();
+            const account1Binding = bindings.find((x) => x.accountId === '111111111111');
+            account1Binding.template.enumBoundParameters();
             expect.fail('expected exception');
         } catch (err) {
             expect(err.message).to.contain('UnkownAccount');

@@ -136,7 +136,14 @@ export class CfnTemplate {
         for (const paramName in this.templateRoot.contents.Parameters) {
             const param = this.templateRoot.contents.Parameters[paramName];
             const clonedParam = JSON.parse(JSON.stringify(param));
-            this.parameters[paramName] = this._resolveOrganizationFunctions(clonedParam, this.accountResource);
+            const parameter = this._resolveOrganizationFunctions(clonedParam, this.accountResource) as ICfnParameter;
+            if (parameter.ExportAccountId) {
+                const val = (parameter.ExportAccountId as any).Ref;
+                if (val !== undefined) {
+                    throw new OrgFormationError(`unable to resolve !Ref ${val} for cross account parameter.`);
+                }
+            }
+            this.parameters[paramName] = parameter;
         }
 
         if (this.templateRoot.contents.Metadata) {

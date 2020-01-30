@@ -146,13 +146,6 @@ export class CloudFormationBinder {
 
         for (const binding of result) {
             for (const dependency of binding.template.listDependencies(binding, result)) {
-                if (typeof dependency.outputAccountId !== 'string') {
-                    const ref = (dependency.outputAccountId as any).Ref;
-                    if (ref !== undefined) {
-                        throw new OrgFormationError(`unable to resolve !Ref ${ref} for cross account reference.`);
-                    }
-                    throw new OrgFormationError(`unable to resolve outputAccountId ${dependency.outputAccountId} for cross account reference.`);
-                }
 
                 binding.dependencies.push(dependency);
                 binding.template.addParameter(dependency);
