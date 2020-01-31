@@ -91,8 +91,8 @@ describe('when loading hostedzone-per-account template', () => {
     });
 
     it('master account imports HostedZoneNameServers from both other accounts', () => {
-        const resourceForAccount1 = masterCfnTemplate.Resources.ParentNsRecordAccount1;
-        const resourceForAccount2 = masterCfnTemplate.Resources.ParentNsRecordAccount2;
+        const resourceForAccount1 = masterCfnTemplate.Resources.ParentNsRecord111111111111;
+        const resourceForAccount2 = masterCfnTemplate.Resources.ParentNsRecord222222222222;
 
         expect(resourceForAccount1).to.not.be.undefined;
         expect(resourceForAccount2).to.not.be.undefined;

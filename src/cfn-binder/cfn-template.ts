@@ -2,6 +2,7 @@ import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
 import { Resource } from '../parser/model/resource';
+import { OrgResourceTypes } from '../parser/model/resource-types';
 import { IResourceTarget } from '../parser/model/resources-section';
 import { TemplateRoot } from '../parser/parser';
 import { ResourceUtil } from '../resource-util';
@@ -88,6 +89,7 @@ export class CfnTemplate {
     private resourceIdsNotInTarget: string[];
     private otherAccountsLogicalIds: string[];
     private accountResource: AccountResource;
+    private masterAccountLogicalId: string;
 
     constructor(target: IResourceTarget, private templateRoot: TemplateRoot, private state: PersistedState) {
         this.resourceIdsForTarget = target.resources.map((x) => x.logicalId);
@@ -95,6 +97,7 @@ export class CfnTemplate {
         this.resourceIdsNotInTarget = this.allResourceIds.filter((x) => !this.resourceIdsForTarget.includes(x));
         this.accountResource = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
         this.otherAccountsLogicalIds = [this.templateRoot.organizationSection.masterAccount.logicalId, ...this.templateRoot.organizationSection.accounts.map((x) => x.logicalId).filter((x) => x !== target.accountLogicalId)];
+        this.masterAccountLogicalId = this.templateRoot.organizationSection.masterAccount.logicalId;
 
         this.resources = {};
         this.outputs = {};
@@ -116,7 +119,11 @@ export class CfnTemplate {
                 for (const accountName of resource.normalizedForeachAccounts) {
                     const resourceForAccount = JSON.parse(JSON.stringify(resource.resourceForTemplate));
                     const keywordReplaced = this._replaceKeyword(resourceForAccount, 'CurrentAccount', accountName);
-                    this.resources[resource.logicalId + accountName] = this._resolveOrganizationFunctions(keywordReplaced, this.accountResource);
+                    const resourceType =  (this.masterAccountLogicalId === accountName) ? OrgResourceTypes.MasterAccount : OrgResourceTypes.Account;
+                    const binding = this.state.getBinding(resourceType, accountName);
+                    if (!binding) { throw new OrgFormationError(`unable to find account ${accountName} in state. Is your organization up to date?`); }
+
+                    this.resources[resource.logicalId + binding.physicalId] = this._resolveOrganizationFunctions(keywordReplaced, this.accountResource);
                 }
             } else {
                 this.resources[resource.logicalId] = this._resolveOrganizationFunctions(clonedResource, this.accountResource);
