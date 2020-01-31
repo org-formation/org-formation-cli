@@ -153,8 +153,8 @@ export class CfnTaskProvider {
                                         ConsoleUtil.LogError('!!! It seems like you got this error when updating guardduty resources.');
                                         ConsoleUtil.LogError('!!! Possibly your first change to guardduty since upgrading to org-formation to 0.0.70+ or you renamed a logical account id.');
                                         ConsoleUtil.LogError('!!! You can resolve this error by commenting out both Master and Member resources and updating the stack');
-                                        ConsoleUtil.LogError('!!! After updating the stacks without these resources add them back to the tempalte and you\'re done');
-                                        ConsoleUtil.LogError('!!! Sorry for the inconveniance!! <3 from org-formation.');
+                                        ConsoleUtil.LogError('!!! After updating the stacks without these resources uncomment first the Member resource them back, run update, then also the Master resource.');
+                                        ConsoleUtil.LogError('!!! hopefully that will fix this. Sorry for the inconveniance!! <3 from org-formation.');
 
                                     }
                                 }
