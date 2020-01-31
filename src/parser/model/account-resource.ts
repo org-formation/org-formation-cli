@@ -58,7 +58,7 @@ export class AccountResource extends Resource {
     }
 
     public calculateHash(): string {
-        const contents: any = { resource: this.resource };
+        const contents: any = { resource: this.resource, logicalId: this.logicalId };
         if (this.passwordPolicy && this.passwordPolicy.TemplateResource) {
             contents.passwordPolicyHash = this.passwordPolicy.TemplateResource.calculateHash();
         }

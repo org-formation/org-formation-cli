@@ -57,7 +57,7 @@ export class TaskProvider {
             action:  'CommitHash',
             dependentTasks: tasks,
             perform: async (task) => {
-                that.state.setBinding({
+                that.state.setUniqueBindingForType({
                     type: resource.type,
                     logicalId: resource.logicalId,
                     lastCommittedHash: hash,
@@ -96,7 +96,7 @@ export class TaskProvider {
             action:  'CommitHash',
             dependentTasks: tasks,
             perform: async (task) => {
-                that.state.setBinding({
+                that.state.setUniqueBindingForType({
                     type: resource.type,
                     logicalId: resource.logicalId,
                     lastCommittedHash: hash,
@@ -325,12 +325,21 @@ export class TaskProvider {
             action:  'CommitHash',
             dependentTasks: tasks,
             perform: async (task) => {
-                that.state.setBinding({
-                    type: resource.type,
-                    logicalId: resource.logicalId,
-                    lastCommittedHash: hash,
-                    physicalId,
-                });
+                if (resource.type === OrgResourceTypes.MasterAccount) {
+                    that.state.setUniqueBindingForType({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId,
+                    });
+                } else {
+                    that.state.setBinding({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId,
+                    });
+                }
             },
         };
 
@@ -363,12 +372,21 @@ export class TaskProvider {
             action:  'CommitHash',
             dependentTasks: tasks,
             perform: async (task) => {
-                that.state.setBinding({
-                    type: resource.type,
-                    logicalId: resource.logicalId,
-                    lastCommittedHash: hash,
-                    physicalId: createAccountTask.result,
-                });
+                if (resource.type === OrgResourceTypes.MasterAccount) {
+                    that.state.setUniqueBindingForType({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId: createAccountTask.result,
+                    });
+                } else {
+                    that.state.setBinding({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId: createAccountTask.result,
+                    });
+                }
             },
         };
         return [...tasks, createAccountCommitHashTask];

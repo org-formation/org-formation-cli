@@ -150,6 +150,13 @@ export class PersistedState {
         }
         return result;
     }
+    public setUniqueBindingForType(binding: IBinding) {
+        let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
+        typeDict = this.state.bindings[binding.type] = {};
+
+        typeDict[binding.logicalId]  = binding;
+        this.dirty = true;
+    }
 
     public setBinding(binding: IBinding) {
         let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
