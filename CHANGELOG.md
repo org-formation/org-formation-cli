@@ -5,6 +5,7 @@ All notable changes to aws organization formation will be documented in this fil
 - Modified init-pipeline command so it will include the template for codecommit/build/pipeline in the initial commit.
 - Added descriptive error when !Ref on parameter.ExportAccountId cannot be resolved.
 - Fixed bug where changing the logical name of MasterAccount resulted in invalid state.
+- Changed the logical name of generated Foreach resources. Also added a very specific error with help how to resolve adverse effects of this on guardduty templates.
 
 
 **version 0.0.69**
