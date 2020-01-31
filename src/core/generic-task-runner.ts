@@ -61,7 +61,7 @@ export class GenericTaskRunner {
                 task.running = false;
                 delegate.onTaskRanSuccessfully(task);
             } catch (err) {
-                if (err.code === 'Throttling' && retryAttemptRateLimited < 5)  {
+                if ((err.code === 'Throttling' || err.code === 'OptInRequired') && retryAttemptRateLimited < 5)  {
                     retryWhenRateLimited = true;
                     retryAttemptRateLimited = retryAttemptRateLimited + 1;
                     await sleep(Math.pow(retryAttemptRateLimited, 2) + Math.random());
