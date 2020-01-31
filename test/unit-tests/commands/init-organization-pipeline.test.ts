@@ -70,7 +70,7 @@ describe('when creating init organization pipeline command', () => {
         const resourcePrefixOpt = opts.find((x) => x.long === '--resource-prefix');
         expect(resourcePrefixOpt).to.not.be.undefined;
         expect(resourcePrefixOpt.required).to.be.true;
-        expect(subCommanderCommand.resourcePrefix).to.eq('orgformation-');
+        expect(subCommanderCommand.resourcePrefix).to.eq('orgformation');
     });
 
     it('command has repository-name option', () => {
@@ -152,8 +152,7 @@ describe('when executing init pipeline command', () => {
         const resourcePrefix = args[3] as string;
         const stackName = args[4] as string;
 
-        expect(cfnTemplate).to.contain('orgformation-codepipeline.');
-        expect(existsSync(cfnTemplate)).to.eq(true);
+        expect(cfnTemplate).to.contain('AWSTemplateFormatVersion: \'2010-09-09\'');
         expect(region).to.eq(commandArgs.region);
         expect(stateBucketName).to.eq(`organization-formation-${masterAccountId}`);
         expect(resourcePrefix).to.eq(commandArgs.resourcePrefix);
