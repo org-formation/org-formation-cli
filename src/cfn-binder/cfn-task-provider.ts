@@ -148,6 +148,15 @@ export class CfnTaskProvider {
                             if (event.ClientRequestToken === clientToken) {
                                 if (failureStates.indexOf(event.ResourceStatus) >= 0) {
                                     ConsoleUtil.LogError(`Resource ${event.LogicalResourceId} failed because ${event.ResourceStatusReason}.`);
+
+                                    if (/[0-9a-f]*\|[0-9]{12} already exists in stack /.test(event.ResourceStatusReason)) {
+                                        ConsoleUtil.LogError('!!! It seems like you got this error when updating guardduty resources.');
+                                        ConsoleUtil.LogError('!!! Possibly you just upgraded org-formation to 0.0.70+ or you renamed a logical account id.');
+                                        ConsoleUtil.LogError('!!! You can resolve this error by commenting out both Master and Member resources and updating the stack');
+                                        ConsoleUtil.LogError('!!! After updating the stacks without these resources add them back to the tempalte and you\'re done');
+                                        ConsoleUtil.LogError('!!! Sorry for the invonveniance!! <3 from org-formation.');
+
+                                    }
                                 }
                             }
                         }
