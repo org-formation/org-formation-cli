@@ -1,0 +1,16 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+OrganizationBuild:
+  Type: update-stacks
+  Template: ./templates/org-formation-build.yml
+  StackName: XXX-stackName
+  Parameters:
+    stateBucketName: XXX-stateBucketName
+    resourcePrefix: XXX-resourcePrefix
+    repositoryName: XXX-repositoryName
+  DefaultOrganizationBindingRegion: XXX-region
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true

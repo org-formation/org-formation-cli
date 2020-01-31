@@ -2,6 +2,7 @@
 All notable changes to aws organization formation will be documented in this file.
 
 **unreleased**
+- Modified init-pipeline command so it will include the template for codecommit/build/pipeline in the initial commit.
 - Added descriptive error when !Ref on parameter.ExportAccountId cannot be resolved.
 
 

@@ -1,4 +1,0 @@
-
-OrganizationUpdate:
-  Type: update-organization
-  Template: ./organization.yml
