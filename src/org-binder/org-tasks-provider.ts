@@ -291,7 +291,7 @@ export class TaskProvider {
             previousResource = this.previousTemplate.organizationSection.masterAccount;
         }
 
-        if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.accountName !== resource.accountName || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)
+        if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.accountName !== resource.accountName || previousResource.supportLevel !== resource.supportLevel || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)
             || !policiesEqual(previousResource.passwordPolicy, resource.passwordPolicy)) {
             const updateAccountTask: IBuildTask = {
                 type: resource.type,

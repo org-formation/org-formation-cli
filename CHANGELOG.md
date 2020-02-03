@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.71**
+- Added SupportLevel attribute to accounts, which can be used to set the support subscription level (enterprise, business or developer) for the account.
+
 **version 0.0.70**
 - Modified init-pipeline command so it will include the template for codecommit/build/pipeline in the initial commit.
 - Added descriptive error when !Ref on parameter.ExportAccountId cannot be resolved.

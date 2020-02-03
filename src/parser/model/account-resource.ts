@@ -13,6 +13,7 @@ export interface IAccountProperties {
     PasswordPolicy?: IResourceRef;
     Alias?: string;
     Tags?: Record<string, string>;
+    SupportLevel?: string;
 }
 
 export class AccountResource extends Resource {
@@ -24,6 +25,7 @@ export class AccountResource extends Resource {
     public serviceControlPolicies?: Array<Reference<ServiceControlPolicyResource>>;
     public passwordPolicy?: Reference<PasswordPolicyResource>;
     public organizationalUnitName?: string;
+    public supportLevel?: string;
     private props?: IAccountProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
@@ -44,6 +46,14 @@ export class AccountResource extends Resource {
         this.rootEmail = this.props.RootEmail;
         this.accountName = this.props.AccountName;
         this.accountId = this.props.AccountId;
+        this.supportLevel = this.props.SupportLevel;
+
+        if (this.supportLevel !== undefined) {
+            if (!['basic', 'developer', 'business', 'enterprise'].includes(this.supportLevel)) {
+                throw new OrgFormationError(`Unexpected value for SupportLevel on account ${id}. Found: ${this.supportLevel}, Exported one of 'basic', 'developer', 'business', 'enterprise'.`);
+            }
+        }
+
         if (typeof this.accountId === 'number') {
             this.accountId = '' + this.accountId;
         }
@@ -54,7 +64,7 @@ export class AccountResource extends Resource {
         this.alias = this.props.Alias;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy');
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel');
     }
 
     public calculateHash(): string {

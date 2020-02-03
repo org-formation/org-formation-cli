@@ -1,5 +1,6 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
+import { CreateCaseRequest } from 'aws-sdk/clients/support';
 import { AwsUtil, passwordPolicEquals } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -221,7 +222,7 @@ export class AwsOrganizationWriter {
         return accountId;
     }
 
-    public async updateAccount(resource: AccountResource, accountId: string) {
+    public async updateAccount(resource: AccountResource, accountId: string, previousResource?: AccountResource) {
         const account = [...this.organization.accounts, this.organization.masterAccount].find((x) => x.Id === accountId);
 
         if (account.Name !== resource.accountName) {
@@ -242,7 +243,39 @@ export class AwsOrganizationWriter {
             if (resource.alias) {
                 await iam.createAccountAlias({AccountAlias: resource.alias}).promise();
             }
+        }
 
+        if (resource.supportLevel !== undefined) {
+            let currentSupportLevel = 'basic';
+            if (previousResource !== undefined && previousResource.supportLevel !== undefined) {
+                currentSupportLevel = previousResource.supportLevel;
+            } else if (account.SupportLevel !== undefined) {
+                currentSupportLevel = account.SupportLevel;
+            }
+
+            if (currentSupportLevel !== resource.supportLevel) {
+                const masterAccountSupportLevel = this.organization.masterAccount.SupportLevel;
+                if (masterAccountSupportLevel !== resource.supportLevel) {
+                    throw new OrgFormationError(`account ${resource.logicalId} specifies support level ${resource.supportLevel}, expected is support level ${masterAccountSupportLevel}, based on the support subscription for the organization master account.`);
+                } else  {
+                    const support = await AwsUtil.GetSupportService(this.organization.masterAccount.Id);
+                    const createCaseRequest: CreateCaseRequest = {
+                        subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
+                        communicationBody: `Hi AWS,
+                        Please enable ${resource.supportLevel} on account ${accountId}.
+                        This case was created automatically - please resolve when done.
+
+                        Thank you!
+                        `,
+                        serviceCode: 'customer-account',
+                        categoryCode: 'other-account-issues',
+                        severityCode: 'low',
+                        issueType: 'customer-service',
+                        ccEmailAddresses: [resource.rootEmail],
+                    };
+                    await support.createCase(createCaseRequest).promise();
+                }
+            }
         }
 
         if (!passwordPolicEquals(account.PasswordPolicy, resource.passwordPolicy)) {
@@ -297,7 +330,6 @@ export class AwsOrganizationWriter {
 
         account.Tags = resource.tags;
     }
-
     private async _createOrganizationalUnit(resource: OrganizationalUnitResource, parentId: string): Promise<string> {
         const createOrganizationalUnitRequest: CreateOrganizationalUnitRequest = {
             Name: resource.organizationalUnitName,
@@ -348,6 +380,7 @@ export class AwsOrganizationWriter {
             Email: resource.rootEmail,
             Type: 'Account',
             Tags: {},
+            SupportLevel: resource.supportLevel,
         });
 
         return accountCreationStatus.AccountId;

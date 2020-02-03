@@ -1,4 +1,4 @@
-import { CloudFormation, IAM, S3, STS } from 'aws-sdk/clients/all';
+import { CloudFormation, IAM, S3, STS, Support } from 'aws-sdk/clients/all';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { PasswordPolicyResource } from './parser/model/password-policy-resource';
 import { Reference } from './parser/model/resource';
@@ -9,6 +9,7 @@ export class AwsUtil {
         AwsUtil.masterAccountId = undefined;
         AwsUtil.CfnServiceCache = {};
         AwsUtil.IamServiceCache = {};
+        AwsUtil.SupportServiceCache = {};
     }
 
     public static async GetMasterAccountId(): Promise<string> {
@@ -19,6 +20,35 @@ export class AwsUtil {
         const caller = await stsClient.getCallerIdentity().promise();
         AwsUtil.masterAccountId = caller.Account;
         return AwsUtil.masterAccountId;
+    }
+
+    public static async GetSupportService(accountId: string): Promise<Support> {
+
+        const cachedSupport = AwsUtil.SupportServiceCache[accountId];
+        if (cachedSupport) {
+            return cachedSupport;
+        }
+
+        const masterAccountId = await AwsUtil.GetMasterAccountId();
+        if (masterAccountId === accountId) {
+            const masterSupport  =  new Support({region: 'us-east-1'});
+            AwsUtil.SupportServiceCache[accountId] = masterSupport;
+            return masterSupport;
+        }
+
+        const sts = new STS();
+        const roleArn = 'arn:aws:iam::' + accountId + ':role/OrganizationAccountAccessRole';
+        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
+
+        const credentialOptions: CredentialsOptions = {
+            accessKeyId: response.Credentials.AccessKeyId,
+            secretAccessKey: response.Credentials.SecretAccessKey,
+            sessionToken: response.Credentials.SessionToken,
+        };
+
+        const support = new Support({ credentials: credentialOptions, region: 'us-east-1' });
+        AwsUtil.SupportServiceCache[accountId] = support;
+        return support;
     }
 
     public static async GetIamService(accountId: string): Promise<IAM> {
@@ -78,12 +108,15 @@ export class AwsUtil {
         AwsUtil.CfnServiceCache[cacheKey] = cfn;
         return cfn;
     }
+
     public static async DeleteObject(bucketName: string, objectKey: string) {
         const s3client = new S3();
         await s3client.deleteObject({Bucket: bucketName, Key: objectKey}).promise();
     }
+
     private static masterAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAM> = {};
+    private static SupportServiceCache: Record<string, Support> = {};
     private static CfnServiceCache: Record<string, CloudFormation> = {};
 }
 

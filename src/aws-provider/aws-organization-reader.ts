@@ -4,6 +4,7 @@ import { AwsUtil } from '../aws-util';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
+export type SupportLevel = 'enterprise' | 'business' | 'developer' | 'basic' | string;
 interface IAWSTags {
     [key: string]: string;
 }
@@ -15,6 +16,9 @@ interface IAWSAccountWithIAMAttributes {
     PasswordPolicy?: IAM.PasswordPolicy;
 }
 
+interface IAWSAccountWithSupportLevel {
+    SupportLevel: SupportLevel;
+}
 interface IObjectWithParentId {
     ParentId: string;
 }
@@ -38,7 +42,7 @@ interface IPolicyTargets {
 }
 
 export type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
-export type AWSAccount = Account & IAWSAccountWithTags & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
+export type AWSAccount = Account & IAWSAccountWithTags & IAWSAccountWithSupportLevel & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
 export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject;
 export type AWSRoot = Root & IObjectWithPolicies;
 
@@ -175,10 +179,11 @@ export class AwsOrganizationReader {
                         continue;
                     }
 
-                    const [tags, alias, passwordPolicy] = await Promise.all([
+                    const [tags, alias, passwordPolicy, supportLevel] = await Promise.all([
                         AwsOrganizationReader.getTagsForAccount(that, acc.Id),
                         AwsOrganizationReader.getIamAliasForAccount(that, acc.Id),
                         AwsOrganizationReader.getIamPasswordPolicyForAccount(that, acc.Id),
+                        AwsOrganizationReader.getSupportLevelForAccount(that, acc.Id),
                     ]);
 
                     const account = {
@@ -191,6 +196,7 @@ export class AwsOrganizationReader {
                         Tags: tags,
                         Alias: alias,
                         PasswordPolicy: passwordPolicy,
+                        SupportLevel: supportLevel,
                     };
 
                     const parentOU = organizationalUnits.find((x) => x.Id === req.ParentId);
@@ -205,6 +211,28 @@ export class AwsOrganizationReader {
         } while (parentIds.length > 0);
 
         return result;
+    }
+
+    private static async getSupportLevelForAccount(that: AwsOrganizationReader, accountId: string): Promise<SupportLevel> {
+        const org = await that.organization.getValue();
+        try {
+            const supportService = await AwsUtil.GetSupportService(accountId);
+            const severityLevels = await supportService.describeSeverityLevels().promise();
+            const critical = severityLevels.severityLevels.find((x) => x.code === 'critical');
+            if (critical !== undefined) {
+                return 'enterprise';
+            }
+            const urgent = severityLevels.severityLevels.find((x) => x.code === 'urgent');
+            if (urgent !== undefined) {
+                return 'business';
+            }
+            return 'developer';
+        } catch (err) {
+            if (err.code === 'SubscriptionRequiredException') {
+                return 'basic';
+            }
+            throw err;
+        }
     }
 
     private static async getIamAliasForAccount(that: AwsOrganizationReader, accountId: string): Promise<string> {
