@@ -325,7 +325,7 @@ Principal:
 
  ```
 
- will result in the following cloudformation (assuming MyBinding has 3 accounts):
+ Will result in the following cloudformation (assuming MyBinding has 3 accounts):
 
 ``` yaml
 Principal:
@@ -387,10 +387,10 @@ Resources:
             Statement:
               - Sid: 'my statement'
                 Action: '*'
-                Effect: "Allow"
+                Effect: 'Allow'
                 Resource: '*'
                 Principal:
                   AWS: [] # empty array is not 'legal'
  ```
 
-syntactically the resource is not correct but as it will not be created (becuase of the condition) there wont be an error. yay!
+Syntactically the resource is not correct but as it will not be created (becuase of the condition) there wont be an error. Yay!
