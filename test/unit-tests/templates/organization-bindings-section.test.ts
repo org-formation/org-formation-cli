@@ -33,19 +33,19 @@ describe('when  using organization bindings section', () => {
         expect(resource1.normalizedBoundAccounts.length).to.eq(5);
     });
 
-    it('Fn:TargetCount MasterBinding resolves to 1', () => {
+    it('Fn::TargetCount MasterBinding resolves to 1', () => {
         const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
         const resource1 = masterTemplate.Resources.Resource1;
         expect(resource1.Properties.MasterCount).to.eq(1);
     });
 
-    it('Fn:TargetCount AllAccountsBinding resolves to 5', () => {
+    it('Fn::TargetCount AllAccountsBinding resolves to 5', () => {
         const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
         const resource1 = masterTemplate.Resources.Resource1;
         expect(resource1.Properties.AllCount).to.eq(5);
     });
 
-    it('Fn:TargetCount EmptyBinding resolves to 0', () => {
+    it('Fn::TargetCount EmptyBinding resolves to 0', () => {
         const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
         const resource1 = masterTemplate.Resources.Resource1;
         expect(resource1.Properties.EmptyCount).to.eq(0);

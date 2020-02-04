@@ -372,7 +372,11 @@ export class CfnTemplate {
                     } else if (val.startsWith('Fn::EnumTargetRegions')) {
                         resource[key] = this.resolveEnumExpression('EnumTargetRegions', val, 'region');
                     } else if (val.startsWith('Fn:TargetCount')) {
+                        ConsoleUtil.LogWarning('expression references Fn::TargetCount with 1 colon (:) instead of two.');
                         resource[key] = this.resolveCountExpression(val);
+                     } else if (val.startsWith('Fn::TargetCount')) {
+                        resource[key] = this.resolveCountExpression(val);
+
                      }
                 }
             }
@@ -415,7 +419,7 @@ export class CfnTemplate {
     private resolveCountExpression(val: string): number {
         const parts = val.split(/\s+/);
         if (parts.length < 2) {
-            throw new OrgFormationError(`invalid Fn:TargetCount expression. expected 'Fn:TargetCount bindingName'`);
+            throw new OrgFormationError(`invalid Fn::TargetCount expression. expected 'Fn::TargetCount bindingName'`);
         }
         const bindingId = parts[1];
         const organizationBinding = this.templateRoot.bindingSection.getBinding(bindingId);

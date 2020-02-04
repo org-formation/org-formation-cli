@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**unrealeased**
+- Fixed inconsistency in function naming scheme: using Fn:TargetCount will log a warning. Fn::TargetCount (2 colons) will not.
+
 **version 0.0.71**
 - Added SupportLevel attribute to accounts, which can be used to set the support subscription level (enterprise, business or developer) for the account.
 
@@ -9,7 +12,6 @@ All notable changes to aws organization formation will be documented in this fil
 - Added descriptive error when !Ref on parameter.ExportAccountId cannot be resolved.
 - Fixed bug where changing the logical name of MasterAccount resulted in invalid state.
 - Changed the logical name of generated Foreach resources. Also added a very specific error with help how to resolve adverse effects of this on guardduty templates.
-
 
 **version 0.0.69**
 - Added --stack-trace flag to print stack traces for errors. stacktraces are now hidden by default.
