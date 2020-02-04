@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { FileUtil } from '../file-util';
+import { writeFileSync } from 'fs';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
@@ -27,7 +27,7 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
         const storageProvider = await this.createOrGetStateBucket(command, region);
         const template = await this.generateDefaultTemplate();
         const templateContents = template.template;
-        FileUtil.writeFileSync(filePath, templateContents);
+        writeFileSync(filePath, templateContents);
 
         await template.state.save(storageProvider);
 
