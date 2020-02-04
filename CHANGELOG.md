@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**unrealeased**
+**version 0.0.72**
 - Fixed inconsistency in function naming scheme: using Fn:TargetCount will log a warning. Fn::TargetCount (2 colons) will not.
 
 **version 0.0.71**
