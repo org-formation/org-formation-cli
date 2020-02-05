@@ -73,6 +73,10 @@ Resources:
         Comment: Root domain
       Name: !Ref rootHostedZoneName
 
+  # be aware that changing the logicalName for a AWS::Route53::RecordSet resource
+  # might result in the Record being deleted. this unfortunately seems to be a cloudformation issue
+  # described here: https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/364
+  # workaround is to remove the resource and then add it.
   ParentNsRecord:
     DependsOn: RootHostedZone
     Type: AWS::Route53::RecordSet
