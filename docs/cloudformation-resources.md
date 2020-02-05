@@ -339,6 +339,8 @@ Principal:
 
 - The Sub expression can have single qoutes
 - The Sub expression may also contain other Sub expression contructs (such as Ref to parameter)
+- For `Fn::EnumTargetAccounts` use the pre-defined variable `${account}` in the Sub expression
+- For `Fn::EnumTargetRegions` use the pre-defined variable `${region}` in the Sub expression
 
 
 ### Fn::TargetCount
