@@ -2,9 +2,9 @@
 All notable changes to aws organization formation will be documented in this file.
 
 **not released yet**
-- Changed the default for max concurrent staks (within a task, update-stacks or delete-stacks). The default now is 1
-- Added --max-concurrent-stacks and --failed-stacks-tolerance options to change the defaults of respectively 1 and 0.
-- Added attributes on update-stacks task configuration to modify default values for max-concurrancy and failure tolerance.
+- Changed the default for max concurrent stacks (within a task, update or delete-stacks) to 1
+- Added `--max-concurrent-stacks` and `--failed-stacks-tolerance` options
+- Added attributes to update-stacks task to modify values for max-concurrancy and failure tolerance.
 - When a tasks depends on a failed task it will be skipped automatically
 
 **version 0.0.72**
