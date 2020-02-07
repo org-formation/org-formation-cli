@@ -6,6 +6,7 @@ All notable changes to aws organization formation will be documented in this fil
 - Added `--max-concurrent-stacks` and `--failed-stacks-tolerance` options
 - Added attributes to update-stacks task to modify values for max-concurrancy and failure tolerance.
 - When a tasks depends on a failed task it will be skipped automatically
+- Added red to errors and yellow warnings to make 'm stand out more
 
 **version 0.0.72**
 - Fixed inconsistency in function naming scheme: using Fn:TargetCount will log a warning. Fn::TargetCount (2 colons) will not.
