@@ -150,6 +150,24 @@ If you are considering to use an account vending machine (e.g. [AWS Control Towe
 
 ## Questions and Answers
 
+
+<details>
+<summary>
+What is the password of the root user for newly created accounts?
+</summary>
+
+Accounts that are created have a root user but **no password**.
+
+You can create a password using the 'Forgot password' process using the root email.
+
+**Note:** Once you have created a password and used it consider to throw the password away. You are not supposed to log in using root anyway and storing your password somewhere could only lead to losing it. As we just figured out above you didnt need it in the first place.
+
+**Do bind** an MFA on your root user! Find info under the [IAM service section of the console](https://console.aws.amazon.com/iam/home?/security_credentials#/home)
+
+**Needless to add?** dont use a virtual MFA on the same device that has access to the email account used as RootEmail... this reduces your 'multi factor' authentication to a single factor 🤔🤣
+
+</details>
+
 <details>
 <summary>
 What happens when I remove an account from the organization.yml?
@@ -212,6 +230,9 @@ No reason other than not running into this usecase so far.
 Really happy to implement this based on someone else's usecase.
 
 </details>
+
+
+
 
 ## More docs
 
