@@ -168,7 +168,7 @@ Will perform tasks from *tasksFile*.
 |option|default|description|
 |---|---|---|
 |<nobr>--max-concurrent-tasks</nobr> | 1 | **required** <br/>Maximum number of tasks to be executed concurrently|
-|<nobr>--failed-tasks-tolerance</nobr> | 1 | **required** <br/>the number of failed tasks after which execution stops (may be higher than --max-concurrent-tasks)|
+|<nobr>--failed-tasks-tolerance</nobr> | 0 | **required** <br/>the number of failed tasks after which execution stops (may be higher than --max-concurrent-tasks)|
 
 ### ``org-formation validate-tasks``
 

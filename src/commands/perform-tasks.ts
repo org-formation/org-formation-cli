@@ -14,7 +14,9 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
     public addOptions(command: Command) {
         command.option('--max-concurrent-tasks <max-concurrent-tasks>', 'maximum number of tasks to be executed concurrently', 1);
-        command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed tasks after which execution stops', 1);
+        command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks (within a task) to be executed concurrently', 1);
+        command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed tasks after which execution stops', 0);
+        command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
         super.addOptions(command);
     }
 
@@ -30,4 +32,6 @@ interface IPerformTasksCommandArgs extends ICommandArgs {
     tasksFile: string;
     maxConcurrentTasks: number;
     failedTasksTolerance: number;
+    maxConcurrentStacks: number;
+    failedStacksTolerance: number;
 }
