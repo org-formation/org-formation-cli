@@ -150,6 +150,23 @@ If you are considering to use an account vending machine (e.g. [AWS Control Towe
 
 ## Questions and Answers
 
+<details>
+<summary>
+Is there a way around having to create new email accounts per account?
+</summary>
+
+Every AWS Account needs a unique root email address, there is no way around this...
+
+What you **can do** however is however is see whether your mailserver allows you to append a '+' (plus sign) and another secondary name to your account to create new unique email addresses.
+
+Email to there addresses will end up in the mailbox assigned to the alias before the plus sign and this will still be considered a valid and unique emailaddress when creating a new AWS Account.
+
+**Example:**
+If your emailaddress is `name@gmail.com` you will receive email send to `name+awsaccount1@gmail.com` and `name+awsaccount2@gmail.com` to your inbox.
+
+Mailservers that support this are gmail, aws workmail and hotmail.
+
+</details>
 
 <details>
 <summary>
