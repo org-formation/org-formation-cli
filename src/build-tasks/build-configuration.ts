@@ -128,6 +128,9 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     DefaultOrganizationBindingRegion?: string | string[];
     OrganizationBindings?: Record<string, IOrganizationBinding>;
     TerminationProtection?: boolean;
+    MaxConcurrentStacks: number;
+    FailedStackTolerance: number;
+
 }
 export interface IUpdateOrganizationTaskConfiguration extends IBuildTaskConfiguration {
     Template: string;

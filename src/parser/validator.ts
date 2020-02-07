@@ -28,7 +28,7 @@ export class Validator {
             'Type', 'DependsOn', 'Template', 'StackName', 'StackDescription', 'Parameters',
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
             'OrganizationBindings', 'TerminationProtection',
-            'LogicalName', 'FilePath');
+            'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance' );
     }
 
     public static ValidateTemplateRoot(root: ITemplate) {

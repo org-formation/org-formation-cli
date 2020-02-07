@@ -8,17 +8,23 @@ CloudTrail:
   Template: ./templates/cloudtrail.yml
   StackName: cloudtrail
   StackDescription: Cloudtrail example template
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10
 
 GuardDuty:
   Type: update-stacks
   Template: ./templates/guardduty.yml
   StackName: guardduty
   StackDescription: Guardduty example template
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10
 
 BudgetAlarms:
   Type: update-stacks
   Template: ./templates/budget-alarms.yml
   StackName: budget-alarms
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10
   DefaultOrganizationBindingRegion: eu-central-1
   DefaultOrganizationBinding:
     AccountsWithTag: budget-alarm-threshold
@@ -31,6 +37,8 @@ SubDomains:
   StackName: SubDomains
   Parameters:
     rootHostedZoneName: olafconijn.com
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10
 
 Include:
   Type: include
@@ -49,6 +57,8 @@ CrossAccountBucket:
       Account: !Ref SharedServicesAccount
     ReadAccessAccountBinding:
       OrganizationalUnit: !Ref DevelopmentOU
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10
 
 CrossAccountSecret:
   Type: update-stacks
@@ -56,6 +66,8 @@ CrossAccountSecret:
   StackName: MySecret
   Parameters:
     secretName: mySecret
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10
 
 CrossAccountLambda:
   Type: update-stacks
@@ -64,4 +76,6 @@ CrossAccountLambda:
   Parameters:
     functionName: myLambda
     functionAccount: !Ref SharedServicesAccount
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10
 

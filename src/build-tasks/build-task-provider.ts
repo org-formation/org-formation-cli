@@ -171,6 +171,14 @@ export abstract class BaseStacksTask implements IBuildTask {
             args.terminationProtection = this.config.TerminationProtection;
         }
 
+        if (this.config.MaxConcurrentStacks) {
+            args.maxConcurrentStacks = this.config.MaxConcurrentStacks;
+        }
+
+        if (this.config.FailedStackTolerance) {
+            args.failedStacksTolerance = this.config.FailedStackTolerance;
+        }
+
         await this.innerPerform(args);
     }
 
