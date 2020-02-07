@@ -11,6 +11,9 @@ export class CfnTaskRunner {
             onTaskRanFailed: (task, err) => {
                 ConsoleUtil.LogError(`failed executing stack ${task.stackName} in account ${task.accountId} (${task.region}). Reason: ${err}`);
             },
+            onTaskSkippedBecauseDependencyFailed: (task) => {
+                ConsoleUtil.LogError(`skip executing stack ${task.stackName} in account ${task.accountId} (${task.region}). Reason: dependency has failed.`);
+            },
             onTaskRanSuccessfully: (task) => {
                 ConsoleUtil.LogInfo(`stack ${task.stackName} successfully ${task.action === 'Delete' ? 'deleted from' : 'updated in' } ${task.accountId}/${task.region}.`);
             },
@@ -34,6 +37,10 @@ export class CfnTaskRunner {
             onTaskRanFailed: (task, err) => {
                 const sname = stackName ? `stack ${stackName} ` : '';
                 ConsoleUtil.LogError(`unable to validate template for ${sname}account ${task.accountId} (${task.region}). Reason: ${err}`);
+            },
+            onTaskSkippedBecauseDependencyFailed: (task) => {
+                const sname = stackName ? `stack ${stackName} ` : '';
+                ConsoleUtil.LogError(`unable to validate template for ${sname}account ${task.accountId} (${task.region}). Reason: dependency has failed.`);
             },
             onTaskRanSuccessfully: (task) => {
                 const sname = stackName ? `stack ${stackName} ` : '';

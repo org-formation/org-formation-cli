@@ -8,6 +8,7 @@ export class GenericTaskRunner {
         let remainingTasks: Array<IGenericTaskInternal<TTask>> = tasks;
         let tasksWithDependencies: Array<IGenericTaskInternal<TTask>> = [];
         let runningTasks: Array<IGenericTaskInternal<TTask>> = [];
+        const allFailedTasks: Array<IGenericTaskInternal<TTask>> = [];
         let runningTaskPromises: Array<Promise<void>> = [];
         do {
             for (const task of remainingTasks) {
@@ -18,6 +19,17 @@ export class GenericTaskRunner {
                 const dependencies = remainingTasks.filter((x) => task.isDependency(x));
                 if (dependencies.length > 0) {
                     tasksWithDependencies.push(task);
+                    continue;
+                }
+
+                const failedDepdency = allFailedTasks.filter((x) => task.isDependency(x));
+                if (failedDepdency.length > 0) {
+                    totalTasksRan += 1;
+                    totalTasksFailed += 1;
+                    allFailedTasks.push(task);
+                    if (totalTasksFailed > delegate.failedTasksTolerance) {
+                        delegate.onFailureToleranceExceeded(totalTasksFailed, delegate.failedTasksTolerance);
+                    }
                     continue;
                 }
 
@@ -35,7 +47,9 @@ export class GenericTaskRunner {
             }
             await Promise.all(runningTaskPromises);
             totalTasksRan = totalTasksRan + runningTasks.length;
-            totalTasksFailed = totalTasksFailed + runningTasks.filter((x) => x.failed === true).length;
+            const failedTasks = runningTasks.filter((x) => x.failed === true);
+            totalTasksFailed = failedTasks.length;
+            allFailedTasks.push(...failedTasks);
             if (totalTasksFailed > delegate.failedTasksTolerance) {
                 delegate.onFailureToleranceExceeded(totalTasksFailed, delegate.failedTasksTolerance);
             }
@@ -81,6 +95,7 @@ export interface ITaskRunnerDelegates<TTask> {
     failedTasksTolerance: number;
     onFailureToleranceExceeded(totalTasksFailed: number, failedTasksTolerance: number): void;
     onTaskRanFailed(task: IGenericTaskInternal<TTask>, err: any): void;
+    onTaskSkippedBecauseDependencyFailed(task: IGenericTaskInternal<TTask>): void;
     onTaskRanSuccessfully(task: IGenericTaskInternal<TTask>): void;
     throwDependencyOnSelfException(task: IGenericTaskInternal<TTask>): void;
     throwCircularDependency(tasks: Array<IGenericTaskInternal<TTask>>): void;
