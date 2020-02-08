@@ -152,6 +152,19 @@ If you are considering to use an account vending machine (e.g. [AWS Control Towe
 
 <details>
 <summary>
+My operation takes a long time to complete / is slow.
+</summary>
+
+Especially if you have a lot of accounts this can happen.
+
+An easy way to speed things up is by specifying the commandline argument `--max-concurrent-stacks 10` where 10 is the number of stacks to run in concurrently.
+
+Another way to speed things up is to run tasks in parallel this can be done with the argument `--max-concurrent-tasks 10`. This, however, has the side-effect that the logging might be somewhat harder to ralate to a specific task (as it might be out of order).
+
+</details>
+
+<details>
+<summary>
 Is there a way around having to create new email accounts per account?
 </summary>
 
