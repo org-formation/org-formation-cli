@@ -92,8 +92,9 @@ Will deploy CloudFormation resources specified in *templateFile*.
 |---|---|---|
 |<nobr>--stack-name</nobr> | none | **required** <br/>The stack name used to deploy cloudformation resources|
 |<nobr>--parameters</nobr> | none | parameters that need to be passed to the cloudformation template.|
-|<nobr>--termination-protection</nobr> | false | If specified the stack will be created with termination protection.
-|
+|<nobr>--termination-protection</nobr> | false | If specified the stack will be created with termination protection.|
+|<nobr>--max-concurrent-stacks</nobr> | 1 | Maximum number of stacks to be updated concurrently |
+|<nobr>--failed-stacks-tolerance</nobr> | 0 | The number of failed stacks after which execution stops|
 
 paramters can be passed in a similar fashion cloudformmation parameters are passed:
 ``> org-formation update-stacks template.yml --stack-name my-stack --parameters ParameterKey=Param1,ParameterValue=Val1 ParameterKey=Param2,ParameterValue=Val2``
@@ -153,6 +154,11 @@ Will delete all stacks of name *stackName* that have been deployed using org-for
 
 ``> org-formation delete-stacks stackName``
 
+|option|default|description|
+|---|---|---|
+|<nobr>--max-concurrent-stacks</nobr> | 1 | Maximum number of stacks to be deleted concurrently |
+|<nobr>--failed-stacks-tolerance</nobr> | 0 | The number of failed stacks after which execution stops|
+
 **Note**: Want to review the stacks that will be deleted? use
 [``describe-stacks``](#command-org-formation-describe-stacks)
 
@@ -167,8 +173,11 @@ Will perform tasks from *tasksFile*.
 
 |option|default|description|
 |---|---|---|
-|<nobr>--max-concurrent-tasks</nobr> | 1 | **required** <br/>Maximum number of tasks to be executed concurrently|
-|<nobr>--failed-tasks-tolerance</nobr> | 0 | **required** <br/>the number of failed tasks after which execution stops (may be higher than --max-concurrent-tasks)|
+|<nobr>--max-concurrent-tasks</nobr> | 1 | Maximum number of tasks to be executed concurrently|
+|<nobr>--failed-tasks-tolerance</nobr> | 0 | The number of failed tasks after which execution stops|
+|<nobr>--max-concurrent-stacks</nobr> | 1 | Maximum number of stacks (within a task) to be executed concurrently |
+|<nobr>--failed-stacks-tolerance</nobr> | 0 | The number of failed stacks (within a task) after which execution stops|
+
 
 ### ``org-formation validate-tasks``
 
