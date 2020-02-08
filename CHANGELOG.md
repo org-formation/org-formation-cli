@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**not released yet**
+**version 0.0.73**
 - Changed the default for max concurrent stacks (within a task, update or delete-stacks) to 1
 - Added `--max-concurrent-stacks` and `--failed-stacks-tolerance` options
 - Added attributes to update-stacks task to modify values for max-concurrancy and failure tolerance.
