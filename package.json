@@ -6,6 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "prepublishOnly": "tsc",
+    "lint": "eslint './src/**/*.ts'",
+    "lint:fix": "eslint --fix './src/**/*.ts'",
     "test": "ts-mocha 'test/unit-tests/**/*.ts'",
     "itests": "ts-mocha 'test/integration-tests/*.ts' --timeout 99999999999"
   },
@@ -46,15 +48,17 @@
     "@types/sinon": "^7.0.13",
     "@types/uuid": "^3.4.5",
     "@types/yamljs": "^0.2.30",
+    "@typescript-eslint/eslint-plugin": "^1.11.0",
+    "@typescript-eslint/parser": "^1.11.0",
     "aws-sdk-mock": "^4.5.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "eslint": "^6.0.1",
     "mocha": "^6.2.0",
     "nyc": "^15.0.0",
     "sinon": "^7.4.1",
     "ts-mocha": "^6.0.0",
     "ts-node": "^8.3.0",
-    "tslint": "^5.20.0",
     "typescript": "^3.6.2"
   },
   "keywords": [
