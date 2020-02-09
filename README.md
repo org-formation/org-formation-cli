@@ -212,7 +212,7 @@ In order to enforce MFA you need to do the following:
 Code snippets below:
 
 1) Creating the `MyOrgFormationRole` Role (step #2) - execute with CloudFormation
-```
+``` yaml
 AWSTemplateFormatVersion: '2010-09-09'
 
 Resources:
@@ -238,7 +238,7 @@ Resources:
 Replace `000000000000` with your master account id.
 The value for `mfa_serial` needs to be the value you got when setting up MFA for your user
 
-```
+``` ini
 [profile org-formation-mfa]
 role_arn = arn:aws:iam::000000000000:role/MyOrgFormationRole
 source_profile = org-formation
@@ -247,7 +247,7 @@ mfa_serial = arn:aws:iam::000000000000:mfa/my-user
 
 3) Expected output when executing a command that requires MFA (step 4):
 
-```
+``` bash
 \> org-formation describe-stacks --profile org-formation-mfa
 👋 Enter MFA code for arn:aws:iam::000000000000:mfa/my-user:
 XXXXXX # here you type in the  put the MFA code
@@ -257,7 +257,7 @@ XXXXXX # here you type in the  put the MFA code
 4) The minimum set of permissions for your user
 Replace `000000000000` with your master account id (or the complete ARN for your Role )
 
-```
+``` yaml
 Sid: 'AssumeMFARole'
 Action: 'sts:AssumeRole'
 Effect: 'Allow'
