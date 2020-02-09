@@ -1,10 +1,9 @@
-import { expect } from 'chai';
 import { ICfnTask } from '../../../src/cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from './../../../src/cfn-binder/cfn-task-runner';
 
 describe('when running cfn tasks', () => {
 
-    it('will run dependencies prior to dependend tasks', async () => {
+    test('will run dependencies prior to dependend tasks', async () => {
         let order = 1;
         let task1order: number = 0;
         let task2order: number = 0;
@@ -25,10 +24,10 @@ describe('when running cfn tasks', () => {
             isDependency: (t) => t.stackName === 'task1',
         };
         await CfnTaskRunner.RunTasks([task2, task1], 'stack');
-        expect(task1order).to.eq(1);
-        expect(task2order).to.eq(2);
+        expect(task1order).toBe(1);
+        expect(task2order).toBe(2);
     });
-    it('all tasks will exactly run once without dependencies', async () => {
+    test('all tasks will exactly run once without dependencies', async () => {
         type MyTask = ICfnTask & { callCount: number};
         const tasks: MyTask[] = [];
         for (let x = 0; x <= 9; x++) {
@@ -46,10 +45,10 @@ describe('when running cfn tasks', () => {
         await CfnTaskRunner.RunTasks(tasks, 'stack');
 
         const notExactlyOnce = tasks.find((x) => x.callCount !== 1);
-        expect(notExactlyOnce).to.be.undefined;
+        expect(notExactlyOnce).toBeUndefined();
     });
 
-    it('all tasks will exactly run once with dependencies', async () => {
+    test('all tasks will exactly run once with dependencies', async () => {
         type MyTask = ICfnTask & { callCount: number};
         const tasks: MyTask[] = [];
         const task1: MyTask = {
@@ -77,10 +76,10 @@ describe('when running cfn tasks', () => {
         await CfnTaskRunner.RunTasks(tasks, 'stack');
 
         const notExactlyOnce = tasks.find((x) => x.callCount !== 1);
-        expect(notExactlyOnce).to.be.undefined;
+        expect(notExactlyOnce).toBeUndefined();
     });
 
-    it('will throw for circular dependency', async () => {
+    test('will throw for circular dependency', async () => {
         const task1: ICfnTask = {
             action: 'UpdateOrCreate',
             isDependency: (t) => t.stackName === 'task2',
@@ -101,13 +100,13 @@ describe('when running cfn tasks', () => {
             await CfnTaskRunner.RunTasks([task1, task2], 'stack');
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).to.contain('circular dependency');
-            expect(err.message).to.contain('123123123123');
-            expect(err.message).to.contain('eu-central-1');
+            expect(err.message).toEqual(expect.arrayContaining(['circular dependency']));
+            expect(err.message).toEqual(expect.arrayContaining(['123123123123']));
+            expect(err.message).toEqual(expect.arrayContaining(['eu-central-1']));
         }
     });
 
-    it('will throw for dependency on self', async () => {
+    test('will throw for dependency on self', async () => {
         const task1: ICfnTask = {
             action: 'UpdateOrCreate',
             isDependency: (t) => true,
@@ -120,7 +119,7 @@ describe('when running cfn tasks', () => {
             await CfnTaskRunner.RunTasks([task1], 'stack');
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).to.contain('dependency on self');
+            expect(err.message).toEqual(expect.arrayContaining(['dependency on self']));
         }
     });
 });

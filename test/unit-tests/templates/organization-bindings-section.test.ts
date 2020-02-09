@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { ITemplate, TemplateRoot } from '../../../src/parser/parser';
@@ -23,48 +22,48 @@ describe('when  using organization bindings section', () => {
         bindings = cloudformationBinder.enumBindings();
     });
 
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('Resource 1 AllCount attribute resolves to 5', () => {
+    test('Resource 1 AllCount attribute resolves to 5', () => {
         const resource1 = template.resourcesSection.resources.find((x) => x.logicalId === 'Resource1');
-        expect(resource1.normalizedBoundAccounts).to.not.be.undefined;
-        expect(resource1.normalizedBoundAccounts.length).to.eq(5);
+        expect(resource1.normalizedBoundAccounts).toBeDefined();
+        expect(resource1.normalizedBoundAccounts.length).toBe(5);
     });
 
-    it('Fn:TargetCount MasterBinding resolves to 1', () => {
+    test('Fn:TargetCount MasterBinding resolves to 1', () => {
         const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
         const resource1 = masterTemplate.Resources.Resource1;
-        expect(resource1.Properties.MasterCount).to.eq(1);
+        expect(resource1.Properties.MasterCount).toBe(1);
     });
 
-    it('Fn:TargetCount AllAccountsBinding resolves to 5', () => {
+    test('Fn:TargetCount AllAccountsBinding resolves to 5', () => {
         const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
         const resource1 = masterTemplate.Resources.Resource1;
-        expect(resource1.Properties.AllCount).to.eq(5);
+        expect(resource1.Properties.AllCount).toBe(5);
     });
 
-    it('Fn:TargetCount EmptyBinding resolves to 0', () => {
+    test('Fn:TargetCount EmptyBinding resolves to 0', () => {
         const masterTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
         const resource1 = masterTemplate.Resources.Resource1;
-        expect(resource1.Properties.EmptyCount).to.eq(0);
+        expect(resource1.Properties.EmptyCount).toBe(0);
     });
 
-    it('Resource 2 has binding to only master', () => {
+    test('Resource 2 has binding to only master', () => {
         const resource2 = template.resourcesSection.resources.find((x) => x.logicalId === 'Resource2');
-        expect(resource2.normalizedBoundAccounts).to.not.be.undefined;
-        expect(resource2.normalizedBoundAccounts.length).to.eq(1);
-        expect(resource2.normalizedBoundAccounts[0]).to.eq('MasterAccount');
+        expect(resource2.normalizedBoundAccounts).toBeDefined();
+        expect(resource2.normalizedBoundAccounts.length).toBe(1);
+        expect(resource2.normalizedBoundAccounts[0]).toBe('MasterAccount');
     });
 
-    it('Resource 3 has binding to only master and foreach on all', () => {
+    test('Resource 3 has binding to only master and foreach on all', () => {
         const resource3 = template.resourcesSection.resources.find((x) => x.logicalId === 'Resource3');
-        expect(resource3.normalizedBoundAccounts).to.not.be.undefined;
-        expect(resource3.normalizedBoundAccounts.length).to.eq(1);
-        expect(resource3.normalizedBoundAccounts[0]).to.eq('MasterAccount');
-        expect(resource3.normalizedForeachAccounts).to.not.be.undefined;
-        expect(resource3.normalizedForeachAccounts.length).to.eq(5);
+        expect(resource3.normalizedBoundAccounts).toBeDefined();
+        expect(resource3.normalizedBoundAccounts.length).toBe(1);
+        expect(resource3.normalizedBoundAccounts[0]).toBe('MasterAccount');
+        expect(resource3.normalizedForeachAccounts).toBeDefined();
+        expect(resource3.normalizedForeachAccounts.length).toBe(5);
 
     });
 });

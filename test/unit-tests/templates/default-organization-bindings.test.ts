@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -36,30 +35,30 @@ describe('when loading default-organization-bindings template', () => {
         account3CfnTemplate = JSON.parse(account3Binding.template.createTemplateBody()) as ICfnTemplate;
     });
 
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('creates 3 bindings for template', () => {
-        expect(bindings.length).to.eq(3);
+    test('creates 3 bindings for template', () => {
+        expect(bindings.length).toBe(3);
     });
 
-    it('only Account1 and Account2 have Topic1', () => {
-        expect(account1CfnTemplate.Resources.Topic1).to.not.be.undefined;
-        expect(account2CfnTemplate.Resources.Topic1).to.not.be.undefined;
-        expect(account3CfnTemplate.Resources.Topic1).to.be.undefined;
+    test('only Account1 and Account2 have Topic1', () => {
+        expect(account1CfnTemplate.Resources.Topic1).toBeDefined();
+        expect(account2CfnTemplate.Resources.Topic1).toBeDefined();
+        expect(account3CfnTemplate.Resources.Topic1).toBeUndefined();
     });
 
-    it('only Account1 and Account2 have S3Bucket1', () => {
-        expect(account1CfnTemplate.Resources.S3Bucket1).to.not.be.undefined;
-        expect(account2CfnTemplate.Resources.S3Bucket1).to.not.be.undefined;
-        expect(account3CfnTemplate.Resources.S3Bucket1).to.be.undefined;
+    test('only Account1 and Account2 have S3Bucket1', () => {
+        expect(account1CfnTemplate.Resources.S3Bucket1).toBeDefined();
+        expect(account2CfnTemplate.Resources.S3Bucket1).toBeDefined();
+        expect(account3CfnTemplate.Resources.S3Bucket1).toBeUndefined();
     });
 
-    it('only Account2 and Account3 have S3Bucket2', () => {
-        expect(account1CfnTemplate.Resources.S3Bucket2).to.be.undefined;
-        expect(account2CfnTemplate.Resources.S3Bucket2).to.not.be.undefined;
-        expect(account3CfnTemplate.Resources.S3Bucket2).to.not.be.undefined;
+    test('only Account2 and Account3 have S3Bucket2', () => {
+        expect(account1CfnTemplate.Resources.S3Bucket2).toBeUndefined();
+        expect(account2CfnTemplate.Resources.S3Bucket2).toBeDefined();
+        expect(account3CfnTemplate.Resources.S3Bucket2).toBeDefined();
     });
 
 });

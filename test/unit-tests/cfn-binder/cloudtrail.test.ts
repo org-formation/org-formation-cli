@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -36,58 +35,58 @@ describe('when loading cloudtrail template', () => {
         complianceBinding = bindings.find((x) => x.accountId === '333333333333');
         complianceCfnTemplate = JSON.parse(complianceBinding.template.createTemplateBody()) as ICfnTemplate;
     });
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('creates 4 bindings for template', () => {
-        expect(bindings.length).to.eq(4);
+    test('creates 4 bindings for template', () => {
+        expect(bindings.length).toBe(4);
     });
 
-    it('compliance account has s3 bucket', () => {
+    test('compliance account has s3 bucket', () => {
         const resources = Object.entries(complianceCfnTemplate.Resources).map((x) => x[1]);
         const buckets = resources.filter((x) => x.Type === 'AWS::S3::Bucket');
-        expect(buckets.length).to.eq(1);
+        expect(buckets.length).toBe(1);
 
-        expect(buckets[0].Properties.BucketName).to.eq('cloudtrail-333333333333');
+        expect(buckets[0].Properties.BucketName).toBe('cloudtrail-333333333333');
     });
 
-    it('compliance account has export for s3 bucket', () => {
-        expect(complianceCfnTemplate.Outputs[expectedOutputLogicalId]).to.not.be.undefined;
-        expect(complianceCfnTemplate.Outputs[expectedOutputLogicalId].Export.Name).to.eq(expectedExportNameFors3Bucket);
+    test('compliance account has export for s3 bucket', () => {
+        expect(complianceCfnTemplate.Outputs[expectedOutputLogicalId]).toBeDefined();
+        expect(complianceCfnTemplate.Outputs[expectedOutputLogicalId].Export.Name).toBe(expectedExportNameFors3Bucket);
 
         const refValue = complianceCfnTemplate.Outputs[expectedOutputLogicalId].Value as ICfnRefValue;
-        expect(refValue.Ref).to.not.be.undefined;
-        expect(refValue.Ref).to.eq('CloudTrailS3Bucket');
+        expect(refValue.Ref).toBeDefined();
+        expect(refValue.Ref).toBe('CloudTrailS3Bucket');
     });
 
-    it('master account has parameter for s3 bucket', () => {
-        expect(masterCfnTemplate.Parameters).to.not.be.undefined;
+    test('master account has parameter for s3 bucket', () => {
+        expect(masterCfnTemplate.Parameters).toBeDefined();
         const parameter = Object.values(masterCfnTemplate.Parameters)[0];
-        expect(parameter.ExportAccountId).to.eq('333333333333');
-        expect(parameter.ExportName).to.eq(expectedExportNameFors3Bucket);
-        expect(parameter.ExportRegion).to.eq('eu-central-1');
+        expect(parameter.ExportAccountId).toBe('333333333333');
+        expect(parameter.ExportName).toBe(expectedExportNameFors3Bucket);
+        expect(parameter.ExportRegion).toBe('eu-central-1');
     });
 
-    it('services account has parameter for s3 bucket', () => {
-        expect(servicesCfnTemplate.Parameters).to.not.be.undefined;
+    test('services account has parameter for s3 bucket', () => {
+        expect(servicesCfnTemplate.Parameters).toBeDefined();
         const parameter = Object.values(servicesCfnTemplate.Parameters)[0];
-        expect(parameter.ExportAccountId).to.eq('333333333333');
-        expect(parameter.ExportName).to.eq(expectedExportNameFors3Bucket);
-        expect(parameter.ExportRegion).to.eq('eu-central-1');
+        expect(parameter.ExportAccountId).toBe('333333333333');
+        expect(parameter.ExportName).toBe(expectedExportNameFors3Bucket);
+        expect(parameter.ExportRegion).toBe('eu-central-1');
     });
 
-    it('master account references parameter for cloudtrail s3 bucket', () => {
-        expect(masterCfnTemplate.Resources.CloudTrail).to.not.be.undefined;
+    test('master account references parameter for cloudtrail s3 bucket', () => {
+        expect(masterCfnTemplate.Resources.CloudTrail).toBeDefined();
         const bucketName = masterCfnTemplate.Resources.CloudTrail.Properties.S3BucketName as ICfnRefValue;
-        expect(bucketName).to.not.be.undefined;
-        expect(bucketName.Ref).to.eq(Object.keys(masterCfnTemplate.Parameters)[0]);
+        expect(bucketName).toBeDefined();
+        expect(bucketName.Ref).toBe(Object.keys(masterCfnTemplate.Parameters)[0]);
     });
 
-    it('services account references parameter for cloudtrail s3 bucket', () => {
-        expect(servicesCfnTemplate.Resources.CloudTrail).to.not.be.undefined;
+    test('services account references parameter for cloudtrail s3 bucket', () => {
+        expect(servicesCfnTemplate.Resources.CloudTrail).toBeDefined();
         const bucketName = servicesCfnTemplate.Resources.CloudTrail.Properties.S3BucketName as ICfnRefValue;
-        expect(bucketName).to.not.be.undefined;
-        expect(bucketName.Ref).to.eq(Object.keys(servicesCfnTemplate.Parameters)[0]);
+        expect(bucketName).toBeDefined();
+        expect(bucketName.Ref).toBe(Object.keys(servicesCfnTemplate.Parameters)[0]);
     });
 });

@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import { expect } from 'chai';
-import { beforeEach } from 'mocha';
 import sinon from 'sinon';
 import Sinon from 'sinon';
 import { IBuildTask, IUpdateStackTaskConfiguration } from '../../../src/build-tasks/build-configuration';
@@ -22,20 +19,20 @@ describe('when creating UpdateStacksTask task', () => {
     afterEach(() => {
         updateStacksResoruces.restore();
     });
-    it('creates task', () => {
-        expect(task).to.not.be.undefined;
+    test('creates task', () => {
+        expect(task).toBeDefined();
     });
 
-    it('template and stackname are passed to updateStackResources', async () => {
+    test('template and stackname are passed to updateStackResources', async () => {
         await task.perform();
         const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
         const fileArg = commandArgs.templateFile;
         const commandKeys = Object.keys(commandArgs);
 
-        expect(fileArg.endsWith('path.yml')).to.be.true;
-        expect(commandKeys.length).to.eq(2);
-        expect(commandKeys).contains('stackName');
-        expect(commandArgs.stackName).to.eq('stack');
+        expect(fileArg.endsWith('path.yml')).toBe(true);
+        expect(commandKeys.length).toBe(2);
+        expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
+        expect(commandArgs.stackName).toBe('stack');
     });
 });
 
@@ -52,22 +49,25 @@ describe('when creating UpdateStacksTask task with command args', () => {
         updateStacksResoruces.restore();
     });
 
-    it('creates task', () => {
-        expect(task).to.not.be.undefined;
+    test('creates task', () => {
+        expect(task).toBeDefined();
     });
-    it('arguments sent to perform are passed to updateStackResources', async () => {
-        await task.perform();
-        const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
-        const fileArg = commandArgs.templateFile;
-        const commandKeys = Object.keys(commandArgs);
+    test(
+        'arguments sent to perform are passed to updateStackResources',
+        async () => {
+            await task.perform();
+            const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
+            const fileArg = commandArgs.templateFile;
+            const commandKeys = Object.keys(commandArgs);
 
-        expect(fileArg.endsWith('path.yml')).to.be.true;
-        expect(commandKeys.length).to.eq(3);
-        expect(commandKeys).contains('stackName');
-        expect(commandArgs.stackName).to.eq('stack');
-        expect(commandKeys).contains('arg');
-        expect((commandArgs as any).arg).to.eq('Val');
-    });
+            expect(fileArg.endsWith('path.yml')).toBe(true);
+            expect(commandKeys.length).toBe(3);
+            expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
+            expect(commandArgs.stackName).toBe('stack');
+            expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
+            expect((commandArgs as any).arg).toBe('Val');
+        }
+    );
 });
 describe('when creating UpdateStacksTask task with old attribute names', () => {
     let task: IBuildTask;
@@ -106,27 +106,27 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
         sandbox.restore();
     });
 
-    it('logs warning for old attribute names', () => {
-        expect(logWarningStub.callCount).to.eq(2);
+    test('logs warning for old attribute names', () => {
+        expect(logWarningStub.callCount).toBe(2);
     });
 
-    it('all arguments are passed to updateStackResources', () => {
+    test('all arguments are passed to updateStackResources', () => {
         const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
         const fileArg = commandArgs.templateFile;
         const commandKeys = Object.keys(commandArgs);
 
-        expect(fileArg.endsWith('path.yml')).to.be.true;
-        expect(commandKeys.length).to.eq(8);
-        expect(commandKeys).contains('stackName');
-        expect(commandArgs.stackName).to.eq('stack');
-        expect(commandKeys).contains('arg');
-        expect((commandArgs as any).arg).to.eq('Val');
-        expect(commandArgs.terminationProtection).to.eq(false);
-        expect(commandArgs.organizationBindings.NamedBinding).to.not.be.undefined;
-        expect(commandArgs.defaultOrganizationBinding.IncludeMasterAccount).to.eq(true);
-        expect(commandArgs.defaultOrganizationBindingRegion[0]).to.eq('eu-central-1');
-        expect(commandArgs.defaultOrganizationBindingRegion[1]).to.eq('us-west-1');
-        expect((commandArgs.parameters as any).Key).to.eq('Val');
+        expect(fileArg.endsWith('path.yml')).toBe(true);
+        expect(commandKeys.length).toBe(8);
+        expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
+        expect(commandArgs.stackName).toBe('stack');
+        expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
+        expect((commandArgs as any).arg).toBe('Val');
+        expect(commandArgs.terminationProtection).toBe(false);
+        expect(commandArgs.organizationBindings.NamedBinding).toBeDefined();
+        expect(commandArgs.defaultOrganizationBinding.IncludeMasterAccount).toBe(true);
+        expect(commandArgs.defaultOrganizationBindingRegion[0]).toBe('eu-central-1');
+        expect(commandArgs.defaultOrganizationBindingRegion[1]).toBe('us-west-1');
+        expect((commandArgs.parameters as any).Key).toBe('Val');
     });
 });
 
@@ -161,23 +161,23 @@ describe('when creating UpdateStacksTask task', () => {
         sandbox.restore();
     });
 
-    it('all arguments are passed to updateStackResources', async () => {
+    test('all arguments are passed to updateStackResources', async () => {
         await task.perform();
         const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
         const fileArg = commandArgs.templateFile;
         const commandKeys = Object.keys(commandArgs);
 
-        expect(fileArg.endsWith('path.yml')).to.be.true;
-        expect(commandKeys.length).to.eq(8);
-        expect(commandKeys).contains('stackName');
-        expect(commandArgs.stackName).to.eq('stack');
-        expect(commandKeys).contains('arg');
-        expect((commandArgs as any).arg).to.eq('Val');
-        expect(commandArgs.terminationProtection).to.eq(false);
-        expect(commandArgs.organizationBindings.NamedBinding).to.not.be.undefined;
-        expect(commandArgs.defaultOrganizationBinding.IncludeMasterAccount).to.eq(true);
-        expect(commandArgs.defaultOrganizationBindingRegion[0]).to.eq('eu-central-1');
-        expect(commandArgs.defaultOrganizationBindingRegion[1]).to.eq('us-west-1');
-        expect((commandArgs.parameters as any).Key).to.eq('Val');
+        expect(fileArg.endsWith('path.yml')).toBe(true);
+        expect(commandKeys.length).toBe(8);
+        expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
+        expect(commandArgs.stackName).toBe('stack');
+        expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
+        expect((commandArgs as any).arg).toBe('Val');
+        expect(commandArgs.terminationProtection).toBe(false);
+        expect(commandArgs.organizationBindings.NamedBinding).toBeDefined();
+        expect(commandArgs.defaultOrganizationBinding.IncludeMasterAccount).toBe(true);
+        expect(commandArgs.defaultOrganizationBindingRegion[0]).toBe('eu-central-1');
+        expect(commandArgs.defaultOrganizationBindingRegion[1]).toBe('us-west-1');
+        expect((commandArgs.parameters as any).Key).toBe('Val');
     });
 });

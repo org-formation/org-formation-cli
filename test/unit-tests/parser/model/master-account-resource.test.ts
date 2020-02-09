@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { IAccountProperties } from '../../../../src/parser/model/account-resource';
 import { MasterAccountResource } from '../../../../src/parser/model/master-account-resource';
 import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
@@ -23,56 +22,56 @@ describe('when creating master account resource', () => {
         };
     });
 
-    it('copies properties from resource', () => {
+    test('copies properties from resource', () => {
         const account = new MasterAccountResource(template, 'logical-id', resource);
-        expect(account.accountName).to.eq(accountProperties.AccountName);
-        expect(account.accountId).to.eq(accountProperties.AccountId);
-        expect(account.rootEmail).to.eq(accountProperties.RootEmail);
-        expect(account.tags).to.be.undefined;
+        expect(account.accountName).toBe(accountProperties.AccountName);
+        expect(account.accountId).toBe(accountProperties.AccountId);
+        expect(account.rootEmail).toBe(accountProperties.RootEmail);
+        expect(account.tags).toBeUndefined();
     });
 
-    it('copies tags from resource', () => {
+    test('copies tags from resource', () => {
         accountProperties.Tags = { key1: 'val1', key2: 'val2' };
         const account = new MasterAccountResource(template, 'logical-id', resource);
-        expect(account.tags.key1).to.eq(accountProperties.Tags.key1);
-        expect(account.tags.key2).to.eq(accountProperties.Tags.key2);
+        expect(account.tags.key1).toBe(accountProperties.Tags.key1);
+        expect(account.tags.key2).toBe(accountProperties.Tags.key2);
     });
 
-    it('throws an error if properties are missing', () => {
+    test('throws an error if properties are missing', () => {
         resource.Properties = undefined;
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/Properties/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/Properties/);
     });
 
-    it('throws an error if both rootEmail and accountId are missing', () => {
+    test('throws an error if both rootEmail and accountId are missing', () => {
         delete accountProperties.AccountId;
         delete accountProperties.RootEmail;
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/AccountId/);
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/RootEmail/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/AccountId/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/RootEmail/);
     });
 
-    it('throws an error if accountName is missing', () => {
+    test('throws an error if accountName is missing', () => {
         delete accountProperties.AccountName;
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/AccountName/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/AccountName/);
     });
 
-    it('throws an error if accountId is not a 12 digit string', () => {
+    test('throws an error if accountId is not a 12 digit string', () => {
         accountProperties.AccountId = 'aaaaaaaaaaaa';
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/AccountId/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/AccountId/);
     });
 
-    it('converts accountId to string if digit', () => {
+    test('converts accountId to string if digit', () => {
         (accountProperties as any).AccountId = 111111111111;
         const account = new MasterAccountResource(template, 'logical-id', resource);
-        expect(typeof account.accountId).to.eq('string');
+        expect(typeof account.accountId).toBe('string');
     });
 
-    it('throws an error if accountId is missing', () => {
+    test('throws an error if accountId is missing', () => {
         delete accountProperties.AccountId;
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).to.throw(/AccountId/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/AccountId/);
     });
 });

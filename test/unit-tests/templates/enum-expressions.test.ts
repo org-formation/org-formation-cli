@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding, ICfnSubValue } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -26,101 +25,122 @@ describe('when resolving enum-expressions', () => {
         masterAccountTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody()) as ICfnTemplate;
     });
 
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('creates template for master account', () => {
-        expect(masterAccountTemplate).to.not.be.undefined;
+    test('creates template for master account', () => {
+        expect(masterAccountTemplate).toBeDefined();
         const resource = masterAccountTemplate.Resources.Resource;
-        expect(resource).to.not.be.empty;
+        expect(Object.keys(resource)).not.toHaveLength(0);
     });
 
-    it('enum target for all accounts creates array with value for all accounts', () => {
-        const resource = masterAccountTemplate.Resources.Resource;
-        const val = resource.Properties.EnumAllTargetAccounts;
-        expect(Array.isArray(val)).to.be.true;
-        expect(val.length).to.eq(4);
-        expect(val[0]).to.eq('blabla-111111111111-blabla');
-        expect(val[3]).to.eq('blabla-444444444444-blabla');
-    });
+    test(
+        'enum target for all accounts creates array with value for all accounts',
+        () => {
+            const resource = masterAccountTemplate.Resources.Resource;
+            const val = resource.Properties.EnumAllTargetAccounts;
+            expect(Array.isArray(val)).toBe(true);
+            expect(val.length).toBe(4);
+            expect(val[0]).toBe('blabla-111111111111-blabla');
+            expect(val[3]).toBe('blabla-444444444444-blabla');
+        }
+    );
 
-    it('enum target for OU1 creates string value for only 1', () => {
+    test('enum target for OU1 creates string value for only 1', () => {
         const resource = masterAccountTemplate.Resources.Resource;
         const val = resource.Properties.EnumOU1TargetAccounts;
-        expect(Array.isArray(val)).to.be.false;
-        expect(val).to.eq('blabla-111111111111-blabla');
+        expect(Array.isArray(val)).toBe(false);
+        expect(val).toBe('blabla-111111111111-blabla');
     });
 
-    it('enum regions for all creates array with value for each region', () => {
+    test('enum regions for all creates array with value for each region', () => {
         const resource = masterAccountTemplate.Resources.Resource;
         const val = resource.Properties.EnumAllTargetRegions;
-        expect(Array.isArray(val)).to.be.true;
-        expect(val.length).to.eq(2);
-        expect(val[0]).to.eq('blabla-eu-west-1-blabla');
-        expect(val[1]).to.eq('blabla-eu-central-1-blabla');
+        expect(Array.isArray(val)).toBe(true);
+        expect(val.length).toBe(2);
+        expect(val[0]).toBe('blabla-eu-west-1-blabla');
+        expect(val[1]).toBe('blabla-eu-central-1-blabla');
     });
 
-    it('enum regions for ou1 creates string value for each region', () => {
+    test('enum regions for ou1 creates string value for each region', () => {
         const resource = masterAccountTemplate.Resources.Resource;
         const val = resource.Properties.EnumOU1TargetRegions;
-        expect(val).to.eq('blabla-eu-west-1-blabla');
+        expect(val).toBe('blabla-eu-west-1-blabla');
     });
 
-    it('enum accounts for results in Sub expression if variables are found', () => {
-        const resource = masterAccountTemplate.Resources.Resource;
-        const val: ICfnSubValue = resource.Properties.EnumWithOtherParameter;
-        expect(val['Fn::Sub']).to.not.be.undefined;
-        expect(val['Fn::Sub']).to.eq('blabla-111111111111-${something}-blabla');
-    });
+    test(
+        'enum accounts for results in Sub expression if variables are found',
+        () => {
+            const resource = masterAccountTemplate.Resources.Resource;
+            const val: ICfnSubValue = resource.Properties.EnumWithOtherParameter;
+            expect(val['Fn::Sub']).toBeDefined();
+            expect(val['Fn::Sub']).toBe('blabla-111111111111-${something}-blabla');
+        }
+    );
 
-    it('enum accounts can be used with default binding', () => {
+    test('enum accounts can be used with default binding', () => {
         const resource = masterAccountTemplate.Resources.Resource;
         const val = resource.Properties.EnumWithDefaultAccountBinding;
-        expect(val).to.eq('blabla-222222222222-blabla');
+        expect(val).toBe('blabla-222222222222-blabla');
     });
 
-    it('enum target for all accounts creates array with value for all accounts (single qoutes)', () => {
-        const resource = masterAccountTemplate.Resources.Resource2;
-        const val = resource.Properties.EnumAllTargetAccounts;
-        expect(Array.isArray(val)).to.be.true;
-        expect(val.length).to.eq(4);
-        expect(val[0]).to.eq('blabla 111111111111 blabla');
-        expect(val[3]).to.eq('blabla 444444444444 blabla');
-    });
+    test(
+        'enum target for all accounts creates array with value for all accounts (single qoutes)',
+        () => {
+            const resource = masterAccountTemplate.Resources.Resource2;
+            const val = resource.Properties.EnumAllTargetAccounts;
+            expect(Array.isArray(val)).toBe(true);
+            expect(val.length).toBe(4);
+            expect(val[0]).toBe('blabla 111111111111 blabla');
+            expect(val[3]).toBe('blabla 444444444444 blabla');
+        }
+    );
 
-    it('enum target for OU1 creates string value for only 1 (single qoutes)', () => {
-        const resource = masterAccountTemplate.Resources.Resource2;
-        const val = resource.Properties.EnumOU1TargetAccounts;
-        expect(Array.isArray(val)).to.be.false;
-        expect(val).to.eq('blabla 111111111111 blabla');
-    });
+    test(
+        'enum target for OU1 creates string value for only 1 (single qoutes)',
+        () => {
+            const resource = masterAccountTemplate.Resources.Resource2;
+            const val = resource.Properties.EnumOU1TargetAccounts;
+            expect(Array.isArray(val)).toBe(false);
+            expect(val).toBe('blabla 111111111111 blabla');
+        }
+    );
 
-    it('enum regions for all creates array with value for each region (single qoutes)', () => {
-        const resource = masterAccountTemplate.Resources.Resource2;
-        const val = resource.Properties.EnumAllTargetRegions;
-        expect(Array.isArray(val)).to.be.true;
-        expect(val.length).to.eq(2);
-        expect(val[0]).to.eq('blabla eu-west-1 blabla');
-        expect(val[1]).to.eq('blabla eu-central-1 blabla');
-    });
+    test(
+        'enum regions for all creates array with value for each region (single qoutes)',
+        () => {
+            const resource = masterAccountTemplate.Resources.Resource2;
+            const val = resource.Properties.EnumAllTargetRegions;
+            expect(Array.isArray(val)).toBe(true);
+            expect(val.length).toBe(2);
+            expect(val[0]).toBe('blabla eu-west-1 blabla');
+            expect(val[1]).toBe('blabla eu-central-1 blabla');
+        }
+    );
 
-    it('enum regions for ou1 creates string value for each region (single qoutes)', () => {
-        const resource = masterAccountTemplate.Resources.Resource2;
-        const val = resource.Properties.EnumOU1TargetRegions;
-        expect(val).to.eq('blabla eu-west-1 blabla');
-    });
+    test(
+        'enum regions for ou1 creates string value for each region (single qoutes)',
+        () => {
+            const resource = masterAccountTemplate.Resources.Resource2;
+            const val = resource.Properties.EnumOU1TargetRegions;
+            expect(val).toBe('blabla eu-west-1 blabla');
+        }
+    );
 
-    it('enum accounts for results in Sub expression if variables are found (single qoutes)', () => {
-        const resource = masterAccountTemplate.Resources.Resource2;
-        const val: ICfnSubValue = resource.Properties.EnumWithOtherParameter;
-        expect(val['Fn::Sub']).to.not.be.undefined;
-        expect(val['Fn::Sub']).to.eq('blabla 111111111111 ${something} blabla');
-    });
+    test(
+        'enum accounts for results in Sub expression if variables are found (single qoutes)',
+        () => {
+            const resource = masterAccountTemplate.Resources.Resource2;
+            const val: ICfnSubValue = resource.Properties.EnumWithOtherParameter;
+            expect(val['Fn::Sub']).toBeDefined();
+            expect(val['Fn::Sub']).toBe('blabla 111111111111 ${something} blabla');
+        }
+    );
 
-    it('enum accounts can be used with default binding (single qoutes)', () => {
+    test('enum accounts can be used with default binding (single qoutes)', () => {
         const resource = masterAccountTemplate.Resources.Resource2;
         const val = resource.Properties.EnumWithDefaultAccountBinding;
-        expect(val).to.eq('blabla 222222222222 blabla');
+        expect(val).toBe('blabla 222222222222 blabla');
     });
 });

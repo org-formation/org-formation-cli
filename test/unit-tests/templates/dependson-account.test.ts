@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -24,18 +23,18 @@ describe('when loading template with resources that depend on account or region'
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
     });
 
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('binding for account 1 has account dependency on 2 ', () => {
-        expect(account1Binding.accountDependencies.length).to.eq(1);
-        expect(account1Binding.accountDependencies[0]).to.eq('222222222222');
+    test('binding for account 1 has account dependency on 2 ', () => {
+        expect(account1Binding.accountDependencies.length).toBe(1);
+        expect(account1Binding.accountDependencies[0]).toBe('222222222222');
     });
 
-    it('binding for account 1 has region dependency on us-east-1', () => {
-        expect(account1Binding.regionDependencies.length).to.eq(1);
-        expect(account1Binding.regionDependencies[0]).to.eq('us-east-1');
+    test('binding for account 1 has region dependency on us-east-1', () => {
+        expect(account1Binding.regionDependencies.length).toBe(1);
+        expect(account1Binding.regionDependencies[0]).toBe('us-east-1');
     });
 });
 
@@ -59,18 +58,18 @@ describe('when loading template with resources that depend on account or region'
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
     });
 
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('binding for account 1 has account dependency on 2 ', () => {
-        expect(account1Binding.accountDependencies.length).to.eq(1);
-        expect(account1Binding.accountDependencies[0]).to.eq('222222222222');
+    test('binding for account 1 has account dependency on 2 ', () => {
+        expect(account1Binding.accountDependencies.length).toBe(1);
+        expect(account1Binding.accountDependencies[0]).toBe('222222222222');
     });
 
-    it('binding for account 1 has region dependency on us-east-1', () => {
-        expect(account1Binding.regionDependencies.length).to.eq(1);
-        expect(account1Binding.regionDependencies[0]).to.eq('us-east-1');
+    test('binding for account 1 has region dependency on us-east-1', () => {
+        expect(account1Binding.regionDependencies.length).toBe(1);
+        expect(account1Binding.regionDependencies[0]).toBe('us-east-1');
     });
 });
 
@@ -94,24 +93,24 @@ describe('when loading template with resource that depends on master account', (
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
     });
 
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('binding for account 1 has account dependency on master ', () => {
-        expect(account1Binding.accountDependencies.length).to.eq(1);
-        expect(account1Binding.accountDependencies[0]).to.eq('000000000000');
+    test('binding for account 1 has account dependency on master ', () => {
+        expect(account1Binding.accountDependencies.length).toBe(1);
+        expect(account1Binding.accountDependencies[0]).toBe('000000000000');
     });
 });
 
 describe('when loading template with resources that depend on account that cannot be found', () => {
 
-    it('creating template throws an exception', () => {
+    test('creating template throws an exception', () => {
         try {
             TemplateRoot.create('./test/resources/depends-on-account/depends-on-unknown-account.yml');
             throw new Error('expected exception');
         } catch (err) {
-            expect(err.message).to.contain('AccountUnknown');
+            expect(err.message).toEqual(expect.arrayContaining(['AccountUnknown']));
         }
     });
 });

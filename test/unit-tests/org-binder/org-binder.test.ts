@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import * as Sinon from 'sinon';
 import { OrganizationBinder } from '../../../src/org-binder/org-binder';
 import { IBuildTask, TaskProvider } from '../../../src/org-binder/org-tasks-provider';
@@ -23,17 +22,17 @@ describe('when enumerating bindings for empty state', () => {
         sut.enumBuildTasks();
     });
 
-    it('no accounts/policies/OU\'s are updated', () => {
-        expect(templateProvider.createOrganizationalUnitUpdateTasks.callCount).to.eq(0);
-        expect(templateProvider.createAccountUpdateTasks.callCount).to.eq(0);
-        expect(templateProvider.createPolicyUpdateTasks.callCount).to.eq(0);
+    test('no accounts/policies/OU\'s are updated', () => {
+        expect(templateProvider.createOrganizationalUnitUpdateTasks.callCount).toBe(0);
+        expect(templateProvider.createAccountUpdateTasks.callCount).toBe(0);
+        expect(templateProvider.createPolicyUpdateTasks.callCount).toBe(0);
     });
 
-    it('creates create tasks for all accounts', () => {
+    test('creates create tasks for all accounts', () => {
         const accounts = [template.organizationSection.masterAccount, ...template.organizationSection.accounts];
-        expect(templateProvider.createAccountCreateTasks.callCount).to.eq(accounts.length);
+        expect(templateProvider.createAccountCreateTasks.callCount).toBe(accounts.length);
         for (const account of accounts) {
-            expect(templateProvider.createAccountCreateTasks.calledWith(account, account.calculateHash())).to.be.true;
+            expect(templateProvider.createAccountCreateTasks.calledWith(account, account.calculateHash())).toBe(true);
         }
     });
 

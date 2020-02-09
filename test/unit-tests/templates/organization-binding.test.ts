@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -19,33 +18,33 @@ describe('when resolving organization binding through parameter', () => {
         bindings = cloudformationBinder.enumBindings();
     });
 
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('will create 2 templates', () => {
-        expect(bindings.length).to.eq(2);
+    test('will create 2 templates', () => {
+        expect(bindings.length).toBe(2);
     });
 
-    it('will create binding for users account', () => {
-        expect(bindings.find((x) => x.accountId === '222222222222')).to.not.be.undefined;
+    test('will create binding for users account', () => {
+        expect(bindings.find((x) => x.accountId === '222222222222')).toBeDefined();
     });
 
-    it('will create binding for master account', () => {
-        expect(bindings.find((x) => x.accountId === '000000000000')).to.not.be.undefined;
+    test('will create binding for master account', () => {
+        expect(bindings.find((x) => x.accountId === '000000000000')).toBeDefined();
     });
 });
 
 describe('when trying to resolve organization binding with accountId', () => {
-    it('error is thrown', () => {
+    test('error is thrown', () => {
         try {
             TemplateRoot.create('./test/resources/organization-binding/organization-binding-account-id.yml');
             throw new Error('error expected');
         } catch (err) {
-            expect(err).to.not.be.undefined;
-            expect(err.message).to.contain('123123123123');
-            expect(err.message).to.contain('not supported');
-            expect(err.message).to.contain('!Ref logicalId ');
+            expect(err).toBeDefined();
+            expect(err.message).toEqual(expect.arrayContaining(['123123123123']));
+            expect(err.message).toEqual(expect.arrayContaining(['not supported']));
+            expect(err.message).toEqual(expect.arrayContaining(['!Ref logicalId ']));
         }
     });
 });

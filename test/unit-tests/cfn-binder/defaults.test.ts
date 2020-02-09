@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -24,24 +23,24 @@ describe('when loading template with default-bindings', () => {
         bindings = cloudformationBinder.enumBindings();
     });
 
-    it('2 bindings are created', () => {
-        expect(bindings).to.not.be.undefined;
-        expect(bindings.length).to.eq(2);
+    test('2 bindings are created', () => {
+        expect(bindings).toBeDefined();
+        expect(bindings.length).toBe(2);
     });
 
-    it('topic is created in acc 1 and region eu-west-1', () => {
+    test('topic is created in acc 1 and region eu-west-1', () => {
         const bindingAcc1 = bindings.find((x) => x.accountId === '111111111111');
         const templateAcc1 = JSON.parse(bindingAcc1.template.createTemplateBody()) as ICfnTemplate;
-        expect(bindingAcc1.region).to.eq('eu-west-1');
-        expect(templateAcc1.Resources.Topic).to.not.be.undefined;
+        expect(bindingAcc1.region).toBe('eu-west-1');
+        expect(templateAcc1.Resources.Topic).toBeDefined();
 
     });
 
-    it('s3 bucket is created in acc 2 and region eu-central-1', () => {
+    test('s3 bucket is created in acc 2 and region eu-central-1', () => {
         const bindingAcc1 = bindings.find((x) => x.accountId === '222222222222');
         const templateAcc1 = JSON.parse(bindingAcc1.template.createTemplateBody()) as ICfnTemplate;
-        expect(bindingAcc1.region).to.eq('eu-central-1');
-        expect(templateAcc1.Resources.S3Bucket).to.not.be.undefined;
+        expect(bindingAcc1.region).toBe('eu-central-1');
+        expect(templateAcc1.Resources.S3Bucket).toBeDefined();
 
     });
 });
@@ -65,25 +64,25 @@ describe('when loading template with default-regions', () => {
         bindings = cloudformationBinder.enumBindings();
     });
 
-    it('3 bindings are created', () => {
-        expect(bindings).to.not.be.undefined;
-        expect(bindings.length).to.eq(3);
+    test('3 bindings are created', () => {
+        expect(bindings).toBeDefined();
+        expect(bindings.length).toBe(3);
     });
 
-    it('topic is created in acc 1 and region eu-west-1 and eu-central-1', () => {
+    test('topic is created in acc 1 and region eu-west-1 and eu-central-1', () => {
         const bindingAccEuWest1 = bindings.find((x) => x.accountId === '111111111111' && x.region === 'eu-west-1' );
         const templateAccEuWest1 = JSON.parse(bindingAccEuWest1.template.createTemplateBody()) as ICfnTemplate;
-        expect(templateAccEuWest1.Resources.Topic).to.not.be.undefined;
+        expect(templateAccEuWest1.Resources.Topic).toBeDefined();
 
         const bindingAccEuCentral1 = bindings.find((x) => x.accountId === '111111111111' && x.region === 'eu-central-1' );
         const templateAccEuCentral1 = JSON.parse(bindingAccEuCentral1.template.createTemplateBody()) as ICfnTemplate;
-        expect(templateAccEuCentral1.Resources.Topic).to.not.be.undefined;
+        expect(templateAccEuCentral1.Resources.Topic).toBeDefined();
     });
 
-    it('s3 bucket is created in acc 1 and region eu-west-1', () => {
+    test('s3 bucket is created in acc 1 and region eu-west-1', () => {
         const bindingAcc1 = bindings.find((x) => x.accountId === '111111111111' && x.region === 'us-east-1');
         const templateAcc1 = JSON.parse(bindingAcc1.template.createTemplateBody()) as ICfnTemplate;
-        expect(templateAcc1.Resources.S3Bucket).to.not.be.undefined;
+        expect(templateAcc1.Resources.S3Bucket).toBeDefined();
 
     });
 });

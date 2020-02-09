@@ -1,6 +1,4 @@
 
-import { expect } from 'chai';
-import * as chai from 'chai';
 import { IOrganizationalUnitProperties, OrganizationalUnitResource } from '../../../../src/parser/model/organizational-unit-resource';
 import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
 import { IResource, TemplateRoot } from '../../../../src/parser/parser';
@@ -22,20 +20,20 @@ describe('when creating organizational unit resource', () => {
         };
     });
 
-    it('copies properties from resource', () => {
+    test('copies properties from resource', () => {
         const ou = new OrganizationalUnitResource(template, 'logical-id', resource);
-        expect(ou.organizationalUnitName).to.eq(properties.OrganizationalUnitName);
+        expect(ou.organizationalUnitName).toBe(properties.OrganizationalUnitName);
     });
 
-    it('throws an error if properties are missing', () => {
+    test('throws an error if properties are missing', () => {
         resource.Properties = undefined;
-        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).to.throw(/Properties/);
+        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/Properties/);
     });
 
-    it('throws an error if organizational unit name is missing', () => {
+    test('throws an error if organizational unit name is missing', () => {
         delete properties.OrganizationalUnitName;
-        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).to.throw(/OrganizationalUnitName/);
+        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/OrganizationalUnitName/);
     });
 });

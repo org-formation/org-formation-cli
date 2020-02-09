@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { Command, Option } from 'commander';
 import Sinon = require('sinon');
 import { AwsUtil } from '../../../src/aws-util';
@@ -20,43 +19,43 @@ describe('when creating init organization command', () => {
         subCommanderCommand = commanderCommand.commands[0];
     });
 
-    it('init command is created', () => {
-        expect(command).to.not.be.undefined;
-        expect(subCommanderCommand).to.not.be.undefined;
-        expect(subCommanderCommand.name()).to.eq('init');
+    test('init command is created', () => {
+        expect(command).toBeDefined();
+        expect(subCommanderCommand).toBeDefined();
+        expect(subCommanderCommand.name()).toBe('init');
     });
 
-    it('init command has description', () => {
-       expect(subCommanderCommand).to.not.be.undefined;
-       expect(subCommanderCommand.description()).to.not.be.undefined;
+    test('init command has description', () => {
+       expect(subCommanderCommand).toBeDefined();
+       expect(subCommanderCommand.description()).toBeDefined();
     });
 
-    it('init command has file as first argument', () => {
+    test('init command has file as first argument', () => {
         const firstArg = subCommanderCommand._args[0];
-        expect(firstArg).to.not.be.undefined;
-        expect(firstArg.required).to.be.true;
-        expect(firstArg.name).to.eq('file');
+        expect(firstArg).toBeDefined();
+        expect(firstArg.required).toBe(true);
+        expect(firstArg.name).toBe('file');
     });
 
-    it('command has state bucket parameter with correct default', () => {
+    test('command has state bucket parameter with correct default', () => {
         const opts: Option[] = subCommanderCommand.options;
         const stateBucketOpt = opts.find((x) => x.long === '--state-bucket-name');
-        expect(stateBucketOpt).to.not.be.undefined;
-        expect(subCommanderCommand.stateBucketName).to.eq('organization-formation-${AWS::AccountId}');
+        expect(stateBucketOpt).toBeDefined();
+        expect(subCommanderCommand.stateBucketName).toBe('organization-formation-${AWS::AccountId}');
     });
 
-    it('command has state file parameter with correct default', () => {
+    test('command has state file parameter with correct default', () => {
         const opts: Option[] = subCommanderCommand.options;
         const stateObjectOpt = opts.find((x) => x.long === '--state-object');
-        expect(stateObjectOpt).to.not.be.undefined;
-        expect(subCommanderCommand.stateObject).to.eq('state.json');
+        expect(stateObjectOpt).toBeDefined();
+        expect(subCommanderCommand.stateObject).toBe('state.json');
     });
 
-    it('command has region parameter', () => {
+    test('command has region parameter', () => {
         const opts: Option[] = subCommanderCommand.options;
         const regionOpt = opts.find((x) => x.long === '--region');
-        expect(regionOpt).to.not.be.undefined;
-        expect(regionOpt.required).to.be.true;
+        expect(regionOpt).toBeDefined();
+        expect(regionOpt.required).toBe(true);
     });
 });
 
@@ -100,51 +99,54 @@ describe('when executing init organization command', () => {
         sandbox.restore();
     });
 
-    it('calls getMasterAccountId', async () => {
+    test('calls getMasterAccountId', async () => {
         await command.performCommand(commandArgs);
-        expect(getMasterAccountIdStub.callCount).to.eq(1);
+        expect(getMasterAccountIdStub.callCount).toBe(1);
     });
 
-    it('creates bucket using masterAccountId and state bucket name', async () => {
-        await command.performCommand(commandArgs);
+    test(
+        'creates bucket using masterAccountId and state bucket name',
+        async () => {
+            await command.performCommand(commandArgs);
 
-        expect(storageProviderCreateStub.callCount).to.eq(1);
-        const createCallArgs = storageProviderCreateStub.lastCall.args;
-        const tv: S3StorageProvider = storageProviderCreateStub.lastCall.thisValue;
-        expect(tv.bucketName).to.eq(`organization-formation-${masterAccountId}`);
-        expect(createCallArgs[0]).to.eq('eu-central-1');
-    });
+            expect(storageProviderCreateStub.callCount).toBe(1);
+            const createCallArgs = storageProviderCreateStub.lastCall.args;
+            const tv: S3StorageProvider = storageProviderCreateStub.lastCall.thisValue;
+            expect(tv.bucketName).toBe(`organization-formation-${masterAccountId}`);
+            expect(createCallArgs[0]).toBe('eu-central-1');
+        }
+    );
 
-    it('writes template to disk', async () => {
+    test('writes template to disk', async () => {
         await command.performCommand(commandArgs);
-        expect(writeFileSyncStub.callCount).to.eq(1);
+        expect(writeFileSyncStub.callCount).toBe(1);
         const callArgs = writeFileSyncStub.lastCall.args;
-        expect(callArgs[0]).to.eq(commandArgs.file);
-        expect(callArgs[1]).to.eq('template');
+        expect(callArgs[0]).toBe(commandArgs.file);
+        expect(callArgs[1]).toBe('template');
     });
 
-    it('stores state in state bucket', async () => {
+    test('stores state in state bucket', async () => {
         commandArgs.stateObject = 'state-file-name.yml';
         await command.performCommand(commandArgs);
 
         const instance: S3StorageProvider = storageProviderCreateStub.lastCall.thisValue;
-        expect(instance.bucketName).to.eq(`organization-formation-${masterAccountId}`);
-        expect(instance.objectKey).to.eq('state-file-name.yml');
+        expect(instance.bucketName).toBe(`organization-formation-${masterAccountId}`);
+        expect(instance.objectKey).toBe('state-file-name.yml');
 
         const putCallArgs = storageProviderPutStub.lastCall.args;
         const contents: string = putCallArgs[0];
         const state: IState = JSON.parse(contents);
-        expect(state.masterAccountId).to.eq(masterAccountId);
+        expect(state.masterAccountId).toBe(masterAccountId);
     });
 
-    it('if bucket already exists process continues', async () => {
+    test('if bucket already exists process continues', async () => {
         storageProviderCreateStub.throws({ code: 'BucketAlreadyOwnedByYou'});
 
         await command.performCommand(commandArgs);
-        expect(writeFileSyncStub.callCount).to.eq(1);
+        expect(writeFileSyncStub.callCount).toBe(1);
     });
 
-    it('if bucket cannot be created exception is retrown', async () => {
+    test('if bucket cannot be created exception is retrown', async () => {
         const error =  {code: 'SomeOtherException'};
         storageProviderCreateStub.throws(error);
 
@@ -152,21 +154,21 @@ describe('when executing init organization command', () => {
             await command.performCommand(commandArgs);
             throw Error('expeted exception');
         } catch (err) {
-            expect(err).to.eq(error);
+            expect(err).toBe(error);
         }
-        expect(writeFileSyncStub.callCount).to.eq(0);
+        expect(writeFileSyncStub.callCount).toBe(0);
     });
 
-    it('throws exception if region is undefined', async () => {
+    test('throws exception if region is undefined', async () => {
         delete commandArgs.region;
 
         try {
             await command.performCommand(commandArgs);
             throw Error('expeted exception');
         } catch (err) {
-            expect(err.message).to.contain('region');
+            expect(err.message).toEqual(expect.arrayContaining(['region']));
         }
-        expect(storageProviderCreateStub.callCount).to.eq(0);
-        expect(writeFileSyncStub.callCount).to.eq(0);
+        expect(storageProviderCreateStub.callCount).toBe(0);
+        expect(writeFileSyncStub.callCount).toBe(0);
     });
 });

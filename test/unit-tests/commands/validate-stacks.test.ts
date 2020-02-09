@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { Command, Option } from 'commander';
 import { create } from 'domain';
 import Sinon = require('sinon');
@@ -25,29 +24,29 @@ describe('when creating validate stacks command', () => {
         subCommanderCommand = commanderCommand.commands[0];
     });
 
-    it('init command is created', () => {
-        expect(command).to.not.be.undefined;
-        expect(subCommanderCommand).to.not.be.undefined;
-        expect(subCommanderCommand.name()).to.eq('validate-stacks');
+    test('init command is created', () => {
+        expect(command).toBeDefined();
+        expect(subCommanderCommand).toBeDefined();
+        expect(subCommanderCommand.name()).toBe('validate-stacks');
     });
 
-    it('init command has description', () => {
-       expect(subCommanderCommand).to.not.be.undefined;
-       expect(subCommanderCommand.description()).to.not.be.undefined;
+    test('init command has description', () => {
+       expect(subCommanderCommand).toBeDefined();
+       expect(subCommanderCommand.description()).toBeDefined();
     });
 
-    it('command has state bucket parameter with correct default', () => {
+    test('command has state bucket parameter with correct default', () => {
         const opts: Option[] = subCommanderCommand.options;
         const stateBucketOpt = opts.find((x) => x.long === '--state-bucket-name');
-        expect(stateBucketOpt).to.not.be.undefined;
-        expect(subCommanderCommand.stateBucketName).to.eq('organization-formation-${AWS::AccountId}');
+        expect(stateBucketOpt).toBeDefined();
+        expect(subCommanderCommand.stateBucketName).toBe('organization-formation-${AWS::AccountId}');
     });
 
-    it('command has state file parameter with correct default', () => {
+    test('command has state file parameter with correct default', () => {
         const opts: Option[] = subCommanderCommand.options;
         const stateObjectOpt = opts.find((x) => x.long === '--state-object');
-        expect(stateObjectOpt).to.not.be.undefined;
-        expect(subCommanderCommand.stateObject).to.eq('state.json');
+        expect(stateObjectOpt).toBeDefined();
+        expect(subCommanderCommand.stateObject).toBe('state.json');
     });
 });
 
@@ -100,32 +99,32 @@ describe('when validate stacks command', () => {
         sandbox.restore();
     });
 
-    it('calls getState and createTemplate', async () => {
+    test('calls getState and createTemplate', async () => {
         await command.performCommand(commandArgs);
-        expect(getStateStub.callCount).to.eq(1);
-        expect(createTemplateStub.callCount).to.eq(1);
+        expect(getStateStub.callCount).toBe(1);
+        expect(createTemplateStub.callCount).toBe(1);
         const args = createTemplateStub.lastCall.args;
-        expect(args[0]).to.eq('abc.yml');
+        expect(args[0]).toBe('abc.yml');
     });
 
-    it('performs tasks in parallel and continues on errors', async () => {
+    test('performs tasks in parallel and continues on errors', async () => {
         await command.performCommand(commandArgs);
-        expect(runTaksStub.callCount).to.eq(1);
+        expect(runTaksStub.callCount).toBe(1);
 
         const args = runTaksStub.lastCall.args;
         const params = args[1];
 
-        expect(params.maxConcurrentTasks).to.eq(99);
-        expect(params.failedTasksTolerance).to.eq(99);
+        expect(params.maxConcurrentTasks).toBe(99);
+        expect(params.failedTasksTolerance).toBe(99);
     });
 
-    it('validates all template targets', async () => {
+    test('validates all template targets', async () => {
         await command.performCommand(commandArgs);
-        expect(runTaksStub.callCount).to.eq(1);
+        expect(runTaksStub.callCount).toBe(1);
 
         const args = runTaksStub.lastCall.args;
         const tasks: [] = args[0];
 
-        expect(tasks.length).to.eq(6);
+        expect(tasks.length).toBe(6);
     });
 });

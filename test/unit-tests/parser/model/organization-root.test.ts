@@ -1,5 +1,3 @@
-import { expect } from 'chai';
-import * as chai from 'chai';
 import { AccountResource, IAccountProperties } from '../../../../src/parser/model/account-resource';
 import { IOrganizationRootProperties, OrganizationRootResource } from '../../../../src/parser/model/organization-root-resource';
 import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
@@ -22,12 +20,12 @@ describe('when organization root resource', () => {
         };
     });
 
-    it('copies properties from resource', () => {
+    test('copies properties from resource', () => {
         const root = new OrganizationRootResource(template, 'logical-id', resource);
-        expect((root as any).props.ServiceControlPolicies).to.eq('*');
+        expect((root as any).props.ServiceControlPolicies).toBe('*');
     });
 
-    it('does not throw wnen properties are missing', () => {
+    test('does not throw wnen properties are missing', () => {
         resource.Properties = undefined;
         new OrganizationRootResource(template, 'logical-id', resource);
     });
