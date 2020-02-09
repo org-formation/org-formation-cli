@@ -1,0 +1,97 @@
+
+service: create-account
+
+provider:
+  name: aws
+  region: eu-central-1
+  runtime: nodejs10.x
+
+functions:
+  hello:
+    handler: handler.hello
+
+stepFunctions:
+  stateMachines:
+    accountCreation:
+      name: OrgFormationAccountCreation
+      definition:
+        Comment: "Step function that will automate the process that needs to follow account creation"
+        StartAt: Notify
+        States:
+          Notify:
+            Type: Task
+            Resource: arn:aws:states:::sns:publish
+            End: true
+            Parameters:
+                Message: "hello"
+                TopicArn: !Ref AccountCreationNotify
+plugins:
+  - serverless-step-functions
+
+resources:
+  Resources:
+
+    AccountCreationNotify:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: String
+        TopicName: my-account-creation-notify
+
+    AccountCreationNotifyPolicy:
+      Type: AWS::SNS::TopicPolicy
+      Properties:
+        Topics:
+        - !Ref AccountCreationNotify
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Sid: AllowStates
+              Effect: Allow
+              Resource: !Ref AccountCreationNotify
+              Principal:
+                Service: states.amazonaws.com
+              Action: sns:publish
+
+    AccountCreationNotifySubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: olaf_conijn@hotmail.com
+        Protocol: email
+        TopicArn: !Ref AccountCreationNotify
+
+    OrganizationEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        Description: Rule used to forward organization events
+        State: ENABLED
+        EventPattern:
+          source:
+            - aws.organizations
+          detail:
+            eventSource:
+              - organizations.amazonaws.com
+            eventName:
+              - CreateAccount
+        Targets:
+          - Arn: !Ref OrgFormationAccountCreation
+            RoleArn: !GetAtt OrganizationEventRuleTargetRole.Arn
+            Id: invokeStepFunction
+
+    OrganizationEventRuleTargetRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Policies:
+        - PolicyName: StepStartExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action: states:StartExecution
+              Resource: !Ref OrgFormationAccountCreation
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole

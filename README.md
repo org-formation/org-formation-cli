@@ -194,7 +194,7 @@ How do i set up MFA for the account used by org-formation?
 `Org-formation` needs high priviledge access to your master account. If you run `org-formation` manually it is wise to set up MFA.
 
 I assume you have credentials set up in `~/.aws/credentials` and this looks like (might well be called `default`):
-```
+``` ini
 [org-formation]
 aws_access_key_id = AKIAxxxxxxxxx
 aws_secret_access_key = xxxxxxxxxxxxxxxxx
