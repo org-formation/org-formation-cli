@@ -154,6 +154,7 @@ If you are considering to use an account vending machine (e.g. [AWS Control Towe
 <summary>
 My operation takes a long time to complete / is slow.
 </summary>
+&nbsp;
 
 Especially if you have a lot of accounts this can happen.
 
@@ -161,12 +162,14 @@ An easy way to speed things up is by specifying the commandline argument `--max-
 
 Another way to speed things up is to run tasks in parallel this can be done with the argument `--max-concurrent-tasks 10`. This, however, has the side-effect that the logging might be somewhat harder to ralate to a specific task (as it might be out of order).
 
+&nbsp;
 </details>
 
 <details>
 <summary>
 Is there a way around having to create new email accounts per account?
 </summary>
+&nbsp;
 
 Every AWS Account needs a unique root email address, there is no way around this...
 
@@ -179,12 +182,98 @@ If your emailaddress is `name@gmail.com` you will receive email send to `name+aw
 
 Mailservers that support this are gmail, aws workmail and hotmail.
 
+&nbsp;
+</details>
+
+<details>
+<summary>
+How do i set up MFA for the account used by org-formation?
+</summary>
+&nbsp;
+
+`Org-formation` needs high priviledge access to your master account. If you run `org-formation` manually it is wise to set up MFA.
+
+I assume you have credentials set up in `~/.aws/credentials` and this looks like (might well be called `default`):
+```
+[org-formation]
+aws_access_key_id = AKIAxxxxxxxxx
+aws_secret_access_key = xxxxxxxxxxxxxxxxx
+```
+
+This allows org-formation to assume the IAM User that corresponds to the access key and secret using the option `--profile org-formation`.
+
+In order to enforce MFA you need to do the following:
+1) Assign a MFA device to the IAM User in the console.
+2) Create a role in your master account that has high priviledged access and enforces the use of MFA. We call this `MyOrgFormationRole`.
+3) Create a profile that refers to the MyOrgFormation. We call this profile `org-formation-mfa`.
+4) Test whether MFA has been setup correctly by running `org-formation describe-stacks --profile org-formation-mfa`.
+5) If step #4 was succesfull you can strip the IAM user you use from permissions other than the once it needs to assume `MyOrgFormationRole`.
+
+Code snippets below:
+
+1) Creating the `MyOrgFormationRole` Role (step #2) - execute with CloudFormation
+```
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+  MyOrgFormationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MyOrgFormationRole
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/AdministratorAccess'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+          Action: sts:AssumeRole
+          Condition:
+            Bool:
+              aws:MultiFactorAuthPresent: 'true'
+```
+
+2) Creating the profile `org-formation-mfa` (step #3) put in your `~/.aws/config` file.
+Replace `000000000000` with your master account id.
+The value for `mfa_serial` needs to be the value you got when setting up MFA for your user
+
+```
+[profile org-formation-mfa]
+role_arn = arn:aws:iam::000000000000:role/MyOrgFormationRole
+source_profile = org-formation
+mfa_serial = arn:aws:iam::000000000000:mfa/my-user
+```
+
+3) Expected output when executing a command that requires MFA (step 4):
+
+```
+\> org-formation describe-stacks --profile org-formation-mfa
+👋 Enter MFA code for arn:aws:iam::000000000000:mfa/my-user:
+XXXXXX # here you type in the  put the MFA code
+{ ...regular output } # if successfull the command will execute
+```
+
+4) The minimum set of permissions for your user
+Replace `000000000000` with your master account id (or the complete ARN for your Role )
+
+```
+Sid: 'AssumeMFARole'
+Action: 'sts:AssumeRole'
+Effect: 'Allow'
+Resource: 'arn:aws:iam::000000000000:role/MyOrgFormationRole'
+```
+
+Hope this helps
+
+&nbsp;
 </details>
 
 <details>
 <summary>
 What is the password of the root user for newly created accounts?
 </summary>
+&nbsp;
 
 Accounts that are created have a root user but **no password**.
 
@@ -196,12 +285,14 @@ You can create a password using the 'Forgot password' process using the root ema
 
 **Needless to add?** dont use a virtual MFA on the same device that has access to the email account used as RootEmail... this reduces your 'multi factor' authentication to a single factor 🤔🤣
 
+&nbsp;
 </details>
 
 <details>
 <summary>
 What happens when I remove an account from the organization.yml?
 </summary>
+&nbsp;
 
 If you remove an account from the organization it will not be deleted. Deleting accounts using api calls is not supported by AWS.
 
@@ -223,6 +314,7 @@ Just add it back to the organization.yml. Make sure you run `update` and `update
 
 As long as the account was not deleted in full `org-formation` will identify it by the `RootEmail` (or `AccountId`) attribute in the organization.yml
 
+&nbsp;
 </details>
 
 
@@ -230,11 +322,13 @@ As long as the account was not deleted in full `org-formation` will identify it 
 <summary>
 What happens when I rename an account (AccountName attribute) in org-formation?
 </summary>
+&nbsp;
 
 Renaming accounts is not possible using API's. You will have to log into the account as root to change the account name in AWS.
 
 If you change the AccountName attribute in org-formation this will warn you about the above and will, when resolving references to the account, use the account name from the organization.yml file.
 
+&nbsp;
 </details>
 
 
@@ -242,11 +336,13 @@ If you change the AccountName attribute in org-formation this will warn you abou
 <summary>
 What happens when I rename an account (logical name) in org-formation?
 </summary>
+&nbsp;
 
 The logical name, just like with CloudFormation is how you refer to the account from within your templates. The logical account is also used as an identifier within org-formation.
 
 If you rename an account, by its logical name, org-formation will first notice that the resource by the old logical name has gone and `forget` it. Later it will discover the new same account by its new logical name and match it with the physical account that already exists in AWS. It will match the two thus completing the rename.
 
+&nbsp;
 </details>
 
 
@@ -254,11 +350,13 @@ If you rename an account, by its logical name, org-formation will first notice t
 <summary>
 Why is nesting OU's or a custom OrganizationAccessRole not supported?
 </summary>
+&nbsp;
 
 No reason other than not running into this usecase so far.
 
 Really happy to implement this based on someone else's usecase.
 
+&nbsp;
 </details>
 
 
