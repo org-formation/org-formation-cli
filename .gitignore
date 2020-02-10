@@ -8,3 +8,4 @@ chainslayer
 .nyc_output
 work
 .DS_Store
+examples/automation/create-account/variables.yml
