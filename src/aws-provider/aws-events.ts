@@ -9,7 +9,7 @@ const eventDetailType = 'events.org-formation.com';
 export class AwsEvents {
     public static async putAccountCreatedEvent(accountId: string) {
         try {
-            const events = new CloudWatchEvents();
+            const events = new CloudWatchEvents({region: 'us-east-1'});
             const putEventsRequest: PutEventsRequest = {Entries: [
                 {
                     Time: new Date(),
