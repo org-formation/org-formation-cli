@@ -2,7 +2,7 @@
 All notable changes to aws organization formation will be documented in this file.
 
 **version 0.0.74**
-- Added support for further automation of account creation by publishing CloudWatch / EventBridge event after account created. See example: https://github.com/OlafConijn/AwsOrganizationFormation/tree/master/examples/automation/create-account
+- Added support for further extending the account creation using CloudWatch / EventBridge events. See example: https://github.com/OlafConijn/AwsOrganizationFormation/tree/master/examples/automation/create-account
 
 **version 0.0.73**
 - Changed the default for max concurrent stacks (within a task, update or delete-stacks) to 1
