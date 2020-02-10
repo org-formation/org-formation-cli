@@ -369,6 +369,7 @@ Really happy to implement this based on someone else's usecase.
 - [Managing AWS Organizations as code](docs/organization-resources.md)
 - [Organization Annotated CloudFormation](docs/cloudformation-resources.md)
 - [Automating deployments](docs/task-files.md)
+- [Custom Account Creation Worklow](examples/automation/create-account/readme.md)
 - [CLI reference](docs/cli-reference.md)
 - [Changelog](CHANGELOG.md)
 

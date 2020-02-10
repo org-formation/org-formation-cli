@@ -17,7 +17,7 @@
 - [cross account secret](#cross-account-secret)
 - [cross account lambda](#cross-account-lambda)
 - [wildcard carts (2 regions)](#wildcard-carts-2-regions)
-- [account creation](#account-creation)
+- [custom account creation worflow](#custom-account-creation-worflow)
 
 <!-- /code_chunk_output -->
 
@@ -121,9 +121,9 @@ Template that demonstrates provisioning wildcard certificates in both us-east-1 
 
 [templates/wildcard-certs.yml](templates/wildcard-certs.yml)
 
-## account creation
+## custom account creation worflow
 
-Serverless project that demonstrate how to further automate account creation using CloudWatch/ EventBridge event rules and StepFunctions
+Serverless project that demonstrate how to customize and extern the account creation process using CloudWatch/ EventBridge event rules and StepFunctions
 
 ![account-creation](img/account-creation.png)
 
