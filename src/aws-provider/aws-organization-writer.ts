@@ -1,4 +1,5 @@
-import { Organizations } from 'aws-sdk/clients/all';
+import { CloudWatchEvents, Organizations } from 'aws-sdk/clients/all';
+import { PutEventsRequest } from 'aws-sdk/clients/cloudwatchevents';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
 import { AwsUtil, passwordPolicEquals } from '../aws-util';
@@ -7,6 +8,7 @@ import { OrgFormationError } from '../org-formation-error';
 import { AccountResource } from '../parser/model/account-resource';
 import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
 import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
+import { AwsEvents } from './aws-events';
 import { AwsOrganization } from './aws-organization';
 
 export class AwsOrganizationWriter {
@@ -218,7 +220,9 @@ export class AwsOrganizationWriter {
                 }
                 throw err;
             }
-        }while (shouldRetry);
+        } while (shouldRetry);
+        await AwsEvents.putAccountCreatedEvent(accountId);
+
         return accountId;
     }
 
