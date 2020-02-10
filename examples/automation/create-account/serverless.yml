@@ -1,14 +1,26 @@
 
 service: create-account
 
+# example serverless project that will send a notification email after account is created.
+# this is intended as an example do demonstrate how to automate and extend the account creation process.
+# in your organization you might want to create a ticket instead, update a wiki or perform tasks in the created account.
+# note that currently events are published in the us-east-1 region.
+# if you would like events to be raised in a different region, please raise a ticket: https://github.com/OlafConijn/AwsOrganizationFormation/issues
+
 custom:
+  # used as a prefix to resources
   resourcePrefix: my-account-creation
+
+  # replace both values with the from and to email addresses you would like to use.
+  # email addresses need to be 'verified' in SES.
+  notificationEmailTo: ${file(./variables.yml):notificationEmailTo}
+  notificationEmailFrom: ${file(./variables.yml):notificationEmailFrom}
 
 provider:
   name: aws
-  region: us-east-1
+  region:  us-east-1 # currently org-formation only publishes events to us-east-1
   runtime: nodejs10.x
-  iamRoleStatements: # IAM role statements so that services can be accessed in the AWS account
+  iamRoleStatements:
     - Effect: 'Allow'
       Action:
         - ses:sendTemplatedEmail
@@ -24,7 +36,7 @@ functions:
     handler: handler.sendEmail
     name: ${self:custom.resourcePrefix}-sendEmail
     environment:
-      fromEmailAddress: ${file(./variables.yml):notificationEmailFrom}
+      fromEmailAddress: ${self:custom.notificationEmailFrom}
 
 stepFunctions:
   stateMachines:
@@ -39,12 +51,6 @@ stepFunctions:
             Resource: !GetAtt getAccountData.Arn
             Next: PerformTasks
             ResultPath: '$.accountData'
-            # Catch:
-            # - ErrorEquals:
-            #   - States.ALL
-            #   IntervalSeconds: 3
-            #   BackoffRate: 1.5
-            #   MaxAttempts: 3
           PerformTasks:
             Type: Parallel
             End: true
@@ -56,7 +62,7 @@ stepFunctions:
                   End: true
                   Resource: !GetAtt sendEmail.Arn
                   Parameters:
-                    toAddress: ${file(./variables.yml):notificationEmailTo}
+                    toAddress: ${self:custom.notificationEmailTo}
                     contentTemplateData.$: $.accountData
                     contentTemplateName: ${self:custom.resourcePrefix}-mail-template
 plugins:
