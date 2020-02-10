@@ -1,11 +1,16 @@
 
 service: create-account
 
-# example serverless project that will send a notification email after account is created.
-# this is intended as an example do demonstrate how to automate and extend the account creation process.
-# in your organization you might want to create a ticket instead, update a wiki or perform tasks in the created account.
-# note that currently events are published in the us-east-1 region.
-# if you would like events to be raised in a different region, please raise a ticket: https://github.com/OlafConijn/AwsOrganizationFormation/issues
+# Example serverless.org project that will use StepFunctions send an email after account is created.
+# This is intended as an example do demonstrate how to automate and extend the account creation process.
+
+# In your organization you might want to do something a lot less manual:
+# e.g: automatically create a ticket, update a wiki or perform tasks in the created account.
+# Maybe integrate a library like [https://github.com/sentialabs/coto](https://github.com/sentialabs/coto)
+
+# Note that currently events are published in the `us-east-1` region.
+# If you would like events to be raised in a different region, please raise a ticket:
+# https://github.com/OlafConijn/AwsOrganizationFormation/issues
 
 custom:
   # used as a prefix to resources
