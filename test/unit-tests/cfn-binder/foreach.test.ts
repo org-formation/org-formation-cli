@@ -42,7 +42,7 @@ describe('when loading template with resource that does Foreach', () => {
             const resource = masterAccountCfnTemplate.Resources[resourceName];
             expect(resource.Properties.AccountId).toBeDefined();
             expect(resource.Properties.AccountId).toBeDefined();
-            expect(resource.Properties.AccountId).toEqual(expect.not.arrayContaining(['CurrentAccount']));
+            expect(resource.Properties.AccountId).toEqual(expect.not.stringContaining('CurrentAccount'));
         }
     });
 
@@ -51,8 +51,8 @@ describe('when loading template with resource that does Foreach', () => {
             const resource = masterAccountCfnTemplate.Resources[resourceName];
             expect(resource.Properties.TagInGetAtt).toBeDefined();
             expect(resource.Properties.TagInGetAtt).toBeDefined();
-            expect(resource.Properties.TagInGetAtt).toEqual(expect.not.arrayContaining(['CurrentAccount']));
-            expect(resource.Properties.TagInSub['Fn::Sub']).toEqual(expect.not.arrayContaining(['Tags']));
+            expect(resource.Properties.TagInGetAtt).toEqual(expect.not.stringContaining('CurrentAccount'));
+            expect(resource.Properties.TagInSub['Fn::Sub']).toEqual(expect.not.stringContaining('Tags'));
         }
     });
 
@@ -61,8 +61,8 @@ describe('when loading template with resource that does Foreach', () => {
             const resource = masterAccountCfnTemplate.Resources[resourceName];
             expect(resource.Properties.TagInSub).toBeDefined();
             expect(resource.Properties.TagInSub['Fn::Sub']).toBeDefined();
-            expect(resource.Properties.TagInSub['Fn::Sub']).toEqual(expect.not.arrayContaining(['CurrentAccount']));
-            expect(resource.Properties.TagInSub['Fn::Sub']).toEqual(expect.not.arrayContaining(['Tags']));
+            expect(resource.Properties.TagInSub['Fn::Sub']).toEqual(expect.not.stringContaining('CurrentAccount'));
+            expect(resource.Properties.TagInSub['Fn::Sub']).toEqual(expect.not.stringContaining('Tags'));
         }
     });
 

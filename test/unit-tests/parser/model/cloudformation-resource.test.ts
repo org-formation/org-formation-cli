@@ -183,9 +183,9 @@ describe('when including specific account that doesnt exist', () => {
     test('resolving references throws', () => {
         try {
             account.resolveRefs();
-            expect.fail('expected exception to have been thrown');
+            throw new Error('expected exception to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['AccountX']));
+            expect(err.message).toEqual(expect.stringContaining('AccountX'));
         }
     });
 });
@@ -253,9 +253,9 @@ describe('when exluding specific account that doesnt exist', () => {
     test('resolving references throws', () => {
         try {
             account.resolveRefs();
-            expect.fail('expected exception to have been thrown');
+            throw new Error('expected exception to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['XYZ']));
+            expect(err.message).toEqual(expect.stringContaining('XYZ'));
         }
     });
 });
@@ -358,9 +358,9 @@ describe('when including specific ou that doesnt exist', () => {
     test('resolving references throws', () => {
         try {
             account.resolveRefs();
-            expect.fail('expected exception to have been thrown');
+            throw new Error('expected exception to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['XXX']));
+            expect(err.message).toEqual(expect.stringContaining('XXX'));
         }
     });
 });
@@ -460,9 +460,9 @@ describe('when adding attribute that is not supported to organizational bindings
         try {
             new CloudFormationResource(template, 'logical-id', resource);
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['Something']));
-            expect(err.message).toEqual(expect.arrayContaining(['logical-id']));
-            expect(err.message).toEqual(expect.arrayContaining(['OrganizationBinding']));
+            expect(err.message).toEqual(expect.stringContaining('Something'));
+            expect(err.message).toEqual(expect.stringContaining('logical-id'));
+            expect(err.message).toEqual(expect.stringContaining('OrganizationBinding'));
         }
     });
 });
@@ -488,9 +488,9 @@ describe('when adding attribute that is not supported to foreach', () => {
         try {
             new CloudFormationResource(template, 'logical-id', resource);
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['Something']));
-            expect(err.message).toEqual(expect.arrayContaining(['logical-id']));
-            expect(err.message).toEqual(expect.arrayContaining(['Foreach']));
+            expect(err.message).toEqual(expect.stringContaining('Something'));
+            expect(err.message).toEqual(expect.stringContaining('logical-id'));
+            expect(err.message).toEqual(expect.stringContaining('Foreach'));
         }
     });
 });
@@ -516,9 +516,9 @@ describe('when adding region which is not supported to foreach', () => {
         try {
             new CloudFormationResource(template, 'logical-id', resource);
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['Region']));
-            expect(err.message).toEqual(expect.arrayContaining(['logical-id']));
-            expect(err.message).toEqual(expect.arrayContaining(['Foreach']));
+            expect(err.message).toEqual(expect.stringContaining('Region'));
+            expect(err.message).toEqual(expect.stringContaining('logical-id'));
+            expect(err.message).toEqual(expect.stringContaining('Foreach'));
         }
     });
 });

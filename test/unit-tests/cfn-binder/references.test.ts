@@ -106,7 +106,7 @@ describe('when loading cross account references through sub', () => {
         'Account 2 S3Bucket 2 Bucketname gets rewritten to parameter reference',
         () => {
             const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket2.Properties.BucketName;
-            expect(bucketName['Fn::Sub']).toEqual(expect.not.arrayContaining(['Account1.Resource']));
+            expect(bucketName['Fn::Sub']).toEqual(expect.not.stringContaining('Account1.Resource'));
             expect(bucketName['Fn::Sub']).toBe('${Account1DotResourcesDotTopicDotTopicName}-bucket');
         }
     );
@@ -118,7 +118,7 @@ describe('when loading cross account references through sub', () => {
             const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
 
             expect(refExpression).toBeDefined();
-            expect(refExpression.Ref).toEqual(expect.not.arrayContaining(['Account1.Resources']));
+            expect(refExpression.Ref).toEqual(expect.not.stringContaining('Account1.Resources'));
             expect(refExpression.Ref).toBe('Account1DotResourcesDotTopicDotTopicName');
         }
     );
@@ -166,14 +166,14 @@ describe('when loading cross account references through sub', () => {
             const getAttExpression = bucketName['Fn::Sub'] as string;
 
             expect(getAttExpression).toBeDefined();
-            expect(getAttExpression).toEqual(expect.arrayContaining(['S3Bucket6.BucketName']));
-            expect(getAttExpression).toEqual(expect.not.arrayContaining(['Account2']));
+            expect(getAttExpression).toEqual(expect.stringContaining('S3Bucket6.BucketName'));
+            expect(getAttExpression).toEqual(expect.not.stringContaining('Account2'));
         }
     );
 
     test('Account 2 S3Bucket 9 Bucketname gets rewritten to parameter', () => {
         const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket9.Properties.BucketName;
-        expect(bucketName['Fn::Sub']).toEqual(expect.not.arrayContaining(['MasterAccount.Resource']));
+        expect(bucketName['Fn::Sub']).toEqual(expect.not.stringContaining('MasterAccount.Resource'));
         expect(bucketName['Fn::Sub']).toBe('${MasterAccountDotResourcesDotTopicMasterDotTopicName}-bucket');
     });
 
@@ -221,7 +221,7 @@ describe('when loading cross account references through sub', () => {
             const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubRef;
 
             expect(val['Fn::Sub']).toBeDefined();
-            expect(val['Fn::Sub']).toEqual(expect.arrayContaining(['${Topic}']));
+            expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic}'));
         }
     );
     test(
@@ -230,7 +230,7 @@ describe('when loading cross account references through sub', () => {
             const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubGetAtt;
 
             expect(val['Fn::Sub']).toBeDefined();
-            expect(val['Fn::Sub']).toEqual(expect.arrayContaining(['${Topic.Arn}']));
+            expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic.Arn}'));
         }
     );
 
@@ -261,7 +261,7 @@ describe('when loading cross account references through sub', () => {
             const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubRef;
 
             expect(val['Fn::Sub']).toBeDefined();
-            expect(val['Fn::Sub']).toEqual(expect.arrayContaining(['${Topic}']));
+            expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic}'));
         }
     );
 
@@ -271,7 +271,7 @@ describe('when loading cross account references through sub', () => {
             const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubGetAtt;
 
             expect(val['Fn::Sub']).toBeDefined();
-            expect(val['Fn::Sub']).toEqual(expect.arrayContaining(['${Topic.Arn}']));
+            expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic.Arn}'));
         }
     );
 
@@ -307,7 +307,7 @@ describe('when loading cross account references through sub', () => {
             const val: ICfnSubValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubRef;
 
             expect(val['Fn::Sub']).toBeDefined();
-            expect(val['Fn::Sub']).toEqual(expect.arrayContaining(['${Account1DotResourcesDotTopic}']));
+            expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Account1DotResourcesDotTopic}'));
         }
     );
 
@@ -317,7 +317,7 @@ describe('when loading cross account references through sub', () => {
             const val: ICfnSubValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubGetAtt;
 
             expect(val['Fn::Sub']).toBeDefined();
-            expect(val['Fn::Sub']).toEqual(expect.arrayContaining(['${Account1DotResourcesDotTopicDotArn}']));
+            expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Account1DotResourcesDotTopicDotArn}'));
         }
     );
 });

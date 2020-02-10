@@ -110,7 +110,7 @@ describe('when loading template with resources that depend on account that canno
             TemplateRoot.create('./test/resources/depends-on-account/depends-on-unknown-account.yml');
             throw new Error('expected exception');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['AccountUnknown']));
+            expect(err.message).toEqual(expect.stringContaining('AccountUnknown'));
         }
     });
 });

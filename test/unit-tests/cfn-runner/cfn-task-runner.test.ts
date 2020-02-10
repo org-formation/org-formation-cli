@@ -100,9 +100,9 @@ describe('when running cfn tasks', () => {
             await CfnTaskRunner.RunTasks([task1, task2], 'stack');
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['circular dependency']));
-            expect(err.message).toEqual(expect.arrayContaining(['123123123123']));
-            expect(err.message).toEqual(expect.arrayContaining(['eu-central-1']));
+            expect(err.message).toEqual(expect.stringContaining('circular dependency'));
+            expect(err.message).toEqual(expect.stringContaining('123123123123'));
+            expect(err.message).toEqual(expect.stringContaining('eu-central-1'));
         }
     });
 
@@ -119,7 +119,7 @@ describe('when running cfn tasks', () => {
             await CfnTaskRunner.RunTasks([task1], 'stack');
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['dependency on self']));
+            expect(err.message).toEqual(expect.stringContaining('dependency on self'));
         }
     });
 });

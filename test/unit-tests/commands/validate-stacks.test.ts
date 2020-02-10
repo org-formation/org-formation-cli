@@ -3,7 +3,8 @@ import { create } from 'domain';
 import Sinon = require('sinon');
 import { CfnTaskRunner } from '../../../src/cfn-binder/cfn-task-runner';
 import { BaseCliCommand } from '../../../src/commands/base-command';
-import { IValidateStacksCommandArgs, ValidateStacksCommand } from '../../../src/commands/validate-stacks';
+import { ValidateStacksCommand } from '../../../src/commands/validate-stacks';
+import { IUpdateStacksCommandArgs } from '../../../src/commands/update-stacks';
 import { GenericTaskRunner } from '../../../src/core/generic-task-runner';
 import { FileUtil } from '../../../src/file-util';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -57,7 +58,7 @@ describe('when validate stacks command', () => {
     let runTaksStub: Sinon.SinonStub;
     let getStateStub: Sinon.SinonStub;
     let createTemplateStub: Sinon.SinonStub;
-    let commandArgs: IValidateStacksCommandArgs;
+    let commandArgs: IUpdateStacksCommandArgs;
     let testTemplate: TemplateRoot;
     const sandbox = Sinon.createSandbox();
 
@@ -91,7 +92,7 @@ describe('when validate stacks command', () => {
         command = new ValidateStacksCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
 
-        commandArgs = {...subCommanderCommand, templateFile: 'abc.yml'}  as unknown as IValidateStacksCommandArgs;
+        commandArgs = {...subCommanderCommand, templateFile: 'abc.yml'}  as unknown as IUpdateStacksCommandArgs;
 
     });
 

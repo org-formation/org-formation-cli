@@ -53,7 +53,7 @@ describe('when getting build tasks for task file without update-organization', (
             config.enumBuildTasks({} as ICommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['update-organization']));
+            expect(err.message).toEqual(expect.stringContaining('update-organization'));
         }
     });
 });
@@ -66,7 +66,7 @@ describe('when getting validation tasks for task file without update-organizatio
             config.enumValidationTasks({} as ICommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['update-organization']));
+            expect(err.message).toEqual(expect.stringContaining('update-organization'));
         }
     });
 });
@@ -79,8 +79,8 @@ describe('when getting validation tasks for task file with duplicate stackName',
             config.enumValidationTasks({} as ICommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['stackName']));
-            expect(err.message).toEqual(expect.arrayContaining(['stack-name']));
+            expect(err.message).toEqual(expect.stringContaining('stackName'));
+            expect(err.message).toEqual(expect.stringContaining('stack-name'));
         }
     });
 });
@@ -93,8 +93,8 @@ describe('when getting build tasks for task file with duplicate stackName', () =
             config.enumBuildTasks({} as ICommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['stackName']));
-            expect(err.message).toEqual(expect.arrayContaining(['stack-name']));
+            expect(err.message).toEqual(expect.stringContaining('stackName'));
+            expect(err.message).toEqual(expect.stringContaining('stack-name'));
         }
     });
 });
@@ -122,7 +122,7 @@ describe('when including task file without update-organization', () => {
         expect(command).toBeDefined();
         expect(command.organizationFile).toBeDefined();
         expect(command.organizationFile as string).toEqual(
-            expect.arrayContaining([(updateOrgTask as BaseOrganizationTask).templatePath])
+            expect.stringContaining((updateOrgTask as BaseOrganizationTask).templatePath)
         );
 
 

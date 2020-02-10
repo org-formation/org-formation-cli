@@ -42,9 +42,9 @@ describe('when trying to resolve organization binding with accountId', () => {
             throw new Error('error expected');
         } catch (err) {
             expect(err).toBeDefined();
-            expect(err.message).toEqual(expect.arrayContaining(['123123123123']));
-            expect(err.message).toEqual(expect.arrayContaining(['not supported']));
-            expect(err.message).toEqual(expect.arrayContaining(['!Ref logicalId ']));
+            expect(err.message).toEqual(expect.stringContaining('123123123123'));
+            expect(err.message).toEqual(expect.stringContaining('not supported'));
+            expect(err.message).toEqual(expect.stringContaining('!Ref logicalId '));
         }
     });
 });

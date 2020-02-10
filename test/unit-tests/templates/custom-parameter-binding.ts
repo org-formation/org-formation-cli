@@ -44,9 +44,9 @@ describe('when specifying !Ref in custom parameter binding to unknown account', 
             const bindings = cloudformationBinder.enumBindings();
             const account1Binding = bindings.find((x) => x.accountId === '111111111111');
             account1Binding.template.enumBoundParameters();
-            expect.fail('expected exception');
+            throw new Error('expected exception');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['UnkownAccount']));
+            expect(err.message).toEqual(expect.stringContaining('UnkownAccount'));
         }
     });
 });

@@ -151,7 +151,7 @@ describe('when executing init pipeline command', () => {
         const resourcePrefix = args[3] as string;
         const stackName = args[4] as string;
 
-        expect(cfnTemplate).toEqual(expect.arrayContaining(['AWSTemplateFormatVersion: \'2010-09-09\'']));
+        expect(cfnTemplate).toEqual(expect.stringContaining('AWSTemplateFormatVersion: \'2010-09-09\''));
         expect(region).toBe(commandArgs.region);
         expect(stateBucketName).toBe(`organization-formation-${masterAccountId}`);
         expect(resourcePrefix).toBe(commandArgs.resourcePrefix);
@@ -215,7 +215,7 @@ describe('when executing init pipeline command', () => {
 
         try {
             await command.performCommand(commandArgs);
-            throw Error('expeted exception');
+            throw Error('expected exception');
         } catch (err) {
             expect(err).toBe(error);
         }
@@ -227,9 +227,9 @@ describe('when executing init pipeline command', () => {
 
         try {
             await command.performCommand(commandArgs);
-            throw Error('expeted exception');
+            throw Error('expected exception');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['region']));
+            expect(err.message).toEqual(expect.stringContaining('region'));
         }
         expect(storageProviderCreateStub.callCount).toBe(0);
         expect(writeFileSyncStub.callCount).toBe(0);

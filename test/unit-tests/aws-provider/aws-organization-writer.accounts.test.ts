@@ -173,9 +173,9 @@ describe('when updating account', () => {
         expect(accountInModel).not.toBe(account.accountName);
         expect(logWarningSpy.callCount).toBe(1);
         const message = logWarningSpy.lastCall.args[0];
-        expect(message).toEqual(expect.arrayContaining([account.accountName]));
-        expect(message).toEqual(expect.arrayContaining([account.accountId]));
-        expect(message).toEqual(expect.arrayContaining(['cannot be changed']));
+        expect(message).toEqual(expect.stringContaining(account.accountName));
+        expect(message).toEqual(expect.stringContaining(account.accountId));
+        expect(message).toEqual(expect.stringContaining('cannot be changed'));
     });
 
     test('new tags are added', () => {

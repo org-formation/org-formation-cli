@@ -269,9 +269,9 @@ describe('when using Sub on account', () => {
     test('Sub does replace multiple values', () => {
         expect(templateResource).toBeDefined();
         expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toBeDefined();
-        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toEqual(expect.arrayContaining(['${' + 'something' + '}']));
-        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toEqual(expect.arrayContaining([otherAccountId]));
-        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toEqual(expect.arrayContaining([masterAccountId]));
+        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toEqual(expect.stringContaining('${' + 'something' + '}'));
+        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toEqual(expect.stringContaining(otherAccountId));
+        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toEqual(expect.stringContaining(masterAccountId));
     });
 
     test('Sub can resolve account name of other account', () => {
@@ -313,7 +313,7 @@ describe('when using Sub on account', () => {
 
     test('Sub can replace only second expression', () => {
         expect(templateResource).toBeDefined();
-        expect(templateResource.Properties.SubWith2Expressions['Fn::Sub']).toEqual(expect.arrayContaining(['account-2']));
+        expect(templateResource.Properties.SubWith2Expressions['Fn::Sub']).toEqual(expect.stringContaining('account-2'));
         expect(templateResource.Properties.SubWith2Expressions['Fn::Sub'].startsWith('${parameter}-abc'));
     });
 

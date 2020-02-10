@@ -152,7 +152,7 @@ describe('when executing init organization command', () => {
 
         try {
             await command.performCommand(commandArgs);
-            throw Error('expeted exception');
+            throw Error('expected exception');
         } catch (err) {
             expect(err).toBe(error);
         }
@@ -164,9 +164,9 @@ describe('when executing init organization command', () => {
 
         try {
             await command.performCommand(commandArgs);
-            throw Error('expeted exception');
+            throw Error('expected exception');
         } catch (err) {
-            expect(err.message).toEqual(expect.arrayContaining(['region']));
+            expect(err.message).toEqual(expect.stringContaining('region'));
         }
         expect(storageProviderCreateStub.callCount).toBe(0);
         expect(writeFileSyncStub.callCount).toBe(0);
