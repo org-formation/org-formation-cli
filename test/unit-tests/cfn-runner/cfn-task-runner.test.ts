@@ -144,7 +144,7 @@ describe('when running cfn tasks', () => {
             perform: async () => { task2.callCount += 1; },
         };
         await CfnTaskRunner.RunTasks([task1, task2], 'stack', 10, 10);
-        expect(task2.callCount).to.eq(0);
+        expect(task2.callCount).toEqual(0);
     });
 
     it('skipped task increases error count (and raises expection above threshold)', async () => {
@@ -171,8 +171,8 @@ describe('when running cfn tasks', () => {
             await CfnTaskRunner.RunTasks([task1, task2], 'stack', 10, 1);
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).to.contain('tolerance');
-            expect(err.message).to.contain('2');
+            expect(err.message).toContain('tolerance');
+            expect(err.message).toContain('2');
         }
     });
 });
