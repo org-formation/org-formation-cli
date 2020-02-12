@@ -123,7 +123,7 @@ describe('when running cfn tasks', () => {
         }
     });
 
-    it('will not run dependee after dependency failed', async () => {
+    test('will not run dependee after dependency failed', async () => {
         type MyTask = ICfnTask & { callCount: number };
         const task1: MyTask = {
             action: 'UpdateOrCreate',
@@ -147,7 +147,7 @@ describe('when running cfn tasks', () => {
         expect(task2.callCount).toEqual(0);
     });
 
-    it('skipped task increases error count (and raises expection above threshold)', async () => {
+    test('skipped task increases error count (and raises expection above threshold)', async () => {
         type MyTask = ICfnTask & { callCount: number };
         const task1: MyTask = {
             action: 'UpdateOrCreate',

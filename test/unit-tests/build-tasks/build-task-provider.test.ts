@@ -10,7 +10,15 @@ describe('when creating UpdateStacksTask task', () => {
     let task: IBuildTask;
     let updateStacksResoruces: sinon.SinonStub;
     beforeEach(() => {
-        const config: IUpdateStackTaskConfiguration = { Type: 'update-stacks', StackName: 'stack', Template: 'path.yml', FilePath: './.', LogicalName: 'task' };
+        const config: IUpdateStackTaskConfiguration = {
+            Type: 'update-stacks',
+            StackName: 'stack',
+            Template: 'path.yml',
+            FilePath: './.',
+            LogicalName: 'task',
+            MaxConcurrentStacks: 1,
+            FailedStackTolerance: 1,
+        };
         task = BuildTaskProvider.createBuildTask(config, {} as ICommandArgs);
 
         updateStacksResoruces = sinon.stub(UpdateStacksCommand, 'Perform');
@@ -30,7 +38,7 @@ describe('when creating UpdateStacksTask task', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).toBe(true);
-        expect(commandKeys.length).toBe(2);
+        expect(commandKeys.length).toBe(4);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
     });
@@ -40,7 +48,15 @@ describe('when creating UpdateStacksTask task with command args', () => {
     let task: IBuildTask;
     let updateStacksResoruces: sinon.SinonStub;
     beforeEach(() => {
-        const config: IUpdateStackTaskConfiguration = { Type: 'update-stacks', StackName: 'stack', Template: 'path.yml', FilePath: './.', LogicalName: 'task' };
+        const config: IUpdateStackTaskConfiguration = {
+            Type: 'update-stacks',
+            StackName: 'stack',
+            Template: 'path.yml',
+            FilePath: './.',
+            LogicalName: 'task',
+            MaxConcurrentStacks: 1,
+            FailedStackTolerance: 1,
+        };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
         updateStacksResoruces = sinon.stub(UpdateStacksCommand, 'Perform');
     });
@@ -61,7 +77,7 @@ describe('when creating UpdateStacksTask task with command args', () => {
             const commandKeys = Object.keys(commandArgs);
 
             expect(fileArg.endsWith('path.yml')).toBe(true);
-            expect(commandKeys.length).toBe(3);
+            expect(commandKeys.length).toBe(5);
             expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
             expect(commandArgs.stackName).toBe('stack');
             expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
@@ -96,6 +112,8 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
                 NamedBinding: { Account: [{ Ref: 'AccountName' }] },
             },
             TerminationProtection: false,
+            MaxConcurrentStacks: 1,
+            FailedStackTolerance: 1,
         };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
         updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
@@ -116,7 +134,7 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).toBe(true);
-        expect(commandKeys.length).toBe(8);
+        expect(commandKeys.length).toBe(10);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
         expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
@@ -153,6 +171,8 @@ describe('when creating UpdateStacksTask task', () => {
                 NamedBinding: { Account: [{ Ref: 'AccountName' }] },
             },
             TerminationProtection: false,
+            MaxConcurrentStacks: 1,
+            FailedStackTolerance: 1,
         };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
         updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
@@ -168,7 +188,7 @@ describe('when creating UpdateStacksTask task', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).toBe(true);
-        expect(commandKeys.length).toBe(8);
+        expect(commandKeys.length).toBe(10);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
         expect(commandKeys).toEqual(expect.arrayContaining(['arg']));

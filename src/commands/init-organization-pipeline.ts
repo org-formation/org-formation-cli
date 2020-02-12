@@ -8,6 +8,7 @@ import { WritableStream } from 'memory-streams';
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
+import { Validator } from '../parser/validator';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'init-pipeline';
@@ -32,6 +33,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         if (!command.region) {
             throw new OrgFormationError(`argument --region is missing`);
         }
+        Validator.validateRegion(command.region);
 
         const region = command.region;
 

@@ -1,0 +1,27 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "declaration": false,
+        "noEmitOnError" : true,
+        "noImplicitAny": false,                    /* Raise error on expressions and declarations with an implied 'any' type. */
+        "noImplicitThis": true,                   /* Raise error on 'this' expressions with an implied 'any' type. */
+        "alwaysStrict": true,                     /* Parse in strict mode and emit "use strict" for each source file. */
+        "outDir" : ".ts",
+        "module": "commonjs",
+        "target": "ES2017",
+        "esModuleInterop": true,
+        "sourceMap": true
+    },
+    "plugins": [
+      {
+        "name": "typescript-tslint-plugin"
+      }],
+    "include": [ "./**/*"],
+    "exclude": [],
+    "typeRoots": [
+        "../node_modules/@types"
+      ],
+    "types": [
+        "node"
+      ]
+ }

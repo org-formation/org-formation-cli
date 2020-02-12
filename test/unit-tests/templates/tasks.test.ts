@@ -145,7 +145,7 @@ describe('when referencing account on parameter', () => {
         expect(updateStacks.length).toBe(2);
     });
 
-    // it('physical id of account is copied to parameter value', () => {
+    // test('physical id of account is copied to parameter value', () => {
     //     const updateStacksAccount1 = tasks.filter((x) => x.type === 'update-stacks' && x.name === 'StackParamAccount1Ref')[0] as BaseStacksTask;
 
     //     expect(updateStacksAccount1);
