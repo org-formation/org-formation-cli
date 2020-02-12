@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { CliProgram } from '../../cli-program';
 
 describe('when creating the cli program', () => {
@@ -20,7 +20,7 @@ describe('when creating the cli program', () => {
     test('all commands take profile as optional option', () => {
         const commands: Command[] = program.commands;
         for (const childCommand of commands) {
-            const profile = childCommand.options.find((o) => o.long === '--profile');
+            const profile = childCommand.options.find((o: Option) => o.long === '--profile');
             expect(profile).toBeDefined();
             expect(profile.optional).toBe(true);
         }
@@ -29,7 +29,7 @@ describe('when creating the cli program', () => {
     test('all commands take state bucket as optional option', () => {
         const commands: Command[] = program.commands;
         for (const childCommand of commands) {
-            const profile = childCommand.options.find((o) => o.long === '--state-bucket-name');
+            const profile = childCommand.options.find((o: Option) => o.long === '--state-bucket-name');
             expect(profile).toBeDefined();
             expect(profile.optional).toBe(true);
         }
@@ -38,7 +38,7 @@ describe('when creating the cli program', () => {
     test('all commands take state object as optional option', () => {
         const commands: Command[] = program.commands;
         for (const childCommand of commands) {
-            const profile = childCommand.options.find((o) => o.long === '--state-object');
+            const profile = childCommand.options.find((o: Option) => o.long === '--state-object');
             expect(profile).toBeDefined();
             expect(profile.optional).toBe(true);
         }

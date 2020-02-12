@@ -4,6 +4,8 @@ import { AwsUtil } from '../../src/aws-util';
 import { ValidateTasksCommand } from '../../src/commands/validate-tasks';
 import { ConsoleUtil } from '../../src/console-util';
 
+jest.setTimeout(99999999);
+
 describe('when validating examples', () => {
 
     const sandbox = Sinon.createSandbox();
@@ -33,7 +35,7 @@ describe('when validating examples', () => {
         expect(logErrorStub.callCount).toBe(0);
         expect(logWarnStub.callCount).toBe(0);
 
-    }).timeout(999999999);
+    });
 });
 
 describe('when validating work', () => {
@@ -59,7 +61,7 @@ describe('when validating work', () => {
         }
         expect(logErrorStub.callCount).toBe(0);
 
-    }).timeout(999999999);
+    });
 });
 
 describe('when validating chainslayer', () => {
@@ -85,5 +87,5 @@ describe('when validating chainslayer', () => {
         }
         expect(logErrorStub.callCount).toBe(0);
 
-    }).timeout(999999999);
+    });
 });

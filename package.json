@@ -8,9 +8,10 @@
     "prepublishOnly": "tsc",
     "lint": "npx eslint './src/**/*.ts'",
     "lint:fix": "npx eslint --fix './src/**/*.ts'",
-    "test": "npx jest --config=jest.config.js",
+    "test": "npx jest --config=jest.config.js 'unit-test'",
     "test:coverage": "npx jest --ci --coverage --config=jest.config.js",
-    "itests": "npx jest --testTimeout=99999999999 --config=jest.config.js '**/test/integration-tests/*.ts'"
+    "itests": "npx jest --config=jest.config.js 'integration-test'",
+    "start:debug": "npx node --inspect -r ts-node/register cli.ts"
   },
   "files": [
     "dist/*",
