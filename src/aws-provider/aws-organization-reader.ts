@@ -18,7 +18,7 @@ interface IAWSAccountWithIAMAttributes {
 }
 
 interface IAWSAccountWithSupportLevel {
-    SupportLevel: SupportLevel;
+    SupportLevel?: SupportLevel;
 }
 interface IObjectWithParentId {
     ParentId: string;

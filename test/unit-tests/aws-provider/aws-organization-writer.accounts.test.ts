@@ -3,11 +3,12 @@ import * as AWSMock from 'aws-sdk-mock';
 import { CreateAccountRequest, TagResourceRequest, UntagResourceRequest } from 'aws-sdk/clients/organizations';
 import { expect } from 'chai';
 import * as Sinon from 'sinon';
+import { AwsEvents } from '../../../src/aws-provider/aws-events';
 import { AwsOrganization } from '../../../src/aws-provider/aws-organization';
 import { AwsOrganizationWriter } from '../../../src/aws-provider/aws-organization-writer';
 import { ConsoleUtil } from '../../../src/console-util';
-import { Resource } from '../../../src/parser/model/resource';
 import { TestOrganizations } from '../test-organizations';
+
 describe('when creating a new account using writer', () => {
     let organizationService: AWS.Organizations;
     let organizationModel: AwsOrganization;
@@ -15,6 +16,9 @@ describe('when creating a new account using writer', () => {
     let createAccountSpy: Sinon.SinonSpy;
     let tagResourceSpy: Sinon.SinonSpy;
     let untagResourceSpy: Sinon.SinonSpy;
+    let putAccountCreatedEventSpy: Sinon.SinonSpy;
+    const sanbox = Sinon.createSandbox();
+
     const account = { rootEmail: 'new-email@org.com', accountName: 'Account Name', tags: {tag1: 'val1', tag2: 'val2'} };
     const accountId = '123456789011';
 
@@ -25,6 +29,7 @@ describe('when creating a new account using writer', () => {
         AWSMock.mock('Organizations', 'describeCreateAccountStatus', (params: any, callback: any) => { callback(null, {CreateAccountStatus: {State: 'SUCCEEDED', AccountId: accountId }}); });
         AWSMock.mock('Organizations', 'tagResource', (params: any, callback: any) => { callback(null, {}); });
         AWSMock.mock('Organizations', 'untagResource', (params: any, callback: any) => { callback(null, {}); });
+        putAccountCreatedEventSpy = sanbox.stub(AwsEvents, 'putAccountCreatedEvent');
 
         organizationService = new AWS.Organizations();
         organizationModel = TestOrganizations.createBasicOrganization();
@@ -32,6 +37,7 @@ describe('when creating a new account using writer', () => {
         createAccountSpy = organizationService.createAccount as Sinon.SinonSpy;
         tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
         untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
+
         expect(createAccountSpy.callCount).to.eq(0);
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
@@ -40,6 +46,7 @@ describe('when creating a new account using writer', () => {
 
     afterEach(() => {
         AWSMock.restore();
+        sanbox.restore();
     });
 
     it('organization create account is called', () => {
@@ -75,6 +82,10 @@ describe('when creating a new account using writer', () => {
         expect(accountFromModel.Email).to.eq(account.rootEmail);
         expect(accountFromModel.Name).to.eq(account.accountName);
         expect(accountFromModel.Id).to.eq(accountId);
+    });
+
+    it('event has been published for new account', () => {
+        expect(putAccountCreatedEventSpy.callCount).to.eq( 1);
     });
 });
 
