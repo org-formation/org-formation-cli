@@ -4,6 +4,16 @@ const defaultConfig = {
 };
 
 module.exports = {
+    coveragePathIgnorePatterns: [
+        '/node_modules/',
+        '/test/'
+    ],
+    coverageReporters: [
+        'json',
+        'lcov',
+        'text',
+        'cobertura'
+    ],
     projects: [
         // TODO: add linter to jest
         // {
