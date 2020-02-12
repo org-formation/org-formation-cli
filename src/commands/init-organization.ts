@@ -3,6 +3,7 @@ import { writeFileSync } from 'fs';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { Validator } from '../parser/validator';
 
 const commandName = 'init <file>';
 const commandDescription = 'generate template & initialize organization';
@@ -22,6 +23,8 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
         if (!command.region) {
             throw new OrgFormationError(`argument --region is missing`);
         }
+
+        Validator.validateRegion(command.region);
 
         const region = command.region;
         const filePath = command.file;
