@@ -18,6 +18,9 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
     public addOptions(command: Command) {
         super.addOptions(command);
         command.option('--stack-name <stack-name>', 'name of the stack that will be deleted');
+        command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
+        command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks after which execution stops', 0);
+
     }
 
     public async performCommand(command: IDeleteStackCommandArgs) {
@@ -37,7 +40,7 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
         if (cfnTasks.length === 0) {
             ConsoleUtil.LogInfo('no templates found.');
         } else {
-            await CfnTaskRunner.RunTasks(cfnTasks, stackName);
+            await CfnTaskRunner.RunTasks(cfnTasks, stackName, command.maxConcurrentStacks, command.failedStacksTolerance);
             ConsoleUtil.LogInfo('done');
         }
 
@@ -47,4 +50,6 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
 
 interface IDeleteStackCommandArgs extends ICommandArgs {
     stackName: string;
+    maxConcurrentStacks: number;
+    failedStacksTolerance: number;
 }

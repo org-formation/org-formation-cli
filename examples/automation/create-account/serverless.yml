@@ -1,0 +1,140 @@
+
+service: create-account
+
+# Example serverless.org project that will use StepFunctions send an email after account is created.
+# This is intended as an example do demonstrate how to automate and extend the account creation process.
+
+# In your organization you might want to do something a lot less manual:
+# e.g: automatically create a ticket, update a wiki or perform tasks in the created account.
+# Maybe integrate a library like [https://github.com/sentialabs/coto](https://github.com/sentialabs/coto)
+
+# Note that currently events are published in the `us-east-1` region.
+# If you would like events to be raised in a different region, please raise a ticket:
+# https://github.com/OlafConijn/AwsOrganizationFormation/issues
+
+custom:
+  # used as a prefix to resources
+  resourcePrefix: my-account-creation
+
+  # replace both values with the from and to email addresses you would like to use.
+  # email addresses need to be 'verified' in SES.
+  notificationEmailTo: ${file(./variables.yml):notificationEmailTo}
+  notificationEmailFrom: ${file(./variables.yml):notificationEmailFrom}
+
+provider:
+  name: aws
+  region:  us-east-1 # currently org-formation only publishes events to us-east-1
+  runtime: nodejs10.x
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - ses:sendTemplatedEmail
+        - organizations:describeAccount
+      Resource: '*'
+
+
+functions:
+  getAccountData:
+    handler: handler.getAccountData
+    name: ${self:custom.resourcePrefix}-getAccountData
+  sendEmail:
+    handler: handler.sendEmail
+    name: ${self:custom.resourcePrefix}-sendEmail
+    environment:
+      fromEmailAddress: ${self:custom.notificationEmailFrom}
+
+stepFunctions:
+  stateMachines:
+    accountCreation:
+      name: OrgFormationAccountCreation
+      definition:
+        Comment: Step function that will automate the process that needs to follow account creation
+        StartAt: GetAccountData
+        States:
+          GetAccountData:
+            Type: Task
+            Resource: !GetAtt getAccountData.Arn
+            Next: PerformTasks
+            ResultPath: '$.accountData'
+          PerformTasks:
+            Type: Parallel
+            End: true
+            Branches:
+            - StartAt: NotifyEmail
+              States:
+                NotifyEmail:
+                  Type: Task
+                  End: true
+                  Resource: !GetAtt sendEmail.Arn
+                  Parameters:
+                    toAddress: ${self:custom.notificationEmailTo}
+                    contentTemplateData.$: $.accountData
+                    contentTemplateName: ${self:custom.resourcePrefix}-mail-template
+plugins:
+  - serverless-step-functions
+
+resources:
+  Resources:
+
+    OrganizationEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        Name: ${self:custom.resourcePrefix}-rule
+        Description: Rule used to forward organization events
+        State: ENABLED
+        EventPattern:
+          source:
+            - oc.org-formation
+          detail:
+            eventName:
+              - AccountCreated
+        Targets:
+          - Arn: !Ref OrgFormationAccountCreation
+            RoleArn: !GetAtt OrganizationEventRuleTargetRole.Arn
+            Id: invokeStepFunction
+            InputPath: $.detail
+
+    OrganizationEventRuleTargetRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:custom.resourcePrefix}-rule-role
+        Policies:
+        - PolicyName: StepStartExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action: states:StartExecution
+              Resource: !Ref OrgFormationAccountCreation
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+
+    NotifyEmailTemplate:
+      Type: AWS::SES::Template
+      Properties:
+        Template:
+          TemplateName: ${self:custom.resourcePrefix}-mail-template
+          SubjectPart: 'New AWS Account: {{Name}}'
+          TextPart: |
+            Hello,
+            We just added a new account to our AWS Organization =).
+
+            Details on the account:
+              - Root Email: {{Email}}
+              - Account Id: {{Id}}
+              - Account Name: {{Name}}
+
+            Would you please:
+              - Add this account to confluence?
+              - Update the VAT information for this account?
+              - Update the alternate contacts for this account?
+
+            Thanks,
+            The platform team.
+
+

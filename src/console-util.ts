@@ -19,17 +19,19 @@ export class ConsoleUtil {
     }
 
     public static LogWarning(message: string) {
-        console.warn(`WARN: ${message}`);
+        const formatted = `WARN: ${message}`;
+        console.warn(yellow(formatted));
     }
 
     public static LogError(message: string, err?: Error) {
-        console.error(`ERROR: ${message}`);
+        const formatted = `ERROR: ${message}`;
+        console.error(red(formatted));
 
         if (err !== undefined) {
             if (ConsoleUtil.printStacktraces) {
-                console.error(err);
+                console.error(red(`${err.message}\n${err.stack}`));
             } else {
-                console.error(`${err.message} (use option --print-stack to print stack)`);
+                console.error(red(`${err.message} (use option --print-stack to print stack)`));
             }
         }
     }
@@ -50,4 +52,11 @@ export class ConsoleUtil {
         console.log(message + ':');
         return await getLine();
     }
+}
+
+function red(message: string) {
+    return `\x1b[31m${message}\x1b[0m`;
+}
+function yellow(message: string) {
+    return `\x1b[33m${message}\x1b[0m`;
 }

@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.74**
+- Added support for further extending the account creation using CloudWatch / EventBridge events. See example: https://github.com/OlafConijn/AwsOrganizationFormation/tree/master/examples/automation/create-account
+
+**version 0.0.73**
+- Changed the default for max concurrent stacks (within a task, update or delete-stacks) to 1
+- Added `--max-concurrent-stacks` and `--failed-stacks-tolerance` options
+- Added attributes to update-stacks task to modify values for max-concurrancy and failure tolerance.
+- When a tasks depends on a failed task it will be skipped automatically
+- Added red to errors and yellow warnings to make 'm stand out more
+
+**version 0.0.72**
+- Fixed inconsistency in function naming scheme: using Fn:TargetCount will log a warning. Fn::TargetCount (2 colons) will not.
+
 **version 0.0.71**
 - Added SupportLevel attribute to accounts, which can be used to set the support subscription level (enterprise, business or developer) for the account.
 
@@ -9,7 +22,6 @@ All notable changes to aws organization formation will be documented in this fil
 - Added descriptive error when !Ref on parameter.ExportAccountId cannot be resolved.
 - Fixed bug where changing the logical name of MasterAccount resulted in invalid state.
 - Changed the logical name of generated Foreach resources. Also added a very specific error with help how to resolve adverse effects of this on guardduty templates.
-
 
 **version 0.0.69**
 - Added --stack-trace flag to print stack traces for errors. stacktraces are now hidden by default.

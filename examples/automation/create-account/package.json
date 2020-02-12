@@ -1,0 +1,15 @@
+{
+  "name": "create-account",
+  "version": "1.0.0",
+  "description": "this project will automate the process that needs to follow account creation",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Olaf Conijn",
+  "license": "MIT",
+  "devDependencies": {
+    "aws-sdk": "^2.614.0",
+    "serverless-step-functions": "^2.17.1"
+  }
+}

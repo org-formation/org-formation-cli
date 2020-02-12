@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { FileUtil } from '../file-util';
+import { writeFileSync } from 'fs';
+import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
@@ -27,9 +28,20 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
         const storageProvider = await this.createOrGetStateBucket(command, region);
         const template = await this.generateDefaultTemplate();
         const templateContents = template.template;
-        FileUtil.writeFileSync(filePath, templateContents);
+        writeFileSync(filePath, templateContents);
 
         await template.state.save(storageProvider);
+
+        ConsoleUtil.LogInfo(`Your organization template is written to ${command.file}`);
+        ConsoleUtil.LogInfo('Hope this will get you started!');
+        ConsoleUtil.LogInfo(``);
+        ConsoleUtil.LogInfo(`You can keep the ${command.file} file on disk or even better, under source control.`);
+        ConsoleUtil.LogInfo(`If you work with code pipeline you might find init-pipeline an interesting command too.`);
+        ConsoleUtil.LogInfo(``);
+        ConsoleUtil.LogInfo(`Dont worry about loosing the ${command.file} file, at any point you can recreate it.`);
+        ConsoleUtil.LogInfo(`Have fun! `);
+        ConsoleUtil.LogInfo(``);
+        ConsoleUtil.LogInfo(`--OC`);
 
     }
 }

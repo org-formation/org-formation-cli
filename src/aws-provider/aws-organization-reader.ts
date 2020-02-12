@@ -1,6 +1,7 @@
 import { IAM, Organizations } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListAccountsResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../aws-util';
+import { ConsoleUtil } from '../console-util';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
@@ -179,31 +180,38 @@ export class AwsOrganizationReader {
                         continue;
                     }
 
-                    const [tags, alias, passwordPolicy, supportLevel] = await Promise.all([
-                        AwsOrganizationReader.getTagsForAccount(that, acc.Id),
-                        AwsOrganizationReader.getIamAliasForAccount(that, acc.Id),
-                        AwsOrganizationReader.getIamPasswordPolicyForAccount(that, acc.Id),
-                        AwsOrganizationReader.getSupportLevelForAccount(that, acc.Id),
-                    ]);
+                    try {
+                        const [tags, alias, passwordPolicy, supportLevel] = await Promise.all([
+                            AwsOrganizationReader.getTagsForAccount(that, acc.Id),
+                            AwsOrganizationReader.getIamAliasForAccount(that, acc.Id),
+                            AwsOrganizationReader.getIamPasswordPolicyForAccount(that, acc.Id),
+                            AwsOrganizationReader.getSupportLevelForAccount(that, acc.Id),
+                        ]);
 
-                    const account = {
-                        ...acc,
-                        Type: 'Account',
-                        Name: acc.Name,
-                        Id: acc.Id,
-                        ParentId: req.ParentId,
-                        Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT'),
-                        Tags: tags,
-                        Alias: alias,
-                        PasswordPolicy: passwordPolicy,
-                        SupportLevel: supportLevel,
-                    };
+                        const account = {
+                            ...acc,
+                            Type: 'Account',
+                            Name: acc.Name,
+                            Id: acc.Id,
+                            ParentId: req.ParentId,
+                            Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT'),
+                            Tags: tags,
+                            Alias: alias,
+                            PasswordPolicy: passwordPolicy,
+                            SupportLevel: supportLevel,
+                        };
 
-                    const parentOU = organizationalUnits.find((x) => x.Id === req.ParentId);
-                    if (parentOU) {
-                        parentOU.Accounts.push(account);
+                        const parentOU = organizationalUnits.find((x) => x.Id === req.ParentId);
+                        if (parentOU) {
+                            parentOU.Accounts.push(account);
+                        }
+                        result.push(account);
+                    } catch (err) {
+                        if (err.code === 'AccessDenied') {
+                            ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot: `);
+                            ConsoleUtil.LogWarning(`https://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md`);
+                        }
                     }
-                    result.push(account);
                 }
 
             } while (resp.NextToken);

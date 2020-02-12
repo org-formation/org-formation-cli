@@ -59,6 +59,7 @@ Resources:
 
   # changing the name of the resource below when updating will result in errors
   # this, unfortunately, is due to a bug in how CloudFormation handles AWS::GuardDuty::Master resources.
+  # issue explained at: https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/363
   Member:
     Type: AWS::GuardDuty::Member
     OrganizationBinding: !Ref GuardDutyMasterBinding

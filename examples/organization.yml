@@ -130,6 +130,16 @@ Organization:
         account-owner-email: olaf@email.com
         subdomain: production1
 
+  Production2Account:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Production 2 Account
+      RootEmail: production2@olafconijn.awsapps.com
+      Alias: my-production2
+      Tags:
+        budget-alarm-threshold: '100'
+        account-owner-email: olaf@email.com
+
   DenyChangeOfOrgRoleSCP:
     Type: OC::ORG::ServiceControlPolicy
     Properties:
@@ -165,6 +175,7 @@ Organization:
               - 'iam:*'
               - 'route53:*'
               - 'support:*'
+              - 'budgets:*'
             Resource: '*'
             Condition:
               StringNotEquals:

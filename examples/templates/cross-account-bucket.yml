@@ -37,9 +37,9 @@ OrganizationBindings:
 
 
 Conditions:
-  CreateReadBucketPolicy: !Not [ !Equals [ Fn:TargetCount ReadAccessAccountBinding, 0 ] ]
-  CreateWriteBucketPolicy: !Not [ !Equals [ Fn:TargetCount WriteAccessAccountBinding, 0 ] ]
-  CreateFullAccessBucketPolicy: !Not [ !Equals [ Fn:TargetCount FullAccessAccountBinding, 0 ] ]
+  CreateReadBucketPolicy: !Not [ !Equals [ Fn::TargetCount ReadAccessAccountBinding, 0 ] ]
+  CreateWriteBucketPolicy: !Not [ !Equals [ Fn::TargetCount WriteAccessAccountBinding, 0 ] ]
+  CreateFullAccessBucketPolicy: !Not [ !Equals [ Fn::TargetCount FullAccessAccountBinding, 0 ] ]
 
 Resources:
 

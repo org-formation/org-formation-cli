@@ -1,9 +1,9 @@
 import { Command, Option } from 'commander';
+const fs = require('fs');
 import Sinon = require('sinon');
 import { AwsUtil } from '../../../src/aws-util';
 import { BaseCliCommand } from '../../../src/commands/base-command';
 import { IInitCommandArgs, InitOrganizationCommand } from '../../../src/commands/init-organization';
-import { FileUtil } from '../../../src/file-util';
 import { IState, PersistedState } from '../../../src/state/persisted-state';
 import { S3StorageProvider } from '../../../src/state/storage-provider';
 import { DefaultTemplate } from '../../../src/writer/default-template-writer';
@@ -85,7 +85,7 @@ describe('when executing init organization command', () => {
         storageProviderPutStub = sandbox.stub(S3StorageProvider.prototype, 'put');
         storageProviderGetStub = sandbox.stub(S3StorageProvider.prototype, 'get');
 
-        writeFileSyncStub = sandbox.stub(FileUtil, 'writeFileSync');
+        writeFileSyncStub = sandbox.stub(fs, 'writeFileSync');
 
         commanderCommand = new Command('root');
         command = new InitOrganizationCommand(commanderCommand);

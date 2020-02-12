@@ -31,6 +31,9 @@ Parameters:
 
 Resources:
 
+  # note that changing some attributes on Budget resources will result in an error.
+  # this unfortunately is a cloudformation error described here: https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/365
+  # workaround is to delete the budget resource and then re-add it.
   Budget:
     Type: AWS::Budgets::Budget
     Properties:
@@ -49,6 +52,8 @@ Resources:
           Subscribers:
             - SubscriptionType: SNS
               Address: !Ref BudgetAlarmTopic
+            - SubscriptionType: EMAIL
+              Address: olaf_conijn@hotmail.com
 
   BudgetAlarmTopic:
     Type: AWS::SNS::Topic

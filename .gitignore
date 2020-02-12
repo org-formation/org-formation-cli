@@ -9,3 +9,4 @@ chainslayer
 work
 .DS_Store
 coverage/
+examples/automation/create-account/variables.yml

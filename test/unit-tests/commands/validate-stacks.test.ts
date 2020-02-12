@@ -1,17 +1,10 @@
 import { Command, Option } from 'commander';
-import { create } from 'domain';
 import Sinon = require('sinon');
-import { CfnTaskRunner } from '../../../src/cfn-binder/cfn-task-runner';
 import { BaseCliCommand } from '../../../src/commands/base-command';
-import { ValidateStacksCommand } from '../../../src/commands/validate-stacks';
 import { IUpdateStacksCommandArgs } from '../../../src/commands/update-stacks';
+import { ValidateStacksCommand } from '../../../src/commands/validate-stacks';
 import { GenericTaskRunner } from '../../../src/core/generic-task-runner';
-import { FileUtil } from '../../../src/file-util';
 import { TemplateRoot } from '../../../src/parser/parser';
-import { IState, PersistedState } from '../../../src/state/persisted-state';
-import { S3StorageProvider } from '../../../src/state/storage-provider';
-import { DefaultTemplate } from '../../../src/writer/default-template-writer';
-import { ICfnResource } from '../cfn-types';
 import { TestTemplates } from '../test-templates';
 
 describe('when creating validate stacks command', () => {
@@ -92,7 +85,7 @@ describe('when validate stacks command', () => {
         command = new ValidateStacksCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
 
-        commandArgs = {...subCommanderCommand, templateFile: 'abc.yml'}  as unknown as IUpdateStacksCommandArgs;
+        commandArgs = {...subCommanderCommand, templateFile: 'abc.yml'} as unknown as IUpdateStacksCommandArgs;
 
     });
 

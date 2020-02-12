@@ -47,6 +47,8 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         command.option('--stack-description [description]', 'description of the stack that will be displayed cloudformation');
         command.option('--parameters [parameters]', 'parameter values passed to cloudformation when executing stacks');
         command.option('--termination-protection', 'value that indicates whether stack must have deletion protection');
+        command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
+        command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks after which execution stops', 0);
         super.addOptions(command);
     }
 
@@ -69,7 +71,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
             ConsoleUtil.LogInfo(`stack ${stackName} already up to date.`);
         } else {
             try {
-                await CfnTaskRunner.RunTasks(cfnTasks, stackName);
+                await CfnTaskRunner.RunTasks(cfnTasks, stackName, command.maxConcurrentStacks, 0);
             } finally {
                 await state.save();
             }
@@ -90,4 +92,6 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     stackDescription?: string;
     parameters?: string | {};
     terminationProtection?: boolean;
+    maxConcurrentStacks: number;
+    failedStacksTolerance: number;
 }

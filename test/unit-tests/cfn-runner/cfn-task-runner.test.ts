@@ -12,7 +12,7 @@ describe('when running cfn tasks', () => {
             region: 'eu-central-1',
             accountId: '123123123123',
             stackName: 'task1',
-            perform: async () => { task1order =  order; order = order + 1; },
+            perform: async () => { task1order = order; order = order + 1; },
             isDependency: () => false,
         };
         const task2: ICfnTask = {
@@ -20,15 +20,15 @@ describe('when running cfn tasks', () => {
             region: 'eu-central-1',
             accountId: '123123123123',
             stackName: 'task2',
-            perform: async () => { task2order =  order; order = order + 1; },
+            perform: async () => { task2order = order; order = order + 1; },
             isDependency: (t) => t.stackName === 'task1',
         };
-        await CfnTaskRunner.RunTasks([task2, task1], 'stack');
+        await CfnTaskRunner.RunTasks([task2, task1], 'stack', 1, 0);
         expect(task1order).toBe(1);
         expect(task2order).toBe(2);
     });
     test('all tasks will exactly run once without dependencies', async () => {
-        type MyTask = ICfnTask & { callCount: number};
+        type MyTask = ICfnTask & { callCount: number };
         const tasks: MyTask[] = [];
         for (let x = 0; x <= 9; x++) {
             const task: MyTask = {
@@ -42,19 +42,19 @@ describe('when running cfn tasks', () => {
             };
             tasks.push(task);
         }
-        await CfnTaskRunner.RunTasks(tasks, 'stack');
+        await CfnTaskRunner.RunTasks(tasks, 'stack', 1, 0);
 
         const notExactlyOnce = tasks.find((x) => x.callCount !== 1);
         expect(notExactlyOnce).toBeUndefined();
     });
 
     test('all tasks will exactly run once with dependencies', async () => {
-        type MyTask = ICfnTask & { callCount: number};
+        type MyTask = ICfnTask & { callCount: number };
         const tasks: MyTask[] = [];
         const task1: MyTask = {
             action: 'UpdateOrCreate',
             region: 'eu-central-1',
-            accountId: '1000000000000' ,
+            accountId: '1000000000000',
             stackName: 'task1',
             callCount: 0,
             perform: async () => { task1.callCount = task1.callCount + 1; await createSleepPromise(10); },
@@ -73,7 +73,7 @@ describe('when running cfn tasks', () => {
             };
             tasks.push(task);
         }
-        await CfnTaskRunner.RunTasks(tasks, 'stack');
+        await CfnTaskRunner.RunTasks(tasks, 'stack', 1, 0);
 
         const notExactlyOnce = tasks.find((x) => x.callCount !== 1);
         expect(notExactlyOnce).toBeUndefined();
@@ -97,7 +97,7 @@ describe('when running cfn tasks', () => {
             perform: async () => { return undefined; },
         };
         try {
-            await CfnTaskRunner.RunTasks([task1, task2], 'stack');
+            await CfnTaskRunner.RunTasks([task1, task2], 'stack', 1, 0);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('circular dependency'));
@@ -116,10 +116,63 @@ describe('when running cfn tasks', () => {
             perform: async () => { return undefined; },
         };
         try {
-            await CfnTaskRunner.RunTasks([task1], 'stack');
+            await CfnTaskRunner.RunTasks([task1], 'stack', 1, 0);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('dependency on self'));
+        }
+    });
+
+    it('will not run dependee after dependency failed', async () => {
+        type MyTask = ICfnTask & { callCount: number };
+        const task1: MyTask = {
+            action: 'UpdateOrCreate',
+            isDependency: (t) => false,
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task1',
+            callCount: 0,
+            perform: async () => { task1.callCount += 1; throw new Error('failed'); },
+        };
+        const task2: MyTask = {
+            action: 'UpdateOrCreate',
+            isDependency: (t) => t.stackName === 'task1',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task2',
+            callCount: 0,
+            perform: async () => { task2.callCount += 1; },
+        };
+        await CfnTaskRunner.RunTasks([task1, task2], 'stack', 10, 10);
+        expect(task2.callCount).to.eq(0);
+    });
+
+    it('skipped task increases error count (and raises expection above threshold)', async () => {
+        type MyTask = ICfnTask & { callCount: number };
+        const task1: MyTask = {
+            action: 'UpdateOrCreate',
+            isDependency: (t) => false,
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task1',
+            callCount: 0,
+            perform: async () => { task1.callCount += 1; throw new Error('failed'); },
+        };
+        const task2: MyTask = {
+            action: 'UpdateOrCreate',
+            isDependency: (t) => t.stackName === 'task1',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task2',
+            callCount: 0,
+            perform: async () => { task2.callCount += 1; },
+        };
+        try {
+            await CfnTaskRunner.RunTasks([task1, task2], 'stack', 10, 1);
+            throw new Error('expected error to have been thrown');
+        } catch (err) {
+            expect(err.message).to.contain('tolerance');
+            expect(err.message).to.contain('2');
         }
     });
 });

@@ -112,7 +112,7 @@ The ``include`` include another taskfile with tasks to be executed.
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |Path|relative path|This property is required.<br/><br/> Specifies the Path of the taskfile that should be included.|
 |MaxConcurrentTasks|number|The number of tasks within the imported file that should be executed concurrently.<br/><br/> Default = 1|
-|FailedTaskTolerance|number|The number of failed tasks within the imported file that will cause the tasks to fail.<br/><br/> Default = 1|
+|FailedTaskTolerance|number|The number of failed tasks within the imported file that will cause the tasks to fail.<br/><br/> Default = 0|
 
 **example**
 ```yaml

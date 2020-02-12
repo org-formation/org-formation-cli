@@ -8,6 +8,8 @@
 - [DependsOnAccount and DependsOnRegion](#dependsonaccount-and-dependsonregion)
 - [Referencing the account the resource is created in](#referencing-the-account-the-resource-is-created-in)
 - [Foreach: Iterating over accounts when creating resources](#foreach-iterating-over-accounts-when-creating-resources)
+- [Fn::EnumTargetAccounts/Regions](#fnenumtargetaccountsregions)
+- [Fn::TargetCount](#fntargetcount)
 
 <!-- /code_chunk_output -->
 
@@ -309,3 +311,88 @@ The template above specifies that:
 - The ``MasterAccount`` gets a Member resource for each account that is refered to from the ``Master`` resource in that account.
 
 yes, the creation of ``Master`` resources to 'Members' and ``Member`` ressources to the Master account is confusing. This, unfortunately, is how Guardduty works in CloudFormation.
+
+
+### Fn::EnumTargetAccounts/Regions
+
+`Fn::EnumTargetAccounts` and `Fn::EnumTargetRegions` will take a named binding as argument and output an array with an element for either each account or region. The value of the element can be formatted as using a 2nd argument that will be interpreted as a Sub-expression.
+
+e.g:
+
+``` yaml
+Principal:
+  AWS: Fn::EnumTargetAccounts MyBinding arn:aws:iam::${account}:root
+
+ ```
+
+ Will result in the following cloudformation (assuming MyBinding has 3 accounts):
+
+``` yaml
+Principal:
+  AWS:
+    - arn:aws:iam::111111111111:root
+    - arn:aws:iam::222222222222:root
+    - arn:aws:iam::333333333333:root
+
+ ```
+**note**:
+
+- The Sub expression can have single qoutes
+- The Sub expression may also contain other Sub expression contructs (such as Ref to parameter)
+- For `Fn::EnumTargetAccounts` use the pre-defined variable `${account}` in the Sub expression
+- For `Fn::EnumTargetRegions` use the pre-defined variable `${region}` in the Sub expression
+
+
+### Fn::TargetCount
+`Fn::TargetCount` will return the number of targets for a binding (regions * accounts).
+
+This is particularly usefull when creating resources in which Fn::EnumTargetAccounts is used to create an array of values foreach target. If the array is empty (the `Fn::TargetCount` returns 0) this function can be used within a condition to not create the resource at all.
+
+
+e.g:
+
+``` yaml
+
+Conditions:
+  CreatePolicy: !Not [ !Equals [ Fn::TargetCount MyBinding, 0 ] ]
+
+Resources:
+  Policy:
+    Type: AWS::S3::BucketPolicy
+    Condition: CreatePolicy
+    Properties:
+          Bucket: !Ref Bucket
+          PolicyDocument:
+            Statement:
+              - Sid: 'my statement'
+                Action: '*'
+                Effect: "Allow"
+                Resource: '*'
+                Principal:
+                  AWS: Fn::EnumTargetAccounts MyBinding arn:aws:iam::${account}:root
+ ```
+
+ Will result in the following cloudformation (assuming MyBinding has 0 accounts):
+
+``` yaml
+
+Conditions:
+  CreatePolicy: !Not [ !Equals [ 0, 0 ] ] # evaluates to false
+
+Resources:
+  Policy:
+    Type: AWS::S3::BucketPolicy
+    Condition: CreatePolicy  # resource will not be created
+    Properties:
+          Bucket: !Ref Bucket
+          PolicyDocument:
+            Statement:
+              - Sid: 'my statement'
+                Action: '*'
+                Effect: 'Allow'
+                Resource: '*'
+                Principal:
+                  AWS: [] # empty array is not 'legal'
+ ```
+
+Syntactically the resource is not correct but as it will not be created (becuase of the condition) there wont be an error. Yay!
