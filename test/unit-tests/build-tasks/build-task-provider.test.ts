@@ -13,7 +13,15 @@ describe('when creating UpdateStacksTask task', () => {
     let task: IBuildTask;
     let updateStacksResoruces: sinon.SinonStub;
     beforeEach(() => {
-        const config: IUpdateStackTaskConfiguration = { Type: 'update-stacks', StackName: 'stack', Template: 'path.yml', FilePath: './.', LogicalName: 'task' };
+        const config: IUpdateStackTaskConfiguration = {
+            Type: 'update-stacks',
+            StackName: 'stack',
+            Template: 'path.yml',
+            FilePath: './.',
+            LogicalName: 'task',
+            MaxConcurrentStacks: 1,
+            FailedStackTolerance: 1,
+        };
         task = BuildTaskProvider.createBuildTask(config, {} as ICommandArgs);
 
         updateStacksResoruces = sinon.stub(UpdateStacksCommand, 'Perform');
@@ -43,7 +51,15 @@ describe('when creating UpdateStacksTask task with command args', () => {
     let task: IBuildTask;
     let updateStacksResoruces: sinon.SinonStub;
     beforeEach(() => {
-        const config: IUpdateStackTaskConfiguration = { Type: 'update-stacks', StackName: 'stack', Template: 'path.yml', FilePath: './.', LogicalName: 'task' };
+        const config: IUpdateStackTaskConfiguration = {
+            Type: 'update-stacks',
+            StackName: 'stack',
+            Template: 'path.yml',
+            FilePath: './.',
+            LogicalName: 'task',
+            MaxConcurrentStacks: 1,
+            FailedStackTolerance: 1,
+        };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
         updateStacksResoruces = sinon.stub(UpdateStacksCommand, 'Perform');
     });
@@ -96,6 +112,8 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
                 NamedBinding: { Account: [{ Ref: 'AccountName' }] },
             },
             TerminationProtection: false,
+            MaxConcurrentStacks: 1,
+            FailedStackTolerance: 1,
         };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
         updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
@@ -153,6 +171,8 @@ describe('when creating UpdateStacksTask task', () => {
                 NamedBinding: { Account: [{ Ref: 'AccountName' }] },
             },
             TerminationProtection: false,
+            MaxConcurrentStacks: 1,
+            FailedStackTolerance: 1,
         };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
         updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');

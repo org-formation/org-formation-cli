@@ -33,7 +33,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         if (!command.region) {
             throw new OrgFormationError(`argument --region is missing`);
         }
-        Validator.validateRegion(command.region); e;
+        Validator.validateRegion(command.region);
 
         const region = command.region;
 

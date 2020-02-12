@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 import * as chai from 'chai';
 import { IAccountProperties } from '../../../src/parser/model/account-resource';
-import { IMasterAccountProperties } from '../../../src/parser/model/master-account-resource';
 import { IOrganizationRootProperties } from '../../../src/parser/model/organization-root-resource';
 import { IOrganizationalUnitProperties } from '../../../src/parser/model/organizational-unit-resource';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
@@ -106,7 +105,7 @@ describe('when validating organization section', () => {
                 AccountName: 'Master 1',
                 AccountId: '111111111111',
                 RootEmail: 'my@email.com',
-            } as IMasterAccountProperties,
+            } as IAccountProperties,
         };
         contents.Organization.Master2 = {
             Type: OrgResourceTypes.MasterAccount,
@@ -114,7 +113,7 @@ describe('when validating organization section', () => {
                 AccountName: 'Master 2',
                 AccountId: '111111111111',
                 RootEmail: 'my2@email.com',
-            } as IMasterAccountProperties,
+            } as IAccountProperties,
         };
         expect(() => { new TemplateRoot(contents, './'); }).to.throw(/master account/);
     });
