@@ -7,17 +7,24 @@ import { IInitPipelineCommandArgs, InitPipelineCommand } from '../../../src/comm
 import { IState, PersistedState } from '../../../src/state/persisted-state';
 import { S3StorageProvider } from '../../../src/state/storage-provider';
 import { DefaultTemplate } from '../../../src/writer/default-template-writer';
+import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when creating init organization pipeline command', () => {
     let command: InitPipelineCommand;
     let commanderCommand: Command;
     let subCommanderCommand: Command;
+    let sandbox = Sinon.createSandbox();
 
     beforeEach(() => {
         commanderCommand = new Command('root');
         command = new InitPipelineCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
+        sandbox.stub(ConsoleUtil, 'LogInfo');
     });
+
+    afterEach(() => {
+        sandbox.restore();
+    })
 
     test('init pipeline command is created', () => {
         expect(command).toBeDefined();
@@ -88,7 +95,6 @@ describe('when executing init pipeline command', () => {
     let getMasterAccountIdStub: Sinon.SinonStub;
     let storageProviderCreateStub: Sinon.SinonStub;
     let storageProviderPutStub: Sinon.SinonStub;
-    let storageProviderGetStub: Sinon.SinonStub;
     let generateDefaultTemplateStub: Sinon.SinonStub;
     let uploadInitialCommitStub: Sinon.SinonStub;
     let executeStackStub: Sinon.SinonStub;
@@ -112,7 +118,8 @@ describe('when executing init pipeline command', () => {
 
         storageProviderCreateStub = sandbox.stub(S3StorageProvider.prototype, 'create');
         storageProviderPutStub = sandbox.stub(S3StorageProvider.prototype, 'put');
-        storageProviderGetStub = sandbox.stub(S3StorageProvider.prototype, 'get');
+        sandbox.stub(S3StorageProvider.prototype, 'get');
+        sandbox.stub(ConsoleUtil, 'LogInfo');
 
         writeFileSyncStub = sandbox.stub(fs, 'writeFileSync');
 

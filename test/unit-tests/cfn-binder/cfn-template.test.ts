@@ -29,6 +29,7 @@ describe('when creating cloudformation with simple resource', () => {
                         },
                         OrganizationBinding: {
                             Account: '*',
+                            Region: 'eu-central-1'
                         },
                     }),
             ],
@@ -93,6 +94,7 @@ describe('when creating cloudformation with resource that has version attribute'
                         },
                         OrganizationBinding: {
                             Account: '*',
+                            Region: 'eu-central-1'
                         },
                     }),
             ],
@@ -133,6 +135,7 @@ describe('when creating cloudformation with output section', () => {
                         },
                         OrganizationBinding: {
                             Account: '*',
+                            Region: 'eu-central-1',
                         },
                     }),
             ],
@@ -215,6 +218,7 @@ describe('when creating cross account reference', () => {
                         },
                         OrganizationBinding: {
                             Account: { Ref: account1 },
+                            Region: 'eu-central-1',
                         },
                     }),
             ],
@@ -227,6 +231,7 @@ describe('when creating cross account reference', () => {
                     Account: {
                         Ref: account2,
                     },
+                    Region: 'eu-central-1',
                 },
             });
 

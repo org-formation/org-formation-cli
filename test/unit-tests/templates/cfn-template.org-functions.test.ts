@@ -224,7 +224,7 @@ describe('when using Sub on account', () => {
                 new CloudFormationResource(templateRoot, 'resource',
                     {
                         Type: 'AWS::Custom',
-                        OrganizationBinding: { Account: '*'},
+                        OrganizationBinding: { Account: '*', Region: 'eu-central-1'},
                         Properties: {
                             MasterAccountRef: { 'Fn::Sub' : '${' + masterAccountLogicalId + '}' },
                             OtherAccountRef: { 'Fn::Sub' : '${' + otherAccountLogicalId + '}' },

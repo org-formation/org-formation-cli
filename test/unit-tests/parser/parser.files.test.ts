@@ -1,4 +1,6 @@
 import { TemplateRoot } from '../../../src/parser/parser';
+import Sinon from 'sinon';
+import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when parsing file', () => {
 
@@ -83,10 +85,16 @@ describe('when loading basic organization using include', () => {
 
 describe('when loading basic organization and regular cloudformation', () => {
     let template: TemplateRoot;
+    let sandbox = Sinon.createSandbox();
 
     beforeEach(() => {
+        sandbox.stub(ConsoleUtil, 'LogWarning');
         template = TemplateRoot.create('./test/resources/valid-regular-cloudformation.yml');
     });
+
+    afterEach(() => {
+        sandbox.restore();
+    })
 
     test('template contains organization resource', () => {
         expect(template.organizationSection.resources.length).toBe(1);

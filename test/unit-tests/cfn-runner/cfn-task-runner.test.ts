@@ -1,7 +1,18 @@
 import { ICfnTask } from '../../../src/cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from './../../../src/cfn-binder/cfn-task-runner';
+import Sinon = require('sinon');
+import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when running cfn tasks', () => {
+    let sandbox = Sinon.createSandbox();
+
+    beforeEach(() => {
+        sandbox.stub(ConsoleUtil, 'LogInfo');
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    })
 
     test('will run dependencies prior to dependend tasks', async () => {
         let order = 1;

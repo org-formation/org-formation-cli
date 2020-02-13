@@ -1,11 +1,12 @@
 import { Command, Option } from 'commander';
-import Sinon = require('sinon');
+import Sinon from 'sinon';
 import { BaseCliCommand } from '../../../src/commands/base-command';
 import { IUpdateStacksCommandArgs } from '../../../src/commands/update-stacks';
 import { ValidateStacksCommand } from '../../../src/commands/validate-stacks';
 import { GenericTaskRunner } from '../../../src/core/generic-task-runner';
 import { TemplateRoot } from '../../../src/parser/parser';
 import { TestTemplates } from '../test-templates';
+import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when creating validate stacks command', () => {
     let command: ValidateStacksCommand;
@@ -87,6 +88,7 @@ describe('when validate stacks command', () => {
 
         commandArgs = {...subCommanderCommand, templateFile: 'abc.yml'} as unknown as IUpdateStacksCommandArgs;
 
+        sandbox.stub(ConsoleUtil, 'LogInfo');
     });
 
     afterEach(() => {

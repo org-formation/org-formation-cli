@@ -416,6 +416,7 @@ describe('when declaring foreach on element level', () => {
             },
             ForeachAccount: {
                 OrganizationalUnit: [{Ref: 'OU'}],
+                Region: 'eu-central-1'
             },
             Properties: {
                 BucketName: 'test-bucket',
@@ -477,6 +478,9 @@ describe('when adding attribute that is not supported to foreach', () => {
             Type : 'AWS::S3::Bucket',
             ForeachAccount: {
                 Something: [{Ref: 'XXX'}],
+            },
+            OrganizationBinding: {
+                Region: 'eu-central-1',
             },
             Properties: {
                 BucketName: 'test-bucket',
