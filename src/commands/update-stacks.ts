@@ -59,6 +59,8 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         }
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
+        Validator.validateBoolean(command.terminationProtection, 'terminationProtection');
+
         const terminationProtection = command.terminationProtection === true;
         const stackName = command.stackName;
         const templateFile = command.templateFile;
