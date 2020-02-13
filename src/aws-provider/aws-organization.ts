@@ -26,8 +26,8 @@ export class AwsOrganization {
         const setPolicies = async () => { this.policies = await this.reader.policies.getValue(); };
         const setAccounts = async () => {
             const accounts = await this.reader.accounts.getValue();
-            this.masterAccount = accounts.find((x) => x.Id === this.organization.MasterAccountId);
-            this.accounts = accounts.filter((x) => x.Id !== this.organization.MasterAccountId);
+            this.masterAccount = accounts.find(x => x.Id === this.organization.MasterAccountId);
+            this.accounts = accounts.filter(x => x.Id !== this.organization.MasterAccountId);
             this.organizationalUnits = await this.reader.organizationalUnits.getValue();
         };
         try {

@@ -35,7 +35,7 @@ export class ExecuteChangeSetCommand extends BaseCliCommand<IExecuteChangeSetCom
         const tasks = binder.enumBuildTasks();
         const changeSet = ChangeSetProvider.CreateChangeSet(tasks, changeSetName);
         if (JSON.stringify(changeSet) !== JSON.stringify(changeSetObj.changeSet)) {
-            ConsoleUtil.LogError(`AWS organization state has changed since creating change set.`);
+            ConsoleUtil.LogError('AWS organization state has changed since creating change set.');
             return;
         }
         await TaskRunner.RunTasks(tasks);

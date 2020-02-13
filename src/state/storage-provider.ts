@@ -20,10 +20,10 @@ export class S3StorageProvider implements IStorageProvider {
 
     private constructor(stateBucketName: string, stateObject: string) {
         if (!stateBucketName || stateBucketName === '') {
-            throw new OrgFormationError(`statebucketName cannot be undefined or empty`);
+            throw new OrgFormationError('statebucketName cannot be undefined or empty');
         }
         if (!stateObject || stateObject === '') {
-            throw new OrgFormationError(`stateObject cannot be undefined or empty`);
+            throw new OrgFormationError('stateObject cannot be undefined or empty');
         }
         this.bucketName = stateBucketName;
         this.objectKey = stateObject;

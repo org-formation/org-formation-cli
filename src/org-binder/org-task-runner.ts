@@ -12,7 +12,7 @@ export class TaskRunner {
             if (task.dependentTaskFilter) {
                 dependentTasks.push(...tasks.filter(task.dependentTaskFilter));
             }
-            const needToRunFirst = dependentTasks.filter((x) => task !== x && !x.done);
+            const needToRunFirst = dependentTasks.filter(x => task !== x && !x.done);
             if (needToRunFirst.length > 0) {
                 await TaskRunner.RunTasks(needToRunFirst);
             }

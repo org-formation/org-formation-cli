@@ -37,12 +37,12 @@ export class OrganizationSection {
         for (const resource of this.resources) {
             if (resource instanceof MasterAccountResource) {
                 if (this.masterAccount) {
-                    throw new OrgFormationError(`organization section cannot have multiple master account resources`);
+                    throw new OrgFormationError('organization section cannot have multiple master account resources');
                 }
                 this.masterAccount = resource;
             } else if (resource instanceof OrganizationRootResource) {
                 if (this.organizationRoot) {
-                    throw new OrgFormationError(`organization section cannot have multiple organization roots`);
+                    throw new OrgFormationError('organization section cannot have multiple organization roots');
                 }
                 this.organizationRoot = resource;
             } else if (resource instanceof AccountResource) {
@@ -56,9 +56,9 @@ export class OrganizationSection {
             }
         }
 
-        const accountIds = this.accounts.filter((acc) => acc.accountId).map((acc) => acc.accountId!);
-        const rootEmails = this.accounts.filter((acc) => acc.rootEmail).map((acc) => acc.rootEmail!);
-        const accountNames = this.accounts.filter((acc) => acc.accountName).map((acc) => acc.accountName!);
+        const accountIds = this.accounts.filter(acc => acc.accountId).map(acc => acc.accountId!);
+        const rootEmails = this.accounts.filter(acc => acc.rootEmail).map(acc => acc.rootEmail!);
+        const accountNames = this.accounts.filter(acc => acc.accountName).map(acc => acc.accountName!);
         if (this.masterAccount) {
             if (this.masterAccount.accountId) {
                 accountIds.push(this.masterAccount.accountId);
@@ -71,8 +71,8 @@ export class OrganizationSection {
                 accountNames.push(this.masterAccount.accountName);
             }
         }
-        const organizationUnitNames = this.organizationalUnits.map((ou) => ou.organizationalUnitName);
-        const serviceControlPolicies = this.serviceControlPolicies.map((policy) => policy.policyName);
+        const organizationUnitNames = this.organizationalUnits.map(ou => ou.organizationalUnitName);
+        const serviceControlPolicies = this.serviceControlPolicies.map(policy => policy.policyName);
 
         this.throwForDuplicateVale(accountIds, (duplicate: string) => new Error(`multiple accounts found with AccountId ${duplicate}`));
         this.throwForDuplicateVale(rootEmails, (duplicate: string) => new Error(`multiple accounts found with RootEmail ${duplicate}`));

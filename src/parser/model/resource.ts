@@ -37,14 +37,14 @@ export abstract class Resource {
         Validator.ThrowForUnknownAttribute(obj, `resource ${id}`, ...knownAttributes);
     }
 
-    protected resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[] ): Array<Reference<T>> {
+    protected resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[] ): Reference<T>[] {
         if (val === undefined) {
             return [];
         }
         if (val === '*') {
-            return list.map((x) => ({TemplateResource: x}));
+            return list.map(x => ({TemplateResource: x}));
         }
-        const results: Array<Reference<T>> = [];
+        const results: Reference<T>[] = [];
         if (!Array.isArray(val)) {
             val = [val];
         }
@@ -53,13 +53,13 @@ export abstract class Resource {
                 results.push({PhysicalId: '' + elm});
             } else if (elm instanceof Object) {
                 const ref = (elm as IResourceRefExpression).Ref;
-                const foundElm = list.find((x) => x.logicalId === ref);
+                const foundElm = list.find(x => x.logicalId === ref);
                 if (foundElm === undefined) {
                     if (this.root.contents.Parameters) {
                         const paramValue = this.root.contents.Parameters[ref];
                         if (paramValue && paramValue.Default && paramValue.Default.Ref) {
                             const refFromParam = paramValue.Default.Ref;
-                            const foundElmThroughParam = list.find((x) => x.logicalId === refFromParam);
+                            const foundElmThroughParam = list.find(x => x.logicalId === refFromParam);
                             if (foundElmThroughParam !== undefined) {
                                 results.push({TemplateResource: foundElmThroughParam});
                             }

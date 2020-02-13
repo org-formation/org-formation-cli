@@ -18,7 +18,7 @@ export class CloudFormationBinder {
     private readonly parameters: Record<string, string>;
     private readonly terminationProtection: boolean;
 
-    constructor(stackName: string, template: TemplateRoot, state: PersistedState, parameters: Record<string, string> = {}, terminationProtection: boolean = false, taskProvider: CfnTaskProvider = new CfnTaskProvider(state)) {
+    constructor(stackName: string, template: TemplateRoot, state: PersistedState, parameters: Record<string, string> = {}, terminationProtection = false, taskProvider: CfnTaskProvider = new CfnTaskProvider(state)) {
         this.template = template;
         this.masterAccount = template.organizationSection.masterAccount.accountId;
         this.state = state;
@@ -34,7 +34,7 @@ export class CloudFormationBinder {
                 if (entries.length === 1) {
                     const [valKey, logicalId] = entries[0];
                     if (valKey === 'Ref') {
-                        const account = template.organizationSection.findAccount((x) => x.logicalId === logicalId);
+                        const account = template.organizationSection.findAccount(x => x.logicalId === logicalId);
                         if (!account) {
                             throw new OrgFormationError(`unable to resolve reference to account ${logicalId}`);
                         }
@@ -150,7 +150,7 @@ export class CloudFormationBinder {
                 binding.dependencies.push(dependency);
                 binding.template.addParameter(dependency);
 
-                const other = result.find((x) => x.accountId === dependency.outputAccountId && x.region === dependency.outputRegion && x.stackName === dependency.outputStackName);
+                const other = result.find(x => x.accountId === dependency.outputAccountId && x.region === dependency.outputRegion && x.stackName === dependency.outputStackName);
                 other.dependents.push(dependency);
                 other.template.addOutput(dependency);
             }
@@ -160,7 +160,7 @@ export class CloudFormationBinder {
             const accountId = storedTarget.accountId;
             const region = storedTarget.region;
             const stackName = storedTarget.stackName;
-            if (!targetsInTemplate.find((element) => element.accountId === accountId && element.region === region && element.stackName === stackName)) {
+            if (!targetsInTemplate.find(element => element.accountId === accountId && element.region === region && element.stackName === stackName)) {
                 result.push({
                     accountId,
                     region,
@@ -183,10 +183,10 @@ export class CloudFormationBinder {
         for (const binding of this.enumBindings()) {
             if (binding.action === 'UpdateOrCreate') {
                 const task = this.taskProvider.createUpdateTemplateTask(binding);
-                task.isDependency = (other) => {
+                task.isDependency = other => {
                     return binding.accountDependencies.includes(other.accountId) ||
                            binding.regionDependencies.includes(other.region) ||
-                           binding.dependencies.findIndex((x) => x.outputAccountId === other.accountId && x.outputRegion === other.region && x.outputStackName === other.stackName) > -1;
+                           binding.dependencies.findIndex(x => x.outputAccountId === other.accountId && x.outputRegion === other.region && x.outputStackName === other.stackName) > -1;
                 };
                 result.push(task);
             } else if (binding.action === 'Delete') {
@@ -231,8 +231,8 @@ export interface ICfnCrossAccountDependency {
 
 type CfnBindingAction = 'UpdateOrCreate' | 'Delete' | 'None';
 
-export interface ICfnRefValue { Ref: string; }
-export interface ICfnGetAttValue  { 'Fn::GetAtt': string[]; }
-export interface ICfnJoinValue  { 'Fn::Join': ICfnValue[]; }
-export interface ICfnSubValue  { 'Fn::Sub': any; }
+export interface ICfnRefValue { Ref: string }
+export interface ICfnGetAttValue  { 'Fn::GetAtt': string[] }
+export interface ICfnJoinValue  { 'Fn::Join': ICfnValue[] }
+export interface ICfnSubValue  { 'Fn::Sub': any }
 export type ICfnValue = string | ICfnRefValue  | ICfnGetAttValue | ICfnJoinValue;

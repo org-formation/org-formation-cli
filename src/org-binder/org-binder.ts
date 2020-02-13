@@ -208,16 +208,16 @@ class Binding<TResource extends Resource> {
         }
     }
 
-    protected static enumerateBindings<TResource extends Resource>(type: string, templateResources: TResource[], state: PersistedState): Array<Binding<TResource>> {
+    protected static enumerateBindings<TResource extends Resource>(type: string, templateResources: TResource[], state: PersistedState): Binding<TResource>[] {
         const savedBindings = state.enumBindings(type);
-        const result: Array<Binding<TResource>> = [];
+        const result: Binding<TResource>[] = [];
         for (const templateResource of templateResources) {
             const binding = Binding.getBinding<TResource>(state, templateResource);
             result.push(binding);
         }
 
         for (const savedBinding of savedBindings) {
-            if (!templateResources.find((x) => x.logicalId === savedBinding.logicalId)) {
+            if (!templateResources.find(x => x.logicalId === savedBinding.logicalId)) {
                 const binding: Binding<TResource> = {
                     action: 'Delete',
                     state: savedBinding,

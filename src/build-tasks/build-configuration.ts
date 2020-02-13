@@ -43,16 +43,16 @@ export class BuildConfiguration {
         return result;
     }
     private validateTasksFile(tasks: IBuildTask[]) {
-        const updateStackTasks = tasks.filter((x) => x.type === 'update-stacks') as BaseStacksTask[];
-        const stackNames = updateStackTasks.map((x) => x.stackName);
-        this.throwForDuplicateVale(stackNames, (x) => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
+        const updateStackTasks = tasks.filter(x => x.type === 'update-stacks') as BaseStacksTask[];
+        const stackNames = updateStackTasks.map(x => x.stackName);
+        this.throwForDuplicateVale(stackNames, x => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
     }
 
     private fixateOrganizationFile(command: ICommandArgs) {
         const updateStacksCommand = command as IUpdateStacksCommandArgs;
 
         if (updateStacksCommand.organizationFile === undefined) {
-            const updateOrgTasks = this.tasks.filter((x) => x.Type === 'update-organization');
+            const updateOrgTasks = this.tasks.filter(x => x.Type === 'update-organization');
             if (updateOrgTasks.length === 0) {
                 throw new OrgFormationError('tasks file does not contain a task with type update-organization');
             }

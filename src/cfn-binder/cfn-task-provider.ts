@@ -58,7 +58,7 @@ export class CfnTaskProvider {
                     let didFindExport = false;
                     do {
                         listExportsRequest.NextToken = listExportsResponse.NextToken;
-                        const foundExport = listExportsResponse.Exports.find((x) => x.Name === dependency.ExportName);
+                        const foundExport = listExportsResponse.Exports.find(x => x.Name === dependency.ExportName);
                         if (foundExport) {
                             stackInput.Parameters.push( {
                                 ParameterKey: dependency.ParameterKey,
@@ -160,7 +160,7 @@ export class CfnTaskProvider {
                                 }
                             }
                         }
-                    } catch {/*hide*/ }
+                    } catch {/* hide*/ }
 
                     throw err;
                 }

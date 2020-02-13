@@ -11,8 +11,8 @@ export class ChangeSetProvider {
 
         return {
             changeSetName,
-            changes: tasks.filter((x) => includedChangeActions.indexOf(x.action) === -1)
-                          .map((x) => ({
+            changes: tasks.filter(x => includedChangeActions.indexOf(x.action) === -1)
+                          .map(x => ({
                             logicalId: x.logicalId,
                             type: x.type,
                             action: x.action,

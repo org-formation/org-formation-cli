@@ -84,7 +84,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                     ConsoleUtil.LogError(err.message);
 
                 } else {
-                    ConsoleUtil.LogError(`unexpected error occurred...`, err);
+                    ConsoleUtil.LogError('unexpected error occurred...', err);
                 }
             }
             process.exitCode = 1;
@@ -155,8 +155,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                     }
                     parameters[parts[0]] = parts[1];
                 } else {
-                    const key = parameterAttributes.find((x) => x.startsWith('ParameterKey='));
-                    const value = parameterAttributes.find((x) => x.startsWith('ParameterValue='));
+                    const key = parameterAttributes.find(x => x.startsWith('ParameterKey='));
+                    const value = parameterAttributes.find(x => x.startsWith('ParameterValue='));
                     if (key === undefined || value === undefined) {
                         throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected ParameterKey=key,ParameterVaue=val`);
                     }

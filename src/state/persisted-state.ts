@@ -47,7 +47,7 @@ export class PersistedState {
     public readonly masterAccount: string;
     private provider?: IStorageProvider;
     private state: IState;
-    private dirty: boolean = false;
+    private dirty = false;
 
     constructor(state: IState, provider?: IStorageProvider) {
         this.provider = provider;
@@ -91,7 +91,7 @@ export class PersistedState {
     }
 
     public listStacks(): string[] {
-        return Object.entries(this.state.stacks).map((x) => x[0]);
+        return Object.entries(this.state.stacks).map(x => x[0]);
     }
 
     public enumTargets(stackName: string): ICfnTarget[] {

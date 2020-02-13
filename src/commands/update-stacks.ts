@@ -55,7 +55,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
 
     public async performCommand(command: IUpdateStacksCommandArgs) {
         if (!command.stackName) {
-            throw new OrgFormationError(`argument --stack-name is missing`);
+            throw new OrgFormationError('argument --stack-name is missing');
         }
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');

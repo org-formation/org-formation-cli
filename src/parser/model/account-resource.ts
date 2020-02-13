@@ -22,7 +22,7 @@ export class AccountResource extends Resource {
     public accountId?: string;
     public alias?: string;
     public tags?: Record<string, string>;
-    public serviceControlPolicies?: Array<Reference<ServiceControlPolicyResource>>;
+    public serviceControlPolicies?: Reference<ServiceControlPolicyResource>[];
     public passwordPolicy?: Reference<PasswordPolicyResource>;
     public organizationalUnitName?: string;
     public supportLevel?: string;

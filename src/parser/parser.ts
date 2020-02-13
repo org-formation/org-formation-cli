@@ -32,18 +32,12 @@ export interface ITemplate {
 }
 
 // tslint:disable-next-line: no-empty-interface
-export interface IResources extends IResourcesMap {
-
-}
+export type IResources = IResourcesMap;
 
 // tslint:disable-next-line: no-empty-interface
-export interface IOrganization extends IResourcesMap {
+export type IOrganization = IResourcesMap;
 
-}
-
-export interface IResourcesMap extends Record<string, IResource> {
-
-}
+export type IResourcesMap = Record<string, IResource>;
 
 export interface IResource {
     Type: OrgResourceTypes | string;
@@ -55,9 +49,7 @@ export interface IResource {
     DependsOnRegion?: string | string[];
 }
 
-export interface IPropertiesMap extends Record<string, any> {
-
-}
+export type IPropertiesMap = Record<string, any>;
 
 export type IResourceRef = IResourceRefExpression | string;
 
@@ -102,7 +94,7 @@ export class TemplateRoot {
         }
     }
 
-    public static createFromContents(contents: string, dirname: string = './', filename: string = 'n/a', overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
+    public static createFromContents(contents: string, dirname = './', filename = 'n/a', overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
         if (contents === undefined) { throw new OrgFormationError('contents is undefined'); }
         if (contents.trim().length === 0) { throw new OrgFormationError('contents is empty'); }
         const organizationInclude = /Organization:\s*!Include\s*(\S*)/.exec(contents);
@@ -220,10 +212,10 @@ export class TemplateRoot {
         const excludeAccounts = this.resolve(binding.ExcludeAccount, binding.ExcludeAccount === '*' ? this.organizationSection.accounts : organizationAccountsAndMaster);
         const organizationalUnits = this.resolve(binding.OrganizationalUnit, this.organizationSection.organizationalUnits);
 
-        const accountLogicalIds = accounts.map((x) => x.TemplateResource!.logicalId);
+        const accountLogicalIds = accounts.map(x => x.TemplateResource!.logicalId);
         const result = new Set<string>(accountLogicalIds);
         for (const unit of organizationalUnits) {
-            const accountsForUnit = unit.TemplateResource!.accounts.map((x) => x.TemplateResource!.logicalId);
+            const accountsForUnit = unit.TemplateResource!.accounts.map(x => x.TemplateResource!.logicalId);
             for (const logicalId of accountsForUnit) {
                 result.add(logicalId);
             }
@@ -238,27 +230,27 @@ export class TemplateRoot {
 
         if (binding.AccountsWithTag) {
             const tagToMatch = binding.AccountsWithTag;
-            const accountsWithTag = this.organizationSection.findAccounts((x) => (x.tags !== undefined) && Object.keys(x.tags).indexOf(tagToMatch) !== -1);
-            for (const account of accountsWithTag.map((x) => x.logicalId)) {
+            const accountsWithTag = this.organizationSection.findAccounts(x => (x.tags !== undefined) && Object.keys(x.tags).indexOf(tagToMatch) !== -1);
+            for (const account of accountsWithTag.map(x => x.logicalId)) {
                 result.add(account);
             }
         }
 
-        for (const account of excludeAccounts.map((x) => x.TemplateResource!.logicalId)) {
+        for (const account of excludeAccounts.map(x => x.TemplateResource!.logicalId)) {
             result.delete(account);
         }
 
         return [...result];
     }
 
-    public resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[] ): Array<Reference<T>> {
+    public resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[] ): Reference<T>[] {
         if (val === undefined) {
             return [];
         }
         if (val === '*') {
-            return list.map((x) => ({TemplateResource: x}));
+            return list.map(x => ({TemplateResource: x}));
         }
-        const results: Array<Reference<T>> = [];
+        const results: Reference<T>[] = [];
         if (!Array.isArray(val)) {
             val = [val];
         }
@@ -267,13 +259,13 @@ export class TemplateRoot {
                 throw new Error(`value ${elm} expected to be a reference. did you mean to use !Ref ${elm} instead?`);
             } else if (elm instanceof Object) {
                 const ref = (elm as IResourceRefExpression).Ref;
-                const foundElm = list.find((x) => x.logicalId === ref);
+                const foundElm = list.find(x => x.logicalId === ref);
                 if (foundElm === undefined) {
                     if (this.contents.Parameters) {
                         const paramValue = this.contents.Parameters[ref];
                         if (paramValue && paramValue.Default && paramValue.Default.Ref) {
                             const refFromParam = paramValue.Default.Ref;
-                            const foundElmThroughParam = list.find((x) => x.logicalId === refFromParam);
+                            const foundElmThroughParam = list.find(x => x.logicalId === refFromParam);
                             if (foundElmThroughParam !== undefined) {
                                 results.push({TemplateResource: foundElmThroughParam});
                             }

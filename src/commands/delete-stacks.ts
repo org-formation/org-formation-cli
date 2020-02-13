@@ -25,7 +25,7 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
 
     public async performCommand(command: IDeleteStackCommandArgs) {
         if (!command.stackName) {
-            throw new OrgFormationError(`argument --stack-name is missing`);
+            throw new OrgFormationError('argument --stack-name is missing');
         }
         const stackName = command.stackName;
 

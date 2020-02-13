@@ -22,7 +22,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
 
     public async performCommand(command: IPrintStacksCommandArgs) {
         if (!command.stackName) {
-            throw new OrgFormationError(`argument --stack-name is missing`);
+            throw new OrgFormationError('argument --stack-name is missing');
         }
         const templateFile = command.templateFile;
         const template = TemplateRoot.create(templateFile);

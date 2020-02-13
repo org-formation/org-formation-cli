@@ -7,13 +7,15 @@ import { ServiceControlPolicyResource } from './service-control-policy-resource'
 export interface IOrganizationalUnitProperties {
     OrganizationalUnitName: string;
     Accounts?: string[] | IResourceRef | IResourceRef[];
+    OrganizationalUnits?: string[] | IResourceRef | IResourceRef[];
     ServiceControlPolicies?: IResourceRef | IResourceRef[];
 }
 
 export class OrganizationalUnitResource extends Resource {
     public organizationalUnitName: string;
-    public accounts: Array<Reference<AccountResource>> = [];
-    public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>> = [];
+    public accounts: Reference<AccountResource>[] = [];
+    public organizationalUnits: Reference<OrganizationalUnitResource>[] = [];
+    public serviceControlPolicies: Reference<ServiceControlPolicyResource>[] = [];
     private props: IOrganizationalUnitProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
@@ -32,14 +34,15 @@ export class OrganizationalUnitResource extends Resource {
         this.organizationalUnitName = this.props.OrganizationalUnitName;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'OrganizationalUnitName', 'Accounts', 'ServiceControlPolicies');
+        super.throwForUnknownAttributes(this.props, id, 'OrganizationalUnitName', 'Accounts', 'ServiceControlPolicies', 'OrganizationalUnits');
     }
 
     public resolveRefs() {
         this.accounts = super.resolve(this.props.Accounts, this.root.organizationSection.accounts);
+        this.organizationalUnits = super.resolve(this.props.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
         this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
 
-        const accountWithOtherOrgUnit = this.accounts.find((x) => x.TemplateResource && (x.TemplateResource.organizationalUnitName !== undefined));
+        const accountWithOtherOrgUnit = this.accounts.find(x => x.TemplateResource && (x.TemplateResource.organizationalUnitName !== undefined));
         if (accountWithOtherOrgUnit) {
             throw new OrgFormationError(`account ${accountWithOtherOrgUnit.TemplateResource!.logicalId} is part of multiple organizational units, e.g. ${this.logicalId} and ${accountWithOtherOrgUnit.TemplateResource!.organizationalUnitName}.`);
         }

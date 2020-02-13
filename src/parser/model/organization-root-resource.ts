@@ -7,7 +7,7 @@ export interface IOrganizationRootProperties {
 }
 
 export class OrganizationRootResource extends Resource {
-    public serviceControlPolicies: Array<Reference<ServiceControlPolicyResource>> = [];
+    public serviceControlPolicies: Reference<ServiceControlPolicyResource>[] = [];
     private props: IOrganizationRootProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {

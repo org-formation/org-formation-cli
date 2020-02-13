@@ -28,7 +28,7 @@ export class SubExpression {
         if (!matches) {
             this.variables = [];
         } else {
-            this.variables = matches.map((match) => this.createSubExpressionVariable(match, this));
+            this.variables = matches.map(match => this.createSubExpressionVariable(match, this));
         }
     }
     public hasVariables() {

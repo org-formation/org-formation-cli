@@ -92,11 +92,11 @@ export class CfnTemplate {
     private masterAccountLogicalId: string;
 
     constructor(target: IResourceTarget, private templateRoot: TemplateRoot, private state: PersistedState) {
-        this.resourceIdsForTarget = target.resources.map((x) => x.logicalId);
-        this.allResourceIds = this.templateRoot.resourcesSection.resources.map((x) => x.logicalId);
-        this.resourceIdsNotInTarget = this.allResourceIds.filter((x) => !this.resourceIdsForTarget.includes(x));
-        this.accountResource = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === target.accountLogicalId);
-        this.otherAccountsLogicalIds = [this.templateRoot.organizationSection.masterAccount.logicalId, ...this.templateRoot.organizationSection.accounts.map((x) => x.logicalId).filter((x) => x !== target.accountLogicalId)];
+        this.resourceIdsForTarget = target.resources.map(x => x.logicalId);
+        this.allResourceIds = this.templateRoot.resourcesSection.resources.map(x => x.logicalId);
+        this.resourceIdsNotInTarget = this.allResourceIds.filter(x => !this.resourceIdsForTarget.includes(x));
+        this.accountResource = this.templateRoot.organizationSection.findAccount(x => x.logicalId === target.accountLogicalId);
+        this.otherAccountsLogicalIds = [this.templateRoot.organizationSection.masterAccount.logicalId, ...this.templateRoot.organizationSection.accounts.map(x => x.logicalId).filter(x => x !== target.accountLogicalId)];
         this.masterAccountLogicalId = this.templateRoot.organizationSection.masterAccount.logicalId;
 
         this.resources = {};
@@ -239,12 +239,12 @@ export class CfnTemplate {
             }
             if (resource.DependsOn !== null && Array.isArray(resource.DependsOn)) {
                 const dependsOn = resource.DependsOn as string[];
-                const unresolvedDependency = dependsOn.find((x) => !allResourceIds.includes(x));
+                const unresolvedDependency = dependsOn.find(x => !allResourceIds.includes(x));
                 if (unresolvedDependency) {
                     throw new OrgFormationError(`Dependent resource ${unresolvedDependency} could not be resolved`);
                 }
 
-                resource.DependsOn = dependsOn.filter((x) => resourceIdsForTarget.includes(x));
+                resource.DependsOn = dependsOn.filter(x => resourceIdsForTarget.includes(x));
             }
             if (dependsOnType === 'string' && resource.DependsOn.length === 1) {
                 resource.DependsOn = resource.DependsOn[0];
@@ -257,7 +257,7 @@ export class CfnTemplate {
 
         const expressionsToOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, [...this.otherAccountsLogicalIds, this.accountResource.logicalId]);
         for (const expression of expressionsToOtherAccounts) {
-            const otherAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === expression.resource);
+            const otherAccount = this.templateRoot.organizationSection.findAccount(x => x.logicalId === expression.resource);
 
             // OtherAccount.Resources.LogicalResourceName[.Arn]?
             if (expression.path && expression.path.startsWith('Resources.')) {
@@ -347,7 +347,7 @@ export class CfnTemplate {
 
         const expressionsToOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, this.otherAccountsLogicalIds);
         for (const expression of expressionsToOtherAccounts) {
-            const otherAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === expression.resource);
+            const otherAccount = this.templateRoot.organizationSection.findAccount(x => x.logicalId === expression.resource);
 
             const val = this.resolveAccountGetAtt(otherAccount, expression.path);
 
@@ -390,28 +390,28 @@ export class CfnTemplate {
         if (!otherAccountState) { throw new OrgFormationError(`unable to find account ${account.logicalId} in state. Is your organization up to date?`); }
 
         const foundBinding = others.
-            filter((x) => x.accountId === otherAccountState.physicalId).
-            filter((x) => x.template!.resources[resourceLogicalId]);
+            filter(x => x.accountId === otherAccountState.physicalId).
+            filter(x => x.template!.resources[resourceLogicalId]);
 
         if (foundBinding.length === 0) {
             ConsoleUtil.LogWarning(`Unable to find resource ${resourceLogicalId} on account ${account.logicalId}`);
             return undefined;
         }
         if (foundBinding.length > 1) {
-            const list = foundBinding.map((x) => `${x.accountId}/${x.region}`).join(', ');
+            const list = foundBinding.map(x => `${x.accountId}/${x.region}`).join(', ');
             throw new OrgFormationError(`Found multiple targets for reference to ${account.logicalId} ${resourceLogicalId}. e.g: ${list}`);
         }
         return foundBinding[0];
     }
 
     private resolveBindingForResource(bindings: ICfnBinding[], resourceLogicalId: string): ICfnBinding {
-        const foundBinding = bindings.filter((x) => x.template!.resources[resourceLogicalId]);
+        const foundBinding = bindings.filter(x => x.template!.resources[resourceLogicalId]);
         if (foundBinding.length === 0) {
             ConsoleUtil.LogDebug(`Unable to find resource with logicalId ${resourceLogicalId}.`);
             return undefined;
         }
         if (foundBinding.length > 1) {
-            const list = foundBinding.map((x) => `${x.accountId}/${x.region}`).join(', ');
+            const list = foundBinding.map(x => `${x.accountId}/${x.region}`).join(', ');
             throw new OrgFormationError(`Found multiple targets for reference to ${resourceLogicalId}. e.g: ${list}`);
         }
         return foundBinding[0];
@@ -419,7 +419,7 @@ export class CfnTemplate {
     private resolveCountExpression(val: string): number {
         const parts = val.split(/\s+/);
         if (parts.length < 2) {
-            throw new OrgFormationError(`invalid Fn::TargetCount expression. expected 'Fn::TargetCount bindingName'`);
+            throw new OrgFormationError('invalid Fn::TargetCount expression. expected \'Fn::TargetCount bindingName\'');
         }
         const bindingId = parts[1];
         const organizationBinding = this.templateRoot.bindingSection.getBinding(bindingId);
@@ -461,7 +461,7 @@ export class CfnTemplate {
         if (which === 'EnumTargetAccounts') {
             const normalizedLogicalAccountIds = this.templateRoot.resolveNormalizedLogicalAccountIds(organizationBinding);
             for (const logicalAccountId of normalizedLogicalAccountIds) {
-                const otherAccount = this.templateRoot.organizationSection.findAccount((x) => x.logicalId === logicalAccountId);
+                const otherAccount = this.templateRoot.organizationSection.findAccount(x => x.logicalId === logicalAccountId);
                 const physicalId = this.resolveAccountGetAtt(otherAccount, 'AccountId');
                 enumUnderlyingValues.push(physicalId);
             }
@@ -493,7 +493,7 @@ export class CfnTemplate {
         const result: SubExpression[] = [];
         for (const val of values) {
             const x = new SubExpression(expression);
-            const accountVar = x.variables.find((v) => v.resource === resourceId);
+            const accountVar = x.variables.find(v => v.resource === resourceId);
             if (accountVar) {
                 accountVar.replace(val);
             }

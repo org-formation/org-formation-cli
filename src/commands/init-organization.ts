@@ -21,7 +21,7 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
 
     public async performCommand(command: IInitCommandArgs) {
         if (!command.region) {
-            throw new OrgFormationError(`argument --region is missing`);
+            throw new OrgFormationError('argument --region is missing');
         }
 
         Validator.validateRegion(command.region);
@@ -37,14 +37,14 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
 
         ConsoleUtil.LogInfo(`Your organization template is written to ${command.file}`);
         ConsoleUtil.LogInfo('Hope this will get you started!');
-        ConsoleUtil.LogInfo(``);
+        ConsoleUtil.LogInfo('');
         ConsoleUtil.LogInfo(`You can keep the ${command.file} file on disk or even better, under source control.`);
-        ConsoleUtil.LogInfo(`If you work with code pipeline you might find init-pipeline an interesting command too.`);
-        ConsoleUtil.LogInfo(``);
+        ConsoleUtil.LogInfo('If you work with code pipeline you might find init-pipeline an interesting command too.');
+        ConsoleUtil.LogInfo('');
         ConsoleUtil.LogInfo(`Dont worry about losing the ${command.file} file, at any point you can recreate it.`);
-        ConsoleUtil.LogInfo(`Have fun! `);
-        ConsoleUtil.LogInfo(``);
-        ConsoleUtil.LogInfo(`--OC`);
+        ConsoleUtil.LogInfo('Have fun! ');
+        ConsoleUtil.LogInfo('');
+        ConsoleUtil.LogInfo('--OC');
 
     }
 }

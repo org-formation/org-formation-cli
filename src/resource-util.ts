@@ -57,7 +57,7 @@ export class ResourceUtil {
                     for (const variable of sub.variables) {
                         if (resourceIds.includes(variable.resource)) {
                             result.push({
-                                resolveToValue: (replacement) => {
+                                resolveToValue: replacement => {
                                     variable.replace(replacement);
                                     if (!sub.hasVariables()) {
                                         resourceParent[resourceKey] = sub.getSubValue();

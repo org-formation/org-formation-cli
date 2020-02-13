@@ -11,17 +11,17 @@ export class CfnTaskRunner {
             onTaskRanFailed: (task, err) => {
                 ConsoleUtil.LogError(`failed executing stack ${task.stackName} in account ${task.accountId} (${task.region}). Reason: ${err}`);
             },
-            onTaskSkippedBecauseDependencyFailed: (task) => {
+            onTaskSkippedBecauseDependencyFailed: task => {
                 ConsoleUtil.LogError(`skip executing stack ${task.stackName} in account ${task.accountId} (${task.region}). Reason: dependency has failed.`);
             },
-            onTaskRanSuccessfully: (task) => {
+            onTaskRanSuccessfully: task => {
                 ConsoleUtil.LogInfo(`stack ${task.stackName} successfully ${task.action === 'Delete' ? 'deleted from' : 'updated in' } ${task.accountId}/${task.region}.`);
             },
-            throwCircularDependency: (ts) => {
-                const targets = ts.map((x) => x.accountId + '/' + x.region);
+            throwCircularDependency: ts => {
+                const targets = ts.map(x => x.accountId + '/' + x.region);
                 throw new OrgFormationError(`circular dependency on stack ${stackName} for targets ${targets.join(', ')}`);
              },
-            throwDependencyOnSelfException: (task) => {throw new OrgFormationError(`stack ${task.stackName} has dependency on self target account ${task.accountId} / ${task.region}`); },
+            throwDependencyOnSelfException: task => {throw new OrgFormationError(`stack ${task.stackName} has dependency on self target account ${task.accountId} / ${task.region}`); },
             onFailureToleranceExceeded: (totalTasksFailed: number, tolerance: number) => {
                 throw new OrgFormationError(`number failed stacks ${totalTasksFailed} exceeded tolerance for failed stacks ${tolerance}`);
             },
@@ -38,22 +38,22 @@ export class CfnTaskRunner {
                 const sname = stackName ? `stack ${stackName} ` : '';
                 ConsoleUtil.LogError(`unable to validate template for ${sname}account ${task.accountId} (${task.region}). Reason: ${err}`);
             },
-            onTaskSkippedBecauseDependencyFailed: (task) => {
+            onTaskSkippedBecauseDependencyFailed: task => {
                 const sname = stackName ? `stack ${stackName} ` : '';
                 ConsoleUtil.LogError(`unable to validate template for ${sname}account ${task.accountId} (${task.region}). Reason: dependency has failed.`);
             },
-            onTaskRanSuccessfully: (task) => {
+            onTaskRanSuccessfully: task => {
                 const sname = stackName ? `stack ${stackName} ` : '';
                 ConsoleUtil.LogInfo(`template for ${sname}account ${task.accountId}/${task.region} valid.`);
             },
-            throwCircularDependency: (ts) => {
-                const targets = ts.map((x) => x.accountId + '/' + x.region);
+            throwCircularDependency: ts => {
+                const targets = ts.map(x => x.accountId + '/' + x.region);
                 throw new OrgFormationError(`circular dependency for targets ${targets.join(', ')}`);
              },
              onFailureToleranceExceeded: (totalTasksFailed: number, tolerance: number) => {
                 throw new OrgFormationError(`number failed tasks ${totalTasksFailed} exceeded tolerance for failed tasks ${tolerance}`);
              },
-            throwDependencyOnSelfException: (task) => {throw new OrgFormationError(`template has dependency on self target account ${task.accountId} / ${task.region}`); },
+            throwDependencyOnSelfException: task => {throw new OrgFormationError(`template has dependency on self target account ${task.accountId} / ${task.region}`); },
             maxConcurrentTasks: 99,
             failedTasksTolerance: 99,
         };

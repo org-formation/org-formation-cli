@@ -2,27 +2,27 @@ import { OrgFormationError } from '../org-formation-error';
 
 export class GenericTaskRunner {
 
-    public static async RunTasks<TTask>(tasks: Array<IGenericTaskInternal<TTask>>, delegate: ITaskRunnerDelegates<TTask>) {
+    public static async RunTasks<TTask>(tasks: IGenericTaskInternal<TTask>[], delegate: ITaskRunnerDelegates<TTask>) {
         let totalTasksRan = 0;
         let totalTasksFailed = 0;
-        let remainingTasks: Array<IGenericTaskInternal<TTask>> = tasks;
-        let tasksWithDependencies: Array<IGenericTaskInternal<TTask>> = [];
-        let runningTasks: Array<IGenericTaskInternal<TTask>> = [];
-        const allFailedTasks: Array<IGenericTaskInternal<TTask>> = [];
-        let runningTaskPromises: Array<Promise<void>> = [];
+        let remainingTasks: IGenericTaskInternal<TTask>[] = tasks;
+        let tasksWithDependencies: IGenericTaskInternal<TTask>[] = [];
+        let runningTasks: IGenericTaskInternal<TTask>[] = [];
+        const allFailedTasks: IGenericTaskInternal<TTask>[] = [];
+        let runningTaskPromises: Promise<void>[] = [];
         do {
             for (const task of remainingTasks) {
                 if (task.isDependency(task)) {
                     delegate.throwDependencyOnSelfException(task);
                 }
 
-                const dependencies = remainingTasks.filter((x) => task.isDependency(x));
+                const dependencies = remainingTasks.filter(x => task.isDependency(x));
                 if (dependencies.length > 0) {
                     tasksWithDependencies.push(task);
                     continue;
                 }
 
-                const failedDepdency = allFailedTasks.filter((x) => task.isDependency(x));
+                const failedDepdency = allFailedTasks.filter(x => task.isDependency(x));
                 if (failedDepdency.length > 0) {
                     totalTasksRan += 1;
                     totalTasksFailed += 1;
@@ -47,7 +47,7 @@ export class GenericTaskRunner {
             }
             await Promise.all(runningTaskPromises);
             totalTasksRan = totalTasksRan + runningTasks.length;
-            const failedTasks = runningTasks.filter((x) => x.failed === true);
+            const failedTasks = runningTasks.filter(x => x.failed === true);
             totalTasksFailed = failedTasks.length;
             allFailedTasks.push(...failedTasks);
             if (totalTasksFailed > delegate.failedTasksTolerance) {
@@ -98,7 +98,7 @@ export interface ITaskRunnerDelegates<TTask> {
     onTaskSkippedBecauseDependencyFailed(task: IGenericTaskInternal<TTask>): void;
     onTaskRanSuccessfully(task: IGenericTaskInternal<TTask>): void;
     throwDependencyOnSelfException(task: IGenericTaskInternal<TTask>): void;
-    throwCircularDependency(tasks: Array<IGenericTaskInternal<TTask>>): void;
+    throwCircularDependency(tasks: IGenericTaskInternal<TTask>[]): void;
 }
 
 export type IGenericTaskInternal<TTask> = IGenericTask<TTask> & IGenericTaskState & TTask;
@@ -116,7 +116,7 @@ export interface IGenericTaskState {
 }
 
 async function sleep(seconds: number) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         setTimeout(resolve, seconds * 1000);
     });
 }

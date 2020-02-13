@@ -31,7 +31,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
     public async performCommand(command: IInitPipelineCommandArgs) {
         if (!command.region) {
-            throw new OrgFormationError(`argument --region is missing`);
+            throw new OrgFormationError('argument --region is missing');
         }
         Validator.validateRegion(command.region);
 
@@ -56,7 +56,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         ConsoleUtil.LogInfo(`uploading initial commit to S3 ${stateBucketName}/initial-commit.zip...`);
         await this.uploadInitialCommit(stateBucketName, path + 'initial-commit/', template.template, buildSpecContents, organizationTasksContents, cloudformationTemplateContents);
 
-        ConsoleUtil.LogInfo(`creating codecommit / codebuild and codepipeline resoures using cloudformmation...`);
+        ConsoleUtil.LogInfo('creating codecommit / codebuild and codepipeline resoures using cloudformmation...');
         await this.executeStack(cloudformationTemplateContents, command.region, stateBucketName, resourcePrefix, stackName, repositoryName);
 
         await template.state.save(storageProvider);
@@ -78,7 +78,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
                 archive.on('end', () => {
                     const uploadRequest: PutObjectRequest = {
                         Body: output.toBuffer(),
-                        Key: `initial-commit.zip`,
+                        Key: 'initial-commit.zip',
                         Bucket: stateBucketName,
                     };
 
