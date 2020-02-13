@@ -41,7 +41,7 @@ describe('when creating UpdateStacksTask task', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).to.be.true;
-        expect(commandKeys.length).to.eq(2);
+        expect(commandKeys.length).to.eq(4);
         expect(commandKeys).contains('stackName');
         expect(commandArgs.stackName).to.eq('stack');
     });
@@ -78,7 +78,7 @@ describe('when creating UpdateStacksTask task with command args', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).to.be.true;
-        expect(commandKeys.length).to.eq(3);
+        expect(commandKeys.length).to.eq(5);
         expect(commandKeys).contains('stackName');
         expect(commandArgs.stackName).to.eq('stack');
         expect(commandKeys).contains('arg');
@@ -134,7 +134,7 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).to.be.true;
-        expect(commandKeys.length).to.eq(8);
+        expect(commandKeys.length).to.eq(10);
         expect(commandKeys).contains('stackName');
         expect(commandArgs.stackName).to.eq('stack');
         expect(commandKeys).contains('arg');
@@ -188,7 +188,7 @@ describe('when creating UpdateStacksTask task', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).to.be.true;
-        expect(commandKeys.length).to.eq(8);
+        expect(commandKeys.length).to.eq(10);
         expect(commandKeys).contains('stackName');
         expect(commandArgs.stackName).to.eq('stack');
         expect(commandKeys).contains('arg');
