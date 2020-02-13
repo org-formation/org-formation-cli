@@ -5,9 +5,11 @@ import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when running cfn tasks', () => {
     let sandbox = Sinon.createSandbox();
+    let consoleErr : Sinon.SinonStub;
 
     beforeEach(() => {
         sandbox.stub(ConsoleUtil, 'LogInfo');
+        consoleErr = sandbox.stub(ConsoleUtil, 'LogError');
     });
 
     afterEach(() => {
@@ -37,6 +39,7 @@ describe('when running cfn tasks', () => {
         await CfnTaskRunner.RunTasks([task2, task1], 'stack', 1, 0);
         expect(task1order).toBe(1);
         expect(task2order).toBe(2);
+        expect(consoleErr.callCount).toBe(0);
     });
     test('all tasks will exactly run once without dependencies', async () => {
         type MyTask = ICfnTask & { callCount: number };
@@ -57,6 +60,7 @@ describe('when running cfn tasks', () => {
 
         const notExactlyOnce = tasks.find((x) => x.callCount !== 1);
         expect(notExactlyOnce).toBeUndefined();
+        expect(consoleErr.callCount).toBe(0);
     });
 
     test('all tasks will exactly run once with dependencies', async () => {
@@ -88,6 +92,7 @@ describe('when running cfn tasks', () => {
 
         const notExactlyOnce = tasks.find((x) => x.callCount !== 1);
         expect(notExactlyOnce).toBeUndefined();
+        expect(consoleErr.callCount).toBe(0);
     });
 
     test('will throw for circular dependency', async () => {
@@ -115,6 +120,7 @@ describe('when running cfn tasks', () => {
             expect(err.message).toEqual(expect.stringContaining('123123123123'));
             expect(err.message).toEqual(expect.stringContaining('eu-central-1'));
         }
+        expect(consoleErr.callCount).toBe(0);
     });
 
     test('will throw for dependency on self', async () => {
@@ -132,6 +138,7 @@ describe('when running cfn tasks', () => {
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('dependency on self'));
         }
+        expect(consoleErr.callCount).toBe(0);
     });
 
     test('will not run dependee after dependency failed', async () => {
@@ -156,6 +163,10 @@ describe('when running cfn tasks', () => {
         };
         await CfnTaskRunner.RunTasks([task1, task2], 'stack', 10, 10);
         expect(task2.callCount).toEqual(0);
+        expect(consoleErr.callCount).toBe(1);
+        expect(consoleErr.getCall(0).args[0]).toContain('task1');
+        expect(consoleErr.getCall(0).args[0]).toContain('123123123123');
+        expect(consoleErr.getCall(0).args[0]).toContain('failed');
     });
 
     test('skipped task increases error count (and raises expection above threshold)', async () => {
@@ -185,6 +196,10 @@ describe('when running cfn tasks', () => {
             expect(err.message).toContain('tolerance');
             expect(err.message).toContain('2');
         }
+        expect(consoleErr.callCount).toBe(1);
+        expect(consoleErr.getCall(0).args[0]).toContain('task1');
+        expect(consoleErr.getCall(0).args[0]).toContain('123123123123');
+        expect(consoleErr.getCall(0).args[0]).toContain('failed');
     });
 });
 

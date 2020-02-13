@@ -413,6 +413,7 @@ describe('when declaring foreach on element level', () => {
             Type : 'AWS::S3::Bucket',
             OrganizationBinding: {
                 IncludeMasterAccount: true,
+                Region: 'eu-central-1',
             },
             ForeachAccount: {
                 OrganizationalUnit: [{Ref: 'OU'}],
@@ -512,6 +513,9 @@ describe('when adding region which is not supported to foreach', () => {
             },
             Properties: {
                 BucketName: 'test-bucket',
+            },
+            OrganizationBinding: {
+                Region: 'eu-central-1'
             },
         };
     });

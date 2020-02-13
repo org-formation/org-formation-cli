@@ -36,6 +36,7 @@ describe('when using Ref on account', () => {
                 new CloudFormationResource(templateRoot, 'resource',
                     {
                         Type: 'AWS::Custom',
+                        OrganizationBinding: { Account: '*', Region: 'eu-central-1'},
                         Properties: {
                             MasterAccountRef: { Ref : masterAccountLogicalId },
                             OtherAccountRef: { Ref : otherAccountLogicalId },

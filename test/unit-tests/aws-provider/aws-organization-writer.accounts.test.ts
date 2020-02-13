@@ -167,7 +167,7 @@ describe('when updating account', () => {
         tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
         untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
 
-        logWarningSpy = sandbox.spy(ConsoleUtil, 'LogWarning');
+        logWarningSpy = sandbox.stub(ConsoleUtil, 'LogWarning');
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.updateAccount(account as any, accountId);

@@ -1,4 +1,3 @@
-import sinon from 'sinon';
 import Sinon from 'sinon';
 import { IBuildTask, IUpdateStackTaskConfiguration } from '../../../src/build-tasks/build-configuration';
 import { BuildTaskProvider } from '../../../src/build-tasks/build-task-provider';
@@ -9,6 +8,7 @@ import { ConsoleUtil } from '../../../src/console-util';
 describe('when creating UpdateStacksTask task', () => {
     let task: IBuildTask;
     let updateStacksResoruces: sinon.SinonStub;
+    const sandbox = Sinon.createSandbox();
     beforeEach(() => {
         const config: IUpdateStackTaskConfiguration = {
             Type: 'update-stacks',
@@ -21,11 +21,12 @@ describe('when creating UpdateStacksTask task', () => {
         };
         task = BuildTaskProvider.createBuildTask(config, {} as ICommandArgs);
 
-        updateStacksResoruces = sinon.stub(UpdateStacksCommand, 'Perform');
+        updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
+        sandbox.stub(ConsoleUtil, 'LogInfo')
     });
 
     afterEach(() => {
-        updateStacksResoruces.restore();
+        sandbox.restore();
     });
     test('creates task', () => {
         expect(task).toBeDefined();
@@ -46,7 +47,8 @@ describe('when creating UpdateStacksTask task', () => {
 
 describe('when creating UpdateStacksTask task with command args', () => {
     let task: IBuildTask;
-    let updateStacksResoruces: sinon.SinonStub;
+    let updateStacksResoruces: Sinon.SinonStub;
+    const sandbox = Sinon.createSandbox();
     beforeEach(() => {
         const config: IUpdateStackTaskConfiguration = {
             Type: 'update-stacks',
@@ -58,11 +60,12 @@ describe('when creating UpdateStacksTask task with command args', () => {
             FailedStackTolerance: 1,
         };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
-        updateStacksResoruces = sinon.stub(UpdateStacksCommand, 'Perform');
+        updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
+        sandbox.stub(ConsoleUtil, 'LogInfo');
     });
 
     afterEach(() => {
-        updateStacksResoruces.restore();
+        sandbox.restore();
     });
 
     test('creates task', () => {
@@ -117,6 +120,7 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
         };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
         updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
+        sandbox.stub(ConsoleUtil, 'LogInfo');
         await task.perform();
 
     });
@@ -176,6 +180,7 @@ describe('when creating UpdateStacksTask task', () => {
         };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
         updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
+        sandbox.stub(ConsoleUtil, 'LogInfo');
     });
     afterEach(() => {
         sandbox.restore();

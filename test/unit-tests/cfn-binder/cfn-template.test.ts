@@ -1,6 +1,6 @@
 import { CfnTemplate } from '../../../src/cfn-binder/cfn-template';
 import { CloudFormationResource } from '../../../src/parser/model/cloudformation-resource';
-import { IResourceTarget, ResourcesSection } from '../../../src/parser/model/resources-section';
+import { IResourceTarget } from '../../../src/parser/model/resources-section';
 import { TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
 import { TestTemplates } from '../test-templates';
@@ -142,7 +142,7 @@ describe('when creating cloudformation with output section', () => {
         };
 
         templateRoot.resourcesSection.resources.push(target.resources[0]);
-        templateRoot.resourcesSection.resources.push(new CloudFormationResource(templateRoot, 'bucket2', {Type: 'abcdef'}));
+        templateRoot.resourcesSection.resources.push(new CloudFormationResource(templateRoot, 'bucket2', {Type: 'abcdef', OrganizationBinding: { Region: 'eu-central-1'}}));
 
         templateRoot.contents.Outputs = {
             Output : {
