@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { BuildConfiguration } from '../build-tasks/build-configuration';
 import { BuildRunner } from '../build-tasks/build-runner';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { Validator } from '../parser/validator';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -22,6 +23,12 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
     public async performCommand(command: IPerformTasksCommandArgs) {
         const tasksFile = command.tasksFile;
+
+        Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
+        Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
+        Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
+        Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
+
         const config = new BuildConfiguration(tasksFile);
         const tasks = config.enumBuildTasks(command);
         await BuildRunner.RunTasks(tasks, command.maxConcurrentTasks, command.failedTasksTolerance);

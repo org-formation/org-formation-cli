@@ -91,6 +91,16 @@ export class Validator {
         }
     }
 
+    public static validatePositiveInteger(val: number, name: string) {
+        if (typeof val === 'number') {
+            if (val < 0) {
+                throw new OrgFormationError(`expected ${name} to be a positive integer, found ${val}`);
+            }
+        } else  {
+            throw new OrgFormationError(`expected ${name} to be a number, found ${typeof val}`);
+        }
+    }
+
     public static validateRegion(region: string) {
         if (typeof region === 'string') {
             if (!Validator.knownRegions.includes(region)) {

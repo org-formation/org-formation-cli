@@ -4,6 +4,7 @@ import { CfnTaskRunner } from '../cfn-binder/cfn-task-runner';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '../parser/parser';
+import { Validator } from '../parser/validator';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'update-stacks <templateFile>';
@@ -56,7 +57,8 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         if (!command.stackName) {
             throw new OrgFormationError(`argument --stack-name is missing`);
         }
-
+        Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
+        Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         const terminationProtection = command.terminationProtection === true;
         const stackName = command.stackName;
         const templateFile = command.templateFile;
