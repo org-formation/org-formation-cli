@@ -7,6 +7,7 @@ import { IInitCommandArgs, InitOrganizationCommand } from '../../../src/commands
 import { IState, PersistedState } from '../../../src/state/persisted-state';
 import { S3StorageProvider } from '../../../src/state/storage-provider';
 import { DefaultTemplate } from '../../../src/writer/default-template-writer';
+import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when creating init organization command', () => {
     let command: InitOrganizationCommand;
@@ -72,8 +73,10 @@ describe('when executing init organization command', () => {
     const sandbox = Sinon.createSandbox();
     const masterAccountId = '112233445566';
     let commandArgs: IInitCommandArgs;
+    let consoleInfo: Sinon.SinonStub;
 
     beforeEach(() => {
+        consoleInfo = sandbox.stub(ConsoleUtil, 'LogInfo');
 
         getMasterAccountIdStub = sandbox.stub(AwsUtil, 'GetMasterAccountId');
         getMasterAccountIdStub.returns(Promise.resolve(masterAccountId));
@@ -171,4 +174,10 @@ describe('when executing init organization command', () => {
         expect(storageProviderCreateStub.callCount).toBe(0);
         expect(writeFileSyncStub.callCount).toBe(0);
     });
+
+    test('command prints friendly message', async () => {
+        await command.performCommand(commandArgs);
+        expect(consoleInfo.callCount).toBeGreaterThan(0);
+        expect(consoleInfo.getCall(0).args[0]).toContain('Your organization template is written to')
+    })
 });

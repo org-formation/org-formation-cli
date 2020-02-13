@@ -104,7 +104,7 @@ describe('when using GetAtt on account', () => {
                 new CloudFormationResource(templateRoot, 'resource',
                     {
                         Type: 'AWS::FantasyType',
-                        OrganizationBinding: { Account: '*'},
+                        OrganizationBinding: { Account: '*', Region: 'eu-central-1'},
                         Properties: {
                             CurrentAccountName: { 'Fn::GetAtt' : ['AWSAccount', 'AccountName'] },
                             CurrentAccountId: { 'Fn::GetAtt' : ['AWSAccount', 'AccountId'] },

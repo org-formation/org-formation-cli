@@ -4,7 +4,7 @@ Description:
 Organization: !Include ./organization.yml
 
 
-OrganizationBinding:
+DefaultOrganizationBinding:
   Region: eu-central-1
   Account:
     - !Ref Account1

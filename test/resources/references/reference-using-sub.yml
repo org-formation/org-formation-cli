@@ -3,7 +3,7 @@ Description:
 
 Organization: !Include ./organization.yml
 
-OrganizationBinding: { Account: !Ref Account2 }
+DefaultOrganizationBinding: { Account: !Ref Account2 }
 
 DefaultOrganizationBindingRegion: eu-west-1
 
