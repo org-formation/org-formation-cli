@@ -1,6 +1,6 @@
 import { ICfnTask } from '../../../src/cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from './../../../src/cfn-binder/cfn-task-runner';
-import Sinon = require('sinon');
+import Sinon from 'sinon';
 import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when running cfn tasks', () => {

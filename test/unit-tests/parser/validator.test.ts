@@ -1,5 +1,5 @@
 
-import Sinon = require('sinon');
+import Sinon from 'sinon';
 import { ConsoleUtil } from '../../../src/console-util';
 import { Validator } from '../../../src/parser/validator';
 

@@ -1,6 +1,6 @@
 import { Command, Option } from 'commander';
 import * as fs from 'fs';
-import Sinon = require('sinon');
+import Sinon from 'sinon';
 import { AwsUtil } from '../../../src/aws-util';
 import { BaseCliCommand } from '../../../src/commands/base-command';
 import { IInitPipelineCommandArgs, InitPipelineCommand } from '../../../src/commands/init-organization-pipeline';

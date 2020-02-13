@@ -1,5 +1,5 @@
 
-import Sinon = require('sinon');
+import Sinon from 'sinon';
 import { AwsUtil } from '../../src/aws-util';
 import { ValidateTasksCommand } from '../../src/commands/validate-tasks';
 import { ConsoleUtil } from '../../src/console-util';

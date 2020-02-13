@@ -1,6 +1,6 @@
 import { Command, Option } from 'commander';
 const fs = require('fs');
-import Sinon = require('sinon');
+import Sinon from 'sinon';
 import { AwsUtil } from '../../../src/aws-util';
 import { BaseCliCommand } from '../../../src/commands/base-command';
 import { IInitCommandArgs, InitOrganizationCommand } from '../../../src/commands/init-organization';
