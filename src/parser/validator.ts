@@ -1,3 +1,4 @@
+import { type } from 'os';
 import { IBuildTaskConfiguration, IUpdateStackTaskConfiguration } from '../build-tasks/build-configuration';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -80,6 +81,16 @@ export class Validator {
                 throw new OrgFormationError(`expected value for IncludeMasterAccount on ${id} to be boolean (true | false)`);
             }
         }
+        if (typeof binding.Region === 'string') {
+            Validator.validateRegion(binding.Region);
+        } else if (Array.isArray(binding.Region)) {
+            for (const element of binding.Region) {
+                Validator.validateRegion(element);
+            }
+        } else if (typeof binding.Region !== 'undefined') {
+            throw new OrgFormationError(`expected Region to be a string or string[], found ${typeof binding.Region} (${binding.Region})`);
+
+        }
         Validator.ThrowForUnknownAttribute(binding, id, 'OrganizationalUnit', 'Account', 'ExcludeAccount', 'Region', 'IncludeMasterAccount', 'AccountsWithTag');
     }
 
@@ -91,10 +102,25 @@ export class Validator {
         }
     }
 
+    public static validateBoolean(val: boolean, name: string) {
+        if (typeof val !== 'boolean' && typeof val !== 'undefined') {
+            throw new OrgFormationError(`expected ${name} to be a boolean, found ${typeof val} (${val})`);
+        }
+    }
+    public static validatePositiveInteger(val: number, name: string) {
+        if (typeof val === 'number') {
+            if (val < 0) {
+                throw new OrgFormationError(`expected ${name} to be a positive integer, found ${val}`);
+            }
+        } else {
+            throw new OrgFormationError(`expected ${name} to be a number, found ${typeof val} (${val})`);
+        }
+    }
+
     public static validateRegion(region: string) {
         if (typeof region === 'string') {
             if (!Validator.knownRegions.includes(region)) {
-                ConsoleUtil.LogWarning(`region ${region} not recognized by tool, continuing anyway.`);
+                ConsoleUtil.LogWarning(`region ${region} not recognized by tool, process continues but might lead to errors.`);
             }
         } else if (region) {
             throw new OrgFormationError(`region ${region} expected to be string, found ${typeof region}`);

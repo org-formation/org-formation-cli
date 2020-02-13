@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import { writeFileSync } from 'fs';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { BaseCliCommand, ICommandArgs } from './base-command';
 import { Validator } from '../parser/validator';
+import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'init <file>';
 const commandDescription = 'generate template & initialize organization';
@@ -41,7 +41,7 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
         ConsoleUtil.LogInfo(`You can keep the ${command.file} file on disk or even better, under source control.`);
         ConsoleUtil.LogInfo(`If you work with code pipeline you might find init-pipeline an interesting command too.`);
         ConsoleUtil.LogInfo(``);
-        ConsoleUtil.LogInfo(`Dont worry about loosing the ${command.file} file, at any point you can recreate it.`);
+        ConsoleUtil.LogInfo(`Dont worry about losing the ${command.file} file, at any point you can recreate it.`);
         ConsoleUtil.LogInfo(`Have fun! `);
         ConsoleUtil.LogInfo(``);
         ConsoleUtil.LogInfo(`--OC`);
