@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import { expect } from 'chai';
 import { CfnTemplate } from '../../../src/cfn-binder/cfn-template';
 import { AccountResource } from '../../../src/parser/model/account-resource';
 import { CloudFormationResource } from '../../../src/parser/model/cloudformation-resource';
@@ -9,7 +7,6 @@ import { TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
 import { TestTemplates } from '../test-templates';
 
-chai.use(require('chai-as-promised'));
 
 describe('when using Ref on account', () => {
     let template: CfnTemplate;
@@ -39,6 +36,7 @@ describe('when using Ref on account', () => {
                 new CloudFormationResource(templateRoot, 'resource',
                     {
                         Type: 'AWS::Custom',
+                        OrganizationBinding: { Account: '*', Region: 'eu-central-1'},
                         Properties: {
                             MasterAccountRef: { Ref : masterAccountLogicalId },
                             OtherAccountRef: { Ref : otherAccountLogicalId },
@@ -53,20 +51,20 @@ describe('when using Ref on account', () => {
         templateResource = templateForTarget.Resources.resource;
     });
 
-    it('Ref resolves to physical id for master account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.MasterAccountRef).to.eq(masterAccountId);
+    test('Ref resolves to physical id for master account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.MasterAccountRef).toBe(masterAccountId);
     });
 
-    it('Ref resolves to physical id for regular account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherAccountRef).to.eq(otherAccountId);
+    test('Ref resolves to physical id for regular account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherAccountRef).toBe(otherAccountId);
     });
 
-    it('Ref does not change if logicalId is not an account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.NonAccountRef.Ref).to.not.be.undefined;
-        expect(templateResource.Properties.NonAccountRef.Ref).to.eq('something');
+    test('Ref does not change if logicalId is not an account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.NonAccountRef.Ref).toBeDefined();
+        expect(templateResource.Properties.NonAccountRef.Ref).toBe('something');
     });
 });
 
@@ -107,7 +105,7 @@ describe('when using GetAtt on account', () => {
                 new CloudFormationResource(templateRoot, 'resource',
                     {
                         Type: 'AWS::FantasyType',
-                        OrganizationBinding: { Account: '*'},
+                        OrganizationBinding: { Account: '*', Region: 'eu-central-1'},
                         Properties: {
                             CurrentAccountName: { 'Fn::GetAtt' : ['AWSAccount', 'AccountName'] },
                             CurrentAccountId: { 'Fn::GetAtt' : ['AWSAccount', 'AccountId'] },
@@ -131,69 +129,69 @@ describe('when using GetAtt on account', () => {
         templateResource = templateForTarget.Resources.resource;
     });
 
-    it('GetAtt can resolve account name of current account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.CurrentAccountName).to.eq(targetAccount.accountName);
+    test('GetAtt can resolve account name of current account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.CurrentAccountName).toBe(targetAccount.accountName);
     });
 
-    it('GetAtt can resolve account id of current account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.CurrentAccountId).to.eq(targetAccountId);
+    test('GetAtt can resolve account id of current account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.CurrentAccountId).toBe(targetAccountId);
     });
 
-    it('GetAtt can resolve account root email of current account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.CurrentRootEmail).to.eq(targetAccount.rootEmail);
+    test('GetAtt can resolve account root email of current account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.CurrentRootEmail).toBe(targetAccount.rootEmail);
     });
 
-    it('GetAtt can resolve account tags of current account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.CurrentTag).to.eq(targetAccount.tags.key);
+    test('GetAtt can resolve account tags of current account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.CurrentTag).toBe(targetAccount.tags.key);
     });
 
-    it('GetAtt can resolve account name of master account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.MasterAccountName).to.eq(masterAccount.accountName);
+    test('GetAtt can resolve account name of master account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.MasterAccountName).toBe(masterAccount.accountName);
     });
 
-    it('GetAtt can resolve account id of master account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.MasterAccountId).to.eq(masterAccountId);
+    test('GetAtt can resolve account id of master account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.MasterAccountId).toBe(masterAccountId);
     });
 
-    it('GetAtt can resolve account root email of master account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.MasterRootEmail).to.eq(masterAccount.rootEmail);
+    test('GetAtt can resolve account root email of master account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.MasterRootEmail).toBe(masterAccount.rootEmail);
     });
 
-    it('GetAtt can resolve account tags of master account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.MasterTag).to.eq(masterAccount.tags.key);
+    test('GetAtt can resolve account tags of master account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.MasterTag).toBe(masterAccount.tags.key);
     });
 
-    it('GetAtt can resolve account name of other account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherAccountName).to.eq(otherAccount.accountName);
+    test('GetAtt can resolve account name of other account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherAccountName).toBe(otherAccount.accountName);
     });
 
-    it('GetAtt can resolve account id of other account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherAccountId).to.eq(otherAccountId);
+    test('GetAtt can resolve account id of other account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherAccountId).toBe(otherAccountId);
     });
 
-    it('GetAtt can resolve account root email of other account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherRootEmail).to.eq(otherAccount.rootEmail);
+    test('GetAtt can resolve account root email of other account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherRootEmail).toBe(otherAccount.rootEmail);
     });
 
-    it('GetAtt can resolve account tags of other account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherTag).to.eq(otherAccount.tags.key);
+    test('GetAtt can resolve account tags of other account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherTag).toBe(otherAccount.tags.key);
     });
 
-    it('GetAtt can resolve alias of other account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherAlias).to.eq(otherAccount.alias);
+    test('GetAtt can resolve alias of other account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherAlias).toBe(otherAccount.alias);
     });
 });
 
@@ -227,7 +225,7 @@ describe('when using Sub on account', () => {
                 new CloudFormationResource(templateRoot, 'resource',
                     {
                         Type: 'AWS::Custom',
-                        OrganizationBinding: { Account: '*'},
+                        OrganizationBinding: { Account: '*', Region: 'eu-central-1'},
                         Properties: {
                             MasterAccountRef: { 'Fn::Sub' : '${' + masterAccountLogicalId + '}' },
                             OtherAccountRef: { 'Fn::Sub' : '${' + otherAccountLogicalId + '}' },
@@ -253,75 +251,75 @@ describe('when using Sub on account', () => {
         templateResource = templateForTarget.Resources.resource;
     });
 
-    it('Sub resolves to physical id for master account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.MasterAccountRef).to.eq(masterAccountId);
+    test('Sub resolves to physical id for master account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.MasterAccountRef).toBe(masterAccountId);
     });
 
-    it('Sub resolves to physical id for regular account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherAccountRef).to.eq(otherAccountId);
+    test('Sub resolves to physical id for regular account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherAccountRef).toBe(otherAccountId);
     });
 
-    it('Sub does not change if logicalId is not an account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.NonAccountRef['Fn::Sub']).to.not.be.undefined;
-        expect(templateResource.Properties.NonAccountRef['Fn::Sub']).to.eq('${' + 'something' + '}');
+    test('Sub does not change if logicalId is not an account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.NonAccountRef['Fn::Sub']).toBeDefined();
+        expect(templateResource.Properties.NonAccountRef['Fn::Sub']).toBe('${' + 'something' + '}');
     });
 
-    it('Sub does replace multiple values', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).to.not.be.undefined;
-        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).to.contain('${' + 'something' + '}');
-        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).to.contain(otherAccountId);
-        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).to.contain(masterAccountId);
+    test('Sub does replace multiple values', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toBeDefined();
+        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toEqual(expect.stringContaining('${' + 'something' + '}'));
+        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toEqual(expect.stringContaining(otherAccountId));
+        expect(templateResource.Properties.CombinedAccountRef['Fn::Sub']).toEqual(expect.stringContaining(masterAccountId));
     });
 
-    it('Sub can resolve account name of other account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherAccountName).to.eq(otherAccount.accountName);
+    test('Sub can resolve account name of other account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherAccountName).toBe(otherAccount.accountName);
     });
 
-    it('Sub can resolve account id of other account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherAccountId).to.eq(otherAccountId);
+    test('Sub can resolve account id of other account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherAccountId).toBe(otherAccountId);
     });
 
-    it('Sub can resolve account root email of other account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherRootEmail).to.eq(otherAccount.rootEmail);
+    test('Sub can resolve account root email of other account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherRootEmail).toBe(otherAccount.rootEmail);
     });
 
-    it('Sub can resolve account tags of other account', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.OtherTag).to.eq(otherAccount.tags.key);
+    test('Sub can resolve account tags of other account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.OtherTag).toBe(otherAccount.tags.key);
     });
 
-    it('Sub wont resolve AWS expressions', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.AccountIdTag['Fn::Sub']).to.eq('arn:aws:iam::${AWS::AccountId}:root');
+    test('Sub wont resolve AWS expressions', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.AccountIdTag['Fn::Sub']).toBe('arn:aws:iam::${AWS::AccountId}:root');
     });
 
-    it('Sub wont resolve string without expression', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.SubWithoutExpressionTag['Fn::Sub']).to.eq('something');
+    test('Sub wont resolve string without expression', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.SubWithoutExpressionTag['Fn::Sub']).toBe('something');
     });
 
-    it('Sub can resolve multiple expressions', () => {
-        expect(templateResource).to.not.be.undefined;
+    test('Sub can resolve multiple expressions', () => {
+        expect(templateResource).toBeDefined();
         const firstIndexOf = templateResource.Properties.TwoRootAliases.indexOf('account-2');
         const lastIndexOf = templateResource.Properties.TwoRootAliases.lastIndexOf('account-2');
-        expect(firstIndexOf).to.not.eq(lastIndexOf);
+        expect(firstIndexOf).not.toBe(lastIndexOf);
     });
 
-    it('Sub can replace only second expression', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.SubWith2Expressions['Fn::Sub']).contains('account-2');
+    test('Sub can replace only second expression', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.SubWith2Expressions['Fn::Sub']).toEqual(expect.stringContaining('account-2'));
         expect(templateResource.Properties.SubWith2Expressions['Fn::Sub'].startsWith('${parameter}-abc'));
     });
 
-    it('Sub replaces missing alias with empty string', () => {
-        expect(templateResource).to.not.be.undefined;
-        expect(templateResource.Properties.MissingAlias).to.eq('abc-');
+    test('Sub replaces missing alias with empty string', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.MissingAlias).toBe('abc-');
     });
 });

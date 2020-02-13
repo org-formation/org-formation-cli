@@ -1,83 +1,89 @@
-import { expect } from 'chai';
 import { Command, Option } from 'commander';
 import * as fs from 'fs';
-import Sinon = require('sinon');
+import Sinon from 'sinon';
 import { AwsUtil } from '../../../src/aws-util';
 import { BaseCliCommand } from '../../../src/commands/base-command';
 import { IInitPipelineCommandArgs, InitPipelineCommand } from '../../../src/commands/init-organization-pipeline';
 import { IState, PersistedState } from '../../../src/state/persisted-state';
 import { S3StorageProvider } from '../../../src/state/storage-provider';
 import { DefaultTemplate } from '../../../src/writer/default-template-writer';
+import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when creating init organization pipeline command', () => {
     let command: InitPipelineCommand;
     let commanderCommand: Command;
     let subCommanderCommand: Command;
+    let sandbox = Sinon.createSandbox();
 
     beforeEach(() => {
         commanderCommand = new Command('root');
         command = new InitPipelineCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
+        sandbox.stub(ConsoleUtil, 'LogInfo');
     });
 
-    it('init pipeline command is created', () => {
-        expect(command).to.not.be.undefined;
-        expect(subCommanderCommand).to.not.be.undefined;
-        expect(subCommanderCommand.name()).to.eq('init-pipeline');
+    afterEach(() => {
+        sandbox.restore();
+    })
+
+    test('init pipeline command is created', () => {
+        expect(command).toBeDefined();
+        expect(subCommanderCommand).toBeDefined();
+        expect(subCommanderCommand.name()).toBe('init-pipeline');
     });
 
-    it('init pipeline command has description', () => {
-       expect(subCommanderCommand).to.not.be.undefined;
-       expect(subCommanderCommand.description()).to.not.be.undefined;
+    test('init pipeline command has description', () => {
+       expect(subCommanderCommand).toBeDefined();
+       expect(subCommanderCommand.description()).toBeDefined();
     });
 
-    it('init pipeline command has no arguments', () => {
-        expect(subCommanderCommand._args.length).to.eq(0);
+    test('init pipeline command has no arguments', () => {
+        expect(subCommanderCommand._args.length).toBe(0);
     });
 
-    it('command has state bucket parameter with correct default', () => {
+    test('command has state bucket parameter with correct default', () => {
         const opts: Option[] = subCommanderCommand.options;
         const stateBucketOpt = opts.find((x) => x.long === '--state-bucket-name');
-        expect(stateBucketOpt).to.not.be.undefined;
-        expect(subCommanderCommand.stateBucketName).to.eq('organization-formation-${AWS::AccountId}');
+        expect(stateBucketOpt).toBeDefined();
+        expect(subCommanderCommand.stateBucketName).toBe('organization-formation-${AWS::AccountId}');
     });
 
-    it('command has state file parameter with correct default', () => {
+    test('command has state file parameter with correct default', () => {
         const opts: Option[] = subCommanderCommand.options;
         const stateObjectOpt = opts.find((x) => x.long === '--state-object');
-        expect(stateObjectOpt).to.not.be.undefined;
-        expect(subCommanderCommand.stateObject).to.eq('state.json');
+        expect(stateObjectOpt).toBeDefined();
+        expect(subCommanderCommand.stateObject).toBe('state.json');
     });
 
-    it('command has region option', () => {
+    test('command has region option', () => {
         const opts: Option[] = subCommanderCommand.options;
         const regionOpt = opts.find((x) => x.long === '--region');
-        expect(regionOpt).to.not.be.undefined;
-        expect(regionOpt.required).to.be.true;
+        expect(regionOpt).toBeDefined();
+        expect(regionOpt.required).toBe(true);
     });
 
-    it('command has stack-name option', () => {
+    test('command has stack-name option', () => {
         const opts: Option[] = subCommanderCommand.options;
         const stackNameOpt = opts.find((x) => x.long === '--stack-name');
-        expect(stackNameOpt).to.not.be.undefined;
-        expect(stackNameOpt.required).to.be.true;
-        expect(subCommanderCommand.stackName).to.eq('organization-formation-build');
+        expect(stackNameOpt).toBeDefined();
+        expect(stackNameOpt.required).toBe(true);
+        expect(subCommanderCommand.stackName).toBe('organization-formation-build');
     });
 
-    it('command has resource-prefix option', () => {
+    test('command has resource-prefix option', () => {
         const opts: Option[] = subCommanderCommand.options;
         const resourcePrefixOpt = opts.find((x) => x.long === '--resource-prefix');
-        expect(resourcePrefixOpt).to.not.be.undefined;
-        expect(resourcePrefixOpt.required).to.be.true;
-        expect(subCommanderCommand.resourcePrefix).to.eq('orgformation');
+        expect(resourcePrefixOpt).toBeDefined();
+        expect(resourcePrefixOpt.required).toBe(true);
+        expect(subCommanderCommand.resourcePrefix).toBe('orgformation');
     });
 
-    it('command has repository-name option', () => {
+    test('command has repository-name option', () => {
         const opts: Option[] = subCommanderCommand.options;
         const repositoryNameOpt = opts.find((x) => x.long === '--repository-name');
-        expect(repositoryNameOpt).to.not.be.undefined;
-        expect(repositoryNameOpt.required).to.be.true;
-        expect(subCommanderCommand.repositoryName).to.eq('organization-formation');
+        expect(repositoryNameOpt).toBeDefined();
+        expect(repositoryNameOpt.required).toBe(true);
+        expect(subCommanderCommand.repositoryName).toBe('organization-formation');
     });
 
 });
@@ -89,7 +95,6 @@ describe('when executing init pipeline command', () => {
     let getMasterAccountIdStub: Sinon.SinonStub;
     let storageProviderCreateStub: Sinon.SinonStub;
     let storageProviderPutStub: Sinon.SinonStub;
-    let storageProviderGetStub: Sinon.SinonStub;
     let generateDefaultTemplateStub: Sinon.SinonStub;
     let uploadInitialCommitStub: Sinon.SinonStub;
     let executeStackStub: Sinon.SinonStub;
@@ -113,7 +118,8 @@ describe('when executing init pipeline command', () => {
 
         storageProviderCreateStub = sandbox.stub(S3StorageProvider.prototype, 'create');
         storageProviderPutStub = sandbox.stub(S3StorageProvider.prototype, 'put');
-        storageProviderGetStub = sandbox.stub(S3StorageProvider.prototype, 'get');
+        sandbox.stub(S3StorageProvider.prototype, 'get');
+        sandbox.stub(ConsoleUtil, 'LogInfo');
 
         writeFileSyncStub = sandbox.stub(fs, 'writeFileSync');
 
@@ -131,19 +137,19 @@ describe('when executing init pipeline command', () => {
         sandbox.restore();
     });
 
-    it('calls getMasterAccountId', async () => {
+    test('calls getMasterAccountId', async () => {
         await command.performCommand(commandArgs);
-        expect(getMasterAccountIdStub.callCount).to.eq(1);
+        expect(getMasterAccountIdStub.callCount).toBe(1);
     });
 
-    it('creates initial commit', async () => {
+    test('creates initial commit', async () => {
         await command.performCommand(commandArgs);
-        expect(uploadInitialCommitStub.callCount).to.eq(1);
+        expect(uploadInitialCommitStub.callCount).toBe(1);
     });
 
-    it('executes stack that creates build infra', async () => {
+    test('executes stack that creates build infra', async () => {
         await command.performCommand(commandArgs);
-        expect(executeStackStub.callCount).to.eq(1);
+        expect(executeStackStub.callCount).toBe(1);
         const args = executeStackStub.lastCall.args;
         const cfnTemplate = args[0] as string;
         const region = args[1] as string;
@@ -151,84 +157,87 @@ describe('when executing init pipeline command', () => {
         const resourcePrefix = args[3] as string;
         const stackName = args[4] as string;
 
-        expect(cfnTemplate).to.contain('AWSTemplateFormatVersion: \'2010-09-09\'');
-        expect(region).to.eq(commandArgs.region);
-        expect(stateBucketName).to.eq(`organization-formation-${masterAccountId}`);
-        expect(resourcePrefix).to.eq(commandArgs.resourcePrefix);
-        expect(stackName).to.eq(commandArgs.stackName);
+        expect(cfnTemplate).toEqual(expect.stringContaining('AWSTemplateFormatVersion: \'2010-09-09\''));
+        expect(region).toBe(commandArgs.region);
+        expect(stateBucketName).toBe(`organization-formation-${masterAccountId}`);
+        expect(resourcePrefix).toBe(commandArgs.resourcePrefix);
+        expect(stackName).toBe(commandArgs.stackName);
     });
 
-    it('creates bucket using masterAccountId and state bucket name', async () => {
-        await command.performCommand(commandArgs);
+    test(
+        'creates bucket using masterAccountId and state bucket name',
+        async () => {
+            await command.performCommand(commandArgs);
 
-        expect(storageProviderCreateStub.callCount).to.eq(1);
-        const createCallArgs = storageProviderCreateStub.lastCall.args;
-        const tv: S3StorageProvider = storageProviderCreateStub.lastCall.thisValue;
-        expect(tv.bucketName).to.eq(`organization-formation-${masterAccountId}`);
-        expect(createCallArgs[0]).to.eq('eu-central-1');
+            expect(storageProviderCreateStub.callCount).toBe(1);
+            const createCallArgs = storageProviderCreateStub.lastCall.args;
+            const tv: S3StorageProvider = storageProviderCreateStub.lastCall.thisValue;
+            expect(tv.bucketName).toBe(`organization-formation-${masterAccountId}`);
+            expect(createCallArgs[0]).toBe('eu-central-1');
+        }
+    );
+
+    test('does not writes to disk', async () => {
+        await command.performCommand(commandArgs);
+        expect(writeFileSyncStub.callCount).toBe(0);
     });
 
-    it('does not writes to disk', async () => {
+    test('deletes initial commit from s3', async () => {
         await command.performCommand(commandArgs);
-        expect(writeFileSyncStub.callCount).to.eq(0);
-    });
-
-    it('deletes initial commit from s3', async () => {
-        await command.performCommand(commandArgs);
-        expect(deleteObjectStub.callCount).to.eq(1);
+        expect(deleteObjectStub.callCount).toBe(1);
         const args = deleteObjectStub.lastCall.args;
         const stateBucketName = args[0] as string;
         const objectKey = args[1] as string;
 
-        expect(stateBucketName).to.eq(stateBucketName);
-        expect(objectKey).to.eq('initial-commit.zip');
+        expect(stateBucketName).toBe(stateBucketName);
+        expect(objectKey).toBe('initial-commit.zip');
     });
 
-    it('stores state in state bucket', async () => {
+    test('stores state in state bucket', async () => {
         commandArgs.stateObject = 'state-file-name.yml';
         await command.performCommand(commandArgs);
 
         const instance: S3StorageProvider = storageProviderCreateStub.lastCall.thisValue;
-        expect(instance.bucketName).to.eq(`organization-formation-${masterAccountId}`);
-        expect(instance.objectKey).to.eq('state-file-name.yml');
+        expect(instance.bucketName).toBe(`organization-formation-${masterAccountId}`);
+        expect(instance.objectKey).toBe('state-file-name.yml');
 
         const putCallArgs = storageProviderPutStub.lastCall.args;
         const contents: string = putCallArgs[0];
         const state: IState = JSON.parse(contents);
-        expect(state.masterAccountId).to.eq(masterAccountId);
+        expect(state.masterAccountId).toBe(masterAccountId);
     });
 
-    it('if bucket already exists calls continue', async () => {
+    test('if bucket already exists calls continue', async () => {
         storageProviderCreateStub.throws({ code: 'BucketAlreadyOwnedByYou'});
 
         await command.performCommand(commandArgs);
-        expect(uploadInitialCommitStub.callCount).to.eq(1);
-        expect(uploadInitialCommitStub.callCount).to.eq(1);
+        expect(uploadInitialCommitStub.callCount).toBe(1);
+        expect(uploadInitialCommitStub.callCount).toBe(1);
     });
 
-    it('if bucket cannot be created exception is retrown', async () => {
+    test('if bucket cannot be created exception is retrown', async () => {
         const error =  {code: 'SomeOtherException'};
         storageProviderCreateStub.throws(error);
 
         try {
             await command.performCommand(commandArgs);
-            throw Error('expeted exception');
+            throw Error('expected exception');
         } catch (err) {
-            expect(err).to.eq(error);
+            expect(err).toBe(error);
         }
-        expect(writeFileSyncStub.callCount).to.eq(0);
+        expect(writeFileSyncStub.callCount).toBe(0);
     });
 
-    it('throws exception if region is undefined', async () => {
+    test('throws exception if region is undefined', async () => {
         delete commandArgs.region;
 
         try {
             await command.performCommand(commandArgs);
-            throw Error('expeted exception');
+            throw Error('expected exception');
         } catch (err) {
-            expect(err.message).to.contain('region');
+            expect(err.message).toEqual(expect.stringContaining('region'));
         }
-        expect(storageProviderCreateStub.callCount).to.eq(0);
-        expect(writeFileSyncStub.callCount).to.eq(0);
+        expect(storageProviderCreateStub.callCount).toBe(0);
+        expect(writeFileSyncStub.callCount).toBe(0);
     });
 });

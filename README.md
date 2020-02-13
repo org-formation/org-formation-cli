@@ -384,3 +384,4 @@ Special thanks to the following companies:
 Special thanks to the following individuals:
 - [Tjerk Stroband](https://github.com/tstroband)
 - [Yan Cui](http://theburningmonk.com)
+- [Eduardo Rodrigues](https://github.com/eduardomourar)

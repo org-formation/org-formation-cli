@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -29,32 +28,32 @@ describe('when loading budget alarms template', () => {
         complianceCfnTemplate = JSON.parse(complianceBinding.template.createTemplateBody()) as ICfnTemplate;
     });
 
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('creates 2 bindings for template', () => {
-        expect(bindings.length).to.eq(2);
+    test('creates 2 bindings for template', () => {
+        expect(bindings.length).toBe(2);
     });
 
-    it('budget for comliance account is set to 100', () => {
+    test('budget for comliance account is set to 100', () => {
         const budgetResource = complianceCfnTemplate.Resources.Budget;
 
-        expect(budgetResource).to.not.be.undefined;
-        expect(budgetResource.Properties.Budget.BudgetLimit.Amount).to.eq('100');
+        expect(budgetResource).toBeDefined();
+        expect(budgetResource.Properties.Budget.BudgetLimit.Amount).toBe('100');
     });
 
-    it('notifications on compliance account go to compliance@org.com', () => {
+    test('notifications on compliance account go to compliance@org.com', () => {
         const budgetResource = complianceCfnTemplate.Resources.Budget;
 
-        expect(budgetResource).to.not.be.undefined;
-        expect(budgetResource.Properties.NotificationsWithSubscribers[0].Subscribers[0].Address).to.eq('compliance@org.com');
+        expect(budgetResource).toBeDefined();
+        expect(budgetResource.Properties.NotificationsWithSubscribers[0].Subscribers[0].Address).toBe('compliance@org.com');
     });
 
-    it('budget for master account is set to 500', () => {
+    test('budget for master account is set to 500', () => {
         const budgetResource = masterCfnTemplate.Resources.Budget;
 
-        expect(budgetResource).to.not.be.undefined;
-        expect(budgetResource.Properties.Budget.BudgetLimit.Amount).to.eq('500');
+        expect(budgetResource).toBeDefined();
+        expect(budgetResource.Properties.Budget.BudgetLimit.Amount).toBe('500');
     });
 });

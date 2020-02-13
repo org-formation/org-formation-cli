@@ -1,12 +1,9 @@
-import * as chai from 'chai';
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
 import { ICfnTemplate } from '../cfn-types';
 
-chai.use(require('chai-as-promised'));
 
 describe('when specifying !Ref in custom parameter binding', () => {
     let template: TemplateRoot;
@@ -27,16 +24,16 @@ describe('when specifying !Ref in custom parameter binding', () => {
         account1CfnTemplate = JSON.parse(account1Binding.template.createTemplateBody()) as ICfnTemplate;
     });
 
-    it('ExportAccount is resolved', () => {
-        expect(account1CfnTemplate).to.not.be.undefined;
-        expect(account1CfnTemplate.Parameters).to.not.be.undefined;
-        expect(account1CfnTemplate.Parameters.Param).to.not.be.undefined;
-        expect(account1CfnTemplate.Parameters.Param.ExportAccountId).to.eq('444444444444');
+    test('ExportAccount is resolved', () => {
+        expect(account1CfnTemplate).toBeDefined();
+        expect(account1CfnTemplate.Parameters).toBeDefined();
+        expect(account1CfnTemplate.Parameters.Param).toBeDefined();
+        expect(account1CfnTemplate.Parameters.Param.ExportAccountId).toBe('444444444444');
     });
 });
 
 describe('when specifying !Ref in custom parameter binding to unknown account', () => {
-    it('exception is thrown', () => {
+    test('exception is thrown', () => {
         try {
             const template = TemplateRoot.create('./test/resources/custom-parameter-binding/custom-parameter-binding-non-existant.yml');
             const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
@@ -47,9 +44,9 @@ describe('when specifying !Ref in custom parameter binding to unknown account', 
             const bindings = cloudformationBinder.enumBindings();
             const account1Binding = bindings.find((x) => x.accountId === '111111111111');
             account1Binding.template.enumBoundParameters();
-            expect.fail('expected exception');
+            throw new Error('expected exception');
         } catch (err) {
-            expect(err.message).to.contain('UnkownAccount');
+            expect(err.message).toEqual(expect.stringContaining('UnkownAccount'));
         }
     });
 });

@@ -8,6 +8,7 @@ chainslayer
 .nyc_output
 work
 .DS_Store
+coverage/
 examples/automation/create-account/variables.yml
 oc
 test/.ts

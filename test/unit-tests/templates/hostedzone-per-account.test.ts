@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -36,82 +35,85 @@ describe('when loading hostedzone-per-account template', () => {
         account2CfnTemplate = JSON.parse(account2Binding.template.createTemplateBody()) as ICfnTemplate;
     });
 
-    it('can create cfn bindings for template', () => {
-        expect(bindings).to.not.be.undefined;
+    test('can create cfn bindings for template', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('creates 3 bindings for template', () => {
-        expect(bindings.length).to.eq(3);
+    test('creates 3 bindings for template', () => {
+        expect(bindings.length).toBe(3);
     });
 
-    it('master record has 2 recordsets resorces', () => {
+    test('master record has 2 recordsets resorces', () => {
         const resources = Object.entries(masterCfnTemplate.Resources).map((x) => x[1]);
         const recordSets = resources.filter((x) => x.Type === 'AWS::Route53::RecordSet');
-        expect(recordSets.length).to.eq(2);
+        expect(recordSets.length).toBe(2);
     });
 
-    it('other accounts dont have recordsets resorces', () => {
+    test('other accounts dont have recordsets resorces', () => {
         const resources1 = Object.entries(account1CfnTemplate.Resources).map((x) => x[1]);
         const recordSets1 = resources1.filter((x) => x.Type === 'AWS::Route53::RecordSet');
-        expect(recordSets1.length).to.eq(0);
+        expect(recordSets1.length).toBe(0);
 
         const resources = Object.entries(account2CfnTemplate.Resources).map((x) => x[1]);
         const recordSets = resources.filter((x) => x.Type === 'AWS::Route53::RecordSet');
-        expect(recordSets.length).to.eq(0);
+        expect(recordSets.length).toBe(0);
     });
 
-    it('account 1 has export on HostedZoneNameServers', () => {
+    test('account 1 has export on HostedZoneNameServers', () => {
         const outputs = Object.entries(account1CfnTemplate.Outputs).map((x) => x[1]);
-        expect(outputs.length).to.eq(1);
+        expect(outputs.length).toBe(1);
         const output = outputs[0];
-        expect(output.Value).to.not.be.undefined;
+        expect(output.Value).toBeDefined();
         const val = output.Value as ICfnJoinValue;
-        expect(val['Fn::Join'][0]).to.eq(', ');
-        expect(val['Fn::Join'][1]).to.not.be.undefined;
+        expect(val['Fn::Join'][0]).toBe(', ');
+        expect(val['Fn::Join'][1]).toBeDefined();
         const ValGetAtt = val['Fn::Join'][1] as ICfnGetAttValue;
-        expect(ValGetAtt['Fn::GetAtt'][0]).to.eq('HostedZone');
-        expect(ValGetAtt['Fn::GetAtt'][1]).to.eq('NameServers');
+        expect(ValGetAtt['Fn::GetAtt'][0]).toBe('HostedZone');
+        expect(ValGetAtt['Fn::GetAtt'][1]).toBe('NameServers');
 
-        expect(output.Export.Name).to.eq('hostedzone-per-account-HostedZone-NameServers');
+        expect(output.Export.Name).toBe('hostedzone-per-account-HostedZone-NameServers');
     });
 
-    it('account 2 has export on HostedZoneNameServers', () => {
+    test('account 2 has export on HostedZoneNameServers', () => {
         const outputs = Object.entries(account2CfnTemplate.Outputs).map((x) => x[1]);
-        expect(outputs.length).to.eq(1);
+        expect(outputs.length).toBe(1);
         const output = outputs[0];
-        expect(output.Value).to.not.be.undefined;
+        expect(output.Value).toBeDefined();
         const val = output.Value as ICfnJoinValue;
-        expect(val['Fn::Join'][0]).to.eq(', ');
-        expect(val['Fn::Join'][1]).to.not.be.undefined;
+        expect(val['Fn::Join'][0]).toBe(', ');
+        expect(val['Fn::Join'][1]).toBeDefined();
         const ValGetAtt = val['Fn::Join'][1] as ICfnGetAttValue;
-        expect(ValGetAtt['Fn::GetAtt'][0]).to.eq('HostedZone');
-        expect(ValGetAtt['Fn::GetAtt'][1]).to.eq('NameServers');
+        expect(ValGetAtt['Fn::GetAtt'][0]).toBe('HostedZone');
+        expect(ValGetAtt['Fn::GetAtt'][1]).toBe('NameServers');
 
-        expect(output.Export.Name).to.eq('hostedzone-per-account-HostedZone-NameServers');
+        expect(output.Export.Name).toBe('hostedzone-per-account-HostedZone-NameServers');
     });
 
-    it('master account imports HostedZoneNameServers from both other accounts', () => {
-        const resourceForAccount1 = masterCfnTemplate.Resources.ParentNsRecord111111111111;
-        const resourceForAccount2 = masterCfnTemplate.Resources.ParentNsRecord222222222222;
+    test(
+        'master account imports HostedZoneNameServers from both other accounts',
+        () => {
+            const resourceForAccount1 = masterCfnTemplate.Resources.ParentNsRecord111111111111;
+            const resourceForAccount2 = masterCfnTemplate.Resources.ParentNsRecord222222222222;
 
-        expect(resourceForAccount1).to.not.be.undefined;
-        expect(resourceForAccount2).to.not.be.undefined;
+            expect(resourceForAccount1).toBeDefined();
+            expect(resourceForAccount2).toBeDefined();
 
-        const resourceRecordsAccount1 = resourceForAccount1.Properties.ResourceRecords as ICfnRefValue;
-        expect(resourceRecordsAccount1.Ref).to.eq('Account1DotResourcesDotHostedZoneDotNameServers');
-        const resourceRecordsAccount2 = resourceForAccount2.Properties.ResourceRecords as ICfnRefValue;
-        expect(resourceRecordsAccount2.Ref).to.eq('Account2DotResourcesDotHostedZoneDotNameServers');
+            const resourceRecordsAccount1 = resourceForAccount1.Properties.ResourceRecords as ICfnRefValue;
+            expect(resourceRecordsAccount1.Ref).toBe('Account1DotResourcesDotHostedZoneDotNameServers');
+            const resourceRecordsAccount2 = resourceForAccount2.Properties.ResourceRecords as ICfnRefValue;
+            expect(resourceRecordsAccount2.Ref).toBe('Account2DotResourcesDotHostedZoneDotNameServers');
 
-        const paramAccount1 = masterCfnTemplate.Parameters.Account1DotResourcesDotHostedZoneDotNameServers;
-        expect(paramAccount1).to.not.be.undefined;
-        expect(paramAccount1.ExportRegion).to.eq('eu-west-1');
-        expect(paramAccount1.ExportAccountId).to.eq('111111111111');
-        expect(paramAccount1.ExportName).to.eq('hostedzone-per-account-HostedZone-NameServers');
+            const paramAccount1 = masterCfnTemplate.Parameters.Account1DotResourcesDotHostedZoneDotNameServers;
+            expect(paramAccount1).toBeDefined();
+            expect(paramAccount1.ExportRegion).toBe('eu-west-1');
+            expect(paramAccount1.ExportAccountId).toBe('111111111111');
+            expect(paramAccount1.ExportName).toBe('hostedzone-per-account-HostedZone-NameServers');
 
-        const paramAccount2 = masterCfnTemplate.Parameters.Account2DotResourcesDotHostedZoneDotNameServers;
-        expect(paramAccount2).to.not.be.undefined;
-        expect(paramAccount2.ExportRegion).to.eq('eu-west-1');
-        expect(paramAccount2.ExportAccountId).to.eq('222222222222');
-        expect(paramAccount2.ExportName).to.eq('hostedzone-per-account-HostedZone-NameServers');
-    });
+            const paramAccount2 = masterCfnTemplate.Parameters.Account2DotResourcesDotHostedZoneDotNameServers;
+            expect(paramAccount2).toBeDefined();
+            expect(paramAccount2.ExportRegion).toBe('eu-west-1');
+            expect(paramAccount2.ExportAccountId).toBe('222222222222');
+            expect(paramAccount2.ExportName).toBe('hostedzone-per-account-HostedZone-NameServers');
+        }
+    );
 });

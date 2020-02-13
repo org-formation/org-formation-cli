@@ -1,9 +1,10 @@
 
-import { expect } from 'chai';
-import Sinon = require('sinon');
+import Sinon from 'sinon';
 import { AwsUtil } from '../../src/aws-util';
 import { ValidateTasksCommand } from '../../src/commands/validate-tasks';
 import { ConsoleUtil } from '../../src/console-util';
+
+jest.setTimeout(99999999);
 
 describe('when validating examples', () => {
 
@@ -21,7 +22,7 @@ describe('when validating examples', () => {
         sandbox.restore();
     });
 
-    it('will return no errors or warnings', async () => {
+    test('will return no errors or warnings', async () => {
         const command = new ValidateTasksCommand();
         (command as any).command = {tasksFile: './examples/organization-tasks.yml', stateBucketName: 'organization-formation-${AWS::AccountId}', stateObject: 'state.json', profile: 'org-formation'};
         await command.invoke();
@@ -31,10 +32,10 @@ describe('when validating examples', () => {
         for (const call of logWarnStub.getCalls()) {
             console.log(call.args[0]);
         }
-        expect(logErrorStub.callCount).to.eq(0);
-        expect(logWarnStub.callCount).to.eq(0);
+        expect(logErrorStub.callCount).toBe(0);
+        expect(logWarnStub.callCount).toBe(0);
 
-    }).timeout(999999999);
+    });
 });
 
 describe('when validating work', () => {
@@ -51,16 +52,16 @@ describe('when validating work', () => {
         sandbox.restore();
     });
 
-    it('will return no errors', async () => {
+    test('will return no errors', async () => {
         const command = new ValidateTasksCommand();
         (command as any).command = {tasksFile: './work/orgformation-tasks.yml', stateBucketName: 'organization-formation-${AWS::AccountId}', stateObject: 'state.json', profile: 'work'};
         await command.invoke();
         for (const call of logErrorStub.getCalls()) {
             console.log(call.args[0]);
         }
-        expect(logErrorStub.callCount).to.eq(0);
+        expect(logErrorStub.callCount).toBe(0);
 
-    }).timeout(999999999);
+    });
 });
 
 describe('when validating chainslayer', () => {
@@ -77,14 +78,14 @@ describe('when validating chainslayer', () => {
         sandbox.restore();
     });
 
-    it('will return no errors', async () => {
+    test('will return no errors', async () => {
         const command = new ValidateTasksCommand();
         (command as any).command = {tasksFile: './chainslayer/orgformation-tasks.yml', stateBucketName: 'organization-formation-${AWS::AccountId}', stateObject: 'state.json', profile: 'chainslayer'};
         await command.invoke();
         for (const call of logErrorStub.getCalls()) {
             console.log(call.args[0]);
         }
-        expect(logErrorStub.callCount).to.eq(0);
+        expect(logErrorStub.callCount).toBe(0);
 
-    }).timeout(999999999);
+    });
 });

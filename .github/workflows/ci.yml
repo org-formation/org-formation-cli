@@ -1,0 +1,42 @@
+---
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Install Dependencies with NPM
+        id: installation
+        run: |
+          npm ci --no-optional
+      - name: Run Tests
+        id: testing
+        run: |
+          npm run test:ci
+      - name: Add Coverage Report
+        if: github.event_name == 'pull_request'
+        id: coverage-report
+        uses: 5monkeys/cobertura-action@v1
+        continue-on-error: true
+        with:
+          path: coverage/cobertura-coverage.xml
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          minimum_coverage: 40
+      - name: Upload Artifacts
+        id: upload-artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: coverage

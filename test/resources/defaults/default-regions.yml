@@ -3,7 +3,7 @@ Description:
 
 Organization: !Include ./organization.yml
 
-OrganizationBindingRegion:
+DefaultOrganizationBindingRegion:
   - eu-west-1
   - eu-central-1
 

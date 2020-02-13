@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -25,52 +24,52 @@ describe('when loading template with resource that does Foreach', () => {
         masterAccountCfnTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody()) as ICfnTemplate;
     });
 
-    it('creates 1 binding', () => {
-        expect(bindings).to.not.be.undefined;
+    test('creates 1 binding', () => {
+        expect(bindings).toBeDefined();
     });
 
-    it('creates template for master account', () => {
-        expect(masterAccountCfnTemplate).to.not.be.undefined;
+    test('creates template for master account', () => {
+        expect(masterAccountCfnTemplate).toBeDefined();
     });
 
-    it('template has 4 resources (one for every account)', () => {
+    test('template has 4 resources (one for every account)', () => {
         const resources = Object.keys(masterAccountCfnTemplate.Resources);
-        expect(resources.length).to.eq(4);
+        expect(resources.length).toBe(4);
     });
 
-    it('AccountId in ref is replaced', () => {
+    test('AccountId in ref is replaced', () => {
         for (const resourceName in masterAccountCfnTemplate.Resources) {
             const resource = masterAccountCfnTemplate.Resources[resourceName];
-            expect(resource.Properties.AccountId).to.not.be.undefined;
-            expect(resource.Properties.AccountId).to.not.be.undefined;
-            expect(resource.Properties.AccountId).to.not.contain('CurrentAccount');
+            expect(resource.Properties.AccountId).toBeDefined();
+            expect(resource.Properties.AccountId).toBeDefined();
+            expect(resource.Properties.AccountId).toEqual(expect.not.stringContaining('CurrentAccount'));
         }
     });
 
-    it('Tag in Get Att is replaced', () => {
+    test('Tag in Get Att is replaced', () => {
         for (const resourceName in masterAccountCfnTemplate.Resources) {
             const resource = masterAccountCfnTemplate.Resources[resourceName];
-            expect(resource.Properties.TagInGetAtt).to.not.be.undefined;
-            expect(resource.Properties.TagInGetAtt).to.not.be.undefined;
-            expect(resource.Properties.TagInGetAtt).to.not.contain('CurrentAccount');
-            expect(resource.Properties.TagInSub['Fn::Sub']).to.not.contain('Tags');
+            expect(resource.Properties.TagInGetAtt).toBeDefined();
+            expect(resource.Properties.TagInGetAtt).toBeDefined();
+            expect(resource.Properties.TagInGetAtt).toEqual(expect.not.stringContaining('CurrentAccount'));
+            expect(resource.Properties.TagInSub['Fn::Sub']).toEqual(expect.not.stringContaining('Tags'));
         }
     });
 
-    it('Tag in sub is replaced', () => {
+    test('Tag in sub is replaced', () => {
         for (const resourceName in masterAccountCfnTemplate.Resources) {
             const resource = masterAccountCfnTemplate.Resources[resourceName];
-            expect(resource.Properties.TagInSub).to.not.be.undefined;
-            expect(resource.Properties.TagInSub['Fn::Sub']).to.not.be.undefined;
-            expect(resource.Properties.TagInSub['Fn::Sub']).to.not.contain('CurrentAccount');
-            expect(resource.Properties.TagInSub['Fn::Sub']).to.not.contain('Tags');
+            expect(resource.Properties.TagInSub).toBeDefined();
+            expect(resource.Properties.TagInSub['Fn::Sub']).toBeDefined();
+            expect(resource.Properties.TagInSub['Fn::Sub']).toEqual(expect.not.stringContaining('CurrentAccount'));
+            expect(resource.Properties.TagInSub['Fn::Sub']).toEqual(expect.not.stringContaining('Tags'));
         }
     });
 
-    it('GetAtt of resource is replaced', () => {
+    test('GetAtt of resource is replaced', () => {
         for (const resourceName in masterAccountCfnTemplate.Resources) {
             const resource = masterAccountCfnTemplate.Resources[resourceName];
-            expect(resource.Properties.GetAttOfResouce.Ref).to.not.be.undefined;
+            expect(resource.Properties.GetAttOfResouce.Ref).toBeDefined();
         }
     });
 });

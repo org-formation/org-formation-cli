@@ -1,13 +1,10 @@
-import * as chai from 'chai';
-import { expect } from 'chai';
 import { CfnTemplate } from '../../../src/cfn-binder/cfn-template';
 import { CloudFormationResource } from '../../../src/parser/model/cloudformation-resource';
-import { IResourceTarget, ResourcesSection } from '../../../src/parser/model/resources-section';
+import { IResourceTarget } from '../../../src/parser/model/resources-section';
 import { TemplateRoot } from '../../../src/parser/parser';
 import { PersistedState } from '../../../src/state/persisted-state';
 import { TestTemplates } from '../test-templates';
 
-chai.use(require('chai-as-promised'));
 
 describe('when creating cloudformation with simple resource', () => {
     let template: CfnTemplate;
@@ -32,6 +29,7 @@ describe('when creating cloudformation with simple resource', () => {
                         },
                         OrganizationBinding: {
                             Account: '*',
+                            Region: 'eu-central-1'
                         },
                     }),
             ],
@@ -41,31 +39,31 @@ describe('when creating cloudformation with simple resource', () => {
         templateForTarget = template.createTemplateBody();
     });
 
-    it('returns template body', () => {
-        expect(templateForTarget).to.not.be.undefined;
+    test('returns template body', () => {
+        expect(templateForTarget).toBeDefined();
     });
 
-    it('template contains resource', () => {
+    test('template contains resource', () => {
         const result = JSON.parse(templateForTarget);
-        expect(result).to.not.be.undefined;
-        expect(result.Resources).to.not.be.undefined;
-        expect(result.Resources.bucket).to.not.be.undefined;
-        expect(result.Resources.bucket.Type).to.eq('AWS::S3::Bucket');
-        expect(result.Resources.bucket.Properties).to.not.be.undefined;
-        expect(result.Resources.bucket.Properties.BucketName).to.eq('BucketName');
+        expect(result).toBeDefined();
+        expect(result.Resources).toBeDefined();
+        expect(result.Resources.bucket).toBeDefined();
+        expect(result.Resources.bucket.Type).toBe('AWS::S3::Bucket');
+        expect(result.Resources.bucket.Properties).toBeDefined();
+        expect(result.Resources.bucket.Properties.BucketName).toBe('BucketName');
     });
 
-    it('template contains version', () => {
+    test('template contains version', () => {
         const result = JSON.parse(templateForTarget);
-        expect(result.AWSTemplateFormatVersion).to.eq('2010-09-09');
+        expect(result.AWSTemplateFormatVersion).toBe('2010-09-09');
     });
 
-    it('template resource doesnt contain organization binding', () => {
+    test('template resource doesnt contain organization binding', () => {
         const result = JSON.parse(templateForTarget);
-        expect(result).to.not.be.undefined;
-        expect(result.Resources).to.not.be.undefined;
-        expect(result.Resources.bucket).to.not.be.undefined;
-        expect(result.Resources.bucket.OrganizationBinding).to.be.undefined;
+        expect(result).toBeDefined();
+        expect(result.Resources).toBeDefined();
+        expect(result.Resources.bucket).toBeDefined();
+        expect(result.Resources.bucket.OrganizationBinding).toBeUndefined();
     });
 
 });
@@ -96,6 +94,7 @@ describe('when creating cloudformation with resource that has version attribute'
                         },
                         OrganizationBinding: {
                             Account: '*',
+                            Region: 'eu-central-1'
                         },
                     }),
             ],
@@ -105,11 +104,11 @@ describe('when creating cloudformation with resource that has version attribute'
         templateForTarget = template.createTemplateBody();
     });
 
-    it('resource contains version in cfn format', () => {
+    test('resource contains version in cfn format', () => {
         const result = JSON.parse(templateForTarget);
-        expect(result.Resources.BucketPolicy).to.not.be.undefined;
-        expect(result.Resources.BucketPolicy.Properties.PolicyDocument.Version).to.not.be.undefined;
-        expect(result.Resources.BucketPolicy.Properties.PolicyDocument.Version).to.eq('2012-10-17');
+        expect(result.Resources.BucketPolicy).toBeDefined();
+        expect(result.Resources.BucketPolicy.Properties.PolicyDocument.Version).toBeDefined();
+        expect(result.Resources.BucketPolicy.Properties.PolicyDocument.Version).toBe('2012-10-17');
     });
 });
 
@@ -136,13 +135,14 @@ describe('when creating cloudformation with output section', () => {
                         },
                         OrganizationBinding: {
                             Account: '*',
+                            Region: 'eu-central-1',
                         },
                     }),
             ],
         };
 
         templateRoot.resourcesSection.resources.push(target.resources[0]);
-        templateRoot.resourcesSection.resources.push(new CloudFormationResource(templateRoot, 'bucket2', {Type: 'abcdef'}));
+        templateRoot.resourcesSection.resources.push(new CloudFormationResource(templateRoot, 'bucket2', {Type: 'abcdef', OrganizationBinding: { Region: 'eu-central-1'}}));
 
         templateRoot.contents.Outputs = {
             Output : {
@@ -162,33 +162,33 @@ describe('when creating cloudformation with output section', () => {
         templateForTarget = template.createTemplateBody();
     });
 
-    it('template contains output in same target', () => {
+    test('template contains output in same target', () => {
         const result = JSON.parse(templateForTarget);
-        expect(result).to.not.be.undefined;
-        expect(result.Outputs).to.not.be.undefined;
-        expect(result.Outputs.Output.Value.Ref).to.eq('bucket');
+        expect(result).toBeDefined();
+        expect(result.Outputs).toBeDefined();
+        expect(result.Outputs.Output.Value.Ref).toBe('bucket');
     });
 
-    it('output to Ref in other target is removed', () => {
+    test('output to Ref in other target is removed', () => {
         const result = JSON.parse(templateForTarget);
-        expect(result).to.not.be.undefined;
-        expect(result.Outputs).to.not.be.undefined;
-        expect(result.Outputs.OutputRefOtherTarget).to.be.undefined;
+        expect(result).toBeDefined();
+        expect(result.Outputs).toBeDefined();
+        expect(result.Outputs.OutputRefOtherTarget).toBeUndefined();
     });
 
-    it('output to GetAtt in other target is removed', () => {
+    test('output to GetAtt in other target is removed', () => {
         const result = JSON.parse(templateForTarget);
-        expect(result).to.not.be.undefined;
-        expect(result.Outputs).to.not.be.undefined;
-        expect(result.Outputs.OutputGetAttOtherTarget).to.be.undefined;
+        expect(result).toBeDefined();
+        expect(result.Outputs).toBeDefined();
+        expect(result.Outputs.OutputGetAttOtherTarget).toBeUndefined();
     });
 
-    it('output to Org function is resolved', () => {
+    test('output to Org function is resolved', () => {
         const result = JSON.parse(templateForTarget);
-        expect(result).to.not.be.undefined;
-        expect(result.Outputs).to.not.be.undefined;
-        expect(result.Outputs.OutputGetOrgFunctions).to.not.be.undefined;
-        expect(result.Outputs.OutputGetOrgFunctions.Value).to.eq('My Account 1');
+        expect(result).toBeDefined();
+        expect(result.Outputs).toBeDefined();
+        expect(result.Outputs.OutputGetOrgFunctions).toBeDefined();
+        expect(result.Outputs.OutputGetOrgFunctions.Value).toBe('My Account 1');
     });
 });
 
@@ -218,6 +218,7 @@ describe('when creating cross account reference', () => {
                         },
                         OrganizationBinding: {
                             Account: { Ref: account1 },
+                            Region: 'eu-central-1',
                         },
                     }),
             ],
@@ -230,6 +231,7 @@ describe('when creating cross account reference', () => {
                     Account: {
                         Ref: account2,
                     },
+                    Region: 'eu-central-1',
                 },
             });
 
@@ -240,10 +242,10 @@ describe('when creating cross account reference', () => {
         templateForTarget = template.createTemplateBody();
     });
 
-    it('parameter was added to template', () => {
+    test('parameter was added to template', () => {
         const result = JSON.parse(templateForTarget);
-        expect(result).to.not.be.undefined;
-        expect(result.Parameters).to.not.be.undefined;
+        expect(result).toBeDefined();
+        expect(result.Parameters).toBeDefined();
     });
 
 });

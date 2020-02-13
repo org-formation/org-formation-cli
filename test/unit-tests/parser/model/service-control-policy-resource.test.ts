@@ -1,5 +1,4 @@
 
-import { expect } from 'chai';
 import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
 import { IServiceControlPolicyProperties, ServiceControlPolicyResource } from '../../../../src/parser/model/service-control-policy-resource';
 import { IResource, TemplateRoot } from '../../../../src/parser/parser';
@@ -25,33 +24,33 @@ describe('when creating service control policy resource', () => {
         };
     });
 
-    it('copies properties from resource', () => {
+    test('copies properties from resource', () => {
         const scp = new ServiceControlPolicyResource(template, 'logical-id', resource);
-        expect(scp.policyName).to.eq(properties.PolicyName);
-        expect(scp.policyDocument).to.eq(properties.PolicyDocument);
-        expect(scp.description).to.eq(properties.Description);
+        expect(scp.policyName).toBe(properties.PolicyName);
+        expect(scp.policyDocument).toBe(properties.PolicyDocument);
+        expect(scp.description).toBe(properties.Description);
     });
 
-    it('policy version attribute is converted to string', () => {
+    test('policy version attribute is converted to string', () => {
         const scp = new ServiceControlPolicyResource(template, 'logical-id', resource);
-        expect(scp.policyDocument.Version).to.eq('2012-10-17');
+        expect(scp.policyDocument.Version).toBe('2012-10-17');
     });
 
-    it('throws an error if properties are missing', () => {
+    test('throws an error if properties are missing', () => {
         resource.Properties = undefined;
-        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).to.throw(/Properties/);
+        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).toThrowError(/Properties/);
     });
 
-    it('throws an error if policy name is missing', () => {
+    test('throws an error if policy name is missing', () => {
         delete properties.PolicyName;
-        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).to.throw(/PolicyName/);
+        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).toThrowError(/PolicyName/);
     });
 
-    it('throws an error if policy document is missing', () => {
+    test('throws an error if policy document is missing', () => {
         delete properties.PolicyDocument;
-        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).to.throw(/logical-id/);
-        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).to.throw(/PolicyDocument/);
+        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
+        expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).toThrowError(/PolicyDocument/);
     });
 });

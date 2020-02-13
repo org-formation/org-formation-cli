@@ -1,5 +1,3 @@
-import { expect } from 'chai';
-import * as chai from 'chai';
 import { IAccountProperties } from '../../../src/parser/model/account-resource';
 import { IOrganizationRootProperties } from '../../../src/parser/model/organization-root-resource';
 import { IOrganizationalUnitProperties } from '../../../src/parser/model/organizational-unit-resource';
@@ -7,12 +5,10 @@ import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { IServiceControlPolicyProperties } from '../../../src/parser/model/service-control-policy-resource';
 import { ITemplate, TemplateRoot } from '../../../src/parser/parser';
 
-chai.use(require('chai-as-promised'));
-
 describe('when validating organization section', () => {
     let contents: ITemplate;
 
-    beforeEach( () => {
+    beforeEach(() => {
         contents = {
             AWSTemplateFormatVersion: '2010-09-09-OC',
             Organization: {
@@ -79,26 +75,26 @@ describe('when validating organization section', () => {
         };
     });
 
-    it('error is thrown for unknown organization resource type', () => {
+    test('error is thrown for unknown organization resource type', () => {
         contents.Organization.Resource = {
             Type: OrgResourceTypes.Account,
             Properties: {},
         };
         (contents.Organization.Resource as any).Type = 'Something-Different';
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/Something-Different/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/Something-Different/);
     });
 
-    it('error is thrown for multiple organization roots', () => {
+    test('error is thrown for multiple organization roots', () => {
         contents.Organization.Root2 = {
             Type: OrgResourceTypes.OrganizationRoot,
             Properties: {
                 ServiceControlPolicies: { Ref: 'Policy'},
             } as IOrganizationRootProperties,
         };
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/organization root/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/organization root/);
     });
 
-    it('error is thrown for multiple master accounts', () => {
+    test('error is thrown for multiple master accounts', () => {
         contents.Organization.Master1 = {
             Type: OrgResourceTypes.MasterAccount,
             Properties: {
@@ -115,90 +111,99 @@ describe('when validating organization section', () => {
                 RootEmail: 'my2@email.com',
             } as IAccountProperties,
         };
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/master account/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/master account/);
     });
 
-    it('error is thrown for account that is part of multiple organizational units', () => {
-        contents.Organization.OU2.Properties.Accounts.push({Ref: 'Account'});
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/Account/);
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/organizational unit/);
-    });
+    test(
+        'error is thrown for account that is part of multiple organizational units',
+        () => {
+            contents.Organization.OU2.Properties.Accounts.push({Ref: 'Account'});
+            expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/Account/);
+            expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/organizational unit/);
+        }
+    );
 
-    it('error is thrown for account that is part of multiple organizational units (referencing *)', () => {
-        contents.Organization.OU2.Properties.Accounts = '*';
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/Account/);
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/organizational unit/);
-    });
+    test(
+        'error is thrown for account that is part of multiple organizational units (referencing *)',
+        () => {
+            contents.Organization.OU2.Properties.Accounts = '*';
+            expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/Account/);
+            expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/organizational unit/);
+        }
+    );
 
-    it('error is thrown for unknown attribute in properties of organization root', () => {
-        contents.Organization.Root.Properties.additional = 'whatever';
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/Root/);
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/additional/);
-    });
+    test(
+        'error is thrown for unknown attribute in properties of organization root',
+        () => {
+            contents.Organization.Root.Properties.additional = 'whatever';
+            expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/Root/);
+            expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/additional/);
+        }
+    );
 
-    it('error is thrown for unknown attribute in organization root', () => {
+    test('error is thrown for unknown attribute in organization root', () => {
         (contents.Organization.Root as any).additional = 'whatever';
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/Root/);
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/additional/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/Root/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/additional/);
     });
 
-    it('error is thrown for unknown attribute in organization section', () => {
+    test('error is thrown for unknown attribute in organization section', () => {
         (contents.Organization as any).additional = 'whatever';
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/Organization/);
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/additional/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/Organization/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/additional/);
     });
 
-    it('error is thrown for unknown attribute', () => {
+    test('error is thrown for unknown attribute', () => {
         (contents as any).additional = 'whatever';
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/additional/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/additional/);
     });
 
-    it('error is thrown for duplicate account name', () => {
+    test('error is thrown for duplicate account name', () => {
         contents.Organization.Account.Properties.AccountName = contents.Organization.Account2.Properties.AccountName;
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/account2/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/account2/);
     });
 
-    it('error is thrown for duplicate account root email', () => {
+    test('error is thrown for duplicate account root email', () => {
         contents.Organization.Account.Properties.RootEmail = contents.Organization.Account2.Properties.RootEmail;
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/email@email.com/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/email@email.com/);
     });
 
-    it('error is thrown for duplicate account id', () => {
+    test('error is thrown for duplicate account id', () => {
         contents.Organization.Account.Properties.AccountId = contents.Organization.Account2.Properties.AccountId;
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/123123123124/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/123123123124/);
     });
 
-    it('error is thrown for duplicate account name (master)', () => {
+    test('error is thrown for duplicate account name (master)', () => {
         contents.Organization.Account.Properties.AccountName = contents.Organization.Account2.Properties.AccountName;
         contents.Organization.Account.Type = OrgResourceTypes.MasterAccount;
         delete contents.Organization.OU.Properties.Accounts;
 
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/account2/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/account2/);
     });
 
-    it('error is thrown for duplicate account root email (master)', () => {
+    test('error is thrown for duplicate account root email (master)', () => {
         contents.Organization.Account.Properties.RootEmail = contents.Organization.Account2.Properties.RootEmail;
         contents.Organization.Account.Type = OrgResourceTypes.MasterAccount;
         delete contents.Organization.OU.Properties.Accounts;
 
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/email@email.com/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/email@email.com/);
     });
 
-    it('error is thrown for duplicate account id (master)', () => {
+    test('error is thrown for duplicate account id (master)', () => {
         contents.Organization.Account.Properties.AccountId = contents.Organization.Account2.Properties.AccountId;
         contents.Organization.Account.Type = OrgResourceTypes.MasterAccount;
         delete contents.Organization.OU.Properties.Accounts;
 
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/123123123124/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/123123123124/);
     });
 
-    it('error is thrown for duplicate organizational unit name', () => {
+    test('error is thrown for duplicate organizational unit name', () => {
         contents.Organization.OU2.Properties.OrganizationalUnitName = contents.Organization.OU.Properties.OrganizationalUnitName;
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/ou1/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/ou1/);
     });
 
-    it('error is thrown for duplicate service control policy name', () => {
+    test('error is thrown for duplicate service control policy name', () => {
         contents.Organization.Policy2.Properties.PolicyName = contents.Organization.Policy.Properties.PolicyName;
-        expect(() => { new TemplateRoot(contents, './'); }).to.throw(/policy1/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/policy1/);
     });
 });

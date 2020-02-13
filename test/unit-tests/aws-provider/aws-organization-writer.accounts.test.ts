@@ -1,7 +1,6 @@
 import * as AWS from 'aws-sdk';
 import * as AWSMock from 'aws-sdk-mock';
 import { CreateAccountRequest, TagResourceRequest, UntagResourceRequest } from 'aws-sdk/clients/organizations';
-import { expect } from 'chai';
 import * as Sinon from 'sinon';
 import { AwsEvents } from '../../../src/aws-provider/aws-events';
 import { AwsOrganization } from '../../../src/aws-provider/aws-organization';
@@ -37,8 +36,7 @@ describe('when creating a new account using writer', () => {
         createAccountSpy = organizationService.createAccount as Sinon.SinonSpy;
         tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
         untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
-
-        expect(createAccountSpy.callCount).to.eq(0);
+        expect(createAccountSpy.callCount).toBe(0);
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.createAccount(account as any);
@@ -49,43 +47,43 @@ describe('when creating a new account using writer', () => {
         sanbox.restore();
     });
 
-    it('organization create account is called', () => {
-        expect(createAccountSpy.callCount).to.eq(1);
+    test('organization create account is called', () => {
+        expect(createAccountSpy.callCount).toBe(1);
     });
 
-    it('organization create account was passed the right arguments', () => {
+    test('organization create account was passed the right arguments', () => {
         const args: CreateAccountRequest = createAccountSpy.lastCall.args[0];
-        expect(args.AccountName).to.eq(account.accountName);
-        expect(args.Email).to.eq(account.rootEmail);
+        expect(args.AccountName).toBe(account.accountName);
+        expect(args.Email).toBe(account.rootEmail);
     });
 
-    it('organization tag account is called once', () => {
-        expect(tagResourceSpy.callCount).to.eq(1);
+    test('organization tag account is called once', () => {
+        expect(tagResourceSpy.callCount).toBe(1);
     });
 
-    it('organization tag account was passed the right arguments', () => {
+    test('organization tag account was passed the right arguments', () => {
         const args: TagResourceRequest = tagResourceSpy.lastCall.args[0];
-        expect(args.ResourceId).to.eq(accountId);
-        expect(args.Tags[0].Key).to.eq('tag1');
-        expect(args.Tags[0].Value).to.eq('val1');
-        expect(args.Tags[1].Key).to.eq('tag2');
-        expect(args.Tags[1].Value).to.eq('val2');
+        expect(args.ResourceId).toBe(accountId);
+        expect(args.Tags[0].Key).toBe('tag1');
+        expect(args.Tags[0].Value).toBe('val1');
+        expect(args.Tags[1].Key).toBe('tag2');
+        expect(args.Tags[1].Value).toBe('val2');
     });
 
-    it('organization un-tag account is not called', () => {
-        expect(untagResourceSpy.callCount).to.eq(0);
+    test('organization un-tag account is not called', () => {
+        expect(untagResourceSpy.callCount).toBe(0);
     });
 
-    it('account is added to organization model', () => {
+    test('account is added to organization model', () => {
         const accountFromModel = organizationModel.accounts.find((x) => x.Email === account.rootEmail);
-        expect(accountFromModel).to.not.be.undefined;
-        expect(accountFromModel.Email).to.eq(account.rootEmail);
-        expect(accountFromModel.Name).to.eq(account.accountName);
-        expect(accountFromModel.Id).to.eq(accountId);
+        expect(accountFromModel).toBeDefined();
+        expect(accountFromModel.Email).toBe(account.rootEmail);
+        expect(accountFromModel.Name).toBe(account.accountName);
+        expect(accountFromModel.Id).toBe(accountId);
     });
 
-    it('event has been published for new account', () => {
-        expect(putAccountCreatedEventSpy.callCount).to.eq( 1);
+    test('event has been published for new account', () => {
+        expect(putAccountCreatedEventSpy.callCount).toBe(1);
     });
 });
 
@@ -114,35 +112,35 @@ describe('when creating an account that already existed', () => {
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.createAccount(account as any);
-     } );
+     });
 
     afterEach(() => {
         AWSMock.restore();
     });
 
-    it('organization create account is not called', () => {
-        expect(createAccountSpy.callCount).to.eq(0);
+    test('organization create account is not called', () => {
+        expect(createAccountSpy.callCount).toBe(0);
     });
 
-    it('organization tag account is called once', () => {
-        expect(tagResourceSpy.callCount).to.eq(1);
+    test('organization tag account is called once', () => {
+        expect(tagResourceSpy.callCount).toBe(1);
     });
 
-    it('organization tag account was passed the right arguments', () => {
+    test('organization tag account was passed the right arguments', () => {
         const args: TagResourceRequest = tagResourceSpy.lastCall.args[0];
-        expect(args.ResourceId).to.eq(accountId);
-        expect(args.Tags[0].Key).to.eq('tag2');
-        expect(args.Tags[0].Value).to.eq('val2');
+        expect(args.ResourceId).toBe(accountId);
+        expect(args.Tags[0].Key).toBe('tag2');
+        expect(args.Tags[0].Value).toBe('val2');
     });
 
-    it('organization un-tag account is not called', () => {
-        expect(untagResourceSpy.callCount).to.eq(0);
+    test('organization un-tag account is not called', () => {
+        expect(untagResourceSpy.callCount).toBe(0);
     });
 
-    it('account is updated organization model', () => {
-        expect(organizationModel.accounts.length).to.eq(1);
+    test('account is updated organization model', () => {
+        expect(organizationModel.accounts.length).toBe(1);
         const accountFromModel = organizationModel.accounts[0];
-        expect(accountFromModel.Tags.tag2).to.eq('val2');
+        expect(accountFromModel.Tags.tag2).toBe('val2');
     });
 });
 
@@ -169,47 +167,47 @@ describe('when updating account', () => {
         tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
         untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
 
-        logWarningSpy = sandbox.spy(ConsoleUtil, 'LogWarning');
+        logWarningSpy = sandbox.stub(ConsoleUtil, 'LogWarning');
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.updateAccount(account as any, accountId);
-     } );
+     });
 
     afterEach(() => {
         AWSMock.restore();
         sandbox.restore();
      });
 
-    it('account name is not updated, warning is logged instead', () => {
+    test('account name is not updated, warning is logged instead', () => {
         const accountInModel = organizationModel.accounts.find((x) => x.Id === accountId);
-        expect(accountInModel).to.not.eq(account.accountName);
-        expect(logWarningSpy.callCount).to.eq(1);
+        expect(accountInModel).not.toBe(account.accountName);
+        expect(logWarningSpy.callCount).toBe(1);
         const message = logWarningSpy.lastCall.args[0];
-        expect(message).to.contain(account.accountName);
-        expect(message).to.contain(account.accountId);
-        expect(message).to.contain('cannot be changed');
+        expect(message).toEqual(expect.stringContaining(account.accountName));
+        expect(message).toEqual(expect.stringContaining(account.accountId));
+        expect(message).toEqual(expect.stringContaining('cannot be changed'));
     });
 
-    it('new tags are added', () => {
-        expect(tagResourceSpy.callCount).to.eq(1);
+    test('new tags are added', () => {
+        expect(tagResourceSpy.callCount).toBe(1);
         const args: TagResourceRequest = tagResourceSpy.lastCall.args[0];
-        expect(args.ResourceId).to.eq(accountId);
-        expect(args.Tags[0].Key).to.eq('tag3');
-        expect(args.Tags[0].Value).to.eq('val3');
+        expect(args.ResourceId).toBe(accountId);
+        expect(args.Tags[0].Key).toBe('tag3');
+        expect(args.Tags[0].Value).toBe('val3');
     });
 
-    it('old tags are removed', () => {
-        expect(untagResourceSpy.callCount).to.eq(1);
+    test('old tags are removed', () => {
+        expect(untagResourceSpy.callCount).toBe(1);
         const args: UntagResourceRequest = untagResourceSpy.lastCall.args[0];
-        expect(args.ResourceId).to.eq(accountId);
-        expect(args.TagKeys[0]).to.eq('tag1');
+        expect(args.ResourceId).toBe(accountId);
+        expect(args.TagKeys[0]).toBe('tag1');
     });
 
-    it('organization model is updated', () => {
+    test('organization model is updated', () => {
         const accountInModel = organizationModel.accounts.find((x) => x.Id === accountId);
-        expect(accountInModel).to.not.be.undefined;
-        expect(accountInModel.Tags).to.not.be.undefined;
-        expect(accountInModel.Tags.tag3).to.eq('val3');
+        expect(accountInModel).toBeDefined();
+        expect(accountInModel.Tags).toBeDefined();
+        expect(accountInModel.Tags.tag3).toBe('val3');
 
     });
 });

@@ -9,7 +9,7 @@ Parameters:
 
 DefaultOrganizationBindingRegion: eu-west-1
 
-OrganizationBinding:
+DefaultOrganizationBinding:
   Account: !Ref Account2
 
 OrganizationBindings:

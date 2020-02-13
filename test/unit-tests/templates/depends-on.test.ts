@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
 import { TemplateRoot } from '../../../src/parser/parser';
@@ -26,27 +25,27 @@ describe('when filtering out depends on', () => {
         account2CfnTemplate = JSON.parse(account2Binding.template.createTemplateBody()) as ICfnTemplate;
     });
 
-    it('removes DependsOn (string) to resource in other template', () => {
+    test('removes DependsOn (string) to resource in other template', () => {
         const resource1 = account2CfnTemplate.Resources.Resource1;
-        expect(resource1.DependsOn).to.not.be.undefined;
-        expect(resource1.DependsOn.length).to.eq(0);
+        expect(resource1.DependsOn).toBeDefined();
+        expect(resource1.DependsOn.length).toBe(0);
     });
 
-    it('removes DependsOn (list) to resource in other template', () => {
+    test('removes DependsOn (list) to resource in other template', () => {
         const resource1 = account2CfnTemplate.Resources.Resource2;
-        expect(resource1.DependsOn).to.not.be.undefined;
-        expect(resource1.DependsOn.length).to.eq(0);
+        expect(resource1.DependsOn).toBeDefined();
+        expect(resource1.DependsOn.length).toBe(0);
     });
 
-    it('keeps DependsOn (string) to resource in same template', () => {
+    test('keeps DependsOn (string) to resource in same template', () => {
         const resource1 = account1CfnTemplate.Resources.Resource1;
-        expect(resource1.DependsOn).to.not.be.undefined;
-        expect(resource1.DependsOn).to.eq('Dependency');
+        expect(resource1.DependsOn).toBeDefined();
+        expect(resource1.DependsOn).toBe('Dependency');
     });
 
-    it('keeps DependsOn (list) to resource in same template', () => {
+    test('keeps DependsOn (list) to resource in same template', () => {
         const resource1 = account1CfnTemplate.Resources.Resource2;
-        expect(resource1.DependsOn).to.not.be.undefined;
-        expect(resource1.DependsOn[0]).to.eq('Dependency');
+        expect(resource1.DependsOn).toBeDefined();
+        expect(resource1.DependsOn[0]).toBe('Dependency');
     });
 });
