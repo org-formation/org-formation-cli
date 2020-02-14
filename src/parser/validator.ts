@@ -108,10 +108,11 @@ export class Validator {
         }
     }
     public static validatePositiveInteger(val: number, name: string) {
-        if (typeof val === 'number') {
+        if (!isNaN(val)) {
             if (val < 0) {
                 throw new OrgFormationError(`expected ${name} to be a positive integer, found ${val}`);
             }
+
         } else {
             throw new OrgFormationError(`expected ${name} to be a number, found ${typeof val} (${val})`);
         }
