@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.0.76**
+- Fixed issue with validation of commandline input pararameters
+
 **version 0.0.75**
 - Added additional input validation
 
