@@ -369,18 +369,6 @@ class Line implements YamlLine {
         return line.trimRight() + '\n';
     }
 }
-
-class CommentedLine extends Line {
-
-    constructor(label: string, value: string, indentation: number) {
-        super(label, value, indentation);
-    }
-
-    public toString(): string {
-        return '#' + super.toString();
-    }
-}
-
 class ListLine implements YamlLine {
     public label: string;
     public values: string[];

@@ -1,4 +1,4 @@
-import { CloudWatchEvents } from 'aws-sdk';
+import * as AWS from 'aws-sdk';
 
 import { PutEventsRequest } from 'aws-sdk/clients/cloudwatchevents';
 import { ConsoleUtil } from '../console-util';
@@ -9,7 +9,6 @@ const eventDetailType = 'events.org-formation.com';
 export class AwsEvents {
     public static async putAccountCreatedEvent(accountId: string) {
         try {
-            const events = new CloudWatchEvents({region: 'us-east-1'});
             const putEventsRequest: PutEventsRequest = {Entries: [
                 {
                     Time: new Date(),
@@ -20,12 +19,16 @@ export class AwsEvents {
                         eventName: 'AccountCreated',
                         accountId,
                     }),
-
                 },
             ]};
-            await events.putEvents(putEventsRequest).promise();
+            await AwsEvents.PutEvent(putEventsRequest);
         } catch (err) {
             ConsoleUtil.LogError(`unable to put event AccountCreated for account ${accountId}`, err);
         }
+    }
+
+    public static async PutEvent(request: PutEventsRequest) {
+        const events = new AWS.CloudWatchEvents({region: 'us-east-1'});
+        await events.putEvents(request).promise();
     }
 }

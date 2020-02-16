@@ -1,5 +1,4 @@
-import { CloudWatchEvents, Organizations } from 'aws-sdk/clients/all';
-import { PutEventsRequest } from 'aws-sdk/clients/cloudwatchevents';
+import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
 import { AwsUtil, passwordPolicEquals } from '../aws-util';

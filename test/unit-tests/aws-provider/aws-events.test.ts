@@ -1,0 +1,52 @@
+import * as Sinon from 'sinon';
+import { AwsEvents } from '../../../src/aws-provider/aws-events';
+import { PutEventsRequest, PutEventsRequestEntry } from 'aws-sdk/clients/cloudwatchevents';
+
+describe('when putting aws account created event', () => {
+    const sandbox = Sinon.createSandbox();
+    let putEventsMock: Sinon.SinonSpy;
+
+    beforeEach(async () => {
+
+        putEventsMock = sandbox.stub(AwsEvents, 'PutEvent');
+
+        await AwsEvents.putAccountCreatedEvent('123123123123');
+    });
+
+    test('1 event is put', () => {
+        expect(putEventsMock.callCount).toBe(1);
+        const args: PutEventsRequest = putEventsMock.getCall(0).args[0];
+        expect(args.Entries).toBeDefined;
+        expect(args.Entries.length).toBe(1)
+    })
+
+    test('event has org formation type', () => {
+        const args: PutEventsRequest = putEventsMock.getCall(0).args[0];
+        const event: PutEventsRequestEntry = args.Entries[0];
+        expect(event.EventBusName).toBeUndefined;
+        expect(event.Source).toBe('oc.org-formation');
+        expect(event.DetailType).toBe('events.org-formation.com');
+    })
+
+    test('event has account as resource', () => {
+        const args: PutEventsRequest = putEventsMock.getCall(0).args[0];
+        const event: PutEventsRequestEntry = args.Entries[0];
+        expect(event.Resources).toBeDefined;
+        expect(event.Resources[0]).toBe('123123123123');
+    });
+
+    test('event has detail with eventName and accountId', () => {
+        const args: PutEventsRequest = putEventsMock.getCall(0).args[0];
+        const event: PutEventsRequestEntry = args.Entries[0];
+        expect(event.Detail).toBeDefined;
+
+        const detail = JSON.parse(event.Detail);
+        expect(detail.accountId).toBe('123123123123');
+        expect(detail.eventName).toBe('AccountCreated');
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+});
