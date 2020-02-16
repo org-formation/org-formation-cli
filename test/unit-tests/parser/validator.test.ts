@@ -31,3 +31,21 @@ describe('when validating region', () => {
     });
 
 });
+
+
+describe('when validating positive number', () => {
+    test('doesn\'t throw exception for valid number', () => {
+        Validator.validatePositiveInteger(3, 'arg');
+    });
+    test('doesn\'t throw exception for numberic string', () => {
+        Validator.validatePositiveInteger('3' as any, 'arg');
+    });
+    test('throws exception for negative number', () => {
+        expect(()=> Validator.validatePositiveInteger(-3, 'arg')).toThrowError(/arg/);
+        expect(()=> Validator.validatePositiveInteger(-3, 'arg')).toThrowError(/-3/);
+    });
+    test('throws exception non-nnumber string', () => {
+        expect(()=> Validator.validatePositiveInteger('asd' as any, 'arg')).toThrowError(/asd/);
+        expect(()=> Validator.validatePositiveInteger('asd' as any, 'arg')).toThrowError(/arg/);
+    });
+});

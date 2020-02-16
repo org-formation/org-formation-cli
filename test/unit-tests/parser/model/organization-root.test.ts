@@ -1,4 +1,3 @@
-import { AccountResource, IAccountProperties } from '../../../../src/parser/model/account-resource';
 import { IOrganizationRootProperties, OrganizationRootResource } from '../../../../src/parser/model/organization-root-resource';
 import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
 import { IResource, TemplateRoot } from '../../../../src/parser/parser';
