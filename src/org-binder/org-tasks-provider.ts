@@ -38,7 +38,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action:  'Create',
-            perform: async (task) => {
+            perform: async task => {
                 task.result = await that.writer.ensureRoot();
             },
         };
@@ -56,7 +56,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async (task) => {
+            perform: async task => {
                 that.state.setUniqueBindingForType({
                     type: resource.type,
                     logicalId: resource.logicalId,
@@ -77,7 +77,7 @@ export class TaskProvider {
 
         const previousSCPs = this.resolveIDs(previosuServiceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
-        for (const attachedSCP of currentSCPS.physicalIds.filter((x) => !previousSCPs.physicalIds.includes(x))) {
+        for (const attachedSCP of currentSCPS.physicalIds.filter(x => !previousSCPs.physicalIds.includes(x))) {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => physicalId);
             tasks.push(attachSCPTask);
         }
@@ -85,7 +85,7 @@ export class TaskProvider {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => physicalId);
             tasks.push(attachSCPTask);
         }
-        for (const detachedSCP of previousSCPs.physicalIds.filter((x) => !currentSCPS.physicalIds.includes(x))) {
+        for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
             const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
             tasks.push(detachSCPTask);
         }
@@ -95,7 +95,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async (task) => {
+            perform: async task => {
                 that.state.setUniqueBindingForType({
                     type: resource.type,
                     logicalId: resource.logicalId,
@@ -114,7 +114,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action: 'Create',
-            perform: async (task) => {
+            perform: async task => {
                 const physicalId = await that.writer.createPolicy(resource);
                 that.state.setBinding({
                     type: resource.type,
@@ -151,7 +151,7 @@ export class TaskProvider {
             type: binding.type,
             logicalId: binding.logicalId,
             action: 'Delete',
-            dependentTaskFilter: (task) => true,
+            dependentTaskFilter: task => true,
             perform: async () => {
                 await that.writer.deletePolicy(binding.physicalId);
                 this.state.removeBinding(binding);
@@ -166,7 +166,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action:  'Create',
-            perform: async (task) => {
+            perform: async task => {
                 task.result = await that.writer.createOrganizationalUnit(resource);
             },
         };
@@ -191,7 +191,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async (task) => {
+            perform: async task => {
                 that.state.setBinding({
                     type: resource.type,
                     logicalId: resource.logicalId,
@@ -207,14 +207,14 @@ export class TaskProvider {
     public createOrganizationalUnitUpdateTasks(resource: OrganizationalUnitResource, physicalId: string,  hash: string): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
-        const previousResource = this.previousTemplate.organizationSection.organizationalUnits.find((x) => x.logicalId === resource.logicalId);
+        const previousResource = this.previousTemplate.organizationSection.organizationalUnits.find(x => x.logicalId === resource.logicalId);
 
         if (previousResource === undefined || previousResource.organizationalUnitName !== resource.organizationalUnitName) {
             const updateOrganizationalUnitTask: IBuildTask = {
                 type: resource.type,
                 logicalId: resource.logicalId,
                 action:  'Update',
-                perform: async (task) => {
+                perform: async task => {
                     task.result = await that.writer.updateOrganizationalUnit(resource, physicalId);
                 },
             };
@@ -224,11 +224,11 @@ export class TaskProvider {
 
         const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
-        for (const detachedSCP of previousSCPs.physicalIds.filter((x) => !currentSCPS.physicalIds.includes(x))) {
+        for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
             const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
             tasks.push(detachSCPTask);
         }
-        for (const attachedSCP of currentSCPS.physicalIds.filter((x) => !previousSCPs.physicalIds.includes(x))) {
+        for (const attachedSCP of currentSCPS.physicalIds.filter(x => !previousSCPs.physicalIds.includes(x))) {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => physicalId);
             tasks.push(attachSCPTask);
         }
@@ -239,11 +239,11 @@ export class TaskProvider {
 
         const previousAccounts = this.resolveIDs(previousResource.accounts);
         const currentAccounts = this.resolveIDs(resource.accounts);
-        for (const detachedAccount of previousAccounts.physicalIds.filter((x) => !currentAccounts.physicalIds.includes(x))) {
+        for (const detachedAccount of previousAccounts.physicalIds.filter(x => !currentAccounts.physicalIds.includes(x))) {
             const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, () => physicalId);
             tasks.push(detachAccountTask);
         }
-        for (const attachAccount of currentAccounts.physicalIds.filter((x) => !previousAccounts.physicalIds.includes(x))) {
+        for (const attachAccount of currentAccounts.physicalIds.filter(x => !previousAccounts.physicalIds.includes(x))) {
             const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, currentAccounts.mapping[attachAccount], that, () => physicalId);
             tasks.push(attachAccountTask);
         }
@@ -257,7 +257,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async (task) => {
+            perform: async task => {
                 that.state.setBinding({
                     type: resource.type,
                     logicalId: resource.logicalId,
@@ -286,7 +286,7 @@ export class TaskProvider {
     public createAccountUpdateTasks(resource: AccountResource, physicalId: string, hash: string): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
-        let previousResource = [...this.previousTemplate.organizationSection.accounts].find((x) => x.logicalId === resource.logicalId);
+        let previousResource = [...this.previousTemplate.organizationSection.accounts].find(x => x.logicalId === resource.logicalId);
         if (!previousResource && resource.type === OrgResourceTypes.MasterAccount) {
             previousResource = this.previousTemplate.organizationSection.masterAccount;
         }
@@ -297,7 +297,7 @@ export class TaskProvider {
                 type: resource.type,
                 logicalId: resource.logicalId,
                 action:  'Update',
-                perform: async (task) => {
+                perform: async task => {
                     task.result = await that.writer.updateAccount(resource, physicalId);
                 },
             };
@@ -307,11 +307,11 @@ export class TaskProvider {
 
         const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
-        for (const detachedSCP of previousSCPs.physicalIds.filter((x) => !currentSCPS.physicalIds.includes(x))) {
+        for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
             const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
             tasks.push(detachSCPTask);
         }
-        for (const attachedSCP of currentSCPS.physicalIds.filter((x) => !previousSCPs.physicalIds.includes(x))) {
+        for (const attachedSCP of currentSCPS.physicalIds.filter(x => !previousSCPs.physicalIds.includes(x))) {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => physicalId);
             tasks.push(attachSCPTask);
         }
@@ -324,7 +324,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async (task) => {
+            perform: async task => {
                 if (resource.type === OrgResourceTypes.MasterAccount) {
                     that.state.setUniqueBindingForType({
                         type: resource.type,
@@ -353,7 +353,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action:  'Create',
-            perform: async (task) => {
+            perform: async task => {
                 task.result = await that.writer.createAccount(resource);
             },
         };
@@ -371,7 +371,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async (task) => {
+            perform: async task => {
                 if (resource.type === OrgResourceTypes.MasterAccount) {
                     that.state.setUniqueBindingForType({
                         type: resource.type,
@@ -411,7 +411,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action: `Detach Policy (${scpIdentifier})`,
-            perform: async (task) => {
+            perform: async task => {
                 task.result = await that.writer.detachPolicy(targetId, policy.PhysicalId);
             },
         };
@@ -426,7 +426,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action: `Attach Policy (${scpIdentifier})`,
-            perform: async (task) => {
+            perform: async task => {
                 let policyId = policy.PhysicalId;
                 if (policyId === undefined) {
                     const binding = that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId);
@@ -437,7 +437,7 @@ export class TaskProvider {
             },
         };
         if (policy.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId)) {
-            attachSCPTask.dependentTaskFilter = (task) => {
+            attachSCPTask.dependentTaskFilter = task => {
                 return (task.logicalId === policy.TemplateResource.logicalId && task.action === 'Create' && task.type === OrgResourceTypes.ServiceControlPolicy)
                 || (task.action.indexOf('Detach Policy') >= 0);
             };
@@ -454,7 +454,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action: `Detach Account (${accountIdentifier})`,
-            perform: async (task) => {
+            perform: async task => {
                 let accountId = account.PhysicalId;
                 if (accountId === undefined) {
                     const binding = that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId);
@@ -465,7 +465,7 @@ export class TaskProvider {
             },
         };
         if (account.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId)) {
-            detachAccountTask.dependentTaskFilter = (task) => task.logicalId === account.TemplateResource.logicalId &&
+            detachAccountTask.dependentTaskFilter = task => task.logicalId === account.TemplateResource.logicalId &&
                 task.action === 'Create' &&
                 task.type === OrgResourceTypes.Account;
         }
@@ -481,7 +481,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action: `Attach Account (${accountIdentifier})`,
-            perform: async (task) => {
+            perform: async task => {
                 let accountId = account.PhysicalId;
                 if (accountId === undefined) {
                     const binding = that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId);
@@ -492,18 +492,18 @@ export class TaskProvider {
             },
         };
         if (account.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId)) {
-            attachAccountTask.dependentTaskFilter = (task) => task.logicalId === account.TemplateResource.logicalId &&
+            attachAccountTask.dependentTaskFilter = task => task.logicalId === account.TemplateResource.logicalId &&
                 task.action === 'Create' &&
                 task.type === OrgResourceTypes.Account;
         }
         return attachAccountTask;
     }
 
-    private resolveIDs<TResource extends Resource>(list: Array<Reference<TResource>>) {
-        const physicalIdsForServiceControlPolicies = list.filter((x) => x.PhysicalId).map((x) => x.PhysicalId);
+    private resolveIDs<TResource extends Resource>(list: Reference<TResource>[]) {
+        const physicalIdsForServiceControlPolicies = list.filter(x => x.PhysicalId).map(x => x.PhysicalId);
         const unresolvedResources: TResource[] = [];
         const mapping: Record<string, Reference<TResource>> = {};
-        for (const logicalRef of list.filter((x) => x.TemplateResource)) {
+        for (const logicalRef of list.filter(x => x.TemplateResource)) {
             const binding = this.state.getBinding(logicalRef.TemplateResource.type, logicalRef.TemplateResource.logicalId);
             if (binding === undefined) {
                 unresolvedResources.push(logicalRef.TemplateResource!);

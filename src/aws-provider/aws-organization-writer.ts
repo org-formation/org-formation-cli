@@ -50,7 +50,7 @@ export class AwsOrganizationWriter {
             return response.Policy!.PolicySummary!.Id!;
         } catch (err) {
             if (err.code === 'DuplicatePolicyException') {
-                const existingPolicy = this.organization.policies.find((x) => x.Name === resource.policyName);
+                const existingPolicy = this.organization.policies.find(x => x.Name === resource.policyName);
                 await this.updatePolicy(resource, existingPolicy!.Id);
                 return existingPolicy.Id;
             }
@@ -133,7 +133,7 @@ export class AwsOrganizationWriter {
     }
 
     public async attachAccount(parentPhysicalId: string, accountPhysicalId: string) {
-        const account = this.organization.accounts.find((x) => x.Id === accountPhysicalId);
+        const account = this.organization.accounts.find(x => x.Id === accountPhysicalId);
         if (account.ParentId === parentPhysicalId) {
             ConsoleUtil.LogDebug(`account ${accountPhysicalId} already has parent ${parentPhysicalId}`);
             return;
@@ -155,7 +155,7 @@ export class AwsOrganizationWriter {
     }
 
     public async createOrganizationalUnit(resource: OrganizationalUnitResource): Promise<string> {
-        const organizationalUnit = this.organization.organizationalUnits.find((x) => x.Name === resource.organizationalUnitName);
+        const organizationalUnit = this.organization.organizationalUnits.find(x => x.Name === resource.organizationalUnitName);
         if (organizationalUnit) {
             ConsoleUtil.LogDebug(`ou with name ${resource.organizationalUnitName} already exists`);
             return organizationalUnit.Id;
@@ -175,7 +175,7 @@ export class AwsOrganizationWriter {
     }
 
     public async deleteOrganizationalUnit(physicalId: string) {
-        const existingOU = this.organization.organizationalUnits.find((x) => x.Id === physicalId);
+        const existingOU = this.organization.organizationalUnits.find(x => x.Id === physicalId);
         if (existingOU === undefined) {
             ConsoleUtil.LogDebug(`organizational unit ${physicalId} not found.`);
             return;
@@ -196,7 +196,7 @@ export class AwsOrganizationWriter {
         let accountId = resource.accountId;
 
         // todo and check on accountId
-        const account = [...this.organization.accounts, this.organization.masterAccount].find((x) => x.Id === resource.accountId || x.Email === resource.rootEmail);
+        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === resource.accountId || x.Email === resource.rootEmail);
         if (account !== undefined) {
             await this.updateAccount(resource, account.Id);
             ConsoleUtil.LogDebug(`account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
@@ -227,7 +227,7 @@ export class AwsOrganizationWriter {
     }
 
     public async updateAccount(resource: AccountResource, accountId: string, previousResource?: AccountResource) {
-        const account = [...this.organization.accounts, this.organization.masterAccount].find((x) => x.Id === accountId);
+        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === accountId);
 
         if (account.Name !== resource.accountName) {
             ConsoleUtil.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. \nInstead: login with root on the specified account to change its name`);
@@ -309,10 +309,10 @@ export class AwsOrganizationWriter {
         }
 
         const tagsOnResource = Object.entries(resource.tags || {});
-        const keysOnResource = tagsOnResource.map((x) => x[0]);
+        const keysOnResource = tagsOnResource.map(x => x[0]);
         const tagsOnAccount = Object.entries(account.Tags);
-        const tagsToRemove = tagsOnAccount.map((x) => x[0]).filter((x) => keysOnResource.indexOf(x) === -1);
-        const tagsToUpdate = keysOnResource.filter((x) => resource.tags[x] !== account.Tags[x]);
+        const tagsToRemove = tagsOnAccount.map(x => x[0]).filter(x => keysOnResource.indexOf(x) === -1);
+        const tagsToUpdate = keysOnResource.filter(x => resource.tags[x] !== account.Tags[x]);
 
         if (tagsToRemove.length > 0) {
             const request: UntagResourceRequest = {
@@ -323,7 +323,7 @@ export class AwsOrganizationWriter {
         }
 
         if (tagsToUpdate.length > 0) {
-            const tags: Tag[] = tagsOnResource.filter((x) => tagsToUpdate.indexOf(x[0]) >= 0).map((x) => ({Key: x[0], Value : (x[1] || '').toString() }));
+            const tags: Tag[] = tagsOnResource.filter(x => tagsToUpdate.indexOf(x[0]) >= 0).map(x => ({Key: x[0], Value : (x[1] || '').toString() }));
 
             const request: TagResourceRequest = {
                 ResourceId: accountId,
@@ -392,5 +392,5 @@ export class AwsOrganizationWriter {
 }
 
 function sleep(time: number) {
-    return new Promise((resolve) => setTimeout(resolve, time));
+    return new Promise(resolve => setTimeout(resolve, time));
 }

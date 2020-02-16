@@ -87,7 +87,7 @@ export class DefaultTemplateWriter {
 
         this.generateResource(lines);
 
-        const template = lines.map((x) => x.toString()).join('');
+        const template = lines.map(x => x.toString()).join('');
         const templateRoot = TemplateRoot.createFromContents(template);
 
         for (const binding of bindings) {
@@ -100,13 +100,13 @@ export class DefaultTemplateWriter {
                     foundResource = templateRoot.organizationSection.organizationRoot;
                     break;
                 case OrgResourceTypes.Account:
-                    foundResource = templateRoot.organizationSection.accounts.find((x) => x.logicalId === binding.logicalId);
+                    foundResource = templateRoot.organizationSection.accounts.find(x => x.logicalId === binding.logicalId);
                     break;
                 case OrgResourceTypes.OrganizationalUnit:
-                    foundResource = templateRoot.organizationSection.organizationalUnits.find((x) => x.logicalId === binding.logicalId);
+                    foundResource = templateRoot.organizationSection.organizationalUnits.find(x => x.logicalId === binding.logicalId);
                     break;
                 case OrgResourceTypes.ServiceControlPolicy:
-                    foundResource = templateRoot.organizationSection.serviceControlPolicies.find((x) => x.logicalId === binding.logicalId);
+                    foundResource = templateRoot.organizationSection.serviceControlPolicies.find(x => x.logicalId === binding.logicalId);
                     break;
             }
             if (foundResource) {
@@ -157,7 +157,7 @@ export class DefaultTemplateWriter {
 
     private generateAccount(lines: YamlLine[], account: AWSAccount) {
         const logicalName = this.logicalNames.getName(account);
-        const policiesList = account.Policies.filter((x) => !x.PolicySummary!.AwsManaged).map((x) => '!Ref ' + this.logicalNames.getName(x));
+        const policiesList = account.Policies.filter(x => !x.PolicySummary!.AwsManaged).map(x => '!Ref ' + this.logicalNames.getName(x));
 
         lines.push(new Line(logicalName, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.Account, 4));
@@ -192,7 +192,7 @@ export class DefaultTemplateWriter {
 
     private generateRoot(lines: YamlLine[], root: AWSRoot) {
         const logicalName = 'OrganizationRoot';
-        const policiesList = root.Policies.filter((x) => !x.PolicySummary!.AwsManaged).map((x) => '!Ref ' + this.logicalNames.getName(x));
+        const policiesList = root.Policies.filter(x => !x.PolicySummary!.AwsManaged).map(x => '!Ref ' + this.logicalNames.getName(x));
 
         lines.push(new Line(logicalName, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.OrganizationRoot, 4));
@@ -208,8 +208,8 @@ export class DefaultTemplateWriter {
 
     private generateOrganizationalUnit(lines: YamlLine[], organizationalUnit: AWSOrganizationalUnit) {
         const logicalName = this.logicalNames.getName(organizationalUnit);
-        const policiesList = organizationalUnit.Policies.filter((x) => !x.PolicySummary!.AwsManaged!).map((x) => '!Ref ' + this.logicalNames.getName(x));
-        const accountList = organizationalUnit.Accounts.map((x) => '!Ref ' + this.logicalNames.getName(x));
+        const policiesList = organizationalUnit.Policies.filter(x => !x.PolicySummary!.AwsManaged!).map(x => '!Ref ' + this.logicalNames.getName(x));
+        const accountList = organizationalUnit.Accounts.map(x => '!Ref ' + this.logicalNames.getName(x));
 
         lines.push(new Line(logicalName, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.OrganizationalUnit, 4));
@@ -226,7 +226,7 @@ export class DefaultTemplateWriter {
     }
 
     private generateMasterAccount(lines: YamlLine[], masterAccount: AWSAccount) {
-        const policiesList = masterAccount.Policies.map((x) => '!Ref ' + this.logicalNames.getName(x));
+        const policiesList = masterAccount.Policies.map(x => '!Ref ' + this.logicalNames.getName(x));
 
         lines.push(new Line('Organization', '', 0));
         lines.push(new Line('MasterAccount', '', 2));
@@ -341,7 +341,7 @@ class ObjLine implements YamlLine {
         const indentation = ''.padStart(this.indentation, ' ');
         const line = `${indentation}${this.label}:\n`;
         const value = Yaml.stringify(this.value, 10, 2);
-        const formatted = value.split('\n').map((part) => `${indentation}  ${part}`).join('\n');
+        const formatted = value.split('\n').map(part => `${indentation}  ${part}`).join('\n');
         return line + formatted ;
     }
 }
@@ -399,7 +399,7 @@ class ListLine implements YamlLine {
         }
         const indentation = ''.padStart(this.indentation, ' ');
         const line = `${indentation}${this.label}:\n`;
-        const values = this.values.map((x) => `${indentation}  - ${x}`).join('\n');
+        const values = this.values.map(x => `${indentation}  - ${x}`).join('\n');
         return line + values + '\n';
     }
 }

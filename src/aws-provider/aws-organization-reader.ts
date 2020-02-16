@@ -48,7 +48,7 @@ export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & I
 export type AWSRoot = Root & IObjectWithPolicies;
 
 function GetPoliciesForTarget(list: AWSPolicy[], targetId: string, targetType: TargetType): AWSPolicy[] {
-    return list.filter((x) => x.Targets.find((y) => y.TargetId === targetId && y.Type === targetType));
+    return list.filter(x => x.Targets.find(y => y.TargetId === targetId && y.Type === targetType));
 }
 
 export class AwsOrganizationReader {
@@ -123,7 +123,7 @@ export class AwsOrganizationReader {
 
         const policies = await that.policies.getValue();
         const roots = await that.roots.getValue();
-        rootsIds.push(...roots.map((x) => x.Id!));
+        rootsIds.push(...roots.map(x => x.Id!));
 
         do {
             const req: ListOrganizationalUnitsForParentRequest = {
@@ -162,8 +162,8 @@ export class AwsOrganizationReader {
         const organizationalUnits = await that.organizationalUnits.getValue();
         const policies = await that.policies.getValue();
         const roots = await that.roots.getValue();
-        const parentIds = organizationalUnits.map((x) => x.Id);
-        const rootIds = roots.map((x) => x.Id);
+        const parentIds = organizationalUnits.map(x => x.Id);
+        const rootIds = roots.map(x => x.Id);
         parentIds.push(...rootIds);
 
         do {
@@ -201,7 +201,7 @@ export class AwsOrganizationReader {
                             SupportLevel: supportLevel,
                         };
 
-                        const parentOU = organizationalUnits.find((x) => x.Id === req.ParentId);
+                        const parentOU = organizationalUnits.find(x => x.Id === req.ParentId);
                         if (parentOU) {
                             parentOU.Accounts.push(account);
                         }
@@ -209,7 +209,7 @@ export class AwsOrganizationReader {
                     } catch (err) {
                         if (err.code === 'AccessDenied') {
                             ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot: `);
-                            ConsoleUtil.LogWarning(`https://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md`);
+                            ConsoleUtil.LogWarning('https://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md');
                         }
                     }
                 }
@@ -226,11 +226,11 @@ export class AwsOrganizationReader {
         try {
             const supportService = await AwsUtil.GetSupportService(accountId);
             const severityLevels = await supportService.describeSeverityLevels().promise();
-            const critical = severityLevels.severityLevels.find((x) => x.code === 'critical');
+            const critical = severityLevels.severityLevels.find(x => x.code === 'critical');
             if (critical !== undefined) {
                 return 'enterprise';
             }
-            const urgent = severityLevels.severityLevels.find((x) => x.code === 'urgent');
+            const urgent = severityLevels.severityLevels.find(x => x.code === 'urgent');
             if (urgent !== undefined) {
                 return 'business';
             }

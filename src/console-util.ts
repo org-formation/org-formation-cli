@@ -41,8 +41,8 @@ export class ConsoleUtil {
         const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
         const getLine = () => {
-            return new Promise<string>((resolve) => {
-                rl.on('line', (input) => {
+            return new Promise<string>(resolve => {
+                rl.on('line', input => {
                     resolve(input);
                     rl.close();
                 });
