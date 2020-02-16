@@ -1,6 +1,7 @@
 import { OrgFormationError } from '../../org-formation-error';
 import { IResource, TemplateRoot } from '../parser';
 import { Resource } from './resource';
+import { Validator } from '../validator';
 
 export interface IPasswordPolicyProperties {
     MaxPasswordAge?: number;
@@ -33,13 +34,15 @@ export class PasswordPolicyResource extends Resource {
 
         this.props = this.resource.Properties as IPasswordPolicyProperties;
         this.maxPasswordAge = this.props.MaxPasswordAge;
-        if (this.minimumPasswordLength) {
-            if (this.minimumPasswordLength < 1) {
+        if (this.maxPasswordAge !== undefined) {
+            Validator.validatePositiveInteger(this.maxPasswordAge, 'MaxPasswordAge');
+            if (this.maxPasswordAge < 1) {
                 throw new OrgFormationError(`MaxPasswordAge for resource ${id} must have value greater than or equal to 1`);
             }
          }
         this.minimumPasswordLength = this.props.MinimumPasswordLength;
-        if (this.minimumPasswordLength) {
+        if (this.minimumPasswordLength !== undefined) {
+            Validator.validatePositiveInteger(this.maxPasswordAge, 'MinimumPasswordLength');
             if (this.minimumPasswordLength < 6) {
                 throw new OrgFormationError(`MinimumPasswordLength for resource ${id} must have value greater than or equal to 6`);
             }
@@ -52,7 +55,8 @@ export class PasswordPolicyResource extends Resource {
         this.requireSymbols = this.props.RequireSymbols;
         this.requireUppercaseCharacters = this.props.RequireUppercaseCharacters;
         this.passwordReusePrevention = this.props.PasswordReusePrevention;
-        if (this.passwordReusePrevention) {
+        if (this.passwordReusePrevention !== undefined) {
+            Validator.validatePositiveInteger(this.maxPasswordAge, 'PasswordReusePrevention');
             if (this.passwordReusePrevention < 1) {
                 throw new OrgFormationError(`PasswordReusePrevention for resource ${id} must have value greater than or equal to 1`);
             }

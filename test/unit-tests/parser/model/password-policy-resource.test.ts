@@ -38,4 +38,35 @@ describe('when password policy resource', () => {
         expect(pwdPolicy.maxPasswordAge).toBe(10);
         expect(pwdPolicy.passwordReusePrevention).toBe(2);
     });
+
+    test('throws for mininum password length too small', () => {
+        properties.MinimumPasswordLength = 3
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/MinimumPasswordLength/)
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/greater than or equal to 6/)
+    });
+
+    test('throws for mininum password length too large', () => {
+        properties.MinimumPasswordLength = 129
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/MinimumPasswordLength/)
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/smaller than or equal to 128/)
+    });
+
+    test('throws for password reuse prevention too small', () => {
+        properties.PasswordReusePrevention = 0
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/PasswordReusePrevention/)
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/greater than or equal to 1/)
+    });
+
+    test('throws for password reuse prevention too large', () => {
+        properties.PasswordReusePrevention = 50
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/PasswordReusePrevention/)
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/smaller than or equal to 24/)
+    });
+
+    test('throws for max password age too small', () => {
+        properties.MaxPasswordAge = 0
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/MaxPasswordAge/)
+        expect(() => { new PasswordPolicyResource(template, 'logical-id', resource); }).toThrowError(/greater than or equal to 1/)
+    });
+
 });
