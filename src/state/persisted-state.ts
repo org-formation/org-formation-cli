@@ -60,6 +60,7 @@ export class PersistedState {
             this.state.values = {};
         }
         this.state.values[key] = val;
+        this.dirty = true;
     }
     public getValue(key: string): string | undefined {
         if (this.state.values === undefined) { return undefined; }
