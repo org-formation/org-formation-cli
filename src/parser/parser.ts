@@ -10,6 +10,7 @@ import { Reference, Resource } from './model/resource';
 import { OrgResourceTypes } from './model/resource-types';
 import { ResourcesSection } from './model/resources-section';
 import { Validator } from './validator';
+import { OrganizationalUnitResource } from './model/organizational-unit-resource';
 
 type TemplateVersion = '2010-09-09-OC';
 
@@ -115,7 +116,7 @@ export class TemplateRoot {
             obj.Organization = includedOrganization;
         }
         if (overrides.OrganizationBindings) {
-            obj.OrganizationBindings = {...obj.OrganizationBindings, ...overrides.OrganizationBindings};
+            obj.OrganizationBindings = { ...obj.OrganizationBindings, ...overrides.OrganizationBindings };
         }
         delete overrides.OrganizationBindings;
 
@@ -214,11 +215,8 @@ export class TemplateRoot {
 
         const accountLogicalIds = accounts.map(x => x.TemplateResource!.logicalId);
         const result = new Set<string>(accountLogicalIds);
-        for (const unit of organizationalUnits) {
-            const accountsForUnit = unit.TemplateResource!.accounts.map(x => x.TemplateResource!.logicalId);
-            for (const logicalId of accountsForUnit) {
-                result.add(logicalId);
-            }
+        for (const accountsForUnit of this.collectAccountLogicalIdsFromOU(organizationalUnits)) {
+            result.add(accountsForUnit);
         }
         if (binding.IncludeMasterAccount) {
             if (this.organizationSection.masterAccount) {
@@ -243,12 +241,12 @@ export class TemplateRoot {
         return [...result];
     }
 
-    public resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[] ): Reference<T>[] {
+    public resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[]): Reference<T>[] {
         if (val === undefined) {
             return [];
         }
         if (val === '*') {
-            return list.map(x => ({TemplateResource: x}));
+            return list.map(x => ({ TemplateResource: x }));
         }
         const results: Reference<T>[] = [];
         if (!Array.isArray(val)) {
@@ -267,14 +265,14 @@ export class TemplateRoot {
                             const refFromParam = paramValue.Default.Ref;
                             const foundElmThroughParam = list.find(x => x.logicalId === refFromParam);
                             if (foundElmThroughParam !== undefined) {
-                                results.push({TemplateResource: foundElmThroughParam});
+                                results.push({ TemplateResource: foundElmThroughParam });
                             }
                             continue;
                         }
                     }
                     throw new OrgFormationError(`unable to find resource named ${ref}`);
                 }
-                results.push({TemplateResource: foundElm});
+                results.push({ TemplateResource: foundElm });
             }
         }
         return results;
@@ -297,6 +295,24 @@ export class TemplateRoot {
                 }
             }
         }
+    }
+
+    private collectAccountLogicalIdsFromOU(organizationalUnits: Reference<OrganizationalUnitResource>[]): Set<string> {
+        const result = new Set<string>();
+        const childOUs: Reference<OrganizationalUnitResource>[] = [];
+        for (const unit of organizationalUnits) {
+            const accountsForUnit = unit.TemplateResource!.accounts.map(x => x.TemplateResource!.logicalId);
+            for (const logicalId of accountsForUnit) {
+                result.add(logicalId);
+            }
+            childOUs.push(...unit.TemplateResource.organizationalUnits)
+        }
+        if (childOUs.length > 0) {
+            for (const accountFromChildren of this.collectAccountLogicalIdsFromOU(childOUs)) {
+                result.add(accountFromChildren);
+            }
+        }
+        return result;
     }
 
 }
