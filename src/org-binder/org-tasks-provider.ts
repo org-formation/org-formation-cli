@@ -86,7 +86,7 @@ export class TaskProvider {
             tasks.push(attachSCPTask);
         }
         for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
-            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
+            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, () => physicalId);
             tasks.push(detachSCPTask);
         }
 
@@ -166,6 +166,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action:  'Create',
+            dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
             perform: async task => {
                 task.result = await that.writer.createOrganizationalUnit(resource);
             },
@@ -180,10 +181,15 @@ export class TaskProvider {
         }
 
         for (const attachedAccount of resource.accounts) {
-
             const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, () => createOrganizationalUnitTask.result);
             attachAccountTask.dependentTasks = [createOrganizationalUnitTask];
             tasks.push(attachAccountTask);
+        }
+
+        for (const attachedOu of resource.organizationalUnits) {
+            const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, () => createOrganizationalUnitTask.result);
+            attachOuTask.dependentTasks = [createOrganizationalUnitTask];
+            tasks.push(attachOuTask);
         }
 
         const createOrganizationalUnitCommitHashTask: IBuildTask = {
@@ -222,34 +228,53 @@ export class TaskProvider {
             tasks.push(updateOrganizationalUnitTask);
         }
 
+        const fnGetPhysicalId = () => {
+            return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.logicalId).physicalId;
+        }
+
         const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
         for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
-            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
+            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, fnGetPhysicalId);
             tasks.push(detachSCPTask);
         }
         for (const attachedSCP of currentSCPS.physicalIds.filter(x => !previousSCPs.physicalIds.includes(x))) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => physicalId);
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, fnGetPhysicalId);
             tasks.push(attachSCPTask);
         }
         for (const attachedSCP of currentSCPS.unresolvedResources) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => physicalId);
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, fnGetPhysicalId);
             tasks.push(attachSCPTask);
         }
 
         const previousAccounts = this.resolveIDs(previousResource.accounts);
         const currentAccounts = this.resolveIDs(resource.accounts);
         for (const detachedAccount of previousAccounts.physicalIds.filter(x => !currentAccounts.physicalIds.includes(x))) {
-            const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, () => physicalId);
+            const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, fnGetPhysicalId);
             tasks.push(detachAccountTask);
         }
         for (const attachAccount of currentAccounts.physicalIds.filter(x => !previousAccounts.physicalIds.includes(x))) {
-            const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, currentAccounts.mapping[attachAccount], that, () => physicalId);
+            const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, currentAccounts.mapping[attachAccount], that, fnGetPhysicalId);
             tasks.push(attachAccountTask);
         }
         for (const attachAccount of currentAccounts.unresolvedResources) {
-            const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, { TemplateResource: attachAccount as AccountResource }, that, () => physicalId);
+            const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, { TemplateResource: attachAccount as AccountResource }, that, fnGetPhysicalId);
             tasks.push(attachAccountTask);
+        }
+
+        const previousChildOUs = this.resolveIDs(previousResource.organizationalUnits);
+        const currentChildOUs = this.resolveIDs(resource.organizationalUnits);
+        for (const detachedChildOu of previousChildOUs.physicalIds.filter(x => !currentChildOUs.physicalIds.includes(x))) {
+            const detachChildOuTask: IBuildTask = this.createDeatchChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
+            tasks.push(detachChildOuTask);
+        }
+        for (const attachedOU of currentChildOUs.physicalIds.filter(x => !previousChildOUs.physicalIds.includes(x))) {
+            const attachOUTask: IBuildTask = this.createAttachOrganizationalUnitTask(resource, currentChildOUs.mapping[attachedOU], that, fnGetPhysicalId);
+            tasks.push(attachOUTask);
+        }
+        for (const attachedOU of currentChildOUs.unresolvedResources) {
+            const attachOUTask: IBuildTask = this.createAttachOrganizationalUnitTask(resource, { TemplateResource: attachedOU as OrganizationalUnitResource }, that, fnGetPhysicalId);
+            tasks.push(attachOUTask);
         }
 
         const createOrganizationalUnitCommitHashTask: IBuildTask = {
@@ -268,6 +293,34 @@ export class TaskProvider {
         };
 
         return [...tasks, createOrganizationalUnitCommitHashTask];
+    }
+    public createDeatchChildOUTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string): IBuildTask {
+        let accountIdentifier = childOu.PhysicalId;
+        if (childOu.TemplateResource) {
+            accountIdentifier = childOu.TemplateResource.logicalId;
+        }
+        const detachChildOuTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action: `Detach OU (${accountIdentifier})`,
+            perform: async task => {
+                const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId);
+                const childOuId = binding.physicalId;
+
+                const targetId = getTargetId();
+                const physicalIdMap = await that.writer.detachOU(targetId, childOuId);
+
+                TaskProvider.updateStateWithOuPhysicalIds(that.state, physicalIdMap);
+
+                task.result = physicalIdMap;
+            },
+        };
+        if (childOu.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId)) {
+            detachChildOuTask.dependentTaskFilter = task => task.logicalId === childOu.TemplateResource.logicalId &&
+                task.action === 'Create' &&
+                task.type === OrgResourceTypes.OrganizationalUnit;
+        }
+        return detachChildOuTask;
     }
 
     public createOrganizationalUnitDeleteTasks(binding: IBinding): IBuildTask[] {
@@ -308,7 +361,7 @@ export class TaskProvider {
         const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
         for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
-            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, physicalId);
+            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, () => physicalId);
             tasks.push(detachSCPTask);
         }
         for (const attachedSCP of currentSCPS.physicalIds.filter(x => !previousSCPs.physicalIds.includes(x))) {
@@ -402,11 +455,12 @@ export class TaskProvider {
             },
         }];
     }
-    private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource | OrganizationRootResource, policy: Reference<ServiceControlPolicyResource>, that: this, targetId: string): IBuildTask {
+    private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource | OrganizationRootResource, policy: Reference<ServiceControlPolicyResource>, that: this, getTargetId: () => string): IBuildTask {
         let scpIdentifier = policy.PhysicalId;
         if (policy.TemplateResource) {
             scpIdentifier = policy.TemplateResource.logicalId;
         }
+        const targetId = getTargetId();
         return {
             type: resource.type,
             logicalId: resource.logicalId,
@@ -499,6 +553,38 @@ export class TaskProvider {
         return attachAccountTask;
     }
 
+    private createAttachOrganizationalUnitTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string) {
+        let ouIdentifier = childOu.PhysicalId;
+        if (childOu.TemplateResource) {
+            ouIdentifier = childOu.TemplateResource.logicalId;
+        }
+        const attachChildOuTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action: `Attach OU (${ouIdentifier})`,
+            perform: async task => {
+                const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId);
+                const childOuId = binding.physicalId;
+
+                const targetId = getTargetId();
+                const physicalIdMap: Record<string, string> = {};
+                try {
+                    await that.writer.moveOU(targetId, childOuId, physicalIdMap);
+                } finally {
+                    TaskProvider.updateStateWithOuPhysicalIds(that.state, physicalIdMap);
+                }
+
+                task.result = physicalIdMap;
+            },
+        };
+        if (childOu.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId)) {
+            attachChildOuTask.dependentTaskFilter = task => task.logicalId === childOu.TemplateResource.logicalId &&
+                (task.action === 'Create' || task.action.startsWith('Detach OU')) &&
+                task.type === OrgResourceTypes.OrganizationalUnit;
+        }
+        return attachChildOuTask;
+    }
+
     private resolveIDs<TResource extends Resource>(list: Reference<TResource>[]) {
         const physicalIdsForServiceControlPolicies = list.filter(x => x.PhysicalId).map(x => x.PhysicalId);
         const unresolvedResources: TResource[] = [];
@@ -513,6 +599,18 @@ export class TaskProvider {
             }
         }
         return {physicalIds: physicalIdsForServiceControlPolicies.sort(), unresolvedResources, mapping};
+    }
+
+    public static updateStateWithOuPhysicalIds(state: PersistedState, physicalIdMap: Record<string, string>) {
+        const organizationalUnitBindings = state.enumBindings(OrgResourceTypes.OrganizationalUnit);
+        for(const binding of organizationalUnitBindings) {
+            const newId = physicalIdMap[binding.physicalId];
+            if (newId !== undefined) {
+                ConsoleUtil.LogDebug(`mapping ${binding.logicalId} old ou ${binding.physicalId} to ${newId}`)
+                binding.physicalId = newId;
+                state.setBinding(binding);
+            }
+        }
     }
 }
 

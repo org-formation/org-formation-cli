@@ -75,8 +75,7 @@ describe('when parsing organization section with references using Ref', () => {
         template = new TemplateRoot(contents, './');
     });
 
-    test(
-        'service control policy can be referenced using !Ref by Organizational Unit',
+    test('service control policy can be referenced using !Ref by Organizational Unit',
         () => {
             const organizationalUnit = template.organizationSection.organizationalUnits[0];
             expect(organizationalUnit.serviceControlPolicies.length).toBe(1);
@@ -88,8 +87,7 @@ describe('when parsing organization section with references using Ref', () => {
         }
     );
 
-    test(
-        'service control policy can be referenced using !Ref by Organizational Root',
+    test('service control policy can be referenced using !Ref by Organizational Root',
         () => {
             const organizationalRoot = template.organizationSection.organizationRoot;
             expect(organizationalRoot.serviceControlPolicies.length).toBe(1);
@@ -120,8 +118,7 @@ describe('when parsing organization section with references using Ref', () => {
         expect(resource).toBe(account);
     });
 
-    test(
-        'Multiple accounts can be referenced using !Ref Array by Organizational Unit',
+    test('Multiple accounts can be referenced using !Ref Array by Organizational Unit',
         () => {
             const organizationalUnit = template.organizationSection.organizationalUnits.find((x) => x.logicalId === 'OU2');
             expect(organizationalUnit.accounts.length).toBe(2);
@@ -242,22 +239,36 @@ describe('when parsing organization section with references using Ref that don\'
         }
     );
 
-    test(
-        'unknown service control policy referenced using !Ref by Account throws',
-        () => {
+    test('unknown service control policy referenced using !Ref by Account throws', () => {
             contents.Organization.Account.Properties.ServiceControlPolicies.Ref = 'unknown';
             expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/unknown/);
             expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/Account/);
         }
     );
 
-    test(
-        'unknown service control policy referenced using !Ref by Organization Root throws',
-        () => {
+    test('unknown service control policy referenced using !Ref by Organization Root throws', () => {
             contents.Organization.Root.Properties.ServiceControlPolicies.Ref = 'whatever';
             expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/whatever/);
             expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/Root/);
         }
     );
+
+    test('unknown ou referenced using !Ref by Organization Unit throws', () => {
+        contents.Organization.OU.Properties.OrganizationalUnits = { Ref: 'non-existent'};
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/non-existent/);
+    });
+
+    test('circular ou referenced using !Ref throws', () => {
+        contents.Organization.OU.Properties.OrganizationalUnits = { Ref: 'OU2'};
+        contents.Organization.OU2.Properties.OrganizationalUnits = { Ref: 'OU'};
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/circular/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/OU2/);
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/OU/);
+    });
+
+    test('ou referencing self using !Ref throws', () => {
+        contents.Organization.OU.Properties.OrganizationalUnits = { Ref: 'OU'};
+        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/reference to self/);
+    });
 
 });

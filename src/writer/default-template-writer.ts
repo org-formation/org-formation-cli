@@ -210,12 +210,14 @@ export class DefaultTemplateWriter {
         const logicalName = this.logicalNames.getName(organizationalUnit);
         const policiesList = organizationalUnit.Policies.filter(x => !x.PolicySummary!.AwsManaged!).map(x => '!Ref ' + this.logicalNames.getName(x));
         const accountList = organizationalUnit.Accounts.map(x => '!Ref ' + this.logicalNames.getName(x));
+        const childOUList = organizationalUnit.OrganizationalUnits.map(x => '!Ref ' + this.logicalNames.getName(x));
 
         lines.push(new Line(logicalName, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.OrganizationalUnit, 4));
         lines.push(new Line('Properties', '', 4));
         lines.push(new Line('OrganizationalUnitName', organizationalUnit.Name, 6));
         lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
+        lines.push(new ListLine('OrganizationalUnits', childOUList, 6));
         lines.push(new ListLine('Accounts', accountList, 6));
         lines.push(new EmptyLine());
 

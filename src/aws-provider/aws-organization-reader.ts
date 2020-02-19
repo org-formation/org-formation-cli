@@ -33,6 +33,9 @@ export interface IAWSObject {
 interface IObjectWithAccounts {
     Accounts: AWSAccount[];
 }
+interface IObjectWitOrganizationalUnits {
+    OrganizationalUnits: AWSOrganizationalUnit[];
+}
 
 interface IObjectWithPolicies {
     Policies: AWSPolicy[];
@@ -44,8 +47,8 @@ interface IPolicyTargets {
 
 export type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
 export type AWSAccount = Account & IAWSAccountWithTags & IAWSAccountWithSupportLevel & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
-export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject;
-export type AWSRoot = Root & IObjectWithPolicies;
+export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject & IObjectWitOrganizationalUnits;
+export type AWSRoot = Root & IObjectWithPolicies & IObjectWitOrganizationalUnits;
 
 function GetPoliciesForTarget(list: AWSPolicy[], targetId: string, targetType: TargetType): AWSPolicy[] {
     return list.filter(x => x.Targets.find(y => y.TargetId === targetId && y.Type === targetType));
@@ -106,9 +109,10 @@ export class AwsOrganizationReader {
             resp = await that.organizationService.listRoots(req).promise();
             req.NextToken = resp.NextToken;
             for (const root of resp.Roots) {
-                const item = {
+                const item: AWSRoot = {
                     ...root,
                     Policies: GetPoliciesForTarget(policies, root.Id, 'ROOT'),
+                    OrganizationalUnits: [],
                 };
                 result.push(item);
             }
@@ -136,7 +140,7 @@ export class AwsOrganizationReader {
                 if (!resp.OrganizationalUnits) { continue; }
 
                 for (const ou of resp.OrganizationalUnits) {
-                    const organization = {
+                    const organization: AWSOrganizationalUnit = {
                         ...ou,
                         Type: 'OrganizationalUnit',
                         Name: ou.Name,
@@ -144,6 +148,7 @@ export class AwsOrganizationReader {
                         ParentId: req.ParentId,
                         Accounts: [] as AWSAccount[],
                         Policies: GetPoliciesForTarget(policies, ou.Id, 'ORGANIZATIONAL_UNIT'),
+                        OrganizationalUnits: [],
                     };
 
                     result.push(organization);
@@ -151,8 +156,19 @@ export class AwsOrganizationReader {
                 }
 
             } while (resp.NextToken);
-
         } while (rootsIds.length > 0);
+
+        for (const ou of result) {
+            let parentToOU: IObjectWitOrganizationalUnits = roots.find(x => x.Id === ou.ParentId);
+            if (parentToOU === undefined) {
+                parentToOU = result.find(x => x.Id === ou.ParentId);
+            }
+            if (parentToOU === undefined) {
+                ConsoleUtil.LogWarning(`found organizational unit of which parent could not be found: ${ou.Name} (parent: ${ou.ParentId})`);
+                continue;
+            }
+            parentToOU.OrganizationalUnits.push(ou);
+        }
 
         return result;
     }

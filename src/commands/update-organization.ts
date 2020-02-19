@@ -34,17 +34,19 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         }
 
         const binder = await this.getOrganizationBinder(template, state);
-
-        const tasks = binder.enumBuildTasks();
-        if (tasks.length === 0) {
-            ConsoleUtil.LogInfo('organization up to date, no work to be done.');
-        } else {
-            await TaskRunner.RunTasks(tasks);
-            ConsoleUtil.LogInfo('done');
+        try {
+            const tasks = binder.enumBuildTasks();
+            if (tasks.length === 0) {
+                ConsoleUtil.LogInfo('organization up to date, no work to be done.');
+            } else {
+                await TaskRunner.RunTasks(tasks);
+                ConsoleUtil.LogInfo('done');
+            }
+            state.putValue('organization.template.hash', templateHash);
+            state.setPreviousTemplate(template.source);
+        } finally {
+            await state.save();
         }
-        state.putValue('organization.template.hash', templateHash);
-        state.setPreviousTemplate(template.source);
-        await state.save();
     }
 }
 

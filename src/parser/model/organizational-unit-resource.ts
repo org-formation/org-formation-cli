@@ -41,7 +41,10 @@ export class OrganizationalUnitResource extends Resource {
         this.accounts = super.resolve(this.props.Accounts, this.root.organizationSection.accounts);
         this.organizationalUnits = super.resolve(this.props.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
         this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
-
+        const referenceToSelf = this.organizationalUnits.find(x=>x.TemplateResource === this);
+        if (referenceToSelf !== undefined) {
+            throw new OrgFormationError(`organizational unit ${this.organizationalUnitName} has a reference to self on child OrganizationalUnits.`);
+        }
         const accountWithOtherOrgUnit = this.accounts.find(x => x.TemplateResource && (x.TemplateResource.organizationalUnitName !== undefined));
         if (accountWithOtherOrgUnit) {
             throw new OrgFormationError(`account ${accountWithOtherOrgUnit.TemplateResource!.logicalId} is part of multiple organizational units, e.g. ${this.logicalId} and ${accountWithOtherOrgUnit.TemplateResource!.organizationalUnitName}.`);

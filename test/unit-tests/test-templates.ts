@@ -26,6 +26,22 @@ export class TestTemplates {
                 lastCommittedHash: 'asd',
             });
         }
+        for (const ou of template.organizationSection.organizationalUnits) {
+            state.setBinding({
+                type: ou.type,
+                logicalId: ou.logicalId,
+                physicalId: `physical-${ou.logicalId}`,
+                lastCommittedHash: 'asd',
+            });
+        }
+        for (const scp of template.organizationSection.serviceControlPolicies) {
+            state.setBinding({
+                type: scp.type,
+                logicalId: scp.logicalId,
+                physicalId: `physical-${scp.logicalId}`,
+                lastCommittedHash: 'asd',
+            });
+        }
         return state;
     }
 

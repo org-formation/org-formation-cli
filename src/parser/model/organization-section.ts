@@ -93,6 +93,7 @@ export class OrganizationSection {
                 throw new OrgFormationError(`unable to load references for organizational resource ${resource.logicalId}, reason: ${reason}`);
             }
         }
+        this.throwForCircularOUReference(this.organizationalUnits);
     }
 
     public createResource(id: string, resource: IResource): Resource {
@@ -146,6 +147,23 @@ export class OrganizationSection {
                 const duplicate = sortedArr[i];
                 throw fnError(duplicate);
             }
+        }
+    }
+
+    private throwForCircularOUReference(ous: OrganizationalUnitResource[]){
+        let ousLeftToCheck = [...ous];
+        let stopChecking = true;
+        do {
+            const ousWithDependency  = ousLeftToCheck.filter(x=>x.organizationalUnits.find(x=>ousLeftToCheck.includes(x.TemplateResource)));
+            const ousWithDepdency = ousLeftToCheck.filter(x=>!ousWithDependency.includes(x));
+            stopChecking = ousWithDepdency.length === 0;
+            ousLeftToCheck = ousWithDependency;
+        } while(!stopChecking && ousLeftToCheck.length > 0)
+
+        if (ousLeftToCheck.length > 0) {
+            const names = ousLeftToCheck.map(x=>x.logicalId);
+
+            throw new OrgFormationError(`circular reference on Organizational Units, participating OU's: ${names.join(', ')}.`)
         }
     }
 }

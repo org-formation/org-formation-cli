@@ -94,8 +94,11 @@ describe('when creating an account that already existed', () => {
     let createAccountSpy: Sinon.SinonSpy;
     let tagResourceSpy: Sinon.SinonSpy;
     let untagResourceSpy: Sinon.SinonSpy;
+    let consoleDebug: Sinon.SinonStub;
     const accountId = '123456789012';
-    const account = { accountId, accountName: 'Account Name', tags: {tag1: 'val1', tag2: 'val2'} };
+    const account = { rootEmail: 'email@root.org',  accountId, accountName: 'Account Name', tags: {tag1: 'val1', tag2: 'val2'} };
+    const sanbox = Sinon.createSandbox();
+
 
     beforeEach(async () => {
         AWSMock.mock('Organizations', 'createAccount', (params: any, callback: any) => { callback(null, {CreateAccountStatus: {State: 'SUCCEEDED', AccountId: accountId} }); });
@@ -109,6 +112,7 @@ describe('when creating an account that already existed', () => {
         createAccountSpy = organizationService.createAccount as Sinon.SinonSpy;
         tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
         untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
+        consoleDebug = sanbox.stub(ConsoleUtil, 'LogDebug');
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.createAccount(account as any);
@@ -116,6 +120,7 @@ describe('when creating an account that already existed', () => {
 
     afterEach(() => {
         AWSMock.restore();
+        sanbox.restore();
     });
 
     test('organization create account is not called', () => {
