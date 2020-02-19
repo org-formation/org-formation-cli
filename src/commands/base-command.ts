@@ -97,6 +97,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--state-object [state-object]', 'key for object used to store state', 'state.json');
         command.option('--profile [profile]', 'aws profile to use');
         command.option('--print-stack', 'will print stacktraces for errors');
+        command.option('--verbose', 'will enable debug logging');
     }
 
     protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState) {
@@ -209,6 +210,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (command.printStack === true) {
             ConsoleUtil.printStacktraces = true;
         }
+        if (command.verbose === true) {
+            ConsoleUtil.verbose = true;
+        }
 
         try {
             await this.customInitializationIncludingMFASupport(command);
@@ -239,4 +243,5 @@ export interface ICommandArgs {
     state?: PersistedState;
     initialized?: boolean;
     printStack?: boolean;
+    verbose?: boolean;
 }
