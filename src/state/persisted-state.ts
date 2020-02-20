@@ -192,10 +192,14 @@ export class PersistedState {
         if (!storageProvider) { return; }
         if (!this.dirty) { return; }
 
-        const json = JSON.stringify(this.state, null, 2);
+        const json = this.toJson();
         await storageProvider.put(json);
 
         this.dirty = false;
+    }
+
+    public toJson(): string {
+        return JSON.stringify(this.state, null, 2);
     }
 }
 
