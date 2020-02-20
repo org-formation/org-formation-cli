@@ -27,7 +27,7 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         const state = await this.getState(command);
         const templateHash = template.hash;
 
-        const lastHash = state.getValue('organization.template.hash');
+        const lastHash = state.getTemplateHash();
         if (lastHash === templateHash) {
             ConsoleUtil.LogInfo('organization up to date, no work to be done.');
             return;
@@ -42,7 +42,7 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
                 await TaskRunner.RunTasks(tasks);
                 ConsoleUtil.LogInfo('done');
             }
-            state.putValue('organization.template.hash', templateHash);
+            state.putTemplateHash(templateHash);
             state.setPreviousTemplate(template.source);
         } finally {
             await state.save();

@@ -54,7 +54,12 @@ export class PersistedState {
         this.state = state;
         this.masterAccount = state.masterAccountId;
     }
-
+    public putTemplateHash(val: string) {
+        this.putValue('organization.template.hash', val);
+    }
+    public getTemplateHash(): string {
+        return this.getValue('organization.template.hash');
+    }
     public putValue(key: string, val: string) {
         if (this.state.values === undefined) {
             this.state.values = {};
