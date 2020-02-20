@@ -23,96 +23,53 @@ export class AwsUtil {
     }
 
     public static async GetSupportService(accountId: string): Promise<Support> {
-
-        const cachedSupport = AwsUtil.SupportServiceCache[accountId];
-        if (cachedSupport) {
-            return cachedSupport;
-        }
-
-        const masterAccountId = await AwsUtil.GetMasterAccountId();
-        if (masterAccountId === accountId) {
-            const masterSupport  =  new Support({region: 'us-east-1'});
-            AwsUtil.SupportServiceCache[accountId] = masterSupport;
-            return masterSupport;
-        }
-
-        const sts = new STS();
-        const roleArn = 'arn:aws:iam::' + accountId + ':role/OrganizationAccountAccessRole';
-        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
-
-        const credentialOptions: CredentialsOptions = {
-            accessKeyId: response.Credentials.AccessKeyId,
-            secretAccessKey: response.Credentials.SecretAccessKey,
-            sessionToken: response.Credentials.SessionToken,
-        };
-
-        const support = new Support({ credentials: credentialOptions, region: 'us-east-1' });
-        AwsUtil.SupportServiceCache[accountId] = support;
-        return support;
+        return await AwsUtil.getOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, 'us-east-1');
     }
 
     public static async GetIamService(accountId: string): Promise<IAM> {
-
-        const cachedIam = AwsUtil.IamServiceCache[accountId];
-        if (cachedIam) {
-            return cachedIam;
-        }
-
-        const masterAccountId = await AwsUtil.GetMasterAccountId();
-        if (masterAccountId === accountId) {
-            const masterIam  =  new IAM();
-            AwsUtil.IamServiceCache[accountId] = masterIam;
-            return masterIam;
-        }
-
-        const sts = new STS();
-        const roleArn = 'arn:aws:iam::' + accountId + ':role/OrganizationAccountAccessRole';
-        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
-
-        const credentialOptions: CredentialsOptions = {
-            accessKeyId: response.Credentials.AccessKeyId,
-            secretAccessKey: response.Credentials.SecretAccessKey,
-            sessionToken: response.Credentials.SessionToken,
-        };
-
-        const iam = new IAM({ credentials: credentialOptions });
-        AwsUtil.IamServiceCache[accountId] = iam;
-        return iam;
+        return await AwsUtil.getOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId);
     }
 
     public static async GetCloudFormation(accountId: string, region: string): Promise<CloudFormation> {
-        const cacheKey = `${accountId}/${region}`;
-        const cachedCfn = AwsUtil.CfnServiceCache[cacheKey];
-        if (cachedCfn) {
-            return cachedCfn;
-        }
-
-        let cfn;
-        const masterAccountId = await AwsUtil.GetMasterAccountId();
-        if (accountId !== masterAccountId) {
-            const sts = new STS();
-            const roleArn = 'arn:aws:iam::' + accountId + ':role/OrganizationAccountAccessRole';
-            const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
-
-            const credentialOptions: CredentialsOptions = {
-                accessKeyId: response.Credentials.AccessKeyId,
-                secretAccessKey: response.Credentials.SecretAccessKey,
-                sessionToken: response.Credentials.SessionToken,
-            };
-
-            cfn = new CloudFormation({ credentials: credentialOptions, region });
-        } else {
-            cfn = new CloudFormation({ region });
-        }
-
-        AwsUtil.CfnServiceCache[cacheKey] = cfn;
-        return cfn;
+        return await AwsUtil.getOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId,  `${accountId}/${region}`, {region});
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string) {
         const s3client = new S3();
         await s3client.deleteObject({Bucket: bucketName, Key: objectKey}).promise();
     }
+
+    private static async getOrCreateService<TService>(ctr: new(args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}) {
+        const cachedService = cache[cacheKey];
+        if (cachedService) {
+            return cachedService;
+        }
+
+        let config = clientConfig;
+        const masterAccountId = await AwsUtil.GetMasterAccountId();
+        if (accountId !== masterAccountId) {
+            const credentialOptions: CredentialsOptions = await AwsUtil.getCredentials(accountId);
+            config.credentials = credentialOptions;
+        }
+
+        const service = new ctr(config);
+
+        cache[cacheKey] = service;
+        return service;
+    }
+
+    private static async getCredentials(accountId: string) {
+        const sts = new STS();
+        const roleArn = 'arn:aws:iam::' + accountId + ':role/OrganizationAccountAccessRole';
+        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
+        const credentialOptions: CredentialsOptions = {
+            accessKeyId: response.Credentials.AccessKeyId,
+            secretAccessKey: response.Credentials.SecretAccessKey,
+            sessionToken: response.Credentials.SessionToken,
+        };
+        return credentialOptions;
+    }
+
 
     private static masterAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAM> = {};
