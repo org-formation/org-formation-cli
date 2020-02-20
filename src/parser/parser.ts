@@ -305,7 +305,7 @@ export class TemplateRoot {
             for (const logicalId of accountsForUnit) {
                 result.add(logicalId);
             }
-            childOUs.push(...unit.TemplateResource.organizationalUnits)
+            childOUs.push(...unit.TemplateResource.organizationalUnits);
         }
         if (childOUs.length > 0) {
             for (const accountFromChildren of this.collectAccountLogicalIdsFromOU(childOUs)) {

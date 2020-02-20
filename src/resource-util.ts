@@ -1,7 +1,7 @@
 import { bool } from 'aws-sdk/clients/signer';
 import { SubExpression } from './cfn-binder/cfn-sub-expression';
 
-const zeroPad = (num: number, places: number) => String(num).padStart(places, '0')
+const zeroPad = (num: number, places: number) => String(num).padStart(places, '0');
 
 export class ResourceUtil {
     public static FixVersions(obj: any) {

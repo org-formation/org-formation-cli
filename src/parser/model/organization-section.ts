@@ -158,12 +158,12 @@ export class OrganizationSection {
             const ousWithDepdency = ousLeftToCheck.filter(x=>!ousWithDependency.includes(x));
             stopChecking = ousWithDepdency.length === 0;
             ousLeftToCheck = ousWithDependency;
-        } while(!stopChecking && ousLeftToCheck.length > 0)
+        } while(!stopChecking && ousLeftToCheck.length > 0);
 
         if (ousLeftToCheck.length > 0) {
             const names = ousLeftToCheck.map(x=>x.logicalId);
 
-            throw new OrgFormationError(`circular reference on Organizational Units, participating OU's: ${names.join(', ')}.`)
+            throw new OrgFormationError(`circular reference on Organizational Units, participating OU's: ${names.join(', ')}.`);
         }
     }
 }

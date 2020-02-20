@@ -45,7 +45,7 @@ export class AwsUtil {
             return cachedService;
         }
 
-        let config = clientConfig;
+        const config = clientConfig;
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         if (accountId !== masterAccountId) {
             const credentialOptions: CredentialsOptions = await AwsUtil.getCredentials(accountId);

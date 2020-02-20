@@ -230,7 +230,7 @@ export class TaskProvider {
 
         const fnGetPhysicalId = () => {
             return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.logicalId).physicalId;
-        }
+        };
 
         const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
@@ -606,7 +606,7 @@ export class TaskProvider {
         for(const binding of organizationalUnitBindings) {
             const newId = physicalIdMap[binding.physicalId];
             if (newId !== undefined) {
-                ConsoleUtil.LogDebug(`mapping ${binding.logicalId} old ou ${binding.physicalId} to ${newId}`)
+                ConsoleUtil.LogDebug(`mapping ${binding.logicalId} old ou ${binding.physicalId} to ${newId}`);
                 binding.physicalId = newId;
                 state.setBinding(binding);
             }
