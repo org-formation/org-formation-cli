@@ -14,7 +14,7 @@ describe('when creating service control policy resource', () => {
         properties = {
             PolicyName: 'policy1',
             PolicyDocument: {
-                Version: new Date(2012, 10, 17),
+                Version: new Date('2012-10-17'),
                 Statement: [],
             },
         };

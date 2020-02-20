@@ -19,13 +19,13 @@ describe('when creating validate stacks command', () => {
         subCommanderCommand = commanderCommand.commands[0];
     });
 
-    test('init command is created', () => {
+    test('validate-stacks command is created', () => {
         expect(command).toBeDefined();
         expect(subCommanderCommand).toBeDefined();
         expect(subCommanderCommand.name()).toBe('validate-stacks');
     });
 
-    test('init command has description', () => {
+    test('validate-stacks command has description', () => {
        expect(subCommanderCommand).toBeDefined();
        expect(subCommanderCommand.description()).toBeDefined();
     });

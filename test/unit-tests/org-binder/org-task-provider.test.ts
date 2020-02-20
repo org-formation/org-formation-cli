@@ -29,29 +29,29 @@ describe('when creating OU', () => {
     })
 
     test('Build tasks are created', () => {
-        expect(buildTasks).toBeDefined;
+        expect(buildTasks).toBeDefined();
     })
 
     test('OU Create Task is returned in build tasks', () => {
         const createTask = buildTasks.find(x=>x.action === 'Create');
-        expect(createTask).toBeDefined;
+        expect(createTask).toBeDefined();
     })
 
     test('Two Attach Policy task are created', () => {
         const attachPolicyTasks = buildTasks.filter(x=>x.action.startsWith('Attach Policy'));
-        expect(attachPolicyTasks).toBeDefined;
+        expect(attachPolicyTasks).toBeDefined();
         expect(attachPolicyTasks.length).toBe(2);
     })
 
 
     test('Attach account task is created', () => {
         const attachAccountTask = buildTasks.find(x=>x.action.startsWith('Attach Account'));
-        expect(attachAccountTask).toBeDefined;
+        expect(attachAccountTask).toBeDefined();
     })
 
     test('Commit Hash task is returned in build tasks', () => {
         const commitHashTask = buildTasks.find(x=>x.action === 'CommitHash');
-        expect(commitHashTask).toBeDefined;
+        expect(commitHashTask).toBeDefined();
     })
 
     test('tasks depend on eachother', () => {
@@ -98,27 +98,27 @@ describe('when creating OU as child of other', () => {
     })
 
     test('Build tasks are created', () => {
-        expect(buildTasks).toBeDefined;
-        expect(buildTaskOU).toBeDefined;
+        expect(buildTasks).toBeDefined();
+        expect(buildTaskOU).toBeDefined();
     })
 
     test('attach ou task is added to update of parent', () => {
         const attachOUTask = buildTaskOU.find(x=>x.action.startsWith('Attach OU'));
-        expect(attachOUTask).toBeDefined;
+        expect(attachOUTask).toBeDefined();
     })
 
     test('attach ou task depends on create of child', () => {
         const attachOUTask = buildTaskOU.find(x=>x.action.startsWith('Attach OU'));
         const createTask = buildTasks.find(x=>x.action=== 'Create');
-        expect(attachOUTask).toBeDefined;
-        expect(createTask).toBeDefined;
+        expect(attachOUTask).toBeDefined();
+        expect(createTask).toBeDefined();
         const isDependent = attachOUTask.dependentTaskFilter(createTask);
         expect(isDependent).toBe(true);
     })
 
     test('commit hash task is added to update of parent', () => {
         const commitHashTask = buildTaskOU.find(x=>x.action === 'CommitHash');
-        expect(commitHashTask).toBeDefined;
+        expect(commitHashTask).toBeDefined();
     })
 
 });

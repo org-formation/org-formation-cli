@@ -89,9 +89,9 @@ describe('when evaluating bindings', () => {
             Account: {Ref: 'MasterAccount'}
          };
         const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
-        expect(resolvedAccounts).toBeDefined;
+        expect(resolvedAccounts).toBeDefined();
         expect(resolvedAccounts.length).toBe(1);
-        expect(resolvedAccounts.includes('MasterAccount')).toBeTruthy;
+        expect(resolvedAccounts.includes('MasterAccount')).toBeTruthy();
     })
 
 
@@ -100,12 +100,12 @@ describe('when evaluating bindings', () => {
             Account: '*'
          };
         const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
-        expect(resolvedAccounts).toBeDefined;
+        expect(resolvedAccounts).toBeDefined();
         expect(resolvedAccounts.length).toBe(3);
-        expect(resolvedAccounts.includes('Account')).toBeTruthy;
-        expect(resolvedAccounts.includes('Account2')).toBeTruthy;
-        expect(resolvedAccounts.includes('Account3')).toBeTruthy;
-        expect(resolvedAccounts.includes('MasterAccount')).toBeFalsy;
+        expect(resolvedAccounts.includes('Account')).toBeTruthy();
+        expect(resolvedAccounts.includes('Account2')).toBeTruthy();
+        expect(resolvedAccounts.includes('Account3')).toBeTruthy();
+        expect(resolvedAccounts.includes('MasterAccount')).toBeFalsy();
     })
 
     test('ou without child will return accounts only directly within ou', () => {
@@ -113,10 +113,10 @@ describe('when evaluating bindings', () => {
             OrganizationalUnit: { Ref : 'OUChild' }
          };
         const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
-        expect(resolvedAccounts).toBeDefined;
+        expect(resolvedAccounts).toBeDefined();
         expect(resolvedAccounts.length).toBe(2);
-        expect(resolvedAccounts.includes('Account2')).toBeTruthy;
-        expect(resolvedAccounts.includes('Account3')).toBeTruthy;
+        expect(resolvedAccounts.includes('Account2')).toBeTruthy();
+        expect(resolvedAccounts.includes('Account3')).toBeTruthy();
     })
 
     test('ou with child ou will return accounts from child', () => {
@@ -124,11 +124,11 @@ describe('when evaluating bindings', () => {
             OrganizationalUnit: { Ref : 'OU' }
          };
         const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
-        expect(resolvedAccounts).toBeDefined;
+        expect(resolvedAccounts).toBeDefined();
         expect(resolvedAccounts.length).toBe(3);
-        expect(resolvedAccounts.includes('Account')).toBeTruthy;
-        expect(resolvedAccounts.includes('Account2')).toBeTruthy;
-        expect(resolvedAccounts.includes('Account3')).toBeTruthy;
+        expect(resolvedAccounts.includes('Account')).toBeTruthy();
+        expect(resolvedAccounts.includes('Account2')).toBeTruthy();
+        expect(resolvedAccounts.includes('Account3')).toBeTruthy();
     })
 
 });

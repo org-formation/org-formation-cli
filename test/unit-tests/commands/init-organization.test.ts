@@ -67,7 +67,6 @@ describe('when executing init organization command', () => {
     let getMasterAccountIdStub: Sinon.SinonStub;
     let storageProviderCreateStub: Sinon.SinonStub;
     let storageProviderPutStub: Sinon.SinonStub;
-    let storageProviderGetStub: Sinon.SinonStub;
     let generateDefaultTemplateStub: Sinon.SinonStub;
     let writeFileSyncStub: Sinon.SinonStub;
     const sandbox = Sinon.createSandbox();
@@ -86,7 +85,7 @@ describe('when executing init organization command', () => {
 
         storageProviderCreateStub = sandbox.stub(S3StorageProvider.prototype, 'create');
         storageProviderPutStub = sandbox.stub(S3StorageProvider.prototype, 'put');
-        storageProviderGetStub = sandbox.stub(S3StorageProvider.prototype, 'get');
+        sandbox.stub(S3StorageProvider.prototype, 'get');
 
         writeFileSyncStub = sandbox.stub(fs, 'writeFileSync');
 

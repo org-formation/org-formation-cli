@@ -138,19 +138,19 @@ describe('when setting bindings', () => {
 
     test('put binding can be read', () => {
         const binding = state.getBinding('myType', 'logical-id-1');
-        expect(binding).toBeDefined;
+        expect(binding).toBeDefined();
         expect(binding.physicalId).toBe('physical-id')
     })
 
     test('put binding overwrites previously set', () => {
         const binding = state.getBinding('myType', 'logical-id-2');
-        expect(binding).toBeDefined;
+        expect(binding).toBeDefined();
         expect(binding.physicalId).toBe('physical-id-3')
     })
 
     test('bindings can be enumerated', () => {
         const bindings = state.enumBindings('myType');
-        expect(bindings).toBeDefined;
+        expect(bindings).toBeDefined();
         expect(bindings.length).toBe(2);
     })
 
@@ -163,7 +163,7 @@ describe('when setting bindings', () => {
         })
 
         const binding = state.getBinding('myType', 'logical-id-2');
-        expect(binding).toBeUndefined;
+        expect(binding).toBeUndefined();
 
         const bindings = state.enumBindings('myType');
         expect(bindings.length).toBe(1);
@@ -204,13 +204,13 @@ describe('when setting binding for unique type', () => {
 
     test('put binding can be read', () => {
         const binding = state.getBinding('myType', 'logical-id-2');
-        expect(binding).toBeDefined;
+        expect(binding).toBeDefined();
         expect(binding.physicalId).toBe('physical-id-2')
     })
 
     test('put binding overwrites previously set regardless of logical id', () => {
         const binding = state.getBinding('myType', 'logical-id-1');
-        expect(binding).toBeUndefined;
+        expect(binding).toBeUndefined();
     })
 
     test('state is marked as dirty', () => {
@@ -259,38 +259,38 @@ describe('when setting targets', () => {
 
     test('put target can be read', () => {
         const binding = state.getTarget('stack', '111111111112', 'eu-central-1');
-        expect(binding).toBeDefined;
+        expect(binding).toBeDefined();
         expect(binding.lastCommittedHash).toBe('qwe123')
     })
 
     test('put target overwrites previously set', () => {
         const binding = state.getTarget('stack', '111111111111', 'eu-west-1');
-        expect(binding).toBeDefined;
+        expect(binding).toBeDefined();
         expect(binding.lastCommittedHash).toBe('bbb')
     })
 
     test('targets can be enumerated', () => {
         const targets = state.enumTargets('stack')
-        expect(targets).toBeDefined;
+        expect(targets).toBeDefined();
         expect(targets.length).toBe(3);
         const t1 = targets.find(x=> x.region === 'eu-central-1' && x.accountId === '111111111111');
         const t2 = targets.find(x=> x.region === 'eu-central-1' && x.accountId === '111111111112');
         const t3 = targets.find(x=> x.region === 'eu-west-1' && x.accountId === '111111111111');
-        expect(t1).toBeDefined;
-        expect(t2).toBeDefined;
-        expect(t3).toBeDefined;
+        expect(t1).toBeDefined();
+        expect(t2).toBeDefined();
+        expect(t3).toBeDefined();
     })
 
     test('targets can be removed', () => {
         state.removeTarget('stack', '111111111112', 'eu-central-1');
 
         const binding = state.getTarget('stack', '111111111112', 'eu-central-1');
-        expect(binding).toBeUndefined;
+        expect(binding).toBeUndefined();
 
         const targets = state.enumTargets('stack');
         expect(targets.length).toBe(2);
         const t2 = targets.find(x=> x.region === 'eu-central-1' && x.accountId === '111111111112');
-        expect(t2).toBeUndefined;
+        expect(t2).toBeUndefined();
     })
 
 

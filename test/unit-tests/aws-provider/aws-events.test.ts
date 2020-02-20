@@ -16,14 +16,14 @@ describe('when putting aws account created event', () => {
     test('1 event is put', () => {
         expect(putEventsMock.callCount).toBe(1);
         const args: PutEventsRequest = putEventsMock.getCall(0).args[0];
-        expect(args.Entries).toBeDefined;
+        expect(args.Entries).toBeDefined();
         expect(args.Entries.length).toBe(1)
     })
 
     test('event has org formation type', () => {
         const args: PutEventsRequest = putEventsMock.getCall(0).args[0];
         const event: PutEventsRequestEntry = args.Entries[0];
-        expect(event.EventBusName).toBeUndefined;
+        expect(event.EventBusName).toBeUndefined();
         expect(event.Source).toBe('oc.org-formation');
         expect(event.DetailType).toBe('events.org-formation.com');
     })
@@ -31,14 +31,14 @@ describe('when putting aws account created event', () => {
     test('event has account as resource', () => {
         const args: PutEventsRequest = putEventsMock.getCall(0).args[0];
         const event: PutEventsRequestEntry = args.Entries[0];
-        expect(event.Resources).toBeDefined;
+        expect(event.Resources).toBeDefined();
         expect(event.Resources[0]).toBe('123123123123');
     });
 
     test('event has detail with eventName and accountId', () => {
         const args: PutEventsRequest = putEventsMock.getCall(0).args[0];
         const event: PutEventsRequestEntry = args.Entries[0];
-        expect(event.Detail).toBeDefined;
+        expect(event.Detail).toBeDefined();
 
         const detail = JSON.parse(event.Detail);
         expect(detail.accountId).toBe('123123123123');
