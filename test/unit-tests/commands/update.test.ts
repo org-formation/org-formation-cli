@@ -55,6 +55,7 @@ describe('when executing update command', () => {
     let storageProviderGet: Sinon.SinonStub;
     const sandbox = Sinon.createSandbox();
     let commandArgs: IUpdateOrganizationCommandArgs;
+    let consoleOut: Sinon.SinonStub;
     let consoleInfo: Sinon.SinonStub;
     let consoleError: Sinon.SinonStub;
     let putTemplateHash: Sinon.SinonSpy;
@@ -62,6 +63,7 @@ describe('when executing update command', () => {
     let templateHash: string;
 
     beforeEach(() => {
+        consoleOut = sandbox.stub(ConsoleUtil, 'Out');
         consoleInfo = sandbox.stub(ConsoleUtil, 'LogInfo');
         consoleError = sandbox.stub(ConsoleUtil, 'LogError');
 
@@ -129,6 +131,14 @@ describe('when executing update command', () => {
         expect(saveState.callCount).toBe(1);
     });
 
+    test('create is logged to console', async () => {
+        await command.performCommand(commandArgs);
+        expect(consoleOut.callCount).toBe(1);
+        expect(consoleOut.lastCall.args[0]).toContain('OC::ORG::Account');
+        expect(consoleOut.lastCall.args[0]).toContain('NewAccount');
+        expect(consoleOut.lastCall.args[0]).toContain('111111111111');
+    });
+
     test('done is logged to console', async () => {
         await command.performCommand(commandArgs);
         expect(consoleInfo.callCount).toBe(1);
@@ -179,6 +189,12 @@ describe('when executing update command', () => {
         test('state is not saved', async () => {
             await command.performCommand(commandArgs);
             expect(saveState.callCount).toBe(0);
+        });
+
+        test('up to date is logged to console', async () => {
+            await command.performCommand(commandArgs);
+            expect(consoleInfo.callCount).toBe(1);
+            expect(consoleInfo.firstCall.args[0]).toContain('up to date');
         });
 
     });
