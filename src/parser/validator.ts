@@ -3,6 +3,7 @@ import { IBuildTaskConfiguration, IUpdateStackTaskConfiguration } from '../build
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { IOrganizationBinding, IResourceRef, ITemplate } from './parser';
+import { ResourceUtil } from '../resource-util';
 
 export class Validator {
     public static ValidateUpdateStacksTask(config: IUpdateStackTaskConfiguration, taskName: string) {
@@ -36,6 +37,10 @@ export class Validator {
 
         if (root.AWSTemplateFormatVersion === undefined) {
             throw new OrgFormationError('AWSTemplateFormatVersion is missing');
+        }
+        if ((root.AWSTemplateFormatVersion as any) instanceof Date) {
+            const templateVersionDate = (root.AWSTemplateFormatVersion as any) as Date;
+            (root.AWSTemplateFormatVersion as string) = ResourceUtil.ToVersion(templateVersionDate);
         }
         if (root.AWSTemplateFormatVersion !== '2010-09-09-OC' && root.AWSTemplateFormatVersion !== '2010-09-09') {
             throw new OrgFormationError(`Unexpected AWSTemplateFormatVersion version ${root.AWSTemplateFormatVersion}, expected '2010-09-09-OC or 2010-09-09'`);
