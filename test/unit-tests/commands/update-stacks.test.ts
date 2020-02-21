@@ -262,6 +262,69 @@ describe('when executing update-stacks command', () => {
             expect(consoleError.firstCall.args[0]).toContain('account 123456789012');
         });
     });
+    describe('and parameters are passed as string', () => {
+        beforeEach(() => {
+            commandArgs.parameters = 'Key=Val Key2=Val2';
+        });
+
+        afterEach(()=> {
+            sandbox.restore();
+        });
+
+        test('parameters are passed to binder', async () => {
+            await command.performCommand(commandArgs);
+            expect(enumTasks.getCall(0).thisValue).toBeDefined();
+            const binder = enumTasks.getCall(0).thisValue;
+            expect(binder.parameters).toBeDefined();
+            expect(binder.parameters['Key']).toBeDefined();
+            expect(binder.parameters['Key']).toBe('Val');
+            expect(binder.parameters['Key2']).toBeDefined();
+            expect(binder.parameters['Key2']).toBe('Val2');
+
+        });
+    });
+    describe('and parameters are passed as string (long)', () => {
+        beforeEach(() => {
+            commandArgs.parameters = 'ParameterKey=Key,ParameterValue=Val ParameterKey=Key2,ParameterValue=Val2';
+        });
+
+        afterEach(()=> {
+            sandbox.restore();
+        });
+
+        test('parameters are passed to binder', async () => {
+            await command.performCommand(commandArgs);
+            expect(enumTasks.getCall(0).thisValue).toBeDefined();
+            const binder = enumTasks.getCall(0).thisValue;
+            expect(binder.parameters).toBeDefined();
+            expect(binder.parameters['Key']).toBeDefined();
+            expect(binder.parameters['Key']).toBe('Val');
+            expect(binder.parameters['Key2']).toBeDefined();
+            expect(binder.parameters['Key2']).toBe('Val2');
+
+        });
+    });
+    describe('and parameters are passed as object', () => {
+        beforeEach(() => {
+            commandArgs.parameters = {Key: 'Val', Key2: 'Val2'};
+        });
+
+        afterEach(()=> {
+            sandbox.restore();
+        });
+
+        test('parameters are passed to binder', async () => {
+            await command.performCommand(commandArgs);
+            expect(enumTasks.getCall(0).thisValue).toBeDefined();
+            const binder = enumTasks.getCall(0).thisValue;
+            expect(binder.parameters).toBeDefined();
+            expect(binder.parameters['Key']).toBeDefined();
+            expect(binder.parameters['Key']).toBe('Val');
+            expect(binder.parameters['Key2']).toBeDefined();
+            expect(binder.parameters['Key2']).toBe('Val2');
+
+        });
+    });
 })
 
 
