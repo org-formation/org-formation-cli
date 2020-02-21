@@ -124,3 +124,26 @@ describe('when validate stacks command', () => {
         expect(tasks.length).toBe(6);
     });
 });
+
+
+describe('when calling static perform method', () => {
+    let performCommand: Sinon.SinonStub;
+    let commandArgs: IUpdateStacksCommandArgs;
+    const sandbox = Sinon.createSandbox();
+
+    beforeEach(() => {
+        performCommand = sandbox.stub(ValidateStacksCommand.prototype, 'performCommand');
+        commandArgs = { templateFile: 'abc.yml'} as unknown as IUpdateStacksCommandArgs;
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    test('static perform passes args to perform', async () => {
+        await ValidateStacksCommand.Perform(commandArgs);
+        expect(performCommand.callCount).toBe(1);
+        expect(performCommand.getCall(0).args[0]).toBe(commandArgs);
+    });
+
+});

@@ -263,3 +263,26 @@ describe('when executing update-stacks command', () => {
         });
     });
 })
+
+
+
+describe('when calling static perform method', () => {
+    let performCommand: Sinon.SinonStub;
+    let commandArgs: IUpdateStacksCommandArgs;
+    const sandbox = Sinon.createSandbox();
+
+    beforeEach(() => {
+        performCommand = sandbox.stub(UpdateStacksCommand.prototype, 'performCommand');
+        commandArgs = { templateFile: 'abc.yml', stackName: 'stackName'} as unknown as IUpdateStacksCommandArgs;
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    test('static perform passes args to perform', async () => {
+        await UpdateStacksCommand.Perform(commandArgs);
+        expect(performCommand.callCount).toBe(1);
+        expect(performCommand.getCall(0).args[0]).toBe(commandArgs);
+    });
+});

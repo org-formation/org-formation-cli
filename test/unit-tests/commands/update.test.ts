@@ -232,3 +232,26 @@ describe('when executing update command', () => {
     });
 
 });
+
+
+describe('when calling static perform method', () => {
+    let performCommand: Sinon.SinonStub;
+    let commandArgs: IUpdateOrganizationCommandArgs;
+    const sandbox = Sinon.createSandbox();
+
+    beforeEach(() => {
+        performCommand = sandbox.stub(UpdateOrganizationCommand.prototype, 'performCommand');
+        commandArgs = { templateFile: 'abc.yml'} as unknown as IUpdateOrganizationCommandArgs;
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    test('static perform passes args to perform', async () => {
+        await UpdateOrganizationCommand.Perform(commandArgs);
+        expect(performCommand.callCount).toBe(1);
+        expect(performCommand.getCall(0).args[0]).toBe(commandArgs);
+    });
+
+});
