@@ -4,6 +4,7 @@ import { ConsoleUtil } from '../console-util';
 import { TaskRunner } from '../org-binder/org-task-runner';
 import { TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { UpdateOrganizationCommand } from './update-organization';
 
 const commandName = 'execute-change-set <change-set-name>';
 const commandDescription = 'execute previously created change set';
@@ -38,12 +39,10 @@ export class ExecuteChangeSetCommand extends BaseCliCommand<IExecuteChangeSetCom
             ConsoleUtil.LogError('AWS organization state has changed since creating change set.');
             return;
         }
-        await TaskRunner.RunTasks(tasks);
-        state.setPreviousTemplate(template.source);
-        await state.save();
+        await UpdateOrganizationCommand.ExecuteTasks(tasks, state, template.hash, template);
     }
 }
 
-interface IExecuteChangeSetCommandArgs extends ICommandArgs {
+export interface IExecuteChangeSetCommandArgs extends ICommandArgs {
     changeSetName: string;
 }

@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { ChangeSetProvider } from '../change-set/change-set-provider';
 import { TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { ConsoleUtil } from '../console-util';
 
 const commandName = 'create-change-set <templateFile>';
 const commandDescription = 'create change set that can be reviewed and executed later';
@@ -30,11 +31,11 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
         const changeSet = await provider.createChangeSet(command.changeSetName, template, tasks);
 
         const contents = JSON.stringify(changeSet, null, 2);
-        console.log(contents);
+        ConsoleUtil.Out(contents);
     }
 }
 
-interface ICreateChangeSetCommandArgs extends ICommandArgs {
+export interface ICreateChangeSetCommandArgs extends ICommandArgs {
     templateFile: string;
     changeSetName?: string;
 }

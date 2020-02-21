@@ -3,6 +3,9 @@ import { ConsoleUtil } from '../console-util';
 import { TaskRunner } from '../org-binder/org-task-runner';
 import { TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { OrganizationBinder } from '../org-binder/org-binder';
+import { PersistedState } from '../state/persisted-state';
+import { IBuildTask } from '../org-binder/org-tasks-provider';
 
 const commandName = 'update <templateFile>';
 const commandDescription = 'update organization resources';
@@ -34,17 +37,23 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         }
 
         const binder = await this.getOrganizationBinder(template, state);
+        const tasks = binder.enumBuildTasks();
+        await UpdateOrganizationCommand.ExecuteTasks(tasks, state, templateHash, template);
+    }
+
+    public static async ExecuteTasks(tasks: IBuildTask[], state: PersistedState, templateHash: string, template: TemplateRoot) {
         try {
-            const tasks = binder.enumBuildTasks();
             if (tasks.length === 0) {
                 ConsoleUtil.LogInfo('organization up to date, no work to be done.');
-            } else {
+            }
+            else {
                 await TaskRunner.RunTasks(tasks);
                 ConsoleUtil.LogInfo('done');
             }
             state.putTemplateHash(templateHash);
             state.setPreviousTemplate(template.source);
-        } finally {
+        }
+        finally {
             await state.save();
         }
     }
