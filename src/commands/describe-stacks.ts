@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { ICfnTarget } from '../state/persisted-state';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { ConsoleUtil } from '../console-util';
 
 const commandName = 'describe-stacks';
 const commandDescription = 'list all stacks deployed to accounts using org-formation';
@@ -31,10 +32,10 @@ export class DescribeStacksCommand extends BaseCliCommand<IDescribetackCommandAr
             }
 
         }
-        console.log(JSON.stringify(record, null, 2));
+        ConsoleUtil.Out(JSON.stringify(record, null, 2));
     }
 }
 
-interface IDescribetackCommandArgs extends ICommandArgs {
+export interface IDescribetackCommandArgs extends ICommandArgs {
     stackName?: string;
 }

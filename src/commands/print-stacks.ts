@@ -35,14 +35,14 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
                 ConsoleUtil.LogInfo(`stack ${command.stackName} for account ${binding.accountId} and region ${binding.region} will be deleted`);
                 continue;
             }
-            console.log(`template for account ${binding.accountId} and region ${binding.region}`);
+            ConsoleUtil.Out(`template for account ${binding.accountId} and region ${binding.region}`);
             const templateBody = binding.template.createTemplateBody();
-            console.log(templateBody);
+            ConsoleUtil.Out(templateBody);
         }
     }
 }
 
-interface IPrintStacksCommandArgs extends ICommandArgs {
+export interface IPrintStacksCommandArgs extends ICommandArgs {
     templateFile: string;
     stackName: string;
 }
