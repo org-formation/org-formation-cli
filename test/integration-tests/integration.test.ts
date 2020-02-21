@@ -21,7 +21,8 @@ describe('when calling org-formation init', () => {
         initResponse = spawnSync('ts-node', ['cli.ts', 'init', templateFileName,
                                             '--profile', awsProfileForTests,
                                             '--state-bucket-name', bucketName,
-                                            '--region', 'eu-west-1']);
+                                            '--region', 'eu-west-1',
+                                            '--print-stack']);
 
         template = TemplateRoot.create(templateFileName);
     });

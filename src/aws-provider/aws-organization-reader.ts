@@ -226,6 +226,8 @@ export class AwsOrganizationReader {
                         if (err.code === 'AccessDenied') {
                             ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot: `);
                             ConsoleUtil.LogWarning('https://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md');
+                        } else {
+                            throw err;
                         }
                     }
                 }
