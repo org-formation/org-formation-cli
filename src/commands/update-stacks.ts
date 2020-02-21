@@ -35,6 +35,12 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         if (command.organizationFile) {
             templateOverrides.OrganizationBindings = command.organizationBindings;
         }
+        if (command.parameters) {
+            templateOverrides.ParameterValues = {};
+            for(const [key, val] of Object.entries(command.parameters)) {
+                templateOverrides.ParameterValues[key] = val;
+            }
+        }
         const template = TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
         return template;
     }

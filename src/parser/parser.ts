@@ -76,6 +76,7 @@ export interface ITemplateOverrides {
     DefaultOrganizationBindingRegion?: string | string[];
     DefaultOrganizationBinding?: IOrganizationBinding;
     OrganizationBindings?: Record<string, IOrganizationBinding>;
+    ParameterValues?: Record<string, any>;
 }
 
 export class TemplateRoot {
@@ -120,8 +121,12 @@ export class TemplateRoot {
         }
         delete overrides.OrganizationBindings;
 
+        const paramValues = overrides.ParameterValues;
+        delete overrides.ParameterValues;
+
+
         const mergedWithOverrides = { ...obj, ...overrides };
-        return new TemplateRoot(mergedWithOverrides, dirname, filename);
+        return new TemplateRoot(mergedWithOverrides, dirname, filename, paramValues);
 
     }
 
@@ -156,8 +161,9 @@ export class TemplateRoot {
     public readonly bindingSection: OrganizationBindingsSection;
     public readonly source: string;
     public readonly hash: string;
+    public readonly paramValues: Record<string, any>;
 
-    constructor(contents: ITemplate, dirname: string, filename?: string) {
+    constructor(contents: ITemplate, dirname: string, filename?: string, paramValues?: Record<string, any>) {
 
         Validator.ValidateTemplateRoot(contents);
 
@@ -165,6 +171,11 @@ export class TemplateRoot {
         this.dirname = dirname;
         this.source = JSON.stringify(contents);
         this.hash = md5(this.source);
+        if (paramValues !== undefined) {
+            this.paramValues = paramValues;
+        } else {
+            this.paramValues = {};
+        }
         if (contents.OrganizationBinding !== undefined) {
             ConsoleUtil.LogWarning(`template ${filename} specifies toplevel OrganizationBinding which is deprecated. Use DefaultOrganizationBinding instead.`);
             contents.DefaultOrganizationBinding = contents.OrganizationBinding;
@@ -259,6 +270,15 @@ export class TemplateRoot {
                 const ref = (elm as IResourceRefExpression).Ref;
                 const foundElm = list.find(x => x.logicalId === ref);
                 if (foundElm === undefined) {
+                    if (this.paramValues[ref] && this.paramValues[ref].Ref) {
+                        const refFromParam = this.paramValues[ref].Ref;
+                        const foundElmThroughParam = list.find(x => x.logicalId === refFromParam);
+                        if (foundElmThroughParam !== undefined) {
+                            results.push({ TemplateResource: foundElmThroughParam });
+                        }
+                        continue;
+                    }
+
                     if (this.contents.Parameters) {
                         const paramValue = this.contents.Parameters[ref];
                         if (paramValue && paramValue.Default && paramValue.Default.Ref) {

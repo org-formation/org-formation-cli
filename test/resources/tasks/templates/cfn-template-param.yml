@@ -2,10 +2,29 @@ AWSTemplateFormatVersion: '2010-09-09'
 
 Parameters:
   param:
-    Type: string
+    Description: account in binding will be passed as parameter.
+  paramWithDefault:
+    Default: !Ref Account2
+    Description: account in binding can be passed as parameter otherwise uses default.
 
 Resources:
   Topic:
     Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Account:
+      - !Ref param
+      - !Ref paramWithDefault
+      Region: eu-central-1
     Properties:
       DisplayName: Name
+
+  OtherTopic:
+    Type: AWS::SNS::Topic
+    DependsOnAccount: !Ref paramWithDefault
+    OrganizationBinding:
+      Account:
+      - !Ref param
+      Region: eu-central-1
+    Properties:
+      DisplayName: Name
+

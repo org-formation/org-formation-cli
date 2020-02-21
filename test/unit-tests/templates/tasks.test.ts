@@ -1,6 +1,12 @@
 import { BuildConfiguration, IBuildTask } from '../../../src/build-tasks/build-configuration';
 import { BaseOrganizationTask, BaseStacksTask } from '../../../src/build-tasks/build-task-provider';
-import { ICommandArgs } from '../../../src/commands/base-command';
+import { ICommandArgs, BaseCliCommand } from '../../../src/commands/base-command';
+import Sinon = require('sinon');
+import { CfnTaskRunner } from '../../../src/cfn-binder/cfn-task-runner';
+import { PersistedState } from '../../../src/state/persisted-state';
+import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
+import { ICfnTask } from '../../../src/cfn-binder/cfn-task-provider';
+import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when loading task file configuration', () => {
     let buildconfig: BuildConfiguration;
@@ -132,11 +138,35 @@ describe('when including task file without update-organization', () => {
 describe('when referencing account on parameter', () => {
     let buildconfig: BuildConfiguration;
     let tasks: IBuildTask[];
+    let runTask: Sinon.SinonStub;
+    const sandbox = Sinon.createSandbox();
 
     beforeEach(() => {
         buildconfig = new BuildConfiguration('./test/resources/tasks/build-tasks-param-account-ref.yml');
-        tasks = buildconfig.enumBuildTasks({} as any);
+        tasks = buildconfig.enumBuildTasks({maxConcurrentStacks: 1, failedStacksTolerance: 0, maxConcurrentTasks: 1, failedTasksTolerance: 0 } as any);
+        const getState = sandbox.stub(BaseCliCommand.prototype, 'getState');
+        const state = PersistedState.CreateEmpty('000000000000');
+        state.setBinding({
+            logicalId: 'Account1',
+            physicalId: '111111111111',
+            lastCommittedHash: 'aabbcc',
+            type: OrgResourceTypes.Account
+        });
+        state.setBinding({
+            logicalId: 'Account2',
+            physicalId: '222222222222',
+            lastCommittedHash: 'aabbcc',
+            type: OrgResourceTypes.Account
+        });
+        getState.returns(Promise.resolve(state));
+        runTask = sandbox.stub(CfnTaskRunner, 'RunTasks');
+        sandbox.stub(PersistedState.prototype, 'save');
+        sandbox.stub(ConsoleUtil, 'LogInfo');
     });
+
+    afterEach(() => {
+        sandbox.restore();
+    })
 
     test('file is loaded without errors', () => {
         expect(tasks).toBeDefined();
@@ -145,9 +175,13 @@ describe('when referencing account on parameter', () => {
         expect(updateStacks.length).toBe(2);
     });
 
-    // test('physical id of account is copied to parameter value', () => {
-    //     const updateStacksAccount1 = tasks.filter((x) => x.type === 'update-stacks' && x.name === 'StackParamAccount1Ref')[0] as BaseStacksTask;
-
-    //     expect(updateStacksAccount1);
-    // });
+    test('account from param is part of binding', async () => {
+        const updateStacksAccount1 = tasks.filter((x) => x.type === 'update-stacks' && x.name === 'StackParamAccount1Ref')[0] as BaseStacksTask;
+        await updateStacksAccount1.perform();
+        expect(runTask.callCount).toBe(1);
+        const taskRan: ICfnTask[] = runTask.getCall(0).args[0];
+        expect(taskRan.length).toBe(2);
+        expect(taskRan.find(x=>x.accountId = '111111111111')).toBeDefined();
+        expect(taskRan.find(x=>x.accountId = '222222222222')).toBeDefined();
+    });
 });
