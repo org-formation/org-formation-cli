@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**not yet released**
+- Added Support for expanding EnumTargetAccounts and EnumTargetRegions inside array
+- Added Support for modeling nested Organizational Units
+- OU bindings will include nested OU's
+- Fixed issue with failed stacks tolerance on update-stacks
+
 **version 0.0.76**
 - Fixed issue with validation of commandline input pararameters
 
