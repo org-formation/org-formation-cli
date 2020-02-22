@@ -24,6 +24,47 @@ OrganizationBindings:
     Region: eu-west-1
     OrganizationalUnit: !Ref OU1
 
+  Account12Binding:
+    Region: eu-west-1
+    Account:
+    - !Ref Account1
+    - !Ref Account2
+
+  Account34Binding:
+    Region: eu-west-1
+    Account:
+    - !Ref Account3
+    - !Ref Account4
+
+  Account1Binding:
+    Region: eu-west-1
+    Account: !Ref Account1
+
+  Account2Binding:
+    Region: eu-west-1
+    Account: !Ref Account2
+
+  EuropeBinding:
+    Region:
+      - eu-west-1
+      - eu-central-1
+    Account: !Ref Account2
+
+  USBinding:
+    Region:
+      - us-east-1
+      - us-west-1
+    Account: !Ref Account2
+
+  SingleEuropeBinding:
+    Region:
+      - eu-west-1
+    Account: !Ref Account2
+
+  SingleUSBinding:
+    Region:
+      - us-east-1
+    Account: !Ref Account2
 Resources:
 
   Resource:
@@ -51,3 +92,21 @@ Resources:
       EnumOU1TargetRegions: Fn::EnumTargetRegions OU1Binding 'blabla ${region} blabla'
       EnumWithOtherParameter: Fn::EnumTargetAccounts OU1Binding 'blabla ${account} ${something} blabla'
       EnumWithDefaultAccountBinding: Fn::EnumTargetAccounts 'blabla ${account} blabla'
+      CombinedEnumTargetAccounts:
+      - Fn::EnumTargetAccounts Account12Binding 'blabla ${account} blabla'
+      - Fn::EnumTargetAccounts Account34Binding 'blabla ${account} blabla'
+      CombinedEnumTargetSingleAccounts:
+      - Fn::EnumTargetAccounts Account1Binding 'blabla ${account} blabla'
+      - Fn::EnumTargetAccounts Account2Binding 'blabla ${account} blabla'
+      CombinedEnumTargetRegions:
+      - Fn::EnumTargetRegions EuropeBinding 'blabla ${region} blabla'
+      - Fn::EnumTargetRegions USBinding 'blabla ${region} blabla'
+      CombinedEnumTargetSingleRegions:
+      - Fn::EnumTargetRegions SingleEuropeBinding 'blabla ${region} blabla'
+      - Fn::EnumTargetRegions SingleUSBinding 'blabla ${region} blabla'
+      CombinedEnumTargetSingleAccountsMixed:
+      - '1'
+      - Fn::EnumTargetAccounts Account1Binding 'blabla ${account} blabla'
+      - '3'
+      - Fn::EnumTargetAccounts Account2Binding 'blabla ${account} blabla'
+      - '5'

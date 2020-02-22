@@ -368,9 +368,11 @@ export class CfnTemplate {
 
                 if (val !== null && typeof val === 'string') {
                     if (val.startsWith('Fn::EnumTargetAccounts ')) {
-                        resource[key] = this.resolveEnumExpression('EnumTargetAccounts', val, 'account');
+                        const result = this.resolveEnumExpression('EnumTargetAccounts', val, 'account');
+                        resource = CfnTemplate.replaceEnumExpressionWithResults(resource, key, val, result);
                     } else if (val.startsWith('Fn::EnumTargetRegions')) {
-                        resource[key] = this.resolveEnumExpression('EnumTargetRegions', val, 'region');
+                        const result = this.resolveEnumExpression('EnumTargetRegions', val, 'region');
+                        resource = CfnTemplate.replaceEnumExpressionWithResults(resource, key, val, result);
                     } else if (val.startsWith('Fn:TargetCount')) {
                         ConsoleUtil.LogWarning('expression references Fn::TargetCount with 1 colon (:) instead of two.');
                         resource[key] = this.resolveCountExpression(val);
@@ -380,7 +382,24 @@ export class CfnTemplate {
                      }
                 }
             }
+        }
+        return resource;
+    }
 
+    private static replaceEnumExpressionWithResults(resource: any, key: any, val: any, expressionResult: any) {
+        if (Array.isArray(resource)) {
+            const index = resource.indexOf(val);
+            if (Array.isArray(expressionResult)) {
+                let offset = 0;
+                for(const elm of expressionResult) {
+                    resource.splice(index + offset, offset === 0 ? 1 : 0, elm);
+                    offset += 1;
+                }
+            } else {
+                resource[index] = expressionResult;
+            }
+        } else {
+            resource[key] = expressionResult
         }
         return resource;
     }
