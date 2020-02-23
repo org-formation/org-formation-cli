@@ -101,7 +101,7 @@ export class ResourceUtil {
 
 }
 
-function createRewriteExpression(parent: any, key: string): (resource: string, path?: string) => void {
+const createRewriteExpression = (parent: any, key: string) => {
     return (resource: string, path?: string) => {
         if (path !== undefined) {
             parent[key] = { 'Fn::GetAtt': [resource, path]};
@@ -109,12 +109,13 @@ function createRewriteExpression(parent: any, key: string): (resource: string, p
             parent[key] = { Ref: resource };
         }
     };
-}
-function createResolveExpression(parent: any, key: string): (val: string) => void {
+};
+
+const createResolveExpression = (parent: any, key: string) => {
     return (val: string) => {
         parent[key] = val;
     };
-}
+};
 
 interface IResourceExpression {
     resource: string;

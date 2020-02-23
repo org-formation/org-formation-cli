@@ -1,8 +1,8 @@
+import { existsSync, readFileSync } from 'fs';
 import AWS, { Organizations, STS } from 'aws-sdk';
 import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
 import { Command } from 'commander';
-import { existsSync, readFileSync } from 'fs';
 import * as ini from 'ini';
 import { AwsOrganization } from '../aws-provider/aws-organization';
 import { AwsOrganizationReader } from '../aws-provider/aws-organization-reader';

@@ -10,7 +10,9 @@ module.exports = {
         "sourceType": "module"
     },
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "import",
+        "prefer-arrow"
     ],
     "extends": [
         "plugin:@typescript-eslint/recommended"
@@ -22,12 +24,6 @@ module.exports = {
         "@typescript-eslint/class-name-casing": "error",
         "@typescript-eslint/consistent-type-assertions": "error",
         "@typescript-eslint/consistent-type-definitions": "error",
-        "@typescript-eslint/explicit-member-accessibility": [
-            "error",
-            {
-                "accessibility": "explicit"
-            }
-        ],
         "@typescript-eslint/indent": [
             "off",
             4,
@@ -54,10 +50,10 @@ module.exports = {
                 }
             }
         ],
-        "@typescript-eslint/member-ordering": "error",
         "@typescript-eslint/no-empty-function": "error",
         "@typescript-eslint/no-empty-interface": "error",
         "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-this-alias": "off",
         "@typescript-eslint/no-misused-new": "error",
         "@typescript-eslint/no-namespace": "error",
         "@typescript-eslint/no-parameter-properties": "off",
@@ -106,9 +102,7 @@ module.exports = {
             "String",
             "string",
             "Boolean",
-            "boolean",
-            "Undefined",
-            "undefined"
+            "boolean"
         ],
         "id-match": "error",
         "import/order": "error",
@@ -144,7 +138,6 @@ module.exports = {
         "no-throw-literal": "error",
         "no-trailing-spaces": "error",
         "no-undef-init": "error",
-        "no-underscore-dangle": "error",
         "no-unsafe-finally": "error",
         "no-unused-expressions": "off",
         "no-unused-labels": "error",

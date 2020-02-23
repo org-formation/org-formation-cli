@@ -32,10 +32,10 @@ export interface ITemplate {
     Outputs?: any;
 }
 
-// tslint:disable-next-line: no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export type IResources = IResourcesMap;
 
-// tslint:disable-next-line: no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export type IOrganization = IResourcesMap;
 
 export type IResourcesMap = Record<string, IResource>;

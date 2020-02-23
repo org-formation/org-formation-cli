@@ -27,7 +27,7 @@ export class BuildRunner {
             onTaskSkippedBecauseDependencyFailed: task => {
                 ConsoleUtil.LogError(`task ${task.name} failed, reason: dependency had failed`);
             },
-            // tslint:disable-next-line: no-empty
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
             onTaskRanSuccessfully: () => { },
             throwCircularDependency: ts => { throw new OrgFormationError(`circular dependency detected with tasks: ${ts.map(t => t.name).join(', ')}`); },
             throwDependencyOnSelfException: task => { throw new OrgFormationError(`task ${task.name} has a dependency on itself.`); },

@@ -154,7 +154,7 @@ export class OrganizationSection {
         let ousLeftToCheck = [...ous];
         let stopChecking = true;
         do {
-            const ousWithDependency  = ousLeftToCheck.filter(x=>x.organizationalUnits.find(x=>ousLeftToCheck.includes(x.TemplateResource)));
+            const ousWithDependency  = ousLeftToCheck.filter(x=>x.organizationalUnits.find(ou=>ousLeftToCheck.includes(ou.TemplateResource)));
             const ousWithDepdency = ousLeftToCheck.filter(x=>!ousWithDependency.includes(x));
             stopChecking = ousWithDepdency.length === 0;
             ousLeftToCheck = ousWithDependency;

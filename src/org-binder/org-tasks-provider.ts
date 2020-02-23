@@ -627,7 +627,7 @@ export interface IBuildTask {
 
 type BuildTaskAction = 'Create' | 'Update' | 'Delete' | 'Relate' | 'Forget' | 'CommitHash' | string;
 
-function policiesEqual(left: Reference<PasswordPolicyResource> , right: Reference<PasswordPolicyResource>) {
+const policiesEqual = (left: Reference<PasswordPolicyResource> , right: Reference<PasswordPolicyResource>) => {
     const leftNull = !left || !left.TemplateResource;
     const rightNull = !right || !right.TemplateResource;
 
@@ -638,4 +638,4 @@ function policiesEqual(left: Reference<PasswordPolicyResource> , right: Referenc
         return false;
     }
     return left.TemplateResource!.calculateHash() === right.TemplateResource!.calculateHash();
-}
+};

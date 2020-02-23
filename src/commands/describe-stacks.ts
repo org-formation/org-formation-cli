@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { ICfnTarget } from '../state/persisted-state';
-import { BaseCliCommand, ICommandArgs } from './base-command';
 import { ConsoleUtil } from '../console-util';
+import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'describe-stacks';
 const commandDescription = 'list all stacks deployed to accounts using org-formation';

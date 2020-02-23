@@ -1,9 +1,9 @@
 import archiver = require('archiver');
+import { existsSync, readFileSync } from 'fs';
 import { CloudFormation, S3 } from 'aws-sdk';
 import { CreateStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { Command } from 'commander';
-import { existsSync, readFileSync } from 'fs';
 import { WritableStream } from 'memory-streams';
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';

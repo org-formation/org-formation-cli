@@ -1,5 +1,5 @@
-import { Command } from 'commander';
 import { writeFileSync } from 'fs';
+import { Command } from 'commander';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { Validator } from '../parser/validator';
