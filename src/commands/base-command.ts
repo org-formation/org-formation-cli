@@ -98,6 +98,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--profile [profile]', 'aws profile to use');
         command.option('--print-stack', 'will print stacktraces for errors');
         command.option('--verbose', 'will enable debug logging');
+        command.option('--no-colors', 'will disable colorization of console logs');
     }
 
     protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState) {
@@ -213,6 +214,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (command.verbose === true) {
             ConsoleUtil.verbose = true;
         }
+        if (command.noColors === true) {
+            ConsoleUtil.colorizeLogs = false;
+        }
 
         try {
             await this.customInitializationIncludingMFASupport(command);
@@ -244,4 +248,5 @@ export interface ICommandArgs {
     initialized?: boolean;
     printStack?: boolean;
     verbose?: boolean;
+    noColors?: boolean;
 }
