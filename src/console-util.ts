@@ -4,6 +4,7 @@ import * as readline from 'readline';
 export class ConsoleUtil {
     public static printStacktraces = false;
     public static verbose = false;
+    public static colorizeLogs = true;
 
     public static LogDebug(message: string) {
         if (!ConsoleUtil.verbose) { return; }
@@ -54,10 +55,10 @@ export class ConsoleUtil {
     }
 }
 
-const red = (message: string) => {
-    return `\x1b[31m${message}\x1b[0m`;
-};
+function red(message: string) {
+    return ConsoleUtil.colorizeLogs ? `\x1b[31m${message}\x1b[0m` : message;
+}
+function yellow(message: string) {
+    return ConsoleUtil.colorizeLogs ? `\x1b[33m${message}\x1b[0m` : message;
+}
 
-const yellow = (message: string) => {
-    return `\x1b[33m${message}\x1b[0m`;
-};
