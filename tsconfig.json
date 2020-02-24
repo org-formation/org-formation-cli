@@ -17,10 +17,6 @@
         "esModuleInterop": true,
         "sourceMap": true
     },
-    "plugins": [
-      {
-        "name": "typescript-tslint-plugin"
-      }],
     "include": [ "src/**/*", "*.ts"],
     "exclude": [ "node_modules", "dist"],
     "typeRoots": [

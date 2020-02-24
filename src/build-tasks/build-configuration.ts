@@ -1,6 +1,6 @@
 import fs, { readFileSync } from 'fs';
-import md5 from 'md5';
 import path from 'path';
+import md5 from 'md5';
 import { yamlParse } from 'yaml-cfn';
 import { ICommandArgs } from '../commands/base-command';
 import { IUpdateStacksCommandArgs } from '../commands/update-stacks';

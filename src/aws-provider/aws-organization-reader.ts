@@ -50,9 +50,9 @@ export type AWSAccount = Account & IAWSAccountWithTags & IAWSAccountWithSupportL
 export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject & IObjectWitOrganizationalUnits;
 export type AWSRoot = Root & IObjectWithPolicies & IObjectWitOrganizationalUnits;
 
-function GetPoliciesForTarget(list: AWSPolicy[], targetId: string, targetType: TargetType): AWSPolicy[] {
+const GetPoliciesForTarget = (list: AWSPolicy[], targetId: string, targetType: TargetType): AWSPolicy[] => {
     return list.filter(x => x.Targets.find(y => y.TargetId === targetId && y.Type === targetType));
-}
+};
 
 export class AwsOrganizationReader {
 

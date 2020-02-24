@@ -115,8 +115,8 @@ export interface IGenericTaskState {
     promise?: Promise<void>;
 }
 
-async function sleep(seconds: number) {
+const sleep = async (seconds: number) => {
     return new Promise(resolve => {
         setTimeout(resolve, seconds * 1000);
     });
-}
+};

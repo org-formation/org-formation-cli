@@ -77,7 +77,7 @@ export class AwsUtil {
     private static CfnServiceCache: Record<string, CloudFormation> = {};
 }
 
-export function passwordPolicEquals(passwordPolicy: IAM.PasswordPolicy, pwdPolicyResource: Reference<PasswordPolicyResource>): boolean {
+export const passwordPolicEquals = (passwordPolicy: IAM.PasswordPolicy, pwdPolicyResource: Reference<PasswordPolicyResource>): boolean => {
 
     if (!passwordPolicy && (!pwdPolicyResource || !pwdPolicyResource.TemplateResource)) {
         return true; // equal
@@ -123,4 +123,4 @@ export function passwordPolicEquals(passwordPolicy: IAM.PasswordPolicy, pwdPolic
     }
 
     return true;
-}
+};

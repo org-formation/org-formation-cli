@@ -399,7 +399,7 @@ export class CfnTemplate {
                 resource[index] = expressionResult;
             }
         } else {
-            resource[key] = expressionResult
+            resource[key] = expressionResult;
         }
         return resource;
     }

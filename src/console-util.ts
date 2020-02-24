@@ -61,3 +61,4 @@ const red = (message: string) => {
 const yellow = (message: string) => {
     return ConsoleUtil.colorizeLogs ? `\x1b[33m${message}\x1b[0m` : message;
 }
+

@@ -159,7 +159,7 @@ export class AwsOrganizationWriter {
 
         // account will be undefined if account is supended.
         // still needs to be moved when e.g. OU gets re-attached.
-        if (account != undefined) {
+        if (account !== undefined) {
             account.ParentId = parentPhysicalId;
         }
     }
@@ -509,6 +509,6 @@ export class AwsOrganizationWriter {
     }
 }
 
-function sleep(time: number) {
+const sleep = (time: number) => {
     return new Promise(resolve => setTimeout(resolve, time));
-}
+};

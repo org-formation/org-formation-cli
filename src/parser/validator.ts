@@ -2,8 +2,8 @@ import { type } from 'os';
 import { IBuildTaskConfiguration, IUpdateStackTaskConfiguration } from '../build-tasks/build-configuration';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { IOrganizationBinding, IResourceRef, ITemplate } from './parser';
 import { ResourceUtil } from '../resource-util';
+import { IOrganizationBinding, IResourceRef, ITemplate } from './parser';
 
 export class Validator {
     public static ValidateUpdateStacksTask(config: IUpdateStackTaskConfiguration, taskName: string) {

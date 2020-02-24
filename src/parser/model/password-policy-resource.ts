@@ -1,7 +1,7 @@
 import { OrgFormationError } from '../../org-formation-error';
 import { IResource, TemplateRoot } from '../parser';
-import { Resource } from './resource';
 import { Validator } from '../validator';
+import { Resource } from './resource';
 
 export interface IPasswordPolicyProperties {
     MaxPasswordAge?: number;

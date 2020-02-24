@@ -2,10 +2,10 @@ import { Command } from 'commander';
 import { ConsoleUtil } from '../console-util';
 import { TaskRunner } from '../org-binder/org-task-runner';
 import { TemplateRoot } from '../parser/parser';
-import { BaseCliCommand, ICommandArgs } from './base-command';
 import { OrganizationBinder } from '../org-binder/org-binder';
 import { PersistedState } from '../state/persisted-state';
 import { IBuildTask } from '../org-binder/org-tasks-provider';
+import { BaseCliCommand, ICommandArgs } from './base-command';
 
 const commandName = 'update <templateFile>';
 const commandDescription = 'update organization resources';
