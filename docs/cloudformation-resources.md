@@ -124,7 +124,7 @@ There is a lot of other ways to specify an account binding though:
 |Region|String or list of String|Resource will be created in all the specified resources.|
 |Account|literal '*'|Resource will be created in all accounts **except** for the master account.|
 ||!Ref or list of !Ref|Resource will be created in [Accounts](#account) that are referred to.|
-|OrganizationalUnit|!Ref or list of !Ref|Resource will be created in all accounts that below to the [OrganizationalUnits](#organizationalunit) that are refered to.|
+|OrganizationalUnit|!Ref or list of !Ref|Resource will be created in all accounts that below to the [OrganizationalUnits](#organizationalunit) that are refered to. This includes accounts created within nested OU's|
 |ExcludeAccount|!Ref or list of !Ref|Resource will **not** be created in [Accounts](#account) that are referred to.|
 |IncludeMasterAccount|``true`` or ``false``| If ``true``, resource will be created in the organizational master account.|
 |AccountsWithTag|tag-name|Resource will be created in all accounts that have a tag specified with tag-name.|
@@ -341,6 +341,7 @@ Principal:
 - The Sub expression may also contain other Sub expression contructs (such as Ref to parameter)
 - For `Fn::EnumTargetAccounts` use the pre-defined variable `${account}` in the Sub expression
 - For `Fn::EnumTargetRegions` use the pre-defined variable `${region}` in the Sub expression
+- When placed inside an array the output of `Fn::EnumTargetAccounts` and `Fn::EnumTargetRegions` will be inserted into the array.
 
 
 ### Fn::TargetCount

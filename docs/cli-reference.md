@@ -192,4 +192,6 @@ Will validate the *tasks-file*, including configured tasks.
 |<nobr>--profile</nobr> | *none* |The ``--profile`` option works just like the ``--profile`` option in the AWS cli. If no profile is specified it uses the default profile from your ``~/.aws/config`` file|
 |<nobr>--state-bucket-name</nobr> |  ``organization-formation-${AWS::AccountId}`` | The ``--state-bucket-name`` option allows you to specify which S3 Bucket state needs to be stored. The name may contain ``${AWS::AccountId}``.|
 |<nobr>--state-object</nobr> |  ``state.json`` | The ``--state-object`` option allows you to specify which S3 object state needs to be stored in.|
-
+|<nobr>--no-color</nobr> |  | the `--no-color` option will toggle off colorization of log files.|
+|<nobr>--print-stack</nobr> |   | the `--print-stack` option will log stack traces for errors that occur.|
+|<nobr>--verbose</nobr> |   | the `--verbose` option will log debug level information.|

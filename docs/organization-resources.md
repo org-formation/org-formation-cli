@@ -236,6 +236,7 @@ OrganizationalUnit is an AWS Organizational Unit within your organization and ca
 |OrganizationalUnitName|Name of the organizational unit|This property is required.
 |Accounts|Reference or list of References|This property is optional.<br/><br/>Reference or list of References to [Account](#account) resources that need to be part of the Organizational Unit.
 |ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on all accounts (including master account) within the AWS Organization.|
+|OrganizationalUnits|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [OrganizationalUnit](#OrganizationalUnit) resources that must be nested within the current OrganizationalUnit.|
 
 **Note** It is currently not supported to nest organizational units (have an OU as the parent of another OU). It is also not possible to add a MasterAccount resource to an OU.
 
