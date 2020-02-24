@@ -390,11 +390,7 @@ export class CfnTemplate {
         if (Array.isArray(resource)) {
             const index = resource.indexOf(val);
             if (Array.isArray(expressionResult)) {
-                let offset = 0;
-                for(const elm of expressionResult) {
-                    resource.splice(index + offset, offset === 0 ? 1 : 0, elm);
-                    offset += 1;
-                }
+                resource.splice(index, 1, ...expressionResult);
             } else {
                 resource[index] = expressionResult;
             }
