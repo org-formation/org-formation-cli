@@ -57,8 +57,9 @@ export class ConsoleUtil {
 
 const red = (message: string) => {
     return ConsoleUtil.colorizeLogs ? `\x1b[31m${message}\x1b[0m` : message;
-}
+};
+
 const yellow = (message: string) => {
     return ConsoleUtil.colorizeLogs ? `\x1b[33m${message}\x1b[0m` : message;
-}
+};
 
