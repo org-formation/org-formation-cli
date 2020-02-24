@@ -55,9 +55,9 @@ export class ConsoleUtil {
     }
 }
 
-function red(message: string) {
+const red = (message: string) => {
     return ConsoleUtil.colorizeLogs ? `\x1b[31m${message}\x1b[0m` : message;
 }
-function yellow(message: string) {
+const yellow = (message: string) => {
     return ConsoleUtil.colorizeLogs ? `\x1b[33m${message}\x1b[0m` : message;
 }
