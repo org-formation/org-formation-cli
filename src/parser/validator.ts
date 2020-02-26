@@ -1,5 +1,4 @@
-import { type } from 'os';
-import { IBuildTaskConfiguration, IUpdateStackTaskConfiguration } from '../build-tasks/build-configuration';
+import { IUpdateStackTaskConfiguration } from '../build-tasks/build-configuration';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { ResourceUtil } from '../resource-util';

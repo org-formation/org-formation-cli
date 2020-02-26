@@ -180,7 +180,7 @@ export class CfnTemplate {
         const result: ICfnCrossAccountDependency[] = [];
         for (const logicalId in this.resources) {
             const resource = this.resources[logicalId];
-            const foundDependencies = this._listDependencies(resource, binding, others, null, null);
+            const foundDependencies = this._listDependencies(resource, binding, others);
             if (foundDependencies.length > 0) {
                 result.push(...foundDependencies);
             }
@@ -252,7 +252,7 @@ export class CfnTemplate {
         }
     }
 
-    private _listDependencies(resource: any, binding: ICfnBinding, others: ICfnBinding[], parent: any, parentKey: string): ICfnCrossAccountDependency[] {
+    private _listDependencies(resource: any, binding: ICfnBinding, others: ICfnBinding[]): ICfnCrossAccountDependency[] {
         const result: ICfnCrossAccountDependency[] = [];
 
         const expressionsToOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, [...this.otherAccountsLogicalIds, this.accountResource.logicalId]);

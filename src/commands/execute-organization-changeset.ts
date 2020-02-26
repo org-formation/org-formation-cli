@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import { ChangeSetProvider } from '../change-set/change-set-provider';
 import { ConsoleUtil } from '../console-util';
-import { TaskRunner } from '../org-binder/org-task-runner';
 import { TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { UpdateOrganizationCommand } from './update-organization';

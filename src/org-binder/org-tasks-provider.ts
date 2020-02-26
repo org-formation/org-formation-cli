@@ -56,7 +56,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async task => {
+            perform: async () => {
                 that.state.setUniqueBindingForType({
                     type: resource.type,
                     logicalId: resource.logicalId,
@@ -95,7 +95,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async task => {
+            perform: async () => {
                 that.state.setUniqueBindingForType({
                     type: resource.type,
                     logicalId: resource.logicalId,
@@ -167,7 +167,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'Create',
             dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
-            perform: async task => {
+            perform: async () => {
                 task.result = await that.writer.createOrganizationalUnit(resource);
                 that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result);
             },
@@ -278,7 +278,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async task => {
+            perform: async () => {
                 that.state.setBindingHash(resource.type, resource.logicalId, hash);
             },
         };
@@ -387,7 +387,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async task => {
+            perform: async () => {
                 if (resource.type === OrgResourceTypes.MasterAccount) {
                     that.state.setUniqueBindingForType({
                         type: resource.type,
@@ -434,7 +434,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async task => {
+            perform: async () => {
                 if (resource.type === OrgResourceTypes.MasterAccount) {
                     that.state.setUniqueBindingForType({
                         type: resource.type,

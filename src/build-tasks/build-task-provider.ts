@@ -234,7 +234,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         await this.innerPerform(updateCommand);
     }
 
-    public isDependency(task: IBuildTask): boolean {
+    public isDependency(): boolean {
         return false;
     }
 
@@ -250,21 +250,21 @@ export class UpdateOrganizationTask extends BaseOrganizationTask {
 }
 
 export class ValidateOrganizationTask extends BaseOrganizationTask {
-    protected async innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
+    protected async innerPerform(/*commandArgs: IUpdateOrganizationCommandArgs*/): Promise<void> {
         // no op.
     }
 
 }
 
 export class CreateChangeSetOrganizationTask extends BaseOrganizationTask {
-    protected innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
+    protected innerPerform(/*commandArgs: IUpdateOrganizationCommandArgs*/): Promise<void> {
         throw new Error('Method not implemented.');
     }
 
 }
 
 export class ExecuteChangeSetOrganizationTask extends BaseOrganizationTask {
-    protected innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
+    protected innerPerform(/*commandArgs: IUpdateOrganizationCommandArgs*/): Promise<void> {
         throw new Error('Method not implemented.');
     }
 

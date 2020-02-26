@@ -115,7 +115,7 @@ export class FileStorageProvider implements IStorageProvider {
         this.filePath = filePath;
     }
 
-    public async create(region: string) {
+    public async create() {
         await Promise.resolve();
     }
 
