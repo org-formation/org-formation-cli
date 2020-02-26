@@ -16,15 +16,15 @@ export class AwsOrganization {
         this.reader = reader;
     }
 
-    public startInitialize() {
+    public startInitialize(): void{
         this.initializationPromise = this.initialize();
     }
 
-    public async initialize() {
-        const setOrgPromise = async () => { this.organization = await this.reader.organization.getValue(); };
-        const setRootsPromise = async () => { this.roots = await this.reader.roots.getValue(); };
-        const setPolicies = async () => { this.policies = await this.reader.policies.getValue(); };
-        const setAccounts = async () => {
+    public async initialize(): Promise<void> {
+        const setOrgPromise = async (): Promise<void> => { this.organization = await this.reader.organization.getValue(); };
+        const setRootsPromise = async (): Promise<void> => { this.roots = await this.reader.roots.getValue(); };
+        const setPolicies = async (): Promise<void> => { this.policies = await this.reader.policies.getValue(); };
+        const setAccounts = async (): Promise<void> => {
             const accounts = await this.reader.accounts.getValue();
             this.masterAccount = accounts.find(x => x.Id === this.organization.MasterAccountId);
             this.accounts = accounts.filter(x => x.Id !== this.organization.MasterAccountId);
@@ -37,7 +37,7 @@ export class AwsOrganization {
         }
     }
 
-    public async endInitialize() {
+    public async endInitialize(): Promise<void> {
         await this.initializationPromise;
     }
 }

@@ -4,7 +4,7 @@ import { OrgFormationError } from '../org-formation-error';
 import { IBuildTask } from './build-configuration';
 
 export class BuildRunner {
-    public static async RunTasks(tasks: IBuildTask[], maxConcurrentTasks = 1, failedTasksTolerance = 0) {
+    public static async RunTasks(tasks: IBuildTask[], maxConcurrentTasks = 1, failedTasksTolerance = 0): Promise<void> {
         const delegate: ITaskRunnerDelegates<IBuildTask> = {
             onTaskRanFailed: (task, err) => { ConsoleUtil.LogError(`task ${task.name} failed`, err); },
             onTaskSkippedBecauseDependencyFailed: task => {
@@ -21,7 +21,7 @@ export class BuildRunner {
         };
         await GenericTaskRunner.RunTasks<IBuildTask>(tasks, delegate);
     }
-    public static async RunValidationTasks(tasks: IBuildTask[], maxConcurrentTasks = 1, failedTasksTolerance = 0) {
+    public static async RunValidationTasks(tasks: IBuildTask[], maxConcurrentTasks = 1, failedTasksTolerance = 0): Promise<void> {
         const delegate: ITaskRunnerDelegates<IBuildTask> = {
             onTaskRanFailed: (task, err) => { ConsoleUtil.LogError(`task ${task.name} failed`, err); },
             onTaskSkippedBecauseDependencyFailed: task => {

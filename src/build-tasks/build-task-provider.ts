@@ -184,7 +184,7 @@ export abstract class BaseStacksTask implements IBuildTask {
 
     public abstract async innerPerform(args: IUpdateStacksCommandArgs): Promise<void>;
 
-    public isDependency(x: IBuildTask) {
+    public isDependency(x: IBuildTask): boolean {
         if (x.type === 'update-organization') {
             return true;
         }
@@ -196,7 +196,7 @@ export abstract class BaseStacksTask implements IBuildTask {
 
 export class UpdateStacksTask extends BaseStacksTask {
 
-    public async innerPerform(args: IUpdateStacksCommandArgs) {
+    public async innerPerform(args: IUpdateStacksCommandArgs): Promise<void> {
         ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath} ${this.stackName}`);
         await UpdateStacksCommand.Perform(args);
     }
@@ -204,7 +204,7 @@ export class UpdateStacksTask extends BaseStacksTask {
 }
 export class ValidateStacksTask extends BaseStacksTask {
 
-    public async innerPerform(args: IUpdateStacksCommandArgs) {
+    public async innerPerform(args: IUpdateStacksCommandArgs): Promise<void> {
         await ValidateStacksCommand.Perform(args);
     }
 
@@ -234,7 +234,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         await this.innerPerform(updateCommand);
     }
 
-    public isDependency(task: IBuildTask) {
+    public isDependency(task: IBuildTask): boolean {
         return false;
     }
 

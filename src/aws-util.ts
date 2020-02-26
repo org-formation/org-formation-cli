@@ -5,7 +5,7 @@ import { Reference } from './parser/model/resource';
 
 export class AwsUtil {
 
-    public static ClearCache() {
+    public static ClearCache(): void {
         AwsUtil.masterAccountId = undefined;
         AwsUtil.CfnServiceCache = {};
         AwsUtil.IamServiceCache = {};
@@ -34,7 +34,7 @@ export class AwsUtil {
         return await AwsUtil.getOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId,  `${accountId}/${region}`, { region });
     }
 
-    public static async DeleteObject(bucketName: string, objectKey: string) {
+    public static async DeleteObject(bucketName: string, objectKey: string): Promise<void> {
         const s3client = new S3();
         await s3client.deleteObject({Bucket: bucketName, Key: objectKey}).promise();
     }
@@ -58,7 +58,7 @@ export class AwsUtil {
         return service;
     }
 
-    private static async getCredentials(accountId: string) {
+    private static async getCredentials(accountId: string): Promise<CredentialsOptions> {
         const sts = new STS();
         const roleArn = 'arn:aws:iam::' + accountId + ':role/OrganizationAccountAccessRole';
         const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();

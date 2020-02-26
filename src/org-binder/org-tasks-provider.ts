@@ -299,9 +299,13 @@ export class TaskProvider {
                 const childOuId = binding.physicalId;
 
                 const targetId = getTargetId();
-                const physicalIdMap = await that.writer.detachOU(targetId, childOuId);
-
-                TaskProvider.updateStateWithOuPhysicalIds(that.state, physicalIdMap);
+                let physicalIdMap: Record<string, string> = {};
+                try {
+                    physicalIdMap = await that.writer.detachOU(targetId, childOuId);
+                }
+                finally {
+                    TaskProvider.updateStateWithOuPhysicalIds(that.state, physicalIdMap);
+                }
 
                 task.result = physicalIdMap;
             },

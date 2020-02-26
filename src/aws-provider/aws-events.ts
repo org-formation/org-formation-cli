@@ -7,7 +7,7 @@ const eventSource = 'oc.org-formation';
 const eventDetailType = 'events.org-formation.com';
 
 export class AwsEvents {
-    public static async putAccountCreatedEvent(accountId: string) {
+    public static async putAccountCreatedEvent(accountId: string): Promise<void> {
         try {
             const putEventsRequest: PutEventsRequest = {Entries: [
                 {
@@ -27,7 +27,7 @@ export class AwsEvents {
         }
     }
 
-    public static async PutEvent(request: PutEventsRequest) {
+    public static async PutEvent(request: PutEventsRequest): Promise<void> {
         const events = new AWS.CloudWatchEvents({region: 'us-east-1'});
         await events.putEvents(request).promise();
     }

@@ -20,14 +20,14 @@ export class AwsOrganizationWriter {
         this.organization = organization;
     }
 
-    public async ensureSCPEnabled() {
+    public async ensureSCPEnabled(): Promise<void> {
         const enablePolicyTypeReq: EnablePolicyTypeRequest = {
             RootId: this.organization.roots[0].Id!,
             PolicyType: 'SERVICE_CONTROL_POLICY',
         };
         try {
             const response = await this.organizationService.enablePolicyType(enablePolicyTypeReq).promise();
-            console.log(response);
+            ConsoleUtil.LogDebug('enabled service control policies');
         } catch (err) {
             if (err && err.code === 'PolicyTypeAlreadyEnabledException') {
                 // do nothing
@@ -62,7 +62,7 @@ export class AwsOrganizationWriter {
         }
     }
 
-    public async attachPolicy(targetPhysicalId: string, policyPhysicalId: string) {
+    public async attachPolicy(targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
 
         // TODO: add retry on ConcurrentModificationException
 
@@ -89,7 +89,7 @@ export class AwsOrganizationWriter {
         }
     }
 
-    public async detachPolicy(targetPhysicalId: string, policyPhysicalId: string) {
+    public async detachPolicy(targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
 
         // TODO: add retry on
 
@@ -107,7 +107,7 @@ export class AwsOrganizationWriter {
         }
     }
 
-    public async updatePolicy(resource: ServiceControlPolicyResource, physicalId: string) {
+    public async updatePolicy(resource: ServiceControlPolicyResource, physicalId: string): Promise<void> {
         const updatePolicyRequest: UpdatePolicyRequest = {
             PolicyId: physicalId,
             Name: resource.policyName,
@@ -117,7 +117,7 @@ export class AwsOrganizationWriter {
         await this.organizationService.updatePolicy(updatePolicyRequest).promise();
     }
 
-    public async deletePolicy(physicalId: string) {
+    public async deletePolicy(physicalId: string): Promise<void> {
         const deletePolicyRequest: DeletePolicyRequest = {
             PolicyId: physicalId,
         };
@@ -131,11 +131,11 @@ export class AwsOrganizationWriter {
         }
     }
 
-    public async detachAccount(targetId: string, accountId: string) {
+    public async detachAccount(targetId: string, accountId: string): Promise<void> {
         await this.attachAccount(this.organization.roots[0].Id, accountId);
     }
 
-    public async attachAccount(parentPhysicalId: string, accountPhysicalId: string) {
+    public async attachAccount(parentPhysicalId: string, accountPhysicalId: string): Promise<void> {
         const account = this.organization.accounts.find(x => x.Id === accountPhysicalId);
         let parentId: string;
         if (account !== undefined) {
@@ -168,7 +168,7 @@ export class AwsOrganizationWriter {
         return await this.moveOU(this.organization.roots[0].Id, childOuPhysicalId);
     }
 
-    public async moveOU(parentPhysicalId: string, childOuPhysicalId: string, mappedOUIds: Record<string, string> = {}) {
+    public async moveOU(parentPhysicalId: string, childOuPhysicalId: string, mappedOUIds: Record<string, string> = {}): Promise<Record<string, string>> {
         ConsoleUtil.LogDebug(`calling describe ou for child ${childOuPhysicalId}`);
 
         const childOu = await this.organizationService.describeOrganizationalUnit({ OrganizationalUnitId: childOuPhysicalId }).promise();
@@ -246,7 +246,7 @@ export class AwsOrganizationWriter {
         return organizationalUnitId;
     }
 
-    public async updateOrganizationalUnit(resource: OrganizationalUnitResource, physicalId: string) {
+    public async updateOrganizationalUnit(resource: OrganizationalUnitResource, physicalId: string): Promise<void>  {
         const updateOrganizationalUnitRequest: UpdateOrganizationalUnitRequest = {
             OrganizationalUnitId: physicalId,
             Name: resource.organizationalUnitName,
@@ -254,7 +254,7 @@ export class AwsOrganizationWriter {
         await this.organizationService.updateOrganizationalUnit(updateOrganizationalUnitRequest).promise();
     }
 
-    public async deleteOrganizationalUnit(physicalId: string) {
+    public async deleteOrganizationalUnit(physicalId: string): Promise<void>  {
         const existingOU = this.organization.organizationalUnits.find(x => x.Id === physicalId);
         if (existingOU === undefined) {
             ConsoleUtil.LogDebug(`can't delete organizational unit ${physicalId} not found.`);
@@ -305,7 +305,7 @@ export class AwsOrganizationWriter {
         return accountId;
     }
 
-    public async updateAccount(resource: AccountResource, accountId: string, previousResource?: AccountResource) {
+    public async updateAccount(resource: AccountResource, accountId: string, previousResource?: AccountResource): Promise<void>  {
         const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === accountId);
 
         if (account.Name !== resource.accountName) {
@@ -471,7 +471,7 @@ export class AwsOrganizationWriter {
         return accountCreationStatus.AccountId;
     }
 
-    private async _moveOuChildren(sourceId: string, targetId: string, mappedOUIds: Record<string, string>, onlyAccounts = false) {
+    private async _moveOuChildren(sourceId: string, targetId: string, mappedOUIds: Record<string, string>, onlyAccounts = false): Promise<void>  {
 
         const listAccountsOfPreviousOURequest: ListAccountsForParentRequest = { ParentId: sourceId };
         let listAccountsOfPreviousOU: ListAccountsForParentResponse = {};
@@ -513,6 +513,6 @@ export class AwsOrganizationWriter {
     }
 }
 
-const sleep = (time: number) => {
+const sleep = (time: number): Promise<void> => {
     return new Promise(resolve => setTimeout(resolve, time));
 };

@@ -42,13 +42,13 @@ export class BuildConfiguration {
 
         return result;
     }
-    private validateTasksFile(tasks: IBuildTask[]) {
+    private validateTasksFile(tasks: IBuildTask[]): void {
         const updateStackTasks = tasks.filter(x => x.type === 'update-stacks') as BaseStacksTask[];
         const stackNames = updateStackTasks.map(x => x.stackName);
         this.throwForDuplicateVale(stackNames, x => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
     }
 
-    private fixateOrganizationFile(command: ICommandArgs) {
+    private fixateOrganizationFile(command: ICommandArgs): void{
         const updateStacksCommand = command as IUpdateStacksCommandArgs;
 
         if (updateStacksCommand.organizationFile === undefined) {
@@ -84,7 +84,7 @@ export class BuildConfiguration {
         return result;
     }
 
-    private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error) {
+    private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error): void {
         const sortedArr = arr.sort();
         for (let i = 0; i < sortedArr.length - 1; i++) {
             if (sortedArr[i + 1] === sortedArr[i]) {
