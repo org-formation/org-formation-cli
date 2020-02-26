@@ -39,7 +39,7 @@ export class AwsUtil {
         await s3client.deleteObject({Bucket: bucketName, Key: objectKey}).promise();
     }
 
-    private static async getOrCreateService<TService>(ctr: new(args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}) {
+    private static async getOrCreateService<TService>(ctr: new(args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}): Promise<TService> {
         const cachedService = cache[cacheKey];
         if (cachedService) {
             return cachedService;

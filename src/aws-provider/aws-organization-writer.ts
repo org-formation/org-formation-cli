@@ -26,7 +26,7 @@ export class AwsOrganizationWriter {
             PolicyType: 'SERVICE_CONTROL_POLICY',
         };
         try {
-            const response = await this.organizationService.enablePolicyType(enablePolicyTypeReq).promise();
+            await this.organizationService.enablePolicyType(enablePolicyTypeReq).promise();
             ConsoleUtil.LogDebug('enabled service control policies');
         } catch (err) {
             if (err && err.code === 'PolicyTypeAlreadyEnabledException') {

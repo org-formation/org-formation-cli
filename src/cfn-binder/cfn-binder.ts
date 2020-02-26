@@ -178,12 +178,12 @@ export class CloudFormationBinder {
         return result;
     }
 
-    public enumTasks() {
+    public enumTasks(): ICfnTask[] {
         const result: ICfnTask[] = [];
         for (const binding of this.enumBindings()) {
             if (binding.action === 'UpdateOrCreate') {
                 const task = this.taskProvider.createUpdateTemplateTask(binding);
-                task.isDependency = other => {
+                task.isDependency = (other: ICfnTask): boolean => {
                     return binding.accountDependencies.includes(other.accountId) ||
                            binding.regionDependencies.includes(other.region) ||
                            binding.dependencies.findIndex(x => x.outputAccountId === other.accountId && x.outputRegion === other.region && x.outputStackName === other.stackName) > -1;

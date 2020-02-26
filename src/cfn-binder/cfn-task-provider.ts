@@ -37,8 +37,8 @@ export class CfnTaskProvider {
             region: binding.region,
             stackName: binding.stackName,
             action: 'UpdateOrCreate',
-            isDependency: () => false,
-            perform: async () => {
+            isDependency: (): boolean => false,
+            perform: async (): Promise<void> => {
 
                 const templateBody = binding.template.createTemplateBody();
                 const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region);
@@ -174,9 +174,9 @@ export class CfnTaskProvider {
             accountId: binding.accountId,
             region: binding.region,
             stackName: binding.stackName,
-            isDependency: () => false,
+            isDependency: (): boolean => false,
             action: 'Delete',
-            perform: async () => {
+            perform: async (): Promise<void> => {
                 try {
                     const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region);
                     const deleteStackInput: DeleteStackInput = {

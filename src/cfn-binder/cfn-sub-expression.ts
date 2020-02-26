@@ -31,10 +31,10 @@ export class SubExpression {
             this.variables = matches.map(match => this.createSubExpressionVariable(match, this));
         }
     }
-    public hasVariables() {
+    public hasVariables(): boolean {
         return this.expression.indexOf('$') > -1;
     }
-    public getSubValue() {
+    public getSubValue(): string | any[] {
         if (!this.locals) {
             return this.expression;
         } else {
