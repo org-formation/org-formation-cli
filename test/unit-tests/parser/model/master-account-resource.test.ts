@@ -74,4 +74,9 @@ describe('when creating master account resource', () => {
         expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
         expect(() => { new MasterAccountResource(template, 'logical-id', resource); }).toThrowError(/AccountId/);
     });
+
+    test('hash is stable (and must be the same over versions)', () => {
+        const account = new MasterAccountResource(template, 'logical-id', resource);
+        expect(account.calculateHash()).toBe('87a97c14b17d6b49a11da909afd7539b');
+    });
 });

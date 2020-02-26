@@ -36,4 +36,9 @@ describe('when creating organizational unit resource', () => {
         expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
         expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/OrganizationalUnitName/);
     });
+
+    test('hash is stable (and must be the same over versions)', () => {
+        const instance = new OrganizationalUnitResource(template, 'logical-id', resource);
+        expect(instance.calculateHash()).toBe('26f3bfb7ba4278ff73d8f937db5a07ab');
+    });
 });

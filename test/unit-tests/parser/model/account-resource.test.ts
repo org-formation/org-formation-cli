@@ -69,4 +69,10 @@ describe('when creating account resource', () => {
         const account = new AccountResource(template, 'logical-id', resource);
         expect(typeof account.accountId).toBe('string');
     });
+
+    test('hash is stable (and must be the same over versions)', () => {
+        const account = new AccountResource(template, 'logical-id', resource);
+        expect(account.calculateHash()).toBe('60f60a1b51a156dd809bec598d1eac8a');
+    });
+
 });

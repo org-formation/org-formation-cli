@@ -53,4 +53,8 @@ describe('when creating service control policy resource', () => {
         expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).toThrowError(/logical-id/);
         expect(() => { new ServiceControlPolicyResource(template, 'logical-id', resource); }).toThrowError(/PolicyDocument/);
     });
+    test('hash is stable (and must be the same over versions)', () => {
+        const instance = new ServiceControlPolicyResource(template, 'logical-id', resource);
+        expect(instance.calculateHash()).toBe('fc4164062320f0c281888cdb1649d6d8');
+    });
 });

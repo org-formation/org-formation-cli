@@ -167,7 +167,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'Create',
             dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
-            perform: async () => {
+            perform: async task => {
                 task.result = await that.writer.createOrganizationalUnit(resource);
                 that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result);
             },

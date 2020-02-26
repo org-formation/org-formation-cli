@@ -29,4 +29,8 @@ describe('when organization root resource', () => {
         new OrganizationRootResource(template, 'logical-id', resource);
     });
 
+    test('hash is stable (and must be the same over versions)', () => {
+        const instance = new OrganizationRootResource(template, 'logical-id', resource);
+        expect(instance.calculateHash()).toBe('f99f3cff11045a38a95d0d1a3a557b99');
+    });
 });
