@@ -100,8 +100,6 @@ describe('when saving state that is dirty', () => {
     })
 });
 
-
-
 describe('when setting bindings', () => {
     let state: PersistedState;
 
@@ -216,6 +214,86 @@ describe('when setting binding for unique type', () => {
     test('state is marked as dirty', () => {
         expect((state as any).dirty).toBe(true);
     })
+});
+
+
+describe('when setting binding physical id', () => {
+    let state: PersistedState;
+
+    beforeEach(() => {
+        state = PersistedState.CreateEmpty('123123123123');
+
+        state.setBindingPhysicalId('myType', 'logical-id-1', 'physical-id-2');
+    });
+
+
+    test('put binding can be read', () => {
+        const binding = state.getBinding('myType', 'logical-id-1');
+        expect(binding).toBeDefined();
+        expect(binding.physicalId).toBe('physical-id-2')
+    })
+
+    test('put binding has undefined hash', () => {
+        const binding = state.getBinding('myType', 'logical-id-1');
+        expect(binding.lastCommittedHash).toBeUndefined();
+    });
+});
+
+describe('when overwriting binding physical id', () => {
+    let state: PersistedState;
+
+    beforeEach(() => {
+        state = PersistedState.CreateEmpty('123123123123');
+        state.setBinding({
+            logicalId: 'logical-id-1',
+            type: 'myType',
+            physicalId: 'old',
+            lastCommittedHash: '23123'
+        });
+
+
+        state.setBindingPhysicalId('myType', 'logical-id-1', 'physical-id-2');
+    });
+
+
+    test('put binding can be read', () => {
+        const binding = state.getBinding('myType', 'logical-id-1');
+        expect(binding).toBeDefined();
+        expect(binding.physicalId).toBe('physical-id-2')
+    })
+
+    test('binding keeps hash', () => {
+        const binding = state.getBinding('myType', 'logical-id-1');
+        expect(binding.lastCommittedHash).toBe('23123');
+    });
+});
+
+describe('when overwriting binding hash', () => {
+    let state: PersistedState;
+
+    beforeEach(() => {
+        state = PersistedState.CreateEmpty('123123123123');
+        state.setBinding({
+            logicalId: 'logical-id-1',
+            type: 'myType',
+            physicalId: '123123123',
+            lastCommittedHash: '23123'
+        });
+
+        state.setBindingHash('myType', 'logical-id-1', 'hash');
+    });
+
+
+    test('put binding hash can be read', () => {
+        const binding = state.getBinding('myType', 'logical-id-1');
+        expect(binding).toBeDefined();
+        expect(binding.lastCommittedHash).toBe('hash')
+    })
+
+    test('put binding keeps physical id', () => {
+        const binding = state.getBinding('myType', 'logical-id-1');
+        expect(binding.physicalId).toBe('123123123');
+    });
 });
 
 describe('when setting targets', () => {

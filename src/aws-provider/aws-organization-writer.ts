@@ -220,7 +220,7 @@ export class AwsOrganizationWriter {
                     parentOrganizationalOU.OrganizationalUnits.push(organizationalUnit);
                 }
             }
-        } catch(err) {
+        } catch (err) {
             ConsoleUtil.LogWarning(`unable to update internal model. ${err}`);
         }
 
@@ -257,12 +257,12 @@ export class AwsOrganizationWriter {
     public async deleteOrganizationalUnit(physicalId: string) {
         const existingOU = this.organization.organizationalUnits.find(x => x.Id === physicalId);
         if (existingOU === undefined) {
-            ConsoleUtil.LogDebug(`organizational unit ${physicalId} not found.`);
+            ConsoleUtil.LogDebug(`can't delete organizational unit ${physicalId} not found.`);
             return;
         }
         const root = this.organization.roots[0];
 
-        this._moveOuChildren(physicalId, root.Id, {});
+        this._moveOuChildren(physicalId, root.Id, {}, true);
 
         const deleteOrganizationalUnitRequest: DeleteOrganizationalUnitRequest = {
             OrganizationalUnitId: physicalId,
@@ -471,7 +471,7 @@ export class AwsOrganizationWriter {
         return accountCreationStatus.AccountId;
     }
 
-    private async _moveOuChildren(sourceId: string, targetId: string, mappedOUIds: Record<string, string>) {
+    private async _moveOuChildren(sourceId: string, targetId: string, mappedOUIds: Record<string, string>, onlyAccounts = false) {
 
         const listAccountsOfPreviousOURequest: ListAccountsForParentRequest = { ParentId: sourceId };
         let listAccountsOfPreviousOU: ListAccountsForParentResponse = {};
@@ -484,27 +484,31 @@ export class AwsOrganizationWriter {
             listAccountsOfPreviousOURequest.NextToken = listAccountsOfPreviousOURequest.NextToken;
         } while (listAccountsOfPreviousOU.NextToken);
 
-        const listServiceControlPoliciesOfPreviousOURequest: ListPoliciesForTargetRequest = { TargetId: sourceId, Filter: 'SERVICE_CONTROL_POLICY' };
-        let listServiceControlPoliciesOfPreviousOU: ListPoliciesForTargetResponse = {};
-        do {
-            listServiceControlPoliciesOfPreviousOU = await this.organizationService.listPoliciesForTarget(listServiceControlPoliciesOfPreviousOURequest).promise();
-            for (const scp of listServiceControlPoliciesOfPreviousOU.Policies) {
-                ConsoleUtil.LogDebug(`moving scp from ou ${sourceId} to ou ${targetId}`);
-                const attachPromise = this.organizationService.attachPolicy({ PolicyId: scp.Id, TargetId: targetId });
-                const detachPromise = this.organizationService.detachPolicy({ PolicyId: scp.Id, TargetId: sourceId });
-                await Promise.all([attachPromise, detachPromise]);
-            }
-        } while (listServiceControlPoliciesOfPreviousOU.NextToken);
+        if (!onlyAccounts) {
 
-        const listChildUnitsOfPreviousOURequest: ListOrganizationalUnitsForParentRequest = { ParentId: sourceId };
-        let childUnitsOfPreviousOU: ListOrganizationalUnitsForParentResponse = await this.organizationService.listOrganizationalUnitsForParent(listChildUnitsOfPreviousOURequest).promise();
-        do {
-            childUnitsOfPreviousOU = await this.organizationService.listOrganizationalUnitsForParent(listChildUnitsOfPreviousOURequest).promise();
-            for (const child of childUnitsOfPreviousOU.OrganizationalUnits) {
-                ConsoleUtil.LogDebug(`moving cnild ou from ou ${sourceId} to ou ${targetId}`);
-                await this.moveOU(targetId, child.Id, mappedOUIds);
-            }
-        } while (childUnitsOfPreviousOU.NextToken);
+            const listServiceControlPoliciesOfPreviousOURequest: ListPoliciesForTargetRequest = { TargetId: sourceId, Filter: 'SERVICE_CONTROL_POLICY' };
+            let listServiceControlPoliciesOfPreviousOU: ListPoliciesForTargetResponse = {};
+            do {
+                listServiceControlPoliciesOfPreviousOU = await this.organizationService.listPoliciesForTarget(listServiceControlPoliciesOfPreviousOURequest).promise();
+                for (const scp of listServiceControlPoliciesOfPreviousOU.Policies) {
+                    ConsoleUtil.LogDebug(`moving scp from ou ${sourceId} to ou ${targetId}`);
+                    const attachPromise = this.organizationService.attachPolicy({ PolicyId: scp.Id, TargetId: targetId });
+                    const detachPromise = this.organizationService.detachPolicy({ PolicyId: scp.Id, TargetId: sourceId });
+                    await Promise.all([attachPromise, detachPromise]);
+                }
+            } while (listServiceControlPoliciesOfPreviousOU.NextToken);
+
+            const listChildUnitsOfPreviousOURequest: ListOrganizationalUnitsForParentRequest = { ParentId: sourceId };
+            let childUnitsOfPreviousOU: ListOrganizationalUnitsForParentResponse = await this.organizationService.listOrganizationalUnitsForParent(listChildUnitsOfPreviousOURequest).promise();
+            do {
+                childUnitsOfPreviousOU = await this.organizationService.listOrganizationalUnitsForParent(listChildUnitsOfPreviousOURequest).promise();
+                for (const child of childUnitsOfPreviousOU.OrganizationalUnits) {
+                    ConsoleUtil.LogDebug(`moving cnild ou from ou ${sourceId} to ou ${targetId}`);
+                    await this.moveOU(targetId, child.Id, mappedOUIds);
+                }
+            } while (childUnitsOfPreviousOU.NextToken);
+
+        }
 
     }
 }

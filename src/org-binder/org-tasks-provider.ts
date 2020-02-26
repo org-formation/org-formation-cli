@@ -169,6 +169,7 @@ export class TaskProvider {
             dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
             perform: async task => {
                 task.result = await that.writer.createOrganizationalUnit(resource);
+                that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result);
             },
         };
 
@@ -197,13 +198,8 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'CommitHash',
             dependentTasks: tasks,
-            perform: async task => {
-                that.state.setBinding({
-                    type: resource.type,
-                    logicalId: resource.logicalId,
-                    lastCommittedHash: hash,
-                    physicalId: createOrganizationalUnitTask.result,
-                });
+            perform: async () => {
+                that.state.setBindingHash(resource.type, resource.logicalId, hash);
             },
         };
 
@@ -232,7 +228,7 @@ export class TaskProvider {
             return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.logicalId).physicalId;
         };
 
-        const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
+        const previousSCPs = this.resolveIDs(previousResource === undefined ? [] : previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
         for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
             const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, fnGetPhysicalId);
@@ -283,12 +279,7 @@ export class TaskProvider {
             action:  'CommitHash',
             dependentTasks: tasks,
             perform: async task => {
-                that.state.setBinding({
-                    type: resource.type,
-                    logicalId: resource.logicalId,
-                    lastCommittedHash: hash,
-                    physicalId,
-                });
+                that.state.setBindingHash(resource.type, resource.logicalId, hash);
             },
         };
 
@@ -325,7 +316,10 @@ export class TaskProvider {
 
     public createOrganizationalUnitDeleteTasks(binding: IBinding): IBuildTask[] {
         const that = this;
-        return [{
+
+        const previous = this.previousTemplate.organizationSection.organizationalUnits.find(x=>x.logicalId === binding.logicalId);
+
+        const task: IBuildTask = {
             type: binding.type,
             logicalId: binding.logicalId,
             action: 'Delete',
@@ -333,7 +327,19 @@ export class TaskProvider {
                 await that.writer.deleteOrganizationalUnit(binding.physicalId);
                 this.state.removeBinding(binding);
             },
-        }];
+        };
+
+        if (previous !== undefined && previous.organizationalUnits.length > 0) {
+            task.dependentTaskFilter = x => {
+                for(const child of previous.organizationalUnits) {
+                    if (child.TemplateResource && child.TemplateResource.logicalId === x.logicalId) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+        }
+        return [task];
     }
 
     public createAccountUpdateTasks(resource: AccountResource, physicalId: string, hash: string): IBuildTask[] {
@@ -579,8 +585,8 @@ export class TaskProvider {
         };
         if (childOu.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId)) {
             attachChildOuTask.dependentTaskFilter = task => task.logicalId === childOu.TemplateResource.logicalId &&
-                (task.action === 'Create' || task.action.startsWith('Detach OU')) &&
-                task.type === OrgResourceTypes.OrganizationalUnit;
+                (task.action === 'Create'
+                || task.action.startsWith('Detach OU')) && task.type === OrgResourceTypes.OrganizationalUnit;
         }
         return attachChildOuTask;
     }

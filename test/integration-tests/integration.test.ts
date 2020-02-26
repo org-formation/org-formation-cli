@@ -1,4 +1,4 @@
-import { S3, SharedIniFileCredentials, STS } from 'aws-sdk';
+import { S3, SharedIniFileCredentials } from 'aws-sdk';
 import { spawnSync, SpawnSyncReturns } from 'child_process';
 import { readFileSync, unlinkSync, writeFileSync } from 'fs';
 import * as path from 'path';
@@ -120,4 +120,113 @@ describe('when calling org-formation init', () => {
             expect(describeStacksResponse.stderr.toString()).toBe('');
         });
     });
+
+
+//     describe('when creating nested OU\'s', () => {
+//         let updateResponse: SpawnSyncReturns<string>;
+
+//         const templateParentChildPath = templateFileName.replace('.yml', '-parent-child.yml');
+//         const parentChild = `
+//   ParentOU:
+//     Type: OC::ORG::OrganizationalUnit
+//     Properties:
+//       OrganizationalUnitName: parent
+//       OrganizationalUnits: !Ref ChildOU
+
+//   ChildOU:
+//     Type: OC::ORG::OrganizationalUnit
+//     Properties:
+//       OrganizationalUnitName: child`
+
+//         beforeAll(() => {
+//             const source = readFileSync(templateFileName).toString('utf-8');
+//             writeFileSync(templateParentChildPath, source + parentChild);
+
+//             updateResponse = spawnSync('ts-node', ['cli.ts', 'update', templateParentChildPath,
+//                 '--profile', awsProfileForTests,
+//                 '--state-bucket-name', bucketName,
+//                 '--print-stack']);
+//         });
+
+//         afterAll(() => {
+
+//             const cleanupResponse = spawnSync('ts-node', ['cli.ts', 'update', templateFileName,
+//                 '--profile', awsProfileForTests,
+//                 '--state-bucket-name', bucketName,
+//                 '--print-stack']);
+
+//             expect(cleanupResponse).toBeDefined();
+//             expect(cleanupResponse.status).toBe(0);
+//             expect(cleanupResponse.stderr.toString()).toBe('');
+
+//             unlinkSync(templateParentChildPath);
+//         });
+
+//         test('parent OU is added to root ', async () => {
+//             expect(updateResponse).toBeDefined();
+//             expect(updateResponse.stderr.toString()).toBe('');
+//             expect(updateResponse.status).toBe(0);
+//             await expectOUInRoot(false, true);
+//         });
+
+//         let expectOUInRoot = async (expectChild: boolean, expectParent: boolean) => {
+
+//             const orgService = new Organizations({region: 'us-east-1'});
+//             const roots = await orgService.listRoots().promise();
+//             const organizationalUnits = await orgService.listOrganizationalUnitsForParent({ ParentId: roots.Roots[0].Id }).promise();
+//             const parent = organizationalUnits.OrganizationalUnits.find(x=>x.Name === 'parent');
+//             const child = organizationalUnits.OrganizationalUnits.find(x=>x.Name === 'child');
+
+//             if (expectChild) {
+//                 expect(child).toBeDefined();
+//             } else {
+//                 expect(child).toBeUndefined();
+//             }
+
+//             if (expectParent) {
+//                 expect(parent).toBeDefined();
+//             } else {
+//                 expect(parent).toBeUndefined();
+//             }
+//         };
+
+//         describe('when swapping parent and child', () => {
+
+//             const templateChildParentPath = templateFileName.replace('.yml', '-child-parent.yml');
+//             const childParent = `
+//   ParentOU:
+//     Type: OC::ORG::OrganizationalUnit
+//     Properties:
+//       OrganizationalUnitName: parent
+
+//   ChildOU:
+//     Type: OC::ORG::OrganizationalUnit
+//     Properties:
+//       OrganizationalUnitName: child
+//       OrganizationalUnits: !Ref ParentOU`
+//             let update2Response: SpawnSyncReturns<string>;
+
+//             beforeAll(() => {
+//                 const source = readFileSync(templateFileName).toString('utf-8');
+//                 writeFileSync(templateChildParentPath, source + childParent);
+
+//                 update2Response = spawnSync('ts-node', ['cli.ts', 'update', templateChildParentPath,
+//                     '--profile', awsProfileForTests,
+//                     '--state-bucket-name', bucketName,
+//                     '--print-stack']);
+//             });
+
+//             afterAll(()=> {
+//                 unlinkSync(templateChildParentPath);
+//             });
+
+//             test('child OU is now at root ', async () => {
+//                 expect(update2Response).toBeDefined();
+//                 expect(update2Response.stderr.toString()).toBe('');
+//                 expect(updateResponse.status).toBe(0);
+//                 await expectOUInRoot(true, false);
+//             });
+
+//         });
+//     })
 });

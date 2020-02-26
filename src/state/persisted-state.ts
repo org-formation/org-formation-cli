@@ -174,6 +174,37 @@ export class PersistedState {
         this.dirty = true;
     }
 
+
+    public setBindingHash(type: string, logicalId: string, lastCommittedHash: string) {
+        let typeDict: Record<string, IBinding> = this.state.bindings[type];
+        if (!typeDict) {
+            typeDict = this.state.bindings[type] = {};
+        }
+
+        const current = typeDict[logicalId];
+        if (current === undefined){
+            typeDict[logicalId] = { lastCommittedHash, logicalId, type } as IBinding;
+        } else {
+            current.lastCommittedHash = lastCommittedHash;
+        }
+        this.dirty = true;
+    }
+
+    public setBindingPhysicalId(type: string, logicalId: string, physicalId: string) {
+        let typeDict: Record<string, IBinding> = this.state.bindings[type];
+        if (!typeDict) {
+            typeDict = this.state.bindings[type] = {};
+        }
+
+        const current = typeDict[logicalId];
+        if (current === undefined){
+            typeDict[logicalId] = { physicalId, logicalId, type } as IBinding;
+        } else {
+            current.physicalId = physicalId;
+        }
+        this.dirty = true;
+    }
+
     public removeBinding(binding: IBinding) {
         let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
         if (!typeDict) {
