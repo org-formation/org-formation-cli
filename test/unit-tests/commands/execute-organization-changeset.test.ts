@@ -1,21 +1,21 @@
 import { Command, Option } from 'commander';
-import { ExecuteChangeSetCommand, IExecuteChangeSetCommandArgs } from '../../../src/commands/execute-organization-changeset';
+import { ExecuteChangeSetCommand, IExecuteChangeSetCommandArgs } from '~commands/execute-organization-changeset';
 import Sinon = require('sinon');
 import { ConsoleUtil } from '../../../src/console-util';
-import { TemplateRoot } from '../../../src/parser/parser';
-import { PersistedState } from '../../../src/state/persisted-state';
-import { ICfnTask } from '../../../src/cfn-binder/cfn-task-provider';
-import { CfnTaskRunner } from '../../../src/cfn-binder/cfn-task-runner';
+import { TemplateRoot } from '~parser/parser';
+import { PersistedState } from '~state/persisted-state';
+import { ICfnTask } from '~cfn-binder/cfn-task-provider';
+import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { AwsUtil } from '../../../src/aws-util';
 import { readFileSync } from 'fs';
-import { ChangeSetProvider, IStoredChangeSet, IOrganizationChange } from '../../../src/change-set/change-set-provider';
-import { S3StorageProvider } from '../../../src/state/storage-provider';
-import { CloudFormationBinder } from '../../../src/cfn-binder/cfn-binder';
-import { OrganizationBinder } from '../../../src/org-binder/org-binder';
-import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
-import { IBuildTask } from '../../../src/org-binder/org-tasks-provider';
-import { TaskRunner } from '../../../src/org-binder/org-task-runner';
-import { AwsOrganization } from '../../../src/aws-provider/aws-organization';
+import { ChangeSetProvider, IStoredChangeSet, IOrganizationChange } from '~change-set/change-set-provider';
+import { S3StorageProvider } from '~state/storage-provider';
+import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
+import { OrganizationBinder } from '~org-binder/org-binder';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { IBuildTask } from '~org-binder/org-tasks-provider';
+import { TaskRunner } from '~org-binder/org-task-runner';
+import { AwsOrganization } from '~aws-provider/aws-organization';
 
 describe('when creating execute change set command', () => {
     let command: ExecuteChangeSetCommand;

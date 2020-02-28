@@ -3,7 +3,7 @@ import { spawnSync, SpawnSyncReturns } from 'child_process';
 import { readFileSync, unlinkSync, writeFileSync } from 'fs';
 import * as path from 'path';
 import { v4 } from 'uuid';
-import {TemplateRoot} from '../../src/parser/parser';
+import {TemplateRoot} from '~parser/parser';
 
 const awsProfileForTests = 'org-formation-test';
 

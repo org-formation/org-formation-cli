@@ -1,4 +1,5 @@
 import { Organization } from 'aws-sdk/clients/organizations';
+import { OrgFormationError } from '../org-formation-error';
 import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot } from './aws-organization-reader';
 
 export class AwsOrganization {
@@ -30,10 +31,15 @@ export class AwsOrganization {
             this.accounts = accounts.filter(x => x.Id !== this.organization.MasterAccountId);
             this.organizationalUnits = await this.reader.organizationalUnits.getValue();
         };
+
         try {
             await Promise.all([setOrgPromise(), setRootsPromise(), setPolicies(), setAccounts()]);
         } catch (err) {
             throw err;
+        }
+
+        if (this.reader.hasMasterInOrganizationUnit(this.organization.MasterAccountId)) {
+            throw new OrgFormationError('This is not supported yet, apologies.');
         }
     }
 

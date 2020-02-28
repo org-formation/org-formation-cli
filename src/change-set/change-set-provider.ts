@@ -1,8 +1,8 @@
 import { v4 } from 'uuid';
-import { IBuildTask } from '../org-binder/org-tasks-provider';
 import { OrgFormationError } from '../org-formation-error';
-import { ITemplate, TemplateRoot } from '../parser/parser';
-import { S3StorageProvider } from '../state/storage-provider';
+import { IBuildTask } from '~org-binder/org-tasks-provider';
+import { ITemplate, TemplateRoot } from '~parser/parser';
+import { S3StorageProvider } from '~state/storage-provider';
 
 export class ChangeSetProvider {
 

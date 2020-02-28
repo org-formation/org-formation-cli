@@ -1,5 +1,5 @@
-import { CloudFormationResource } from '../../../../src/parser/model/cloudformation-resource';
-import { IOrganizationBinding, IResource, IResourceRef, IResourceRefExpression, TemplateRoot } from '../../../../src/parser/parser';
+import { CloudFormationResource } from '~parser/model/cloudformation-resource';
+import { IOrganizationBinding, IResource, IResourceRef, IResourceRefExpression, TemplateRoot } from '~parser/parser';
 import { TestTemplates } from '../../test-templates';
 
 describe('when creating cloudformation resource with * accounts', () => {

@@ -8,8 +8,8 @@ import { WritableStream } from 'memory-streams';
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { Validator } from '../parser/validator';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { Validator } from '~parser/validator';
 
 const commandName = 'init-pipeline';
 const commandDescription = 'initializes organization and created codecommit repo, codebuild and codepipeline';

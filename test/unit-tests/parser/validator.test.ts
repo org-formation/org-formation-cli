@@ -1,7 +1,7 @@
 
 import Sinon from 'sinon';
 import { ConsoleUtil } from '../../../src/console-util';
-import { Validator } from '../../../src/parser/validator';
+import { Validator } from '~parser/validator';
 
 describe('when validating region', () => {
     const sandbox = Sinon.createSandbox();

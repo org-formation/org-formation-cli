@@ -2,9 +2,9 @@ import * as AWS from 'aws-sdk';
 import * as AWSMock from 'aws-sdk-mock';
 import { CreateAccountRequest, TagResourceRequest, UntagResourceRequest } from 'aws-sdk/clients/organizations';
 import * as Sinon from 'sinon';
-import { AwsEvents } from '../../../src/aws-provider/aws-events';
-import { AwsOrganization } from '../../../src/aws-provider/aws-organization';
-import { AwsOrganizationWriter } from '../../../src/aws-provider/aws-organization-writer';
+import { AwsEvents } from '~aws-provider/aws-events';
+import { AwsOrganization } from '~aws-provider/aws-organization';
+import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
 import { ConsoleUtil } from '../../../src/console-util';
 import { TestOrganizations } from '../test-organizations';
 

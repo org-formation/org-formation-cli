@@ -1,16 +1,16 @@
-import { UpdateOrganizationCommand, IUpdateOrganizationCommandArgs } from "../../../src/commands/update-organization";
+import { UpdateOrganizationCommand, IUpdateOrganizationCommandArgs } from "~commands/update-organization";
 import { Command, Option } from 'commander';
 import Sinon = require("sinon");
 import { ConsoleUtil } from "../../../src/console-util";
 import { AwsUtil } from "../../../src/aws-util";
-import { TemplateRoot } from "../../../src/parser/parser";
-import { PersistedState } from "../../../src/state/persisted-state";
-import { S3StorageProvider } from "../../../src/state/storage-provider";
-import { OrganizationBinder } from "../../../src/org-binder/org-binder";
-import { IBuildTask } from "../../../src/org-binder/org-tasks-provider";
-import { TaskRunner } from "../../../src/org-binder/org-task-runner";
-import { OrgResourceTypes } from "../../../src/parser/model/resource-types";
-import { AwsOrganization } from "../../../src/aws-provider/aws-organization";
+import { TemplateRoot } from "~parser/parser";
+import { PersistedState } from "~state/persisted-state";
+import { S3StorageProvider } from "~state/storage-provider";
+import { OrganizationBinder } from "~org-binder/org-binder";
+import { IBuildTask } from "~org-binder/org-tasks-provider";
+import { TaskRunner } from "~org-binder/org-task-runner";
+import { OrgResourceTypes } from "~parser/model/resource-types";
+import { AwsOrganization } from "~aws-provider/aws-organization";
 
 describe('when creating update command', () => {
     let command: UpdateOrganizationCommand;

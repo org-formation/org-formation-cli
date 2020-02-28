@@ -1,7 +1,7 @@
 
-import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
-import { IServiceControlPolicyProperties, ServiceControlPolicyResource } from '../../../../src/parser/model/service-control-policy-resource';
-import { IResource, TemplateRoot } from '../../../../src/parser/parser';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { IServiceControlPolicyProperties, ServiceControlPolicyResource } from '~parser/model/service-control-policy-resource';
+import { IResource, TemplateRoot } from '~parser/parser';
 
 describe('when creating service control policy resource', () => {
     let template: TemplateRoot;

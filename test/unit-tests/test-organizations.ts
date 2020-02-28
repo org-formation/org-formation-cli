@@ -1,5 +1,5 @@
-import { AwsOrganization } from '../../src/aws-provider/aws-organization';
-import { AWSAccount } from '../../src/aws-provider/aws-organization-reader';
+import { AwsOrganization } from '~aws-provider/aws-organization';
+import { AWSAccount } from '~aws-provider/aws-organization-reader';
 
 export class TestOrganizations {
     public static createBasicOrganization(): AwsOrganization {

@@ -1,6 +1,6 @@
-import { PersistedState } from "../../../src/state/persisted-state";
+import { PersistedState } from "~state/persisted-state";
 import Sinon = require("sinon");
-import { S3StorageProvider, IStorageProvider } from "../../../src/state/storage-provider";
+import { S3StorageProvider, IStorageProvider } from "~state/storage-provider";
 
 describe('when creating empty persisted state', () => {
     let emptyState: PersistedState;

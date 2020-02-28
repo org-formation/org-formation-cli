@@ -1,14 +1,14 @@
 import { OrgFormationError } from '../org-formation-error';
-import { AccountResource } from '../parser/model/account-resource';
-import { MasterAccountResource } from '../parser/model/master-account-resource';
-import { OrganizationRootResource } from '../parser/model/organization-root-resource';
-import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
-import { Resource } from '../parser/model/resource';
-import { OrgResourceTypes } from '../parser/model/resource-types';
-import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
-import { TemplateRoot } from '../parser/parser';
-import { IBinding, PersistedState } from '../state/persisted-state';
 import { IBuildTask, TaskProvider } from './org-tasks-provider';
+import { AccountResource } from '~parser/model/account-resource';
+import { MasterAccountResource } from '~parser/model/master-account-resource';
+import { OrganizationRootResource } from '~parser/model/organization-root-resource';
+import { OrganizationalUnitResource } from '~parser/model/organizational-unit-resource';
+import { Resource } from '~parser/model/resource';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { ServiceControlPolicyResource } from '~parser/model/service-control-policy-resource';
+import { TemplateRoot } from '~parser/parser';
+import { IBinding, PersistedState } from '~state/persisted-state';
 
 export class OrganizationBinder {
     private taskProvider: TaskProvider;

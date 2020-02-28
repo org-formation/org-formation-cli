@@ -305,6 +305,16 @@ export class AwsOrganizationReader {
     public readonly roots: Lazy<AWSRoot[]>;
     private readonly organizationService: Organizations;
 
+    public async hasMasterInOrganizationUnit(masterAccountId: string): Promise<boolean> {
+        const organizationalUnits = await this.organizationalUnits.getValue();
+        if (masterAccountId && organizationalUnits) {
+            return organizationalUnits.some((ou: AWSOrganizationalUnit) => {
+                return ou.Accounts.some((x: AWSAccount) => x.Id === masterAccountId);
+            });
+        }
+        return false;
+    }
+
     constructor(organizationService: Organizations) {
         this.organizationService = organizationService;
         this.policies = new Lazy(this, AwsOrganizationReader.listPolicies);

@@ -1,8 +1,8 @@
-import { CfnTemplate } from '../../../src/cfn-binder/cfn-template';
-import { CloudFormationResource } from '../../../src/parser/model/cloudformation-resource';
-import { IResourceTarget } from '../../../src/parser/model/resources-section';
-import { TemplateRoot } from '../../../src/parser/parser';
-import { PersistedState } from '../../../src/state/persisted-state';
+import { CfnTemplate } from '~cfn-binder/cfn-template';
+import { CloudFormationResource } from '~parser/model/cloudformation-resource';
+import { IResourceTarget } from '~parser/model/resources-section';
+import { TemplateRoot } from '~parser/parser';
+import { PersistedState } from '~state/persisted-state';
 import { TestTemplates } from '../test-templates';
 
 

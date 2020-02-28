@@ -1,14 +1,14 @@
-import { AwsOrganizationWriter } from '../aws-provider/aws-organization-writer';
 import { ConsoleUtil } from '../console-util';
-import { AccountResource } from '../parser/model/account-resource';
-import { OrganizationRootResource } from '../parser/model/organization-root-resource';
-import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
-import { PasswordPolicyResource } from '../parser/model/password-policy-resource';
-import { Reference, Resource } from '../parser/model/resource';
-import { OrgResourceTypes } from '../parser/model/resource-types';
-import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
-import { TemplateRoot } from '../parser/parser';
-import { IBinding, PersistedState } from '../state/persisted-state';
+import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
+import { AccountResource } from '~parser/model/account-resource';
+import { OrganizationRootResource } from '~parser/model/organization-root-resource';
+import { OrganizationalUnitResource } from '~parser/model/organizational-unit-resource';
+import { PasswordPolicyResource } from '~parser/model/password-policy-resource';
+import { Reference, Resource } from '~parser/model/resource';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { ServiceControlPolicyResource } from '~parser/model/service-control-policy-resource';
+import { TemplateRoot } from '~parser/parser';
+import { IBinding, PersistedState } from '~state/persisted-state';
 
 export class TaskProvider {
     private state: PersistedState;

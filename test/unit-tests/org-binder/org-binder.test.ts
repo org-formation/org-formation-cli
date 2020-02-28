@@ -1,7 +1,7 @@
 import * as Sinon from 'sinon';
-import { OrganizationBinder } from '../../../src/org-binder/org-binder';
-import { IBuildTask, TaskProvider } from '../../../src/org-binder/org-tasks-provider';
-import { PersistedState } from '../../../src/state/persisted-state';
+import { OrganizationBinder } from '~org-binder/org-binder';
+import { IBuildTask, TaskProvider } from '~org-binder/org-tasks-provider';
+import { PersistedState } from '~state/persisted-state';
 import { TestTemplates } from '../test-templates';
 
 describe('when enumerating bindings for empty state', () => {

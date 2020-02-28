@@ -1,7 +1,7 @@
 
 import Sinon from 'sinon';
 import { AwsUtil } from '../../src/aws-util';
-import { ValidateTasksCommand } from '../../src/commands/validate-tasks';
+import { ValidateTasksCommand } from '~commands/validate-tasks';
 import { ConsoleUtil } from '../../src/console-util';
 
 jest.setTimeout(99999999);

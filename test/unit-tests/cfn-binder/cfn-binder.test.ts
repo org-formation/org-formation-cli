@@ -1,6 +1,6 @@
-import { CloudFormationBinder, ICfnBinding } from '../../../src/cfn-binder/cfn-binder';
-import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
-import { PersistedState } from '../../../src/state/persisted-state';
+import { CloudFormationBinder, ICfnBinding } from '~cfn-binder/cfn-binder';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { PersistedState } from '~state/persisted-state';
 import { TestTemplates } from '../test-templates';
 
 

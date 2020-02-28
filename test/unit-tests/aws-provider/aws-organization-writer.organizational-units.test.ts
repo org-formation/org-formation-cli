@@ -2,8 +2,8 @@ import * as AWS from 'aws-sdk';
 import * as AWSMock from 'aws-sdk-mock';
 import { CreateOrganizationalUnitRequest } from 'aws-sdk/clients/organizations';
 import * as Sinon from 'sinon';
-import { AwsOrganization } from '../../../src/aws-provider/aws-organization';
-import { AwsOrganizationWriter } from '../../../src/aws-provider/aws-organization-writer';
+import { AwsOrganization } from '~aws-provider/aws-organization';
+import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
 import { TestOrganizations } from '../test-organizations';
 
 describe('when creating a new organizational unit using writer', () => {

@@ -1,16 +1,16 @@
 import { Command, Option } from 'commander';
-import { CreateChangeSetCommand, ICreateChangeSetCommandArgs } from '../../../src/commands/create-organization-changeset';
+import { CreateChangeSetCommand, ICreateChangeSetCommandArgs } from '~commands/create-organization-changeset';
 import Sinon = require('sinon');
 import { ConsoleUtil } from '../../../src/console-util';
 import { AwsUtil } from '../../../src/aws-util';
-import { TemplateRoot } from '../../../src/parser/parser';
-import { ChangeSetProvider, IStoredChangeSet, IOrganizationChange, IOrganizationChangeSet } from '../../../src/change-set/change-set-provider';
-import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
-import { AwsOrganization } from '../../../src/aws-provider/aws-organization';
-import { PersistedState } from '../../../src/state/persisted-state';
-import { S3StorageProvider } from '../../../src/state/storage-provider';
-import { OrganizationBinder } from '../../../src/org-binder/org-binder';
-import { IBuildTask } from '../../../src/org-binder/org-tasks-provider';
+import { TemplateRoot } from '~parser/parser';
+import { ChangeSetProvider, IStoredChangeSet, IOrganizationChange, IOrganizationChangeSet } from '~change-set/change-set-provider';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { AwsOrganization } from '~aws-provider/aws-organization';
+import { PersistedState } from '~state/persisted-state';
+import { S3StorageProvider } from '~state/storage-provider';
+import { OrganizationBinder } from '~org-binder/org-binder';
+import { IBuildTask } from '~org-binder/org-tasks-provider';
 
 describe('when creating create change set command', () => {
     let command: CreateChangeSetCommand;

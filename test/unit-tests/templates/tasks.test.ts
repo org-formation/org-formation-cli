@@ -1,11 +1,11 @@
-import { BuildConfiguration, IBuildTask } from '../../../src/build-tasks/build-configuration';
-import { BaseOrganizationTask, BaseStacksTask } from '../../../src/build-tasks/build-task-provider';
-import { ICommandArgs, BaseCliCommand } from '../../../src/commands/base-command';
+import { BuildConfiguration, IBuildTask } from '~build-tasks/build-configuration';
+import { BaseOrganizationTask, BaseStacksTask } from '~build-tasks/build-task-provider';
+import { ICommandArgs, BaseCliCommand } from '~commands/base-command';
 import Sinon = require('sinon');
-import { CfnTaskRunner } from '../../../src/cfn-binder/cfn-task-runner';
-import { PersistedState } from '../../../src/state/persisted-state';
-import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
-import { ICfnTask } from '../../../src/cfn-binder/cfn-task-provider';
+import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
+import { PersistedState } from '~state/persisted-state';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { ICfnTask } from '~cfn-binder/cfn-task-provider';
 import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when loading task file configuration', () => {

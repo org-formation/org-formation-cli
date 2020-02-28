@@ -1,14 +1,14 @@
-import { PrintStacksCommand, IPrintStacksCommandArgs } from "../../../src/commands/print-stacks";
+import { PrintStacksCommand, IPrintStacksCommandArgs } from "~commands/print-stacks";
 import { Command, Option } from "commander";
-import { DescribeStacksCommand, IDescribetackCommandArgs } from "../../../src/commands/describe-stacks";
+import { DescribeStacksCommand, IDescribetackCommandArgs } from "~commands/describe-stacks";
 import { ConsoleUtil } from "../../../src/console-util";
 import Sinon = require("sinon");
 import { AwsUtil } from "../../../src/aws-util";
-import { TemplateRoot } from "../../../src/parser/parser";
-import { PersistedState } from "../../../src/state/persisted-state";
-import { S3StorageProvider } from "../../../src/state/storage-provider";
-import { CloudFormationBinder, ICfnBinding } from "../../../src/cfn-binder/cfn-binder";
-import { CfnTemplate } from "../../../src/cfn-binder/cfn-template";
+import { TemplateRoot } from "~parser/parser";
+import { PersistedState } from "~state/persisted-state";
+import { S3StorageProvider } from "~state/storage-provider";
+import { CloudFormationBinder, ICfnBinding } from "~cfn-binder/cfn-binder";
+import { CfnTemplate } from "~cfn-binder/cfn-template";
 
 describe('when creating print stacks command', () => {
     let command: PrintStacksCommand;

@@ -15,14 +15,27 @@
         "module": "commonjs",
         "target": "ES2017",
         "esModuleInterop": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "baseUrl": ".",
+        "paths": {
+            "~aws-provider/*": ["src/aws-provider/*"],
+            "~build-tasks/*": ["src/build-tasks/*"],
+            "~cfn-binder/*": ["src/cfn-binder/*"],
+            "~change-set/*": ["src/change-set/*"],
+            "~commands/*": ["src/commands/*"],
+            "~core/*": ["src/core/*"],
+            "~org-binder/*": ["src/org-binder/*"],
+            "~parser/*": ["src/parser/*"],
+            "~state/*": ["src/state/*"],
+            "~writer/*": ["src/writer/*"]
+        }
     },
     "include": [ "src/**/*", "*.ts"],
     "exclude": [ "node_modules", "dist"],
     "typeRoots": [
         "node_modules/@types"
-      ],
+    ],
     "types": [
         "node"
-      ]
+    ]
  }

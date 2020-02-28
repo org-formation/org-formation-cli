@@ -1,14 +1,14 @@
 import { Command, Option } from 'commander';
 import Sinon from 'sinon';
-import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '../../../src/commands/update-stacks';
-import { TemplateRoot } from '../../../src/parser/parser';
+import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-stacks';
+import { TemplateRoot } from '~parser/parser';
 import { ConsoleUtil } from '../../../src/console-util';
-import { CloudFormationBinder } from '../../../src/cfn-binder/cfn-binder';
-import { S3StorageProvider } from '../../../src/state/storage-provider';
+import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
+import { S3StorageProvider } from '~state/storage-provider';
 import { AwsUtil } from '../../../src/aws-util';
-import { PersistedState } from '../../../src/state/persisted-state';
-import { ICfnTask } from '../../../src/cfn-binder/cfn-task-provider';
-import { CfnTaskRunner } from '../../../src/cfn-binder/cfn-task-runner';
+import { PersistedState } from '~state/persisted-state';
+import { ICfnTask } from '~cfn-binder/cfn-task-provider';
+import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 
 describe('when creating update stacks command', () => {
     let command: UpdateStacksCommand;

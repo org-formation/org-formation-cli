@@ -2,11 +2,11 @@ import { Command, Option } from 'commander';
 const fs = require('fs');
 import Sinon from 'sinon';
 import { AwsUtil } from '../../../src/aws-util';
-import { BaseCliCommand } from '../../../src/commands/base-command';
-import { IInitCommandArgs, InitOrganizationCommand } from '../../../src/commands/init-organization';
-import { IState, PersistedState } from '../../../src/state/persisted-state';
-import { S3StorageProvider } from '../../../src/state/storage-provider';
-import { DefaultTemplate } from '../../../src/writer/default-template-writer';
+import { BaseCliCommand } from '~commands/base-command';
+import { IInitCommandArgs, InitOrganizationCommand } from '~commands/init-organization';
+import { IState, PersistedState } from '~state/persisted-state';
+import { S3StorageProvider } from '~state/storage-provider';
+import { DefaultTemplate } from '~writer/default-template-writer';
 import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when creating init organization command', () => {

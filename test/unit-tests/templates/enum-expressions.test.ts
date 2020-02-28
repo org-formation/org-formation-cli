@@ -1,7 +1,7 @@
-import { CloudFormationBinder, ICfnBinding, ICfnSubValue } from '../../../src/cfn-binder/cfn-binder';
-import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
-import { TemplateRoot } from '../../../src/parser/parser';
-import { PersistedState } from '../../../src/state/persisted-state';
+import { CloudFormationBinder, ICfnBinding, ICfnSubValue } from '~cfn-binder/cfn-binder';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { TemplateRoot } from '~parser/parser';
+import { PersistedState } from '~state/persisted-state';
 import { ICfnTemplate } from '../cfn-types';
 
 describe('when resolving enum-expressions', () => {

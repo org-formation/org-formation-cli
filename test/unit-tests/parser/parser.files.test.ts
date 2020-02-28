@@ -1,4 +1,4 @@
-import { TemplateRoot } from '../../../src/parser/parser';
+import { TemplateRoot } from '~parser/parser';
 import Sinon from 'sinon';
 import { ConsoleUtil } from '../../../src/console-util';
 

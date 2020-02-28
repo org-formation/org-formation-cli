@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { BuildConfiguration } from '../build-tasks/build-configuration';
-import { BuildRunner } from '../build-tasks/build-runner';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { BuildConfiguration } from '~build-tasks/build-configuration';
+import { BuildRunner } from '~build-tasks/build-runner';
 
 const commandName = 'validate-tasks <templateFile>';
 const commandDescription = 'Will validate the tasks file, including configured tasks';
