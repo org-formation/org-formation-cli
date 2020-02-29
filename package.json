@@ -11,7 +11,7 @@
     "test": "npx jest --config=jest.config.js 'unit-test'",
     "test:ci": "npx jest --ci --collect-coverage --config=jest.config.js 'unit-test'",
     "itests": "npx jest --config=jest.config.js 'integration-test'",
-    "start:debug": "npx node --inspect -r ts-node/register cli.ts"
+    "start:debug": "npx node --inspect -r ts-node/register -r tsconfig-paths/register cli.ts"
   },
   "files": [
     "dist/*",
@@ -50,15 +50,16 @@
     "@types/yamljs": "^0.2.30",
     "@typescript-eslint/eslint-plugin": "^2.19.0",
     "@typescript-eslint/parser": "^2.19.0",
-    "aws-sdk-mock": "^4.5.0",
+    "aws-sdk-mock": "^5.0.0",
     "eslint": "^6.8.0",
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-prefer-arrow": "^1.1.7",
     "jest": "^25.1.0",
     "sinon": "^7.4.1",
-    "ts-jest": "^25.1.0",
-    "ts-node": "^8.3.0",
-    "typescript": "^3.6.2"
+    "ts-jest": "^25.2.0",
+    "ts-node": "^8.6.2",
+    "tsconfig-paths": "^3.9.0",
+    "typescript": "^3.8.3"
   },
   "keywords": [
     "AWS",
