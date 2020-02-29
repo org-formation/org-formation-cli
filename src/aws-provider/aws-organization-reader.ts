@@ -2,6 +2,7 @@ import { IAM, Organizations } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
+import { OrgFormationError } from '../org-formation-error';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
@@ -140,6 +141,7 @@ export class AwsOrganizationReader {
                 if (!resp.OrganizationalUnits) { continue; }
 
                 for (const ou of resp.OrganizationalUnits) {
+                    if (ou.Id === req.ParentId) { continue; }
                     const organization: AWSOrganizationalUnit = {
                         ...ou,
                         Type: 'OrganizationalUnit',
@@ -152,7 +154,10 @@ export class AwsOrganizationReader {
                     };
 
                     result.push(organization);
-                    rootsIds.push(organization.Id);
+                    // Only add unique values to avoid infinite loop
+                    if (rootsIds.indexOf(organization.Id) === -1) {
+                        rootsIds.push(organization.Id);
+                    }
                 }
 
             } while (resp.NextToken);
@@ -224,8 +229,8 @@ export class AwsOrganizationReader {
                         result.push(account);
                     } catch (err) {
                         if (err.code === 'AccessDenied') {
-                            ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot: `);
-                            ConsoleUtil.LogWarning('https://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md');
+                            ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot:`
+                                + '\nhttps://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md');
                         } else {
                             throw err;
                         }
@@ -305,16 +310,6 @@ export class AwsOrganizationReader {
     public readonly roots: Lazy<AWSRoot[]>;
     private readonly organizationService: Organizations;
 
-    public async hasMasterInOrganizationUnit(masterAccountId: string): Promise<boolean> {
-        const organizationalUnits = await this.organizationalUnits.getValue();
-        if (masterAccountId && organizationalUnits) {
-            return organizationalUnits.some((ou: AWSOrganizationalUnit) => {
-                return ou.Accounts.some((x: AWSAccount) => x.Id === masterAccountId);
-            });
-        }
-        return false;
-    }
-
     constructor(organizationService: Organizations) {
         this.organizationService = organizationService;
         this.policies = new Lazy(this, AwsOrganizationReader.listPolicies);
@@ -322,6 +317,20 @@ export class AwsOrganizationReader {
         this.accounts = new Lazy(this, AwsOrganizationReader.listAccounts);
         this.organization = new Lazy(this, AwsOrganizationReader.getOrganization);
         this.roots = new Lazy(this, AwsOrganizationReader.listRoots);
+    }
+
+    public async hasMasterInOrganizationUnit(masterAccountId: string): Promise<boolean> {
+        const organizationalUnits = await this.organizationalUnits.getValue();
+        if (masterAccountId && organizationalUnits) {
+            return organizationalUnits.some((ou: AWSOrganizationalUnit) => {
+                return ou.Accounts.some((x: AWSAccount) => {
+                    if (x.Id === masterAccountId) {
+                        throw new OrgFormationError('Master account outside root organization is not supported yet, apologies.');
+                    }
+                });
+            });
+        }
+        return false;
     }
 }
 
