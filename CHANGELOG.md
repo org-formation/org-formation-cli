@@ -7,6 +7,7 @@ All notable changes to aws organization formation will be documented in this fil
 - OU bindings will include nested OU's
 - Fixed issue with failed stacks tolerance on update-stacks
 - Added option (--no-color) to disable colorization of log messages.
+- Clear error message when generating organization.yaml for org with master account inside OU
 
 **version 0.0.76**
 - Fixed issue with validation of commandline input pararameters
