@@ -348,7 +348,7 @@ If you rename an account, by its logical name, org-formation will first notice t
 
 <details>
 <summary>
-Why is nesting OU's or a custom OrganizationAccessRole not supported?
+Why is XYZ not supported?
 </summary>
 &nbsp;
 
