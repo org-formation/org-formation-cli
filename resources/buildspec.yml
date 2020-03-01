@@ -7,7 +7,7 @@ phases:
       - org-formation -v
   build:
     commands:
-      - org-formation perform-tasks ./organization-tasks.yml --no-colors XXX-ARGS
+      - org-formation perform-tasks ./organization-tasks.yml --no-color XXX-ARGS
   post_build:
     commands:
       - echo Build completed
