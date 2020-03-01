@@ -1,7 +1,7 @@
 
 **Constrains or things that are otherwise not supprted (yet)**
 
-If you feel it is important to support these scenarios, please post an enahncement or make a pull request!
+If you feel it is important to support these scenarios, please post an enhancement or make a pull request!
 
 **in general**
 - it is not possible to use a custom role name for organization access (OrganizationAccountAccessRole is assumed to available in all accounts)
