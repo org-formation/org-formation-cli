@@ -10,7 +10,7 @@
     "lint:fix": "npx eslint --fix './src/**/*.ts'",
     "test": "npx jest --config=jest.config.js 'unit-test'",
     "test:ci": "npx jest --ci --collect-coverage --config=jest.config.js 'unit-test'",
-    "itests": "npx jest --config=jest.config.js 'integration-test'",
+    "itests": "npx jest --config=jest.config.js 'integration-test' --runInBand",
     "start:debug": "npx node --inspect -r ts-node/register -r tsconfig-paths/register cli.ts"
   },
   "files": [
