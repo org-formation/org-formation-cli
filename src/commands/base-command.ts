@@ -218,6 +218,19 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             ConsoleUtil.colorizeLogs = false;
         }
 
+        // create a copy of `command` to ensure no circular references
+        ConsoleUtil.LogDebug(`initializing, arguments: \n${JSON.stringify({
+
+            stateBucketName: command.stateBucketName,
+            stateObject: command.stateObject,
+            state: typeof command.state,
+            profile: command.profile,
+            color: command.color,
+            verbose: command.verbose,
+            printStack: command.printStack,
+        }, undefined, 2)}`);
+
+
         try {
             await this.customInitializationIncludingMFASupport(command);
         } catch (err) {

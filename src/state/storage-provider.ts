@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { S3 } from 'aws-sdk';
 import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
 import { OrgFormationError } from '../org-formation-error';
+import { ConsoleUtil } from '../console-util';
 
 export interface IStorageProvider {
     get(): Promise<string | undefined>;
@@ -103,6 +104,12 @@ export class S3StorageProvider implements IStorageProvider {
             Key: this.objectKey,
             Body: contents,
         };
+
+        // create a copy of `putObjectRequest` to ensure no circular references
+        ConsoleUtil.LogDebug(`putting object to S3: \n${JSON.stringify({
+            Bucket: putObjectRequest.Bucket,
+            Key: putObjectRequest.Key,
+        }, undefined, 2)}`);
 
         await s3client.putObject(putObjectRequest).promise();
     }
