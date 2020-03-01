@@ -1,7 +1,7 @@
 import { ConsoleUtil } from '../console-util';
+import { GenericTaskRunner, ITaskRunnerDelegates } from '../core/generic-task-runner';
 import { OrgFormationError } from '../org-formation-error';
 import { ICfnTask } from './cfn-task-provider';
-import { GenericTaskRunner, ITaskRunnerDelegates } from '~core/generic-task-runner';
 
 export class CfnTaskRunner {
 

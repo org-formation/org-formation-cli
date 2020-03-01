@@ -1,14 +1,14 @@
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
+import { AccountResource } from '../parser/model/account-resource';
+import { Resource } from '../parser/model/resource';
+import { OrgResourceTypes } from '../parser/model/resource-types';
+import { IResourceTarget } from '../parser/model/resources-section';
+import { TemplateRoot } from '../parser/parser';
 import { ResourceUtil } from '../resource-util';
+import { PersistedState } from '../state/persisted-state';
 import { ICfnBinding, ICfnCrossAccountDependency, ICfnValue } from './cfn-binder';
 import { SubExpression } from './cfn-sub-expression';
-import { AccountResource } from '~parser/model/account-resource';
-import { Resource } from '~parser/model/resource';
-import { OrgResourceTypes } from '~parser/model/resource-types';
-import { IResourceTarget } from '~parser/model/resources-section';
-import { TemplateRoot } from '~parser/parser';
-import { PersistedState } from '~state/persisted-state';
 
 export class CfnTemplate {
 

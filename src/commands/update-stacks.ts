@@ -1,11 +1,12 @@
 import { Command } from 'commander';
+import { CloudFormationBinder } from '../cfn-binder/cfn-binder';
+import { CfnTaskRunner } from '../cfn-binder/cfn-task-runner';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
+import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '../parser/parser';
+import { Validator } from '../parser/validator';
 import { BaseCliCommand, ICommandArgs } from './base-command';
-import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
-import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
-import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/parser';
-import { Validator } from '~parser/validator';
+
 
 const commandName = 'update-stacks <templateFile>';
 const commandDescription = 'update cloudformation resources in accounts';

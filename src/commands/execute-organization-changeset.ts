@@ -1,9 +1,9 @@
 import { Command } from 'commander';
+import { ChangeSetProvider } from '../change-set/change-set-provider';
 import { ConsoleUtil } from '../console-util';
+import { TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { UpdateOrganizationCommand } from './update-organization';
-import { TemplateRoot } from '~parser/parser';
-import { ChangeSetProvider } from '~change-set/change-set-provider';
 
 const commandName = 'execute-change-set <change-set-name>';
 const commandDescription = 'execute previously created change set';

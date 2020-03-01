@@ -1,13 +1,14 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { Organization } from 'aws-sdk/clients/organizations';
 import * as Yaml from 'yamljs';
+import { AwsOrganization } from '../aws-provider/aws-organization';
+import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot, IAWSObject } from '../aws-provider/aws-organization-reader';
 import { OrgFormationError } from '../org-formation-error';
-import { AwsOrganization } from '~aws-provider/aws-organization';
-import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot, IAWSObject } from '~aws-provider/aws-organization-reader';
-import { Resource } from '~parser/model/resource';
-import { OrgResourceTypes } from '~parser/model/resource-types';
-import { TemplateRoot } from '~parser/parser';
-import { IBinding, PersistedState } from '~state/persisted-state';
+import { Resource } from '../parser/model/resource';
+import { OrgResourceTypes } from '../parser/model/resource-types';
+import { TemplateRoot } from '../parser/parser';
+import { IBinding, PersistedState } from '../state/persisted-state';
+
 
 export class DefaultTemplateWriter {
     public organizationModel: AwsOrganization;

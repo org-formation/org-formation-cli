@@ -2,11 +2,12 @@ import fs, { readFileSync } from 'fs';
 import path from 'path';
 import md5 from 'md5';
 import { yamlParse } from 'yaml-cfn';
+import { ICommandArgs } from '../commands/base-command';
+import { IUpdateStacksCommandArgs } from '../commands/update-stacks';
 import { OrgFormationError } from '../org-formation-error';
+import { IOrganizationBinding } from '../parser/parser';
 import { BaseStacksTask, BuildTaskProvider } from './build-task-provider';
-import { ICommandArgs } from '~commands/base-command';
-import { IUpdateStacksCommandArgs } from '~commands/update-stacks';
-import { IOrganizationBinding } from '~parser/parser';
+
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];

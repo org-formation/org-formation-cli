@@ -1,10 +1,10 @@
 import { Command } from 'commander';
+import { CloudFormationBinder } from '../cfn-binder/cfn-binder';
+import { CfnTaskRunner } from '../cfn-binder/cfn-task-runner';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
+import { ITemplate, TemplateRoot } from '../parser/parser';
 import { BaseCliCommand, ICommandArgs } from './base-command';
-import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
-import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
-import { ITemplate, TemplateRoot } from '~parser/parser';
 
 const commandName = 'delete-stacks';
 const commandDescription = 'removes all stacks deployed to accounts using org-formation';

@@ -2,8 +2,8 @@ import { CreateStackInput, DeleteStackInput, ListExportsInput, UpdateStackInput 
 import uuid = require('uuid');
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
+import { PersistedState } from '../state/persisted-state';
 import { ICfnBinding } from './cfn-binder';
-import { PersistedState } from '~state/persisted-state';
 export class CfnTaskProvider {
     private state: PersistedState;
 

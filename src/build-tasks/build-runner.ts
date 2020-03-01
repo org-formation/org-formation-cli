@@ -1,7 +1,7 @@
 import { ConsoleUtil } from '../console-util';
+import { GenericTaskRunner, ITaskRunnerDelegates } from '../core/generic-task-runner';
 import { OrgFormationError } from '../org-formation-error';
 import { IBuildTask } from './build-configuration';
-import { GenericTaskRunner, ITaskRunnerDelegates } from '~core/generic-task-runner';
 
 export class BuildRunner {
     public static async RunTasks(tasks: IBuildTask[], maxConcurrentTasks = 1, failedTasksTolerance = 0): Promise<void> {

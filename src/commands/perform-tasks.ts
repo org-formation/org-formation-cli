@@ -1,8 +1,8 @@
 import { Command } from 'commander';
+import { BuildConfiguration } from '../build-tasks/build-configuration';
+import { BuildRunner } from '../build-tasks/build-runner';
+import { Validator } from '../parser/validator';
 import { BaseCliCommand, ICommandArgs } from './base-command';
-import { BuildConfiguration } from '~build-tasks/build-configuration';
-import { BuildRunner } from '~build-tasks/build-runner';
-import { Validator } from '~parser/validator';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
