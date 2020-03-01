@@ -5,7 +5,7 @@ import { IOrganizationBinding, IResourceRef, ITemplate } from './parser';
 import { IUpdateStackTaskConfiguration } from '~build-tasks/build-configuration';
 
 export class Validator {
-    public static ValidateUpdateStacksTask(config: IUpdateStackTaskConfiguration, taskName: string) {
+    public static ValidateUpdateStacksTask(config: IUpdateStackTaskConfiguration, taskName: string): void {
         if (config === undefined) { return; }
 
         if (config.Template === undefined) {
@@ -32,7 +32,7 @@ export class Validator {
             'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance' );
     }
 
-    public static ValidateTemplateRoot(root: ITemplate) {
+    public static ValidateTemplateRoot(root: ITemplate): void {
 
         if (root.AWSTemplateFormatVersion === undefined) {
             throw new OrgFormationError('AWSTemplateFormatVersion is missing');
@@ -67,7 +67,7 @@ export class Validator {
 
     }
 
-    public static ValidateOrganizationBinding(binding: IOrganizationBinding, id: string) {
+    public static ValidateOrganizationBinding(binding: IOrganizationBinding, id: string): void {
         if (binding === undefined || binding === null) {
             return;
         }
@@ -98,7 +98,7 @@ export class Validator {
         Validator.ThrowForUnknownAttribute(binding, id, 'OrganizationalUnit', 'Account', 'ExcludeAccount', 'Region', 'IncludeMasterAccount', 'AccountsWithTag');
     }
 
-    public static ThrowForUnknownAttribute(obj: any, id: string, ...knownAttributes: string[]) {
+    public static ThrowForUnknownAttribute(obj: any, id: string, ...knownAttributes: string[]): void {
         for (const att in obj) {
             if (knownAttributes.indexOf(att) < 0) {
                 throw new OrgFormationError(`unexpected attribute ${att} found on ${id}`);
@@ -106,12 +106,12 @@ export class Validator {
         }
     }
 
-    public static validateBoolean(val: boolean, name: string) {
+    public static validateBoolean(val: boolean, name: string): void {
         if (typeof val !== 'boolean' && typeof val !== 'undefined') {
             throw new OrgFormationError(`expected ${name} to be a boolean, found ${typeof val} (${val})`);
         }
     }
-    public static validatePositiveInteger(val: number, name: string) {
+    public static validatePositiveInteger(val: number, name: string): void {
         if (!isNaN(val)) {
             if (val < 0) {
                 throw new OrgFormationError(`expected ${name} to be a positive integer, found ${val}`);
@@ -122,7 +122,7 @@ export class Validator {
         }
     }
 
-    public static validateRegion(region: string) {
+    public static validateRegion(region: string): void {
         if (typeof region === 'string') {
             if (!Validator.knownRegions.includes(region)) {
                 ConsoleUtil.LogWarning(`region ${region} not recognized by tool, process continues but might lead to errors.`);
@@ -134,10 +134,10 @@ export class Validator {
     }
     private static knownRegions = ['us-east-2', 'us-east-1', 'us-west-1', 'us-west-2', 'ap-east-1', 'ap-south-1', 'ap-northeast-3', 'ap-northeast-2', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'ca-central-1', 'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'me-south-1', 'sa-east-1'];
 
-    private static validateReferenceToAccount(resourceRefs: IResourceRef | IResourceRef[], id: string) {
+    private static validateReferenceToAccount(resourceRefs: IResourceRef | IResourceRef[], id: string): void {
         if (resourceRefs === undefined) { return; }
 
-        const validateSingleReference = (elm: any) => {
+        const validateSingleReference = (elm: any): void => {
             if (typeof elm === 'string') {
                 if (elm.match(/\d{12}/)) {
                     throw new OrgFormationError(`Invalid account binding ${elm} on ${id}. Directly binding on accountId is not supported, use !Ref logicalId instead.`);
@@ -160,8 +160,8 @@ export class Validator {
         }
     }
 
-    private static validateReferenceToOU(resourceRefs: IResourceRef | IResourceRef[], id: string) {
-        const validateSingleReference = (elm: any) => {
+    private static validateReferenceToOU(resourceRefs: IResourceRef | IResourceRef[], id: string): void {
+        const validateSingleReference = (elm: any): void => {
             if (typeof elm === 'string') {
                 if (elm.match(/\d{12}/)) {
                     throw new OrgFormationError(`Invalid organizational unit binding ${elm} on ${id}. Expected literal '*' or !Ref logicalId.`);

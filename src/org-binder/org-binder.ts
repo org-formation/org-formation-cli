@@ -48,7 +48,7 @@ export class OrganizationBinder {
         };
     }
 
-    public enumBuildTasks() {
+    public enumBuildTasks(): IBuildTask[] {
         const tasks: IBuildTask[] = [];
         const org = this.getOrganizationBinding();
         for (const boundPolicy of org.policies) {

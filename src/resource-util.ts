@@ -1,10 +1,10 @@
 import { bool } from 'aws-sdk/clients/signer';
 import { SubExpression } from '~cfn-binder/cfn-sub-expression';
 
-const zeroPad = (num: number, places: number) => String(num).padStart(places, '0');
+const zeroPad = (num: number, places: number): string => String(num).padStart(places, '0');
 
 export class ResourceUtil {
-    public static FixVersions(obj: any) {
+    public static FixVersions(obj: any): void {
         if (obj !== null && typeof obj === 'object') {
             const entries = Object.entries(obj);
             for (const [key, val] of entries) {
@@ -20,7 +20,7 @@ export class ResourceUtil {
         }
     }
 
-    public static ToVersion(date: Date) {
+    public static ToVersion(date: Date): string {
         const year = date.getUTCFullYear();
         const month = zeroPad(1 + date.getUTCMonth(), 2);
         const day = zeroPad(date.getUTCDate(), 2);
@@ -102,7 +102,7 @@ export class ResourceUtil {
 }
 
 const createRewriteExpression = (parent: any, key: string) => {
-    return (resource: string, path?: string) => {
+    return (resource: string, path?: string): void => {
         if (path !== undefined) {
             parent[key] = { 'Fn::GetAtt': [resource, path]};
         } else {
@@ -112,7 +112,7 @@ const createRewriteExpression = (parent: any, key: string) => {
 };
 
 const createResolveExpression = (parent: any, key: string) => {
-    return (val: string) => {
+    return (val: string): void => {
         parent[key] = val;
     };
 };

@@ -13,7 +13,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         super(command, commandName, commandDescription, 'tasksFile');
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         command.option('--max-concurrent-tasks <max-concurrent-tasks>', 'maximum number of tasks to be executed concurrently', 1);
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks (within a task) to be executed concurrently', 1);
         command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed tasks after which execution stops', 0);
@@ -21,7 +21,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         super.addOptions(command);
     }
 
-    public async performCommand(command: IPerformTasksCommandArgs) {
+    public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');

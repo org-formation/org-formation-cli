@@ -3,7 +3,7 @@ import { IBuildTask } from './org-tasks-provider';
 
 export class TaskRunner {
 
-    public static async RunTasks(tasks: IBuildTask[]) {
+    public static async RunTasks(tasks: IBuildTask[]): Promise<void> {
         for (const task of tasks) {
             const dependentTasks = [];
             if (task.dependentTasks) {

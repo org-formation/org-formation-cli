@@ -12,12 +12,12 @@ export class DescribeStacksCommand extends BaseCliCommand<IDescribetackCommandAr
         super(command, commandName, commandDescription);
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         super.addOptions(command);
         command.option('--stack-name [stack-name]', 'output will be limited to stacks of this name');
     }
 
-    public async performCommand(command: IDescribetackCommandArgs) {
+    public async performCommand(command: IDescribetackCommandArgs): Promise<void> {
         const stackName = command.stackName;
 
         const state = await this.getState(command);

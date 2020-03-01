@@ -14,12 +14,12 @@ export class ExecuteChangeSetCommand extends BaseCliCommand<IExecuteChangeSetCom
         super(command, commandName, commandDescription, 'changeSetName');
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         super.addOptions(command);
         command.option('--change-set-name [change-set-name]', 'change set name');
     }
 
-    public async performCommand(command: IExecuteChangeSetCommandArgs) {
+    public async performCommand(command: IExecuteChangeSetCommandArgs): Promise<void> {
 
         const changeSetName = command.changeSetName;
         const stateBucketName = await this.GetStateBucketName(command);

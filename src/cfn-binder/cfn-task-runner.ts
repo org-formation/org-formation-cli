@@ -5,7 +5,7 @@ import { GenericTaskRunner, ITaskRunnerDelegates } from '~core/generic-task-runn
 
 export class CfnTaskRunner {
 
-    public static async RunTasks(tasks: ICfnTask[], stackName: string, maxConcurrentTasks: number, failedTasksTolerance: number) {
+    public static async RunTasks(tasks: ICfnTask[], stackName: string, maxConcurrentTasks: number, failedTasksTolerance: number): Promise<void> {
 
         const delegate: ITaskRunnerDelegates<ICfnTask> = {
             onTaskRanFailed: (task, err) => {
@@ -31,7 +31,7 @@ export class CfnTaskRunner {
         await GenericTaskRunner.RunTasks<ICfnTask>(tasks, delegate);
     }
 
-    public static async ValidateTemplates(tasks: ICfnTask[], stackName?: string) {
+    public static async ValidateTemplates(tasks: ICfnTask[], stackName?: string): Promise<void> {
 
         const delegate: ITaskRunnerDelegates<ICfnTask> = {
             onTaskRanFailed: (task, err) => {

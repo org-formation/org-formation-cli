@@ -11,7 +11,7 @@ const commandDescription = 'validates the cloudformation templates that will be 
 
 export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs> {
 
-    public static async Perform(command: IUpdateStacksCommandArgs) {
+    public static async Perform(command: IUpdateStacksCommandArgs): Promise<void> {
         const x = new ValidateStacksCommand();
         await x.performCommand(command);
     }
@@ -19,13 +19,13 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         super(command, commandName, commandDescription, 'templateFile');
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         command.option('--parameters [parameters]', 'parameter values passed to cloudformation when executing stacks');
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation', 'validation');
         super.addOptions(command);
     }
 
-    public async performCommand(command: IUpdateStacksCommandArgs) {
+    public async performCommand(command: IUpdateStacksCommandArgs): Promise<void> {
         const templateFile = command.templateFile;
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);

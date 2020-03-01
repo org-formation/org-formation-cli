@@ -13,12 +13,12 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
         super(command, commandName, commandDescription, 'templateFile');
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         super.addOptions(command);
         command.option('--change-set-name [change-set-name]', 'change set name');
     }
 
-    public async performCommand(command: ICreateChangeSetCommandArgs) {
+    public async performCommand(command: ICreateChangeSetCommandArgs): Promise<void> {
         const template = TemplateRoot.create(command.templateFile);
 
         const state = await this.getState(command);

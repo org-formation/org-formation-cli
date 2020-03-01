@@ -19,7 +19,7 @@ export class OrganizationRootResource extends Resource {
         super.throwForUnknownAttributes(this.props, id, 'ServiceControlPolicies');
     }
 
-    public resolveRefs() {
+    public resolveRefs(): void {
         if (this.props) {
             this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
         } else  {

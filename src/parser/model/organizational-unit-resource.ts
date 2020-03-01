@@ -37,7 +37,7 @@ export class OrganizationalUnitResource extends Resource {
         super.throwForUnknownAttributes(this.props, id, 'OrganizationalUnitName', 'Accounts', 'ServiceControlPolicies', 'OrganizationalUnits');
     }
 
-    public resolveRefs() {
+    public resolveRefs(): void {
         this.accounts = super.resolve(this.props.Accounts, this.root.organizationSection.accounts);
         this.organizationalUnits = super.resolve(this.props.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
         this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);

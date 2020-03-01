@@ -34,9 +34,9 @@ export class CfnValidateTaskProvider {
             accountId: binding.accountId,
             region: binding.region,
             stackName: binding.stackName,
-            isDependency: () => false,
+            isDependency: (): boolean => false,
             action: 'Validate',
-            perform: async () => {
+            perform: async (): Promise<void> => {
                 const templateBody = binding.template.createTemplateBody();
                 const validateInput: ValidateTemplateInput =  {
                     TemplateBody: templateBody,

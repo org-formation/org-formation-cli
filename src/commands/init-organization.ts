@@ -14,12 +14,12 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
         super(command, commandName, commandDescription, 'file');
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         command.option('--region <region>', 'region used to created state-bucket in');
         super.addOptions(command);
     }
 
-    public async performCommand(command: IInitCommandArgs) {
+    public async performCommand(command: IInitCommandArgs): Promise<void> {
         if (!command.region) {
             throw new OrgFormationError('argument --region is missing');
         }

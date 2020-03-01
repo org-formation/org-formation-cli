@@ -1,5 +1,5 @@
 import { OrgFormationError } from '../../org-formation-error';
-import { IResource, IResourceRef, TemplateRoot } from '../parser';
+import { IResource, TemplateRoot } from '../parser';
 import { AccountResource } from './account-resource';
 
 export class MasterAccountResource extends AccountResource {

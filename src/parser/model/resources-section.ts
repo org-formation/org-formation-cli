@@ -18,7 +18,7 @@ export class ResourcesSection {
         }
     }
 
-    public resolveRefs() {
+    public resolveRefs(): void {
         for (const resource of this.resources) {
             resource.resolveRefs();
         }

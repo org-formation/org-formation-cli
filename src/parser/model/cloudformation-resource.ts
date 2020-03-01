@@ -92,11 +92,11 @@ export class CloudFormationResource extends Resource {
         delete this.resourceForTemplate.DependsOnRegion;
     }
 
-    public calculateHash() {
+    public calculateHash(): string {
         return this.resourceHash;
     }
 
-    public resolveRefs() {
+    public resolveRefs(): void {
         if (this.binding) {
             this.normalizedBoundAccounts = this.root.resolveNormalizedLogicalAccountIds(this.binding);
         }

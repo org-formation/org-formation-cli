@@ -1,8 +1,6 @@
-import { OrgFormationError } from '../org-formation-error';
-
 export class GenericTaskRunner {
 
-    public static async RunTasks<TTask>(tasks: IGenericTaskInternal<TTask>[], delegate: ITaskRunnerDelegates<TTask>) {
+    public static async RunTasks<TTask>(tasks: IGenericTaskInternal<TTask>[], delegate: ITaskRunnerDelegates<TTask>): Promise<void> {
         let totalTasksRan = 0;
         let totalTasksFailed = 0;
         let remainingTasks: IGenericTaskInternal<TTask>[] = tasks;
@@ -115,7 +113,7 @@ export interface IGenericTaskState {
     promise?: Promise<void>;
 }
 
-const sleep = async (seconds: number) => {
+const sleep = async (seconds: number): Promise<void> => {
     return new Promise(resolve => {
         setTimeout(resolve, seconds * 1000);
     });

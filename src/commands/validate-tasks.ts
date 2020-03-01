@@ -12,11 +12,11 @@ export class ValidateTasksCommand extends BaseCliCommand<IValidateTasksCommandAr
         super(command, commandName, commandDescription, 'tasksFile');
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         super.addOptions(command);
     }
 
-    public async performCommand(command: IValidateTasksCommandArgs) {
+    public async performCommand(command: IValidateTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
         const config = new BuildConfiguration(tasksFile);
         const validationTasks = config.enumValidationTasks(command);

@@ -30,9 +30,9 @@ export abstract class Resource {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    public resolveRefs() { }
+    public resolveRefs(): void { }
 
-    protected throwForUnknownAttributes(obj: any, id: string, ...knownAttributes: string[]) {
+    protected throwForUnknownAttributes(obj: any, id: string, ...knownAttributes: string[]): void {
         Validator.ThrowForUnknownAttribute(obj, `resource ${id}`, ...knownAttributes);
     }
 

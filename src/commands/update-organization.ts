@@ -11,7 +11,7 @@ const commandDescription = 'update organization resources';
 
 export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizationCommandArgs> {
 
-    public static async Perform(command: IUpdateOrganizationCommandArgs) {
+    public static async Perform(command: IUpdateOrganizationCommandArgs): Promise<void> {
         const x = new UpdateOrganizationCommand();
         await x.performCommand(command);
     }
@@ -20,11 +20,11 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         super(command, commandName, commandDescription, 'templateFile');
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         super.addOptions(command);
     }
 
-    public async performCommand(command: IUpdateOrganizationCommandArgs) {
+    public async performCommand(command: IUpdateOrganizationCommandArgs): Promise<void> {
         const template = TemplateRoot.create(command.templateFile);
         const state = await this.getState(command);
         const templateHash = template.hash;
@@ -40,7 +40,7 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         await UpdateOrganizationCommand.ExecuteTasks(tasks, state, templateHash, template);
     }
 
-    public static async ExecuteTasks(tasks: IBuildTask[], state: PersistedState, templateHash: string, template: TemplateRoot) {
+    public static async ExecuteTasks(tasks: IBuildTask[], state: PersistedState, templateHash: string, template: TemplateRoot): Promise<void> {
         try {
             if (tasks.length === 0) {
                 ConsoleUtil.LogInfo('organization up to date, no work to be done.');

@@ -188,7 +188,7 @@ export class CfnTemplate {
         return result;
     }
 
-    public addOutput(dependency: ICfnCrossAccountDependency) {
+    public addOutput(dependency: ICfnCrossAccountDependency): void {
         const cfnFriendlyName = dependency.outputName.replace(/-/g, 'Dash');
 
         if (!this.outputs[cfnFriendlyName]) {
@@ -203,7 +203,7 @@ export class CfnTemplate {
         }
     }
 
-    public addParameter(dependency: ICfnCrossAccountDependency) {
+    public addParameter(dependency: ICfnCrossAccountDependency): void {
         if (!this.parameters[dependency.parameterName]) {
             this.parameters[dependency.parameterName] = {
                 Description: 'Cross Account dependency',
@@ -230,7 +230,7 @@ export class CfnTemplate {
         return JSON.stringify(this.resultingTemplate, null, 2);
     }
 
-    private _removeCrossAccountDependsOn(resource: any, resourceIdsForTarget: string[], allResourceIds: string[]) {
+    private _removeCrossAccountDependsOn(resource: any, resourceIdsForTarget: string[], allResourceIds: string[]): void{
 
         if (resource !== null && typeof resource === 'object') {
             const dependsOnType = typeof resource.DependsOn;
@@ -306,7 +306,7 @@ export class CfnTemplate {
         return result;
     }
 
-    private _replaceKeyword(resource: any, keyword: string, replacement: string) {
+    private _replaceKeyword(resource: any, keyword: string, replacement: string): void {
         const expressions = ResourceUtil.EnumExpressionsForResource(resource, [keyword]);
         for (const expression of expressions) {
             expression.rewriteExpression(replacement, expression.path);
@@ -314,7 +314,7 @@ export class CfnTemplate {
         return resource;
     }
 
-    private _resolveOrganizationFunctions(resource: any, account: AccountResource) {
+    private _resolveOrganizationFunctions(resource: any, account: AccountResource): any {
         const expressionsToSelf = ResourceUtil.EnumExpressionsForResource(resource, [account.logicalId, 'AWSAccount']);
         for (const expression of expressionsToSelf) {
             // AWSAccount[.Alias]?
@@ -386,7 +386,7 @@ export class CfnTemplate {
         return resource;
     }
 
-    private static replaceEnumExpressionWithResults(resource: any, key: any, val: any, expressionResult: any) {
+    private static replaceEnumExpressionWithResults(resource: any, key: any, val: any, expressionResult: any): void {
         if (Array.isArray(resource)) {
             const index = resource.indexOf(val);
             if (Array.isArray(expressionResult)) {
@@ -445,7 +445,7 @@ export class CfnTemplate {
         return numRegions * numTemplates;
 
     }
-    private resolveEnumExpression(which: 'EnumTargetAccounts' | 'EnumTargetRegions', val: string, replacementParameter: string) {
+    private resolveEnumExpression(which: 'EnumTargetAccounts' | 'EnumTargetRegions', val: string, replacementParameter: string): any[] {
         const value = val.trim();
         let expr: string;
         let bindingId: string;

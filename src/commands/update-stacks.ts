@@ -12,12 +12,12 @@ const commandDescription = 'update cloudformation resources in accounts';
 
 export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs> {
 
-    public static async Perform(command: IUpdateStacksCommandArgs) {
+    public static async Perform(command: IUpdateStacksCommandArgs): Promise<void> {
         const x = new UpdateStacksCommand();
         await x.performCommand(command);
     }
 
-    public static createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string) {
+    public static createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string): TemplateRoot {
         const templateOverrides: ITemplateOverrides = {};
 
         if (command.stackDescription) {
@@ -49,7 +49,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         super(command, commandName, commandDescription, 'templateFile');
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation');
         command.option('--stack-description [description]', 'description of the stack that will be displayed cloudformation');
         command.option('--parameters [parameters]', 'parameter values passed to cloudformation when executing stacks');
@@ -59,7 +59,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         super.addOptions(command);
     }
 
-    public async performCommand(command: IUpdateStacksCommandArgs) {
+    public async performCommand(command: IUpdateStacksCommandArgs): Promise<void> {
         if (!command.stackName) {
             throw new OrgFormationError('argument --stack-name is missing');
         }

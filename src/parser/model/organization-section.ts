@@ -81,7 +81,7 @@ export class OrganizationSection {
         this.throwForDuplicateVale(serviceControlPolicies, (duplicate: string) => new Error(`multiple service control policies found with policyName ${duplicate}`));
     }
 
-    public resolveRefs() {
+    public resolveRefs(): void {
         for (const resource of this.resources) {
             try {
                 resource.resolveRefs();
@@ -140,7 +140,7 @@ export class OrganizationSection {
         return list.filter(fn);
     }
 
-    private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error) {
+    private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error): void {
         const sortedArr = arr.sort();
         for (let i = 0; i < sortedArr.length - 1; i++) {
             if (sortedArr[i + 1] === sortedArr[i]) {
@@ -150,7 +150,7 @@ export class OrganizationSection {
         }
     }
 
-    private throwForCircularOUReference(ous: OrganizationalUnitResource[]){
+    private throwForCircularOUReference(ous: OrganizationalUnitResource[]): void {
         let ousLeftToCheck = [...ous];
         let stopChecking = true;
         do {

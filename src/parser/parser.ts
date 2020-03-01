@@ -130,7 +130,7 @@ export class TemplateRoot {
 
     }
 
-    public static createEmpty() {
+    public static createEmpty(): TemplateRoot {
         return new TemplateRoot({
             AWSTemplateFormatVersion: '2010-09-09-OC',
             Organization: {},
@@ -298,7 +298,7 @@ export class TemplateRoot {
         return results;
     }
 
-    private throwForAccountIDs(resourceRefs: IResourceRef | IResourceRef[]) {
+    private throwForAccountIDs(resourceRefs: IResourceRef | IResourceRef[]): void {
         if (resourceRefs) {
             if (typeof resourceRefs === 'string') {
                 if (resourceRefs.match(/\d{12}/)) {

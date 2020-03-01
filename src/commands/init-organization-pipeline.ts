@@ -20,7 +20,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         super(command, commandName, commandDescription);
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         command.option('--region <region>', 'region used to created state-bucket and pipeline in');
         command.option('--stack-name <stack-name>', 'stack name used to create pipeline artifacts', 'organization-formation-build');
         command.option('--resource-prefix <resource-prefix>', 'name prefix used when creating AWS resources', 'orgformation');
@@ -29,7 +29,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         super.addOptions(command);
     }
 
-    public async performCommand(command: IInitPipelineCommandArgs) {
+    public async performCommand(command: IInitPipelineCommandArgs): Promise<void> {
         if (!command.region) {
             throw new OrgFormationError('argument --region is missing');
         }
@@ -102,7 +102,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     });
     }
 
-    public async executeStack(cfnTemplate: string, region: string, stateBucketName: string, resourcePrefix: string, stackName: string, repositoryName: string) {
+    public async executeStack(cfnTemplate: string, region: string, stateBucketName: string, resourcePrefix: string, stackName: string, repositoryName: string): Promise<void>{
 
         const cfn = new CloudFormation({ region });
         const stackInput: CreateStackInput | UpdateStackInput = {
@@ -143,7 +143,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         }
     }
 
-    private createTasksFile(path: string, stackName: string, resourcePrefix: string, stateBucketName: string, region: string, repositoryName: string) {
+    private createTasksFile(path: string, stackName: string, resourcePrefix: string, stateBucketName: string, region: string, repositoryName: string): string {
         let buildSpecContents = readFileSync(path + 'orgformation-tasks.yml').toString('utf-8');
 
         buildSpecContents = buildSpecContents.replace('XXX-resourcePrefix', resourcePrefix);
@@ -155,7 +155,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         return buildSpecContents;
     }
 
-    private createBuildSpecContents(path: string, command: IInitPipelineCommandArgs, stateBucketName: string) {
+    private createBuildSpecContents(path: string, command: IInitPipelineCommandArgs, stateBucketName: string): string {
         let buildSpecContents = readFileSync(path + 'buildspec.yml').toString('utf-8');
 
         buildSpecContents = buildSpecContents.replace('XXX-ARGS', '--state-bucket-name ' + stateBucketName + ' XXX-ARGS');

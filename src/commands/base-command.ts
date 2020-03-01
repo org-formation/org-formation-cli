@@ -71,7 +71,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
     }
 
-    public async invoke() {
+    public async invoke(): Promise<void> {
         try {
             await this.initialize(this.command as any as ICommandArgs);
             await this.performCommand(this.command as any as T);
@@ -92,7 +92,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
     protected abstract async performCommand(command: T): Promise<void>;
 
-    protected addOptions(command: Command) {
+    protected addOptions(command: Command): void {
         command.option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}');
         command.option('--state-object [state-object]', 'key for object used to store state', 'state.json');
         command.option('--profile [profile]', 'aws profile to use');
@@ -101,7 +101,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--no-color', 'will disable colorization of console logs');
     }
 
-    protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState) {
+    protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState): Promise<OrganizationBinder> {
         const organizations = new Organizations({ region: 'us-east-1' });
         const awsReader = new AwsOrganizationReader(organizations);
         const awsOrganization = new AwsOrganization(awsReader);
@@ -141,7 +141,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return bucketName;
     }
 
-    protected parseStackParameters(commandParameters?: string | {}) {
+    protected parseStackParameters(commandParameters?: string | {}): Record<string, string>  {
         if (commandParameters && typeof commandParameters === 'object') {
             return commandParameters;
         }
@@ -172,7 +172,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return parameters;
     }
 
-    private async customInitializationIncludingMFASupport(command: ICommandArgs)  {
+    private async customInitializationIncludingMFASupport(command: ICommandArgs): Promise<void>  {
         const profileName = command.profile ? command.profile : 'default';
         const homeDir = require('os').homedir();
         // todo: add support for windows?
@@ -205,7 +205,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
     }
 
-    private async initialize(command: ICommandArgs) {
+    private async initialize(command: ICommandArgs): Promise<void> {
         if (command.initialized) { return; }
 
         if (command.printStack === true) {

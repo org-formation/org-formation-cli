@@ -77,7 +77,7 @@ export class AccountResource extends Resource {
         return md5(s);
     }
 
-    public resolveRefs() {
+    public resolveRefs(): void {
         if (this.props) {
             this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
             const passwordPolicies = super.resolve(this.props.PasswordPolicy, this.root.organizationSection.passwordPolicies);

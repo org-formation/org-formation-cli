@@ -15,7 +15,7 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
         super(command, commandName, commandDescription);
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         super.addOptions(command);
         command.option('--stack-name <stack-name>', 'name of the stack that will be deleted');
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
@@ -23,7 +23,7 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
 
     }
 
-    public async performCommand(command: IDeleteStackCommandArgs) {
+    public async performCommand(command: IDeleteStackCommandArgs): Promise<void> {
         if (!command.stackName) {
             throw new OrgFormationError('argument --stack-name is missing');
         }

@@ -32,7 +32,7 @@ export class PersistedState {
 
     }
 
-    public static CreateEmpty(masterAccountId: string) {
+    public static CreateEmpty(masterAccountId: string): PersistedState {
         const empty = new PersistedState({
             masterAccountId,
             bindings: {},
@@ -55,13 +55,13 @@ export class PersistedState {
         this.state = state;
         this.masterAccount = state.masterAccountId;
     }
-    public putTemplateHash(val: string) {
+    public putTemplateHash(val: string): void {
         this.putValue('organization.template.hash', val);
     }
     public getTemplateHash(): string {
         return this.getValue('organization.template.hash');
     }
-    public putValue(key: string, val: string) {
+    public putValue(key: string, val: string): void {
         if (this.state.values === undefined) {
             this.state.values = {};
         }
@@ -83,7 +83,7 @@ export class PersistedState {
         return regions[region];
     }
 
-    public setTarget(templateTarget: ICfnTarget) {
+    public setTarget(templateTarget: ICfnTarget): void {
         let accounts = this.state.stacks[templateTarget.stackName];
         if (!accounts) {
             accounts = this.state.stacks[templateTarget.stackName] = {};
@@ -118,7 +118,7 @@ export class PersistedState {
         }
         return result;
     }
-    public removeTarget(stackName: string, accountId: string, region: string) {
+    public removeTarget(stackName: string, accountId: string, region: string): void {
         const accounts = this.state.stacks[stackName];
         if (!accounts) {
             return;
@@ -161,7 +161,7 @@ export class PersistedState {
         }
         return result;
     }
-    public setUniqueBindingForType(binding: IBinding) {
+    public setUniqueBindingForType(binding: IBinding): void {
         let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
         typeDict = this.state.bindings[binding.type] = {};
 
@@ -169,7 +169,7 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public setBinding(binding: IBinding) {
+    public setBinding(binding: IBinding): void {
         let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
         if (!typeDict) {
             typeDict = this.state.bindings[binding.type] = {};
@@ -180,7 +180,7 @@ export class PersistedState {
     }
 
 
-    public setBindingHash(type: string, logicalId: string, lastCommittedHash: string) {
+    public setBindingHash(type: string, logicalId: string, lastCommittedHash: string): void {
         let typeDict: Record<string, IBinding> = this.state.bindings[type];
         if (!typeDict) {
             typeDict = this.state.bindings[type] = {};
@@ -195,7 +195,7 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public setBindingPhysicalId(type: string, logicalId: string, physicalId: string) {
+    public setBindingPhysicalId(type: string, logicalId: string, physicalId: string): void {
         let typeDict: Record<string, IBinding> = this.state.bindings[type];
         if (!typeDict) {
             typeDict = this.state.bindings[type] = {};
@@ -210,7 +210,7 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public removeBinding(binding: IBinding) {
+    public removeBinding(binding: IBinding): void {
         let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
         if (!typeDict) {
             typeDict = this.state.bindings[binding.type] = {};
@@ -220,7 +220,7 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public setPreviousTemplate(template: string) {
+    public setPreviousTemplate(template: string): void {
         this.state.previousTemplate = template;
         this.dirty = true;
     }
@@ -229,7 +229,7 @@ export class PersistedState {
         return this.state.previousTemplate;
     }
 
-    public async save(storageProvider: IStorageProvider | undefined = this.provider) {
+    public async save(storageProvider: IStorageProvider | undefined = this.provider): Promise<void> {
         if (!storageProvider) { return; }
         if (!this.dirty) { return; }
 

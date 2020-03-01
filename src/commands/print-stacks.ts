@@ -14,13 +14,13 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         super(command, commandName, commandDescription, 'templateFile');
     }
 
-    public addOptions(command: Command) {
+    public addOptions(command: Command): void {
         command.option('--parameters [parameters]', 'parameter values passed to cloudformation when executing stacks');
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation', 'print');
         super.addOptions(command);
     }
 
-    public async performCommand(command: IPrintStacksCommandArgs) {
+    public async performCommand(command: IPrintStacksCommandArgs): Promise<void> {
         if (!command.stackName) {
             throw new OrgFormationError('argument --stack-name is missing');
         }

@@ -30,7 +30,7 @@ export class S3StorageProvider implements IStorageProvider {
         this.objectKey = stateObject;
     }
 
-    public async create(region: string) {
+    public async create(region: string): Promise<void> {
         const request: CreateBucketRequest = {
             Bucket: this.bucketName,
         };
@@ -92,12 +92,12 @@ export class S3StorageProvider implements IStorageProvider {
         }
     }
 
-    public async putObject<T>(object: T) {
+    public async putObject<T>(object: T): Promise<void> {
         const contents = JSON.stringify(object, null, 2);
         await this.put(contents);
     }
 
-    public async put(contents: string) {
+    public async put(contents: string): Promise<void> {
         const s3client = new S3();
         const putObjectRequest: PutObjectRequest = {
             Bucket: this.bucketName,
@@ -122,7 +122,7 @@ export class FileStorageProvider implements IStorageProvider {
         this.filePath = filePath;
     }
 
-    public async create() {
+    public async create(): Promise<void> {
         await Promise.resolve();
     }
 
@@ -137,7 +137,7 @@ export class FileStorageProvider implements IStorageProvider {
             }
         }
     }
-    public async put(contents: string) {
+    public async put(contents: string): Promise<void> {
         writeFileSync(this.filePath, contents, { encoding: 'utf8' });
     }
 }
