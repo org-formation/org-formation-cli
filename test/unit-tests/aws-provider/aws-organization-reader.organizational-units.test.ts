@@ -100,6 +100,7 @@ describe('when reading a organizational unit using reader', () => {
         try {
             await organizationModel.initialize()
         } catch(err) {
+            expect(err.message).toContain('Master account outside root organization is not supported yet');
             console.warn('Missing implementation for master account within a organizational unit...');
         }
         expect(listRootsSpy).toHaveBeenCalledTimes(1);
