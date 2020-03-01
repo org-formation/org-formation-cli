@@ -30,11 +30,14 @@ export class AwsOrganization {
             this.accounts = accounts.filter(x => x.Id !== this.organization.MasterAccountId);
             this.organizationalUnits = await this.reader.organizationalUnits.getValue();
         };
+
         try {
             await Promise.all([setOrgPromise(), setRootsPromise(), setPolicies(), setAccounts()]);
         } catch (err) {
             throw err;
         }
+
+        await this.reader.hasMasterInOrganizationUnit(this.organization?.MasterAccountId);
     }
 
     public async endInitialize(): Promise<void> {

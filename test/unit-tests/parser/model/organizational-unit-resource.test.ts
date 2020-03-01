@@ -1,7 +1,7 @@
 
-import { IOrganizationalUnitProperties, OrganizationalUnitResource } from '../../../../src/parser/model/organizational-unit-resource';
-import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
-import { IResource, TemplateRoot } from '../../../../src/parser/parser';
+import { IOrganizationalUnitProperties, OrganizationalUnitResource } from '~parser/model/organizational-unit-resource';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { IResource, TemplateRoot } from '~parser/parser';
 
 describe('when creating organizational unit resource', () => {
     let template: TemplateRoot;

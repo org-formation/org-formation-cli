@@ -1,6 +1,6 @@
-import { AccountResource, IAccountProperties } from '../../../../src/parser/model/account-resource';
-import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
-import { IResource, TemplateRoot } from '../../../../src/parser/parser';
+import { AccountResource, IAccountProperties } from '~parser/model/account-resource';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { IResource, TemplateRoot } from '~parser/parser';
 
 describe('when creating account resource', () => {
     let template: TemplateRoot;

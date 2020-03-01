@@ -1,8 +1,8 @@
 import md5 = require('md5');
 import { ConsoleUtil } from '../../console-util';
 import { OrgFormationError } from '../../org-formation-error';
-import { IOrganizationBinding, IResource, IResourceRef, TemplateRoot } from '../parser';
 import { Validator } from '../validator';
+import { IOrganizationBinding, IResource, IResourceRef, TemplateRoot } from '../parser';
 import { Resource } from './resource';
 
 export class CloudFormationResource extends Resource {

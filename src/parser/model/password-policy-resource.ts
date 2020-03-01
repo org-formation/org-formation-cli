@@ -1,6 +1,6 @@
 import { OrgFormationError } from '../../org-formation-error';
-import { IResource, TemplateRoot } from '../parser';
 import { Validator } from '../validator';
+import { IResource, TemplateRoot } from '../parser';
 import { Resource } from './resource';
 
 export interface IPasswordPolicyProperties {

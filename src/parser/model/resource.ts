@@ -1,7 +1,7 @@
 import md5 = require('md5');
 import { OrgFormationError } from '../../org-formation-error';
-import { IResource, IResourceRef, IResourceRefExpression, TemplateRoot } from '../parser';
 import { Validator } from '../validator';
+import { IResource, IResourceRef, IResourceRefExpression, TemplateRoot } from '../parser';
 import { OrgResourceTypes } from './resource-types';
 
 export interface Reference<TResource extends Resource> {

@@ -1,10 +1,10 @@
 import { Command, Option } from 'commander';
 import Sinon from 'sinon';
-import { BaseCliCommand } from '../../../src/commands/base-command';
-import { IUpdateStacksCommandArgs } from '../../../src/commands/update-stacks';
-import { ValidateStacksCommand } from '../../../src/commands/validate-stacks';
-import { GenericTaskRunner } from '../../../src/core/generic-task-runner';
-import { TemplateRoot } from '../../../src/parser/parser';
+import { BaseCliCommand } from '~commands/base-command';
+import { IUpdateStacksCommandArgs } from '~commands/update-stacks';
+import { ValidateStacksCommand } from '~commands/validate-stacks';
+import { GenericTaskRunner } from '~core/generic-task-runner';
+import { TemplateRoot } from '~parser/parser';
 import { TestTemplates } from '../test-templates';
 import { ConsoleUtil } from '../../../src/console-util';
 

@@ -1,7 +1,7 @@
-import { IAccountProperties } from '../../../../src/parser/model/account-resource';
-import { MasterAccountResource } from '../../../../src/parser/model/master-account-resource';
-import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
-import { IResource, TemplateRoot } from '../../../../src/parser/parser';
+import { IAccountProperties } from '~parser/model/account-resource';
+import { MasterAccountResource } from '~parser/model/master-account-resource';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { IResource, TemplateRoot } from '~parser/parser';
 
 describe('when creating master account resource', () => {
     let template: TemplateRoot;

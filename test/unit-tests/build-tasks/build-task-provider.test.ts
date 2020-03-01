@@ -1,8 +1,8 @@
 import Sinon from 'sinon';
-import { IBuildTask, IUpdateStackTaskConfiguration } from '../../../src/build-tasks/build-configuration';
-import { BuildTaskProvider } from '../../../src/build-tasks/build-task-provider';
-import { ICommandArgs } from '../../../src/commands/base-command';
-import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '../../../src/commands/update-stacks';
+import { IBuildTask, IUpdateStackTaskConfiguration } from '~build-tasks/build-configuration';
+import { BuildTaskProvider } from '~build-tasks/build-task-provider';
+import { ICommandArgs } from '~commands/base-command';
+import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-stacks';
 import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when creating UpdateStacksTask task', () => {

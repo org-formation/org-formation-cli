@@ -1,9 +1,9 @@
 import * as Sinon from 'sinon';
-import { IBuildTask, TaskProvider } from '../../../src/org-binder/org-tasks-provider';
+import { IBuildTask, TaskProvider } from '~org-binder/org-tasks-provider';
 import { TestTemplates } from '../test-templates';
-import { AwsOrganizationWriter } from '../../../src/aws-provider/aws-organization-writer';
-import { OrgResourceTypes } from '../../../src/parser/model/resource-types';
-import { OrganizationalUnitResource } from '../../../src/parser/model/organizational-unit-resource';
+import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { OrganizationalUnitResource } from '~parser/model/organizational-unit-resource';
 
 describe('when creating OU', () => {
     const sandbox = Sinon.createSandbox()

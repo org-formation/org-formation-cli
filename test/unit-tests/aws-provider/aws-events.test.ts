@@ -1,5 +1,5 @@
 import * as Sinon from 'sinon';
-import { AwsEvents } from '../../../src/aws-provider/aws-events';
+import { AwsEvents } from '~aws-provider/aws-events';
 import { PutEventsRequest, PutEventsRequestEntry } from 'aws-sdk/clients/cloudwatchevents';
 
 describe('when putting aws account created event', () => {

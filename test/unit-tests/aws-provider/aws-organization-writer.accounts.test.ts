@@ -1,42 +1,40 @@
 import * as AWS from 'aws-sdk';
 import * as AWSMock from 'aws-sdk-mock';
 import { CreateAccountRequest, TagResourceRequest, UntagResourceRequest } from 'aws-sdk/clients/organizations';
-import * as Sinon from 'sinon';
-import { AwsEvents } from '../../../src/aws-provider/aws-events';
-import { AwsOrganization } from '../../../src/aws-provider/aws-organization';
-import { AwsOrganizationWriter } from '../../../src/aws-provider/aws-organization-writer';
+import { AwsEvents } from '~aws-provider/aws-events';
+import { AwsOrganization } from '~aws-provider/aws-organization';
+import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
 import { ConsoleUtil } from '../../../src/console-util';
 import { TestOrganizations } from '../test-organizations';
+
+AWSMock.setSDKInstance(AWS);
 
 describe('when creating a new account using writer', () => {
     let organizationService: AWS.Organizations;
     let organizationModel: AwsOrganization;
     let writer: AwsOrganizationWriter;
-    let createAccountSpy: Sinon.SinonSpy;
-    let tagResourceSpy: Sinon.SinonSpy;
-    let untagResourceSpy: Sinon.SinonSpy;
-    let putAccountCreatedEventSpy: Sinon.SinonSpy;
-    const sanbox = Sinon.createSandbox();
+    let createAccountSpy: jest.SpyInstance;
+    let tagResourceSpy: jest.SpyInstance;
+    let untagResourceSpy: jest.SpyInstance;
+    let putAccountCreatedEventSpy: jest.SpyInstance;
 
     const account = { rootEmail: 'new-email@org.com', accountName: 'Account Name', tags: {tag1: 'val1', tag2: 'val2'} };
     const accountId = '123456789011';
 
     beforeEach(async () => {
-        AWSMock.setSDKInstance(AWS);
-
         AWSMock.mock('Organizations', 'createAccount', (params: any, callback: any) => { callback(null, {CreateAccountStatus: {State: 'SUCCEEDED', AccountId: accountId} }); });
         AWSMock.mock('Organizations', 'describeCreateAccountStatus', (params: any, callback: any) => { callback(null, {CreateAccountStatus: {State: 'SUCCEEDED', AccountId: accountId }}); });
         AWSMock.mock('Organizations', 'tagResource', (params: any, callback: any) => { callback(null, {}); });
         AWSMock.mock('Organizations', 'untagResource', (params: any, callback: any) => { callback(null, {}); });
-        putAccountCreatedEventSpy = sanbox.stub(AwsEvents, 'putAccountCreatedEvent');
+        putAccountCreatedEventSpy = jest.spyOn(AwsEvents, 'putAccountCreatedEvent');
 
         organizationService = new AWS.Organizations();
         organizationModel = TestOrganizations.createBasicOrganization();
 
-        createAccountSpy = organizationService.createAccount as Sinon.SinonSpy;
-        tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
-        untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
-        expect(createAccountSpy.callCount).toBe(0);
+        createAccountSpy = jest.spyOn(organizationService, 'createAccount');
+        tagResourceSpy = jest.spyOn(organizationService, 'tagResource');
+        untagResourceSpy = jest.spyOn(organizationService, 'untagResource');
+        expect(createAccountSpy).toHaveBeenCalledTimes(0);
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.createAccount(account as any);
@@ -44,25 +42,25 @@ describe('when creating a new account using writer', () => {
 
     afterEach(() => {
         AWSMock.restore();
-        sanbox.restore();
+        jest.restoreAllMocks();
     });
 
     test('organization create account is called', () => {
-        expect(createAccountSpy.callCount).toBe(1);
+        expect(createAccountSpy).toHaveBeenCalledTimes(1);
     });
 
     test('organization create account was passed the right arguments', () => {
-        const args: CreateAccountRequest = createAccountSpy.lastCall.args[0];
+        const args: CreateAccountRequest = createAccountSpy.mock.calls[0][0];
         expect(args.AccountName).toBe(account.accountName);
         expect(args.Email).toBe(account.rootEmail);
     });
 
     test('organization tag account is called once', () => {
-        expect(tagResourceSpy.callCount).toBe(1);
+        expect(tagResourceSpy).toHaveBeenCalledTimes(1);
     });
 
     test('organization tag account was passed the right arguments', () => {
-        const args: TagResourceRequest = tagResourceSpy.lastCall.args[0];
+        const args: TagResourceRequest = tagResourceSpy.mock.calls[0][0];
         expect(args.ResourceId).toBe(accountId);
         expect(args.Tags[0].Key).toBe('tag1');
         expect(args.Tags[0].Value).toBe('val1');
@@ -71,7 +69,7 @@ describe('when creating a new account using writer', () => {
     });
 
     test('organization un-tag account is not called', () => {
-        expect(untagResourceSpy.callCount).toBe(0);
+        expect(untagResourceSpy).toHaveBeenCalledTimes(0);
     });
 
     test('account is added to organization model', () => {
@@ -83,7 +81,7 @@ describe('when creating a new account using writer', () => {
     });
 
     test('event has been published for new account', () => {
-        expect(putAccountCreatedEventSpy.callCount).toBe(1);
+        expect(putAccountCreatedEventSpy).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -91,14 +89,12 @@ describe('when creating an account that already existed', () => {
     let organizationService: AWS.Organizations;
     let organizationModel: AwsOrganization;
     let writer: AwsOrganizationWriter;
-    let createAccountSpy: Sinon.SinonSpy;
-    let tagResourceSpy: Sinon.SinonSpy;
-    let untagResourceSpy: Sinon.SinonSpy;
-    let consoleDebug: Sinon.SinonStub;
+    let createAccountSpy: jest.SpyInstance;
+    let tagResourceSpy: jest.SpyInstance;
+    let untagResourceSpy: jest.SpyInstance;
+    let consoleDebug: jest.SpyInstance;
     const accountId = '123456789012';
     const account = { rootEmail: 'email@root.org',  accountId, accountName: 'Account Name', tags: {tag1: 'val1', tag2: 'val2'} };
-    const sanbox = Sinon.createSandbox();
-
 
     beforeEach(async () => {
         AWSMock.mock('Organizations', 'createAccount', (params: any, callback: any) => { callback(null, {CreateAccountStatus: {State: 'SUCCEEDED', AccountId: accountId} }); });
@@ -109,10 +105,10 @@ describe('when creating an account that already existed', () => {
         organizationService = new AWS.Organizations();
         organizationModel = TestOrganizations.createBasicOrganization();
 
-        createAccountSpy = organizationService.createAccount as Sinon.SinonSpy;
-        tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
-        untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
-        consoleDebug = sanbox.stub(ConsoleUtil, 'LogDebug');
+        createAccountSpy = jest.spyOn(organizationService, 'createAccount');
+        tagResourceSpy = jest.spyOn(organizationService, 'tagResource');
+        untagResourceSpy = jest.spyOn(organizationService, 'untagResource');
+        consoleDebug = jest.spyOn(ConsoleUtil, 'LogDebug');
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.createAccount(account as any);
@@ -120,26 +116,26 @@ describe('when creating an account that already existed', () => {
 
     afterEach(() => {
         AWSMock.restore();
-        sanbox.restore();
+        jest.restoreAllMocks();
     });
 
     test('organization create account is not called', () => {
-        expect(createAccountSpy.callCount).toBe(0);
+        expect(createAccountSpy).toHaveBeenCalledTimes(0);
     });
 
     test('organization tag account is called once', () => {
-        expect(tagResourceSpy.callCount).toBe(1);
+        expect(tagResourceSpy).toHaveBeenCalledTimes(1);
     });
 
     test('organization tag account was passed the right arguments', () => {
-        const args: TagResourceRequest = tagResourceSpy.lastCall.args[0];
+        const args: TagResourceRequest = tagResourceSpy.mock.calls[0][0];
         expect(args.ResourceId).toBe(accountId);
         expect(args.Tags[0].Key).toBe('tag2');
         expect(args.Tags[0].Value).toBe('val2');
     });
 
     test('organization un-tag account is not called', () => {
-        expect(untagResourceSpy.callCount).toBe(0);
+        expect(untagResourceSpy).toHaveBeenCalledTimes(0);
     });
 
     test('account is updated organization model', () => {
@@ -153,10 +149,9 @@ describe('when updating account', () => {
     let organizationService: AWS.Organizations;
     let organizationModel: AwsOrganization;
     let writer: AwsOrganizationWriter;
-    const sandbox = Sinon.createSandbox();
-    let tagResourceSpy: Sinon.SinonSpy;
-    let untagResourceSpy: Sinon.SinonSpy;
-    let logWarningSpy: Sinon.SinonSpy;
+    let tagResourceSpy: jest.SpyInstance;
+    let untagResourceSpy: jest.SpyInstance;
+    let logWarningSpy: jest.SpyInstance;
     const accountId = '123456789012';
     const account = { accountId, accountName: 'Account Name 2', tags: {tag3: 'val3'} };
 
@@ -169,10 +164,10 @@ describe('when updating account', () => {
         organizationService = new AWS.Organizations();
         organizationModel = TestOrganizations.createBasicOrganization();
 
-        tagResourceSpy = organizationService.tagResource as Sinon.SinonSpy;
-        untagResourceSpy = organizationService.untagResource as Sinon.SinonSpy;
+        tagResourceSpy = jest.spyOn(organizationService, 'tagResource');
+        untagResourceSpy = jest.spyOn(organizationService, 'untagResource');
 
-        logWarningSpy = sandbox.stub(ConsoleUtil, 'LogWarning');
+        logWarningSpy = jest.spyOn(ConsoleUtil, 'LogWarning');
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.updateAccount(account as any, accountId);
@@ -180,30 +175,30 @@ describe('when updating account', () => {
 
     afterEach(() => {
         AWSMock.restore();
-        sandbox.restore();
+        jest.restoreAllMocks();
      });
 
     test('account name is not updated, warning is logged instead', () => {
         const accountInModel = organizationModel.accounts.find((x) => x.Id === accountId);
         expect(accountInModel).not.toBe(account.accountName);
-        expect(logWarningSpy.callCount).toBe(1);
-        const message = logWarningSpy.lastCall.args[0];
+        expect(logWarningSpy).toHaveBeenCalledTimes(1);
+        const message = logWarningSpy.mock.calls[0][0];
         expect(message).toEqual(expect.stringContaining(account.accountName));
         expect(message).toEqual(expect.stringContaining(account.accountId));
         expect(message).toEqual(expect.stringContaining('cannot be changed'));
     });
 
     test('new tags are added', () => {
-        expect(tagResourceSpy.callCount).toBe(1);
-        const args: TagResourceRequest = tagResourceSpy.lastCall.args[0];
+        expect(tagResourceSpy).toHaveBeenCalledTimes(1);
+        const args: TagResourceRequest = tagResourceSpy.mock.calls[0][0];
         expect(args.ResourceId).toBe(accountId);
         expect(args.Tags[0].Key).toBe('tag3');
         expect(args.Tags[0].Value).toBe('val3');
     });
 
     test('old tags are removed', () => {
-        expect(untagResourceSpy.callCount).toBe(1);
-        const args: UntagResourceRequest = untagResourceSpy.lastCall.args[0];
+        expect(untagResourceSpy).toHaveBeenCalledTimes(1);
+        const args: UntagResourceRequest = untagResourceSpy.mock.calls[0][0];
         expect(args.ResourceId).toBe(accountId);
         expect(args.TagKeys[0]).toBe('tag1');
     });

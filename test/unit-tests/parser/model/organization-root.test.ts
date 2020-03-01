@@ -1,6 +1,6 @@
-import { IOrganizationRootProperties, OrganizationRootResource } from '../../../../src/parser/model/organization-root-resource';
-import { OrgResourceTypes } from '../../../../src/parser/model/resource-types';
-import { IResource, TemplateRoot } from '../../../../src/parser/parser';
+import { IOrganizationRootProperties, OrganizationRootResource } from '~parser/model/organization-root-resource';
+import { OrgResourceTypes } from '~parser/model/resource-types';
+import { IResource, TemplateRoot } from '~parser/parser';
 
 describe('when organization root resource', () => {
     let template: TemplateRoot;
