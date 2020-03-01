@@ -286,16 +286,21 @@ export class TaskProvider {
         return [...tasks, createOrganizationalUnitCommitHashTask];
     }
     public createDeatchChildOUTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string): IBuildTask {
-        let accountIdentifier = childOu.PhysicalId;
+        let resourceIdentifier = childOu.PhysicalId;
         if (childOu.TemplateResource) {
-            accountIdentifier = childOu.TemplateResource.logicalId;
+            resourceIdentifier = childOu.TemplateResource.logicalId;
         }
+        const childLogicalId = childOu.TemplateResource.logicalId;
         const detachChildOuTask: IBuildTask = {
             type: resource.type,
             logicalId: resource.logicalId,
-            action: `Detach OU (${accountIdentifier})`,
+            action: `Detach OU (${resourceIdentifier})`,
             perform: async task => {
-                const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId);
+                const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childLogicalId);
+                if (binding === undefined) {
+                    ConsoleUtil.LogDebug(`resource ${childLogicalId} was already deleted`);
+                    return;
+                }
                 const childOuId = binding.physicalId;
 
                 const targetId = getTargetId();
@@ -310,8 +315,8 @@ export class TaskProvider {
                 task.result = physicalIdMap;
             },
         };
-        if (childOu.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId)) {
-            detachChildOuTask.dependentTaskFilter = task => task.logicalId === childOu.TemplateResource.logicalId &&
+        if (childOu.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childLogicalId)) {
+            detachChildOuTask.dependentTaskFilter = task => task.logicalId === childLogicalId &&
                 task.action === 'Create' &&
                 task.type === OrgResourceTypes.OrganizationalUnit;
         }
@@ -320,13 +325,37 @@ export class TaskProvider {
 
     public createOrganizationalUnitDeleteTasks(binding: IBinding): IBuildTask[] {
         const that = this;
-
+        const tasks: IBuildTask[] = [];
         const previous = this.previousTemplate.organizationSection.organizationalUnits.find(x=>x.logicalId === binding.logicalId);
+
+        const fnGetPhysicalId = () => {
+            return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, previous.logicalId).physicalId;
+        };
+
+
+        const previousSCPs = this.resolveIDs(previous.serviceControlPolicies);
+        for (const detachedSCP of previousSCPs.physicalIds) {
+            const detachSCPTask: IBuildTask = this.createDetachSCPTask(previous, previousSCPs.mapping[detachedSCP], that, fnGetPhysicalId);
+            tasks.push(detachSCPTask);
+        }
+
+        const previousAccounts = this.resolveIDs(previous.accounts);
+        for (const detachedAccount of previousAccounts.physicalIds) {
+            const detachAccountTask: IBuildTask = this.createDetachAccountTask(previous, previousAccounts.mapping[detachedAccount], that, fnGetPhysicalId);
+            tasks.push(detachAccountTask);
+        }
+
+        const previousChildOUs = this.resolveIDs(previous.organizationalUnits);
+        for (const detachedChildOu of previousChildOUs.physicalIds) {
+            const detachChildOuTask: IBuildTask = this.createDeatchChildOUTask(previous, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
+            tasks.push(detachChildOuTask);
+        }
 
         const task: IBuildTask = {
             type: binding.type,
             logicalId: binding.logicalId,
             action: 'Delete',
+            dependentTasks: tasks,
             perform: async () => {
                 await that.writer.deleteOrganizationalUnit(binding.physicalId);
                 this.state.removeBinding(binding);
@@ -340,10 +369,10 @@ export class TaskProvider {
                         return true;
                     }
                 }
-                return false;
+                return (x.logicalId === binding.logicalId);
             };
         }
-        return [task];
+        return [...tasks, task];
     }
 
     public createAccountUpdateTasks(resource: AccountResource, physicalId: string, hash: string): IBuildTask[] {
