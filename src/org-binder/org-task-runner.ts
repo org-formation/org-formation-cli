@@ -22,6 +22,7 @@ export class TaskRunner {
 
             try {
                 let line = `${task.type.padEnd(29, ' ')} | ${task.logicalId.padEnd(29, ' ')} | ${task.action}`;
+                ConsoleUtil.LogDebug(`start executing task: ${task.action} ${task.type} ${task.logicalId}`);
                 await task.perform(task);
                 task.done = true;
                 if (task.result) {

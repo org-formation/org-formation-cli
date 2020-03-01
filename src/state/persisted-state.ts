@@ -1,4 +1,5 @@
 import { OrgFormationError } from '../org-formation-error';
+import { ConsoleUtil } from '../console-util';
 import { IStorageProvider } from './storage-provider';
 
 export class PersistedState {
@@ -143,7 +144,11 @@ export class PersistedState {
         const typeDict = this.state.bindings[type];
         if (!typeDict) { return undefined; }
 
-        return typeDict[logicalId];
+        const result = typeDict[logicalId];
+        if (result === undefined) {
+            ConsoleUtil.LogDebug(`unable to find binding for ${type}/${logicalId}`);
+        }
+        return result;
     }
 
     public enumBindings(type: string): IBinding[] {
