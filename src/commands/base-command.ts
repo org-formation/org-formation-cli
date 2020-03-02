@@ -4,18 +4,18 @@ import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
 import { Command } from 'commander';
 import * as ini from 'ini';
-import { AwsOrganization } from '../aws-provider/aws-organization';
-import { AwsOrganizationReader } from '../aws-provider/aws-organization-reader';
-import { AwsOrganizationWriter } from '../aws-provider/aws-organization-writer';
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
-import { OrganizationBinder } from '../org-binder/org-binder';
-import { TaskProvider } from '../org-binder/org-tasks-provider';
 import { OrgFormationError } from '../org-formation-error';
-import { TemplateRoot } from '../parser/parser';
-import { PersistedState } from '../state/persisted-state';
-import { S3StorageProvider } from '../state/storage-provider';
-import { DefaultTemplate, DefaultTemplateWriter } from '../writer/default-template-writer';
+import { AwsOrganization } from '~aws-provider/aws-organization';
+import { AwsOrganizationReader } from '~aws-provider/aws-organization-reader';
+import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
+import { OrganizationBinder } from '~org-binder/org-binder';
+import { TaskProvider } from '~org-binder/org-tasks-provider';
+import { TemplateRoot } from '~parser/parser';
+import { PersistedState } from '~state/persisted-state';
+import { S3StorageProvider } from '~state/storage-provider';
+import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template-writer';
 
 
 export abstract class BaseCliCommand<T extends ICommandArgs> {

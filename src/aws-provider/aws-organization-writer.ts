@@ -4,11 +4,13 @@ import { CreateCaseRequest } from 'aws-sdk/clients/support';
 import { AwsUtil, passwordPolicEquals } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { AccountResource } from '../parser/model/account-resource';
-import { OrganizationalUnitResource } from '../parser/model/organizational-unit-resource';
-import { ServiceControlPolicyResource } from '../parser/model/service-control-policy-resource';
 import { AwsEvents } from './aws-events';
 import { AwsOrganization } from './aws-organization';
+import {
+    AccountResource,
+    OrganizationalUnitResource,
+    ServiceControlPolicyResource,
+} from '~parser/model';
 export class AwsOrganizationWriter {
 
     private organization: AwsOrganization;

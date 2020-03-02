@@ -1,8 +1,10 @@
-import { IAccountProperties } from '~parser/model/account-resource';
-import { IOrganizationRootProperties } from '~parser/model/organization-root-resource';
-import { IOrganizationalUnitProperties } from '~parser/model/organizational-unit-resource';
-import { OrgResourceTypes } from '~parser/model/resource-types';
-import { IServiceControlPolicyProperties } from '~parser/model/service-control-policy-resource';
+import {
+    IAccountProperties,
+    IOrganizationalUnitProperties,
+    IOrganizationRootProperties,
+    IServiceControlPolicyProperties,
+    OrgResourceTypes,
+} from '~parser/model';
 import { IResource, IResources, ITemplate, TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 

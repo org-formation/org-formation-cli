@@ -1,17 +1,18 @@
 import { Command } from 'commander';
-import { CreateChangeSetCommand } from './src/commands/create-organization-changeset';
-import { DeleteStacksCommand } from './src/commands/delete-stacks';
-import { DescribeStacksCommand } from './src/commands/describe-stacks';
-import { ExecuteChangeSetCommand } from './src/commands/execute-organization-changeset';
-import { InitOrganizationCommand } from './src/commands/init-organization';
-import { InitPipelineCommand } from './src/commands/init-organization-pipeline';
-import { PerformTasksCommand } from './src/commands/perform-tasks';
-import { PrintStacksCommand } from './src/commands/print-stacks';
-import { UpdateOrganizationCommand } from './src/commands/update-organization';
-import { UpdateStacksCommand } from './src/commands/update-stacks';
-import { ValidateStacksCommand } from './src/commands/validate-stacks';
-import { ValidateTasksCommand } from './src/commands/validate-tasks';
-
+import {
+    CreateChangeSetCommand,
+    DeleteStacksCommand,
+    DescribeStacksCommand,
+    ExecuteChangeSetCommand,
+    InitOrganizationCommand,
+    InitPipelineCommand,
+    PerformTasksCommand,
+    PrintStacksCommand,
+    UpdateOrganizationCommand,
+    UpdateStacksCommand,
+    ValidateStacksCommand,
+    ValidateTasksCommand,
+} from '~commands/index';
 
 export class CliProgram {
 

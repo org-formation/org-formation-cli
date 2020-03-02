@@ -5,13 +5,14 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepublishOnly": "tsc",
+    "build": "npx tsc && tscpaths -p tsconfig.json -s . -o dist",
+    "prepublishOnly": "npm run build",
     "lint": "npx eslint './src/**/*.ts'",
     "lint:fix": "npx eslint --fix './src/**/*.ts'",
     "test": "npx jest --config=jest.config.js 'unit-test'",
     "test:ci": "npx jest --ci --collect-coverage --config=jest.config.js 'unit-test'",
     "itests": "npx jest --config=jest.config.js 'integration-test' --runInBand",
-    "start:debug": "npx node --inspect -r ts-node/register -r tsconfig-paths/register cli.ts"
+    "start:debug": "node --inspect -r ts-node/register -r tsconfig-paths/register cli.ts"
   },
   "files": [
     "dist/*",
@@ -59,6 +60,7 @@
     "ts-jest": "^25.2.0",
     "ts-node": "^8.6.2",
     "tsconfig-paths": "^3.9.0",
+    "tscpaths": "^0.0.9",
     "typescript": "^3.8.3"
   },
   "keywords": [

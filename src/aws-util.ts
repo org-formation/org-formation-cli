@@ -1,7 +1,6 @@
 import { CloudFormation, IAM, S3, STS, Support } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
-import { PasswordPolicyResource } from './parser/model/password-policy-resource';
-import { Reference } from './parser/model/resource';
+import { PasswordPolicyResource, Reference } from '~parser/model';
 
 
 export class AwsUtil {

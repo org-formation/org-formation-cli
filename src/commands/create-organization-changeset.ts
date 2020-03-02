@@ -1,8 +1,8 @@
 import { Command } from 'commander';
-import { ChangeSetProvider } from '../change-set/change-set-provider';
-import { TemplateRoot } from '../parser/parser';
 import { ConsoleUtil } from '../console-util';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { ChangeSetProvider } from '~change-set/change-set-provider';
+import { TemplateRoot } from '~parser/parser';
 
 const commandName = 'create-change-set <templateFile>';
 const commandDescription = 'create change set that can be reviewed and executed later';
