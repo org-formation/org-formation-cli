@@ -167,7 +167,8 @@ describe('when updating account', () => {
         tagResourceSpy = jest.spyOn(organizationService, 'tagResource');
         untagResourceSpy = jest.spyOn(organizationService, 'untagResource');
 
-        logWarningSpy = jest.spyOn(ConsoleUtil, 'LogWarning');
+        logWarningSpy = jest.spyOn(ConsoleUtil, 'LogWarning')
+                            .mockImplementation(() => {});
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.updateAccount(account as any, accountId);
