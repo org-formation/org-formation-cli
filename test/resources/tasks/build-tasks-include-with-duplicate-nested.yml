@@ -1,0 +1,12 @@
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+Include:
+  Type: include
+  Path: ./include1.yml
+
+Template:
+  Type: update-stacks
+  Template: ./templates/org-template.yml
+  StackName: stack-name-3

@@ -18,4 +18,4 @@ Include1:
 
 Include2:
   Type: include
-  Path: ./include1.yml
+  Path: ./include2.yml

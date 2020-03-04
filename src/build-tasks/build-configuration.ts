@@ -43,10 +43,16 @@ export class BuildConfiguration {
 
         return result;
     }
+
     private validateTasksFile(tasks: IBuildTask[]): void {
-        const updateStackTasks = tasks.filter(x => x.type === 'update-stacks') as BaseStacksTask[];
+        const updateStackTasks = this.recursivelyFilter(tasks, x => x.type === 'update-stacks') as BaseStacksTask[];
         const stackNames = updateStackTasks.map(x => x.stackName);
-        this.throwForDuplicateVale(stackNames, x => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
+        this.throwForDuplicateVal(stackNames, x => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
+
+        const updateOrgTasks = this.recursivelyFilter(tasks, x => x.type === 'update-organization') as BaseStacksTask[];
+        if (updateOrgTasks.length > 1) {
+            throw new OrgFormationError('multiple update-organization tasks found');
+        }
     }
 
     private fixateOrganizationFile(command: ICommandArgs): void{
@@ -85,7 +91,7 @@ export class BuildConfiguration {
         return result;
     }
 
-    private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error): void {
+    private throwForDuplicateVal(arr: string[], fnError: (val: string) => Error): void {
         const sortedArr = arr.sort();
         for (let i = 0; i < sortedArr.length - 1; i++) {
             if (sortedArr[i + 1] === sortedArr[i]) {
@@ -93,6 +99,17 @@ export class BuildConfiguration {
                 throw fnError(duplicate);
             }
         }
+    }
+
+    private recursivelyFilter(tasks: IBuildTask[], filter: (task: IBuildTask) => boolean): IBuildTask[] {
+        const result = tasks.filter(filter);
+        const tasksWithChildren = tasks.filter(x=> x.childTasks && x.childTasks.length > 0);
+        const childrenFlattened = tasksWithChildren.reduce((acc: IBuildTask[], x: IBuildTask)=> acc.concat(...x.childTasks), []);
+        if (childrenFlattened.length > 0) {
+            const resultFromChildren = this.recursivelyFilter(childrenFlattened, filter);
+            return result.concat(resultFromChildren);
+        }
+        return result;
     }
 }
 
@@ -141,5 +158,6 @@ export interface IBuildTask {
     name: string;
     type: BuildTaskType;
     isDependency(task: IBuildTask): boolean;
+    childTasks: IBuildTask[];
     perform(): Promise<void>;
 }

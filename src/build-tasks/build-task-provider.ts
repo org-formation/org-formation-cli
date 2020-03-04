@@ -49,6 +49,7 @@ abstract class BaseIncludeTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
     public dependsOn: string[];
+    public childTasks: IBuildTask[] = [];
     public taskFilePath: string;
     protected config: IIncludeTaskConfiguration;
     private command: any;
@@ -68,6 +69,7 @@ abstract class BaseIncludeTask implements IBuildTask {
         const dir = path.dirname(config.FilePath);
         this.taskFilePath = path.join(dir, config.Path);
         this.command = command;
+        this.childTasks  = this.expandChildTasks(command);
     }
 
     public isDependency(task: IBuildTask): boolean {
@@ -83,21 +85,33 @@ abstract class BaseIncludeTask implements IBuildTask {
     }
 
     protected abstract innerPerform(command: ICommandArgs): Promise<void>;
+
+    protected abstract expandChildTasks(command: ICommandArgs): IBuildTask[];
 }
 
 class UpdateIncludeTask extends BaseIncludeTask {
-    protected async innerPerform(command: ICommandArgs): Promise<void> {
-        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.taskFilePath}`);
+
+    protected expandChildTasks(command: ICommandArgs): IBuildTask[] {
         const buildConfig = new BuildConfiguration(this.taskFilePath);
         const tasks = buildConfig.enumBuildTasks(command);
-        await BuildRunner.RunTasks(tasks, this.config.MaxConcurrentTasks, this.config.FailedTaskTolerance);
+        return tasks;
+    }
+
+    protected async innerPerform(): Promise<void> {
+        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.taskFilePath}`);
+        await BuildRunner.RunTasks(this.childTasks, this.config.MaxConcurrentTasks, this.config.FailedTaskTolerance);
     }
 }
 class ValidateIncludeTask extends BaseIncludeTask {
-    protected async innerPerform(command: ICommandArgs): Promise<void> {
+
+    protected expandChildTasks(command: ICommandArgs): IBuildTask[] {
         const buildConfig = new BuildConfiguration(this.taskFilePath);
         const tasks = buildConfig.enumValidationTasks(command);
-        await BuildRunner.RunValidationTasks(tasks, 1, 999);
+        return tasks;
+    }
+
+    protected async innerPerform(): Promise<void> {
+        await BuildRunner.RunValidationTasks(this.childTasks, 1, 999);
     }
 }
 
@@ -107,6 +121,7 @@ export abstract class BaseStacksTask implements IBuildTask {
     public dependsOn: string[];
     public stackName: string;
     public templatePath: string;
+    public childTasks: IBuildTask[] = [];
     protected config: IUpdateStackTaskConfiguration;
     private command: any;
     private dir: string;
@@ -215,6 +230,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
     public templatePath: string;
+    public childTasks: IBuildTask[] = [];
     protected config: IUpdateOrganizationTaskConfiguration;
     private command: any;
 

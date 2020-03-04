@@ -1,0 +1,11 @@
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+Include:
+  Type: include
+  Path: ./include1.yml
+
+Include2:
+  Type: include
+  Path: ./include-include1.yml

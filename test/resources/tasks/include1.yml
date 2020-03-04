@@ -1,10 +1,10 @@
 
-Template:
+Template2:
   Type: update-stacks
   Template: ./templates/org-template.yml
   StackName: stack-name-2
 
-Template:
+Template3:
   Type: update-stacks
   Template: ./templates/org-template.yml
   StackName: stack-name-3

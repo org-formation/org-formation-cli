@@ -71,9 +71,7 @@ describe('when creating UpdateStacksTask task with command args', () => {
     test('creates task', () => {
         expect(task).toBeDefined();
     });
-    test(
-        'arguments sent to perform are passed to updateStackResources',
-        async () => {
+    test('arguments sent to perform are passed to updateStackResources', async () => {
             await task.perform();
             const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
             const fileArg = commandArgs.templateFile;
@@ -88,6 +86,7 @@ describe('when creating UpdateStacksTask task with command args', () => {
         }
     );
 });
+
 describe('when creating UpdateStacksTask task with old attribute names', () => {
     let task: IBuildTask;
     let updateStacksResoruces: sinon.SinonStub;

@@ -49,6 +49,13 @@ describe('when enumerating build tasks', () => {
         expect(tasks.filter((x) => x.type === 'update-stacks').length).toBe(2);
         expect(tasks.filter((x) => x.type === 'update-organization').length).toBe(1);
     });
+
+    test('include tasks have child tasks', () => {
+        const tasks = buildconfig.enumBuildTasks({} as any);
+        const includes = tasks.filter((x) => x.type === 'include');
+        expect(includes[0].childTasks.length).toBe(2);
+        expect(includes[1].childTasks.length).toBe(2);
+    });
 });
 
 describe('when getting build tasks for task file without update-organization', () => {
@@ -92,7 +99,6 @@ describe('when getting validation tasks for task file with duplicate stackName',
 });
 
 describe('when getting build tasks for task file with duplicate stackName', () => {
-
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-duplicate-stackname.yml');
@@ -101,6 +107,72 @@ describe('when getting build tasks for task file with duplicate stackName', () =
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('stackName'));
             expect(err.message).toEqual(expect.stringContaining('stack-name'));
+        }
+    });
+});
+
+describe('when getting build tasks for task file with duplicate stackName through include', () => {
+    test('then error is thrown', () => {
+        try {
+            const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-duplicate.yml');
+            config.enumBuildTasks({} as ICommandArgs);
+            throw new Error('expected error to have been thrown');
+        } catch (err) {
+            expect(err.message).toEqual(expect.stringContaining('stackName'));
+            expect(err.message).toEqual(expect.stringContaining('stack-name'));
+        }
+    });
+});
+
+describe('when getting validation tasks for task file with duplicate stackName through include', () => {
+
+    test('then error is thrown', () => {
+        try {
+            const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-duplicate.yml');
+            config.enumValidationTasks({} as ICommandArgs);
+            throw new Error('expected error to have been thrown');
+        } catch (err) {
+            expect(err.message).toEqual(expect.stringContaining('stackName'));
+            expect(err.message).toEqual(expect.stringContaining('stack-name'));
+        }
+    });
+});
+
+
+describe('when getting build tasks for task file with duplicate stackName through nested includes', () => {
+    test('then error is thrown', () => {
+        try {
+            const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-duplicate-nested.yml');
+            config.enumBuildTasks({} as ICommandArgs);
+            throw new Error('expected error to have been thrown');
+        } catch (err) {
+            expect(err.message).toEqual(expect.stringContaining('stackName'));
+            expect(err.message).toEqual(expect.stringContaining('stack-name'));
+        }
+    });
+});
+
+describe('when getting validation tasks for task file with duplicate stackName through nested includes', () => {
+    test('then error is thrown', () => {
+        try {
+            const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-duplicate-nested.yml');
+            config.enumValidationTasks({} as ICommandArgs);
+            throw new Error('expected error to have been thrown');
+        } catch (err) {
+            expect(err.message).toEqual(expect.stringContaining('stackName'));
+            expect(err.message).toEqual(expect.stringContaining('stack-name'));
+        }
+    });
+});
+
+describe('when including task file with update-organization', () => {
+    test('then error is thrown', () => {
+        try {
+            const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-update-org.yml');
+            config.enumValidationTasks({} as ICommandArgs);
+            throw new Error('expected error to have been thrown');
+        } catch (err) {
+            expect(err.message).toEqual(expect.stringContaining('multiple update-organization tasks found'));
         }
     });
 });
