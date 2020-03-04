@@ -10,9 +10,8 @@
     "lint": "npx eslint './src/**/*.ts'",
     "lint:fix": "npx eslint --fix './src/**/*.ts'",
     "test": "npm run test:unit",
-    "test:base": "npx jest --config=jest.config.js",
-    "test:unit": "npm run test:base 'unit-test'",
-    "test:integration": "npm run test:base --runInBand 'integration-test'",
+    "test:unit": "npx jest 'unit-test'",
+    "test:integration": "npx jest --runInBand 'integration-test'",
     "test:ci": "npm run test:unit -- --ci --collect-coverage",
     "start": "npx --quiet ts-node cli.ts",
     "start:debug": "node --inspect -r ts-node/register cli.ts"
