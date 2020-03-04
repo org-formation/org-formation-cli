@@ -1,5 +1,8 @@
 {
     "compileOnSave": true,
+    "ts-node": {
+        "compiler": "ttypescript"
+    },
     "compilerOptions": {
         "declaration": false,
         "noEmitOnError" : true,
@@ -24,7 +27,13 @@
             "~parser/*": ["src/parser/*"],
             "~state/*": ["src/state/*"],
             "~writer/*": ["src/writer/*"]
-        }
+        },
+        "plugins": [
+            {
+                "transform": "@zerollup/ts-transform-paths",
+                "exclude": [ "*" ]
+            }
+        ]
     },
     "include": [ "src/**/*", "*.ts"],
     "exclude": [ "node_modules", "dist"],

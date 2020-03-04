@@ -1,4 +1,4 @@
-import md5 = require('md5');
+import md5 from 'md5';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { CfnTaskProvider, ICfnTask } from './cfn-task-provider';
