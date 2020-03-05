@@ -173,6 +173,8 @@ Will perform tasks from *tasksFile*.
 
 |option|default|description|
 |---|---|---|
+|<nobr>--logical-name</nobr>| 'default' | logical name of the tasks file, allows multiple tasks files to be used together with --perform-cleanup action |
+|<nobr>--perform-cleanup</nobr>| false | when set will cleanup resources created by previous perform-tasks after task is removed from tasks file |
 |<nobr>--max-concurrent-tasks</nobr> | 1 | Maximum number of tasks to be executed concurrently|
 |<nobr>--failed-tasks-tolerance</nobr> | 0 | The number of failed tasks after which execution stops|
 |<nobr>--max-concurrent-stacks</nobr> | 1 | Maximum number of stacks (within a task) to be executed concurrently |
