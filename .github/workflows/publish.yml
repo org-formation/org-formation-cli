@@ -3,9 +3,7 @@ name: Publish
 
 on:
   push:
-    branches:
-      - master
-    tags:        
+    tags:
       - v*
 
 jobs:
