@@ -1,6 +1,6 @@
 import Sinon from 'sinon';
 import { IBuildTask, IUpdateStackTaskConfiguration } from '~build-tasks/build-configuration';
-import { BuildTaskProvider } from '~build-tasks/build-task-provider';
+import { BuildTaskProvider, BaseStacksTask } from '~build-tasks/build-task-provider';
 import { ICommandArgs } from '~commands/base-command';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-stacks';
 import { ConsoleUtil } from '../../../src/console-util';
@@ -32,6 +32,9 @@ describe('when creating build configuration with duplicate stack name', () => {
         expect(task).toBeDefined();
     });
 
+    test('stackname is used for physicalIdForCleanup', () => {
+        expect(task.physicalIdForCleanup).toBe((task as BaseStacksTask).stackName);
+    });
     test('template and stackname are passed to updateStackResources', async () => {
         await task.perform();
         const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;

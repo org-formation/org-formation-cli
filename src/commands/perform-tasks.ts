@@ -1,8 +1,10 @@
 import { Command } from 'commander';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { BuildTaskProvider } from '~build-tasks/build-task-provider';
+import { ITrackedTask } from '~state/persisted-state';
+import { Validator } from '~parser/validator';
 import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
-import { Validator } from '~parser/validator';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -14,6 +16,8 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
     }
 
     public addOptions(command: Command): void {
+        command.option('--logical-name <tasks-logical-name>', 'logical name of the tasks file, allows multiple tasks files to be used together with --perform-cleanup action', 'default');
+        command.option('--perform-cleanup', 'when set will cleanup resources created by previous perform-tasks after task is removed from tasks file', false);
         command.option('--max-concurrent-tasks <max-concurrent-tasks>', 'maximum number of tasks to be executed concurrently', 1);
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks (within a task) to be executed concurrently', 1);
         command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed tasks after which execution stops', 0);
@@ -31,12 +35,25 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
         const config = new BuildConfiguration(tasksFile);
         const tasks = config.enumBuildTasks(command);
+        const state = await this.getState(command);
+
         await BuildRunner.RunTasks(tasks, command.maxConcurrentTasks, command.failedTasksTolerance);
+        const tracked = state.getTrackedTasks(command.logicalName);
+        const cleanupTasks = BuildTaskProvider.enumTasksForCleanup(tracked, tasks, command);
+        if (cleanupTasks.length > 0) {
+            await BuildRunner.RunTasks(cleanupTasks, command.maxConcurrentTasks, 0);
+        }
+        const tasksToTrack = BuildTaskProvider.recursivelyFilter(tasks, x=> x.physicalIdForCleanup !== undefined);
+        const trackedTasks: ITrackedTask[] = tasksToTrack.map(x=> {return {physicalIdForCleanup: x.physicalIdForCleanup, logicalName: x.name, type: x.type  }; });
+        state.setTrackedTasks(command.logicalName, trackedTasks);
+        state.save();
     }
 }
 
-interface IPerformTasksCommandArgs extends ICommandArgs {
+export interface IPerformTasksCommandArgs extends ICommandArgs {
     tasksFile: string;
+    logicalName: string;
+    performCleanup: boolean;
     maxConcurrentTasks: number;
     failedTasksTolerance: number;
     maxConcurrentStacks: number;

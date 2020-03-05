@@ -11,7 +11,13 @@ const commandDescription = 'removes all stacks deployed to accounts using org-fo
 
 export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs> {
 
-    constructor(command: Command) {
+
+    public static async Perform(command: IDeleteStackCommandArgs): Promise<void> {
+        const x = new DeleteStacksCommand();
+        await x.performCommand(command);
+    }
+
+    constructor(command?: Command) {
         super(command, commandName, commandDescription);
     }
 

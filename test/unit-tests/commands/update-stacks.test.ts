@@ -312,7 +312,6 @@ describe('when executing update-stacks command', () => {
         afterEach(()=> {
             sandbox.restore();
         });
-
         test('parameters are passed to binder', async () => {
             await command.performCommand(commandArgs);
             expect(enumTasks.getCall(0).thisValue).toBeDefined();
