@@ -1,12 +1,11 @@
-import md5 = require('md5');
+import md5 from 'md5';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { OrgResourceTypes } from '../parser/model/resource-types';
-import { IResourceTarget } from '../parser/model/resources-section';
-import { TemplateRoot } from '../parser/parser';
-import { ICfnTarget, PersistedState } from '../state/persisted-state';
 import { CfnTaskProvider, ICfnTask } from './cfn-task-provider';
 import { CfnTemplate } from './cfn-template';
+import { IResourceTarget, OrgResourceTypes } from '~parser/model';
+import { TemplateRoot } from '~parser/parser';
+import { ICfnTarget, PersistedState } from '~state/persisted-state';
 
 export class CloudFormationBinder {
     private readonly template: TemplateRoot;

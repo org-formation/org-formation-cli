@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { CloudFormationBinder } from '../cfn-binder/cfn-binder';
-import { CfnTaskRunner } from '../cfn-binder/cfn-task-runner';
-import { CfnValidateTaskProvider } from '../cfn-binder/cfn-validate-task-provider';
 import { ConsoleUtil } from '../console-util';
 import { BaseCliCommand } from './base-command';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from './update-stacks';
+import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
+import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
+import { CfnValidateTaskProvider } from '~cfn-binder/cfn-validate-task-provider';
 
 const commandName = 'validate-stacks <templateFile>';
 const commandDescription = 'validates the cloudformation templates that will be generated';

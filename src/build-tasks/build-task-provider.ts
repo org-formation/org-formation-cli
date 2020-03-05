@@ -1,13 +1,17 @@
 import path from 'path';
-import { ICommandArgs } from '../commands/base-command';
-import { IUpdateOrganizationCommandArgs, UpdateOrganizationCommand } from '../commands/update-organization';
-import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '../commands/update-stacks';
-import { ValidateStacksCommand } from '../commands/validate-stacks';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { Validator } from '../parser/validator';
 import { BuildConfiguration, BuildTaskType, IBuildTask, IBuildTaskConfiguration, IIncludeTaskConfiguration, IUpdateOrganizationTaskConfiguration, IUpdateStackTaskConfiguration } from './build-configuration';
 import { BuildRunner } from './build-runner';
+import { Validator } from '~parser/validator';
+import {
+    ICommandArgs,
+    IUpdateOrganizationCommandArgs,
+    IUpdateStacksCommandArgs,
+    UpdateOrganizationCommand,
+    UpdateStacksCommand,
+    ValidateStacksCommand,
+} from '~commands/index';
 
 
 export class BuildTaskProvider {
