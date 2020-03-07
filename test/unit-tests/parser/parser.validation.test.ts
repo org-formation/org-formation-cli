@@ -209,7 +209,11 @@ describe('when validating organization section', () => {
 
     test('error is thrown for duplicate organizational unit name', () => {
         contents.Organization.OU2.Properties.OrganizationalUnitName = contents.Organization.OU.Properties.OrganizationalUnitName;
-        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/ou1/);
+        expect(() => {
+
+            const x = new TemplateRoot(contents, './');
+            x.organizationSection.resolveRefs();
+        }).toThrowError(/ou1/);
     });
 
     test('error is thrown for duplicate service control policy name', () => {

@@ -72,13 +72,11 @@ export class OrganizationSection {
                 accountNames.push(this.masterAccount.accountName);
             }
         }
-        const organizationUnitNames = this.organizationalUnits.map(ou => ou.organizationalUnitName);
         const serviceControlPolicies = this.serviceControlPolicies.map(policy => policy.policyName);
 
         this.warnForDuplicateVal(accountNames, (duplicate: string) => `Multiple accounts found with AccountName ${duplicate}. This will not be a problem, but perhaps confusing?`);
         this.throwForDuplicateVal(accountIds, (duplicate: string) => new Error(`multiple accounts found with AccountId ${duplicate}`));
         this.throwForDuplicateVal(rootEmails, (duplicate: string) => new Error(`multiple accounts found with RootEmail ${duplicate}`));
-        this.throwForDuplicateVal(organizationUnitNames, (duplicate: string) => new Error(`multiple organizational units found with OrganizationalUnitName ${duplicate}`));
         this.throwForDuplicateVal(serviceControlPolicies, (duplicate: string) => new Error(`multiple service control policies found with policyName ${duplicate}`));
     }
 
@@ -94,7 +92,13 @@ export class OrganizationSection {
                 throw new OrgFormationError(`unable to load references for organizational resource ${resource.logicalId}, reason: ${reason}`);
             }
         }
+
         this.throwForCircularOUReference(this.organizationalUnits);
+
+        const topLevelOrganizationalUnits = this.organizationalUnits.filter(x=>x.parentOULogicalName === undefined);
+        const organizationUnitNames = topLevelOrganizationalUnits.map(ou => ou.organizationalUnitName);
+        this.throwForDuplicateVal(organizationUnitNames, (duplicate: string) => new Error(`multiple organizational units found with OrganizationalUnitName ${duplicate}`));
+
     }
 
     public createResource(id: string, resource: IResource): Resource {
