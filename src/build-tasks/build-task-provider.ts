@@ -180,13 +180,13 @@ export class DeleteStacksTask implements IBuildTask {
     async perform(): Promise<void> {
         if (!this.performCleanup) {
             ConsoleUtil.LogWarning('Hi there, it seems you have removed a task!');
-            ConsoleUtil.LogWarning(`The task was called ${this.name}  and used to deploy stacks by name of ${this.stackName}.`);
+            ConsoleUtil.LogWarning(`The task was called ${this.name} and used to deploy stacks by name of ${this.stackName}.`);
             ConsoleUtil.LogWarning('By default these stacks dont get cleaned up. You can change this by adding the option --perfom-cleanup.');
             ConsoleUtil.LogWarning('You can remove the stacks manually by running the following command:');
             ConsoleUtil.LogWarning('');
             ConsoleUtil.LogWarning(`    org-formation delete-stacks --stack-name ${this.stackName}`);
             ConsoleUtil.LogWarning('');
-            ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --task-file-name option.');
+            ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
         } else {
             ConsoleUtil.LogInfo(`executing: ${this.type} ${this.stackName}`);
             await DeleteStacksCommand.Perform({...this.command, stackName: this.stackName, maxConcurrentStacks: 1, failedStacksTolerance: 0});
