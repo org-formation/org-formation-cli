@@ -4,7 +4,7 @@ describe('when calling org-formation --version', () => {
     let stdout: string;
 
     beforeEach(() => {
-        const response = spawnSync('ts-node', ['cli.ts', '--version']);
+        const response = spawnSync('npx', ['ts-node', 'cli', '--version']);
         stdout = response.stdout.toString();
     });
 

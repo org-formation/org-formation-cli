@@ -51,7 +51,7 @@ describe('when manipulating ous', () => {
         }
 
         console.info(`executing init:`)
-        const init = spawnProcess('init', 'ts-node', ['cli.ts', 'init', templateFileName,
+        const init = spawnProcess('init', 'npx', ['ts-node', 'cli.ts', 'init', templateFileName,
                                             '--profile', awsProfileForTests,
                                             '--state-bucket-name', bucketName,
                                             '--region', 'eu-west-1',
@@ -62,7 +62,7 @@ describe('when manipulating ous', () => {
         const source = readFileSync(templateFileName).toString('utf-8');
         writeFileSync(templateParentChildPath, source + parentChild);
 
-        updateResponse = spawnProcess('update', 'ts-node', ['cli.ts', 'update', templateParentChildPath,
+        updateResponse = spawnProcess('update', 'npx', ['ts-node', 'cli.ts', 'update', templateParentChildPath,
             '--profile', awsProfileForTests,
             '--state-bucket-name', bucketName,
             '--verbose',
@@ -72,7 +72,7 @@ describe('when manipulating ous', () => {
     });
     afterEach(async (done) => {
 
-        spawnProcess('cleanup', 'ts-node', ['cli.ts', 'update', templateFileName,
+        spawnProcess('cleanup', 'npx', ['ts-node', 'cli.ts', 'update', templateFileName,
             '--profile', awsProfileForTests,
             '--state-bucket-name', bucketName,
             '--verbose',
@@ -112,7 +112,7 @@ describe('when manipulating ous', () => {
 
         writeFileSync(templateChildParentPath, source + childParent);
 
-        update2Response = spawnProcess('swap parent with child', 'ts-node', ['cli.ts', 'update', templateChildParentPath,
+        update2Response = spawnProcess('swap parent with child', 'npx', ['ts-node', 'cli.ts', 'update', templateChildParentPath,
             '--profile', awsProfileForTests,
             '--state-bucket-name', bucketName,
             '--verbose',
@@ -135,7 +135,7 @@ describe('when manipulating ous', () => {
 
         writeFileSync(templateWithoutParentPath, source + withoutParent);
 
-        spawnProcess('delete parent, keep child', 'ts-node', ['cli.ts', 'update', templateWithoutParentPath,
+        spawnProcess('delete parent, keep child', 'npx', ['ts-node', 'cli.ts', 'update', templateWithoutParentPath,
             '--profile', awsProfileForTests,
             '--state-bucket-name', bucketName,
             '--verbose',
@@ -171,7 +171,7 @@ describe('when manipulating ous', () => {
 
         writeFileSync(templateWithAccountsInOUsFileName, sourceRewritten + withAccounts);
 
-        spawnProcess('delete parent, keep child', 'ts-node', ['cli.ts', 'update', templateWithAccountsInOUsFileName,
+        spawnProcess('delete parent, keep child', 'npx', ['ts-node', 'cli.ts', 'update', templateWithAccountsInOUsFileName,
             '--profile', awsProfileForTests,
             '--state-bucket-name', bucketName,
             '--verbose',
@@ -186,7 +186,7 @@ describe('when manipulating ous', () => {
 
         writeFileSync(templateWithoutParentPath, source + withoutParent);
 
-        spawnProcess('delete parent, keep child', 'ts-node', ['cli.ts', 'update', templateWithoutParentPath,
+        spawnProcess('delete parent, keep child','npx', ['ts-node', 'cli.ts', 'update', templateWithoutParentPath,
             '--profile', awsProfileForTests,
             '--state-bucket-name', bucketName,
             '--verbose',
@@ -210,7 +210,7 @@ describe('when manipulating ous', () => {
 
         writeFileSync(templateWithoutChildPath, source + withoutParent);
 
-        update2Response = spawnProcess('delete child, keep parent', 'ts-node', ['cli.ts', 'update', templateWithoutChildPath,
+        update2Response = spawnProcess('delete child, keep parent','npx', ['ts-node', 'cli.ts', 'update', templateWithoutChildPath,
             '--profile', awsProfileForTests,
             '--state-bucket-name', bucketName,
             '--verbose',

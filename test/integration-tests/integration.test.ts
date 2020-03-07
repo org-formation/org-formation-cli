@@ -18,7 +18,7 @@ describe('when calling org-formation init', () => {
 
     beforeAll(async () => {
 
-        initResponse = spawnSync('ts-node', ['cli.ts', 'init', templateFileName,
+        initResponse = spawnSync('npx', ['ts-node', 'cli.ts', 'init', templateFileName,
                                             '--profile', awsProfileForTests,
                                             '--state-bucket-name', bucketName,
                                             '--region', 'eu-west-1',
@@ -84,12 +84,12 @@ describe('when calling org-formation init', () => {
             const contents = templateResourcesFile.replace('./organization.yml', './' + templatePath.base);
             writeFileSync(templatePath.dir + '/' + 'bucket.yml', contents);
 
-            updateResponse = spawnSync('ts-node', ['cli.ts', 'update-stacks', templatePath.dir + '/' + 'bucket.yml',
+            updateResponse = spawnSync('npx', [ 'ts-node', 'cli.ts', 'update-stacks', templatePath.dir + '/' + 'bucket.yml',
                                                 '--stack-name', stackName,
                                                 '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
 
-            describeStacksResponse = spawnSync('ts-node', ['cli.ts', 'describe-stacks',
+            describeStacksResponse = spawnSync('npx', ['ts-node', 'cli.ts', 'describe-stacks',
                                                 '--stack-name', stackName,
                                                 '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
@@ -98,7 +98,7 @@ describe('when calling org-formation init', () => {
         afterAll(() => {
             unlinkSync(templatePath.dir + '/' + 'bucket.yml');
 
-            const deleteResponse = spawnSync('ts-node', ['cli.ts', 'delete-stacks',
+            const deleteResponse = spawnSync('npx', ['ts-node', 'cli.ts', 'delete-stacks',
                                                 '--stack-name', stackName,
                                                 '--profile', awsProfileForTests,
                                                 '--state-bucket-name', bucketName]);
