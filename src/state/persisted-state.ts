@@ -70,8 +70,7 @@ export class PersistedState {
         this.dirty = true;
     }
     public getValue(key: string): string | undefined {
-        if (this.state.values === undefined) { return undefined; }
-        return this.state.values[key];
+        return this.state.values?.[key];
     }
 
     public getTrackedTasks(tasksFileName: string): ITrackedTask[] {
@@ -96,9 +95,7 @@ export class PersistedState {
     }
 
     public getTarget(stackName: string, accountId: string, region: string): ICfnTarget | undefined {
-        if (!this.state.stacks) { return undefined; }
-
-        const accounts = this.state.stacks[stackName];
+        const accounts = this.state.stacks?.[stackName];
         if (!accounts) { return undefined; }
 
         const regions = accounts[accountId];
@@ -170,10 +167,7 @@ export class PersistedState {
     }
 
     public getBinding(type: string, logicalId: string): IBinding | undefined {
-        if (this.state.bindings === undefined) {
-            return undefined;
-        }
-        const typeDict = this.state.bindings[type];
+        const typeDict = this.state.bindings?.[type];
         if (!typeDict) { return undefined; }
 
         const result = typeDict[logicalId];

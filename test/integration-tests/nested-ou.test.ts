@@ -146,57 +146,57 @@ describe('when manipulating ous', () => {
         unlinkSync(templateWithoutParentPath);
     });
 
-//     test('can delete parent and keep child with accounts ', async () => {
+    test('can delete parent and keep child with accounts ', async () => {
 
-//         const source = readFileSync(templateFileName).toString('utf-8');
+        const source = readFileSync(templateFileName).toString('utf-8');
 
-//         const templateWithAccountsInOUsFileName = templateFileName.replace('.yml', '-with-accounts.yml');
+        const templateWithAccountsInOUsFileName = templateFileName.replace('.yml', '-with-accounts.yml');
 
-//         const withAccounts = `
-//   ParentOU:
-//     Type: OC::ORG::OrganizationalUnit
-//     Properties:
-//       OrganizationalUnitName: parent
-//       OrganizationalUnits: !Ref ChildOU
-//       Accounts: !Ref ${templateRoot.organizationSection.accounts[0].logicalId}
+        const withAccounts = `
+  ParentOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: parent
+      OrganizationalUnits: !Ref ChildOU
+      Accounts: !Ref ${templateRoot.organizationSection.accounts[0].logicalId}
 
-//   ChildOU:
-//     Type: OC::ORG::OrganizationalUnit
-//     Properties:
-//       OrganizationalUnitName: child
-//       Accounts: !Ref ${templateRoot.organizationSection.accounts[1].logicalId}`;
+  ChildOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: child
+      Accounts: !Ref ${templateRoot.organizationSection.accounts[1].logicalId}`;
 
-//         let sourceRewritten = source.replace(/\s*- !Ref ${templateRoot.organizationSection.accounts[0].logicalId}/, '');
-//         sourceRewritten = sourceRewritten.replace(/\s*- !Ref ${templateRoot.organizationSection.accounts[1].logicalId}/, '');
+        let sourceRewritten = source.replace(/\s*- !Ref ${templateRoot.organizationSection.accounts[0].logicalId}/, '');
+        sourceRewritten = sourceRewritten.replace(/\s*- !Ref ${templateRoot.organizationSection.accounts[1].logicalId}/, '');
 
-//         writeFileSync(templateWithAccountsInOUsFileName, sourceRewritten + withAccounts);
+        writeFileSync(templateWithAccountsInOUsFileName, sourceRewritten + withAccounts);
 
-//         spawnProcess('delete parent, keep child', 'ts-node', ['cli.ts', 'update', templateWithAccountsInOUsFileName,
-//             '--profile', awsProfileForTests,
-//             '--state-bucket-name', bucketName,
-//             '--verbose',
-//             '--print-stack']);
+        spawnProcess('delete parent, keep child', 'ts-node', ['cli.ts', 'update', templateWithAccountsInOUsFileName,
+            '--profile', awsProfileForTests,
+            '--state-bucket-name', bucketName,
+            '--verbose',
+            '--print-stack']);
 
-//         const templateWithoutParentPath = templateFileName.replace('.yml', '-without-parent.yml');
-//         const withoutParent = `
-//   ChildOU:
-//     Type: OC::ORG::OrganizationalUnit
-//     Properties:
-//       OrganizationalUnitName: child`
+        const templateWithoutParentPath = templateFileName.replace('.yml', '-without-parent.yml');
+        const withoutParent = `
+  ChildOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: child`
 
-//         writeFileSync(templateWithoutParentPath, source + withoutParent);
+        writeFileSync(templateWithoutParentPath, source + withoutParent);
 
-//         spawnProcess('delete parent, keep child', 'ts-node', ['cli.ts', 'update', templateWithoutParentPath,
-//             '--profile', awsProfileForTests,
-//             '--state-bucket-name', bucketName,
-//             '--verbose',
-//             '--print-stack']);
+        spawnProcess('delete parent, keep child', 'ts-node', ['cli.ts', 'update', templateWithoutParentPath,
+            '--profile', awsProfileForTests,
+            '--state-bucket-name', bucketName,
+            '--verbose',
+            '--print-stack']);
 
-//         await expectOUInRoot(true, false);
+        await expectOUInRoot(true, false);
 
-//         unlinkSync(templateWithAccountsInOUsFileName);
-//         unlinkSync(templateWithoutParentPath);
-//     });
+        unlinkSync(templateWithAccountsInOUsFileName);
+        unlinkSync(templateWithoutParentPath);
+    });
 
     test('can delete child and keep parent ', async () => {
         const templateWithoutChildPath = templateFileName.replace('.yml', '-without-child.yml');
