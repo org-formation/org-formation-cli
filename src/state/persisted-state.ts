@@ -86,7 +86,7 @@ export class PersistedState {
         return trackedForTasksFile;
     }
 
-    public setTrackedTasks(tasksFileName: string, trackedTasks: ITrackedTask[]) {
+    public setTrackedTasks(tasksFileName: string, trackedTasks: ITrackedTask[]): void {
         if (this.state.trackedTasks === undefined) {
             this.state.trackedTasks = {};
         }
