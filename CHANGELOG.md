@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+
+**not yet released**
+- Added flag --perform-cleanup to perform-tasks to automatically delete stacks removed from tasks file
+
 **version 0.9.2**
 - Fixed issue with init-pipeline failing due to wrong option on codebuild script
 

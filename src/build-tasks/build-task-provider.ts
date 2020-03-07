@@ -4,6 +4,7 @@ import { OrgFormationError } from '../org-formation-error';
 import { BuildConfiguration, BuildTaskType, IBuildTask, IBuildTaskConfiguration, IIncludeTaskConfiguration, IUpdateOrganizationTaskConfiguration, IUpdateStackTaskConfiguration } from './build-configuration';
 import { BuildRunner } from './build-runner';
 import { Validator } from '~parser/validator';
+import { ITrackedTask } from '~state/persisted-state';
 import {
     ICommandArgs,
     IUpdateOrganizationCommandArgs,
@@ -11,6 +12,8 @@ import {
     UpdateOrganizationCommand,
     UpdateStacksCommand,
     ValidateStacksCommand,
+    IPerformTasksCommandArgs,
+    DeleteStacksCommand,
 } from '~commands/index';
 
 
@@ -46,6 +49,41 @@ export class BuildTaskProvider {
             default:
                 throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);
         }
+    }
+
+    public static createDeleteTask(logicalId: string, type: string, physicalId: string, command: ICommandArgs): IBuildTask | undefined {
+        switch (type) {
+            case 'update-stacks':
+                return new DeleteStacksTask(logicalId, physicalId, command);
+        }
+
+        return undefined;
+    }
+
+    public static enumTasksForCleanup(previouslyTracked: ITrackedTask[], tasks: IBuildTask[], command: ICommandArgs): IBuildTask[] {
+        const result: IBuildTask[] = [];
+        const currentTasks = BuildTaskProvider.recursivelyFilter(tasks, t => t.physicalIdForCleanup !== undefined);
+        const physicalIds = currentTasks.map(x=>x.physicalIdForCleanup);
+        for(const tracked of previouslyTracked) {
+            if (!physicalIds.includes(tracked.physicalIdForCleanup)) {
+                const deleteTask = this.createDeleteTask(tracked.logicalName, tracked.type, tracked.physicalIdForCleanup, command);
+                if (deleteTask !== undefined) {
+                    result.push(deleteTask);
+                }
+            }
+        }
+        return result;
+    }
+
+    public static recursivelyFilter(tasks: IBuildTask[], filter: (task: IBuildTask) => boolean): IBuildTask[] {
+        const result = tasks.filter(filter);
+        const tasksWithChildren = tasks.filter(x => x.childTasks && x.childTasks.length > 0);
+        const childrenFlattened = tasksWithChildren.reduce((acc: IBuildTask[], x: IBuildTask)=> acc.concat(...x.childTasks), []);
+        if (childrenFlattened.length > 0) {
+            const resultFromChildren = BuildTaskProvider.recursivelyFilter(childrenFlattened, filter);
+            return result.concat(resultFromChildren);
+        }
+        return result;
     }
 }
 
@@ -119,6 +157,45 @@ class ValidateIncludeTask extends BaseIncludeTask {
     }
 }
 
+export class DeleteStacksTask implements IBuildTask {
+    name: string;
+    stackName: string;
+    command: ICommandArgs;
+    type: BuildTaskType = 'delete-stacks';
+    childTasks: IBuildTask[] = [];
+    physicalIdForCleanup?: string = undefined;
+    performCleanup = false;
+
+    constructor(logicalName: string, stackName: string, command: ICommandArgs) {
+        this.name = logicalName;
+        this.stackName = stackName;
+        this.command = command;
+        this.performCleanup = (command as IPerformTasksCommandArgs).performCleanup;
+    }
+
+    isDependency(): boolean {
+        return false;
+    }
+
+    async perform(): Promise<void> {
+        if (!this.performCleanup) {
+            ConsoleUtil.LogWarning('Hi there, it seems you have removed a task!');
+            ConsoleUtil.LogWarning(`The task was called ${this.name} and used to deploy stacks by name of ${this.stackName}.`);
+            ConsoleUtil.LogWarning('By default these stacks dont get cleaned up. You can change this by adding the option --perfom-cleanup.');
+            ConsoleUtil.LogWarning('You can remove the stacks manually by running the following command:');
+            ConsoleUtil.LogWarning('');
+            ConsoleUtil.LogWarning(`    org-formation delete-stacks --stack-name ${this.stackName}`);
+            ConsoleUtil.LogWarning('');
+            ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
+        } else {
+            ConsoleUtil.LogInfo(`executing: ${this.type} ${this.stackName}`);
+            await DeleteStacksCommand.Perform({...this.command, stackName: this.stackName, maxConcurrentStacks: 1, failedStacksTolerance: 0});
+        }
+    }
+
+
+}
+
 export abstract class BaseStacksTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
@@ -126,6 +203,7 @@ export abstract class BaseStacksTask implements IBuildTask {
     public stackName: string;
     public templatePath: string;
     public childTasks: IBuildTask[] = [];
+    public physicalIdForCleanup?: string = undefined;
     protected config: IUpdateStackTaskConfiguration;
     private command: any;
     private dir: string;
@@ -216,6 +294,11 @@ export abstract class BaseStacksTask implements IBuildTask {
 
 export class UpdateStacksTask extends BaseStacksTask {
 
+    constructor(config: IUpdateStackTaskConfiguration, command: ICommandArgs) {
+        super(config, command);
+        this.physicalIdForCleanup = config.StackName;
+    }
+
     public async innerPerform(args: IUpdateStacksCommandArgs): Promise<void> {
         ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath} ${this.stackName}`);
         await UpdateStacksCommand.Perform(args);
@@ -245,8 +328,8 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         const dir = path.dirname(config.FilePath);
         this.templatePath = path.join(dir, config.Template);
         this.command = command;
-
     }
+
     public async perform(): Promise<void> {
 
         const updateCommand = this.command as IUpdateOrganizationCommandArgs;

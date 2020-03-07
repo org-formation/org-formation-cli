@@ -44,11 +44,11 @@ export class BuildConfiguration {
     }
 
     private validateTasksFile(tasks: IBuildTask[]): void {
-        const updateStackTasks = this.recursivelyFilter(tasks, x => x.type === 'update-stacks') as BaseStacksTask[];
+        const updateStackTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-stacks') as BaseStacksTask[];
         const stackNames = updateStackTasks.map(x => x.stackName);
         this.throwForDuplicateVal(stackNames, x => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
 
-        const updateOrgTasks = this.recursivelyFilter(tasks, x => x.type === 'update-organization') as BaseStacksTask[];
+        const updateOrgTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-organization') as BaseStacksTask[];
         if (updateOrgTasks.length > 1) {
             throw new OrgFormationError('multiple update-organization tasks found');
         }
@@ -77,7 +77,7 @@ export class BuildConfiguration {
         }
     }
 
-    private enumBuildConfiguration(filePath: string): IBuildTaskConfiguration[] {
+    public enumBuildConfiguration(filePath: string): IBuildTaskConfiguration[] {
         const buffer = fs.readFileSync(filePath);
         const contents = buffer.toString('utf-8');
         const buildFile = yamlParse(contents) as Record<string, IBuildTaskConfiguration>;
@@ -99,20 +99,9 @@ export class BuildConfiguration {
             }
         }
     }
-
-    private recursivelyFilter(tasks: IBuildTask[], filter: (task: IBuildTask) => boolean): IBuildTask[] {
-        const result = tasks.filter(filter);
-        const tasksWithChildren = tasks.filter(x=> x.childTasks && x.childTasks.length > 0);
-        const childrenFlattened = tasksWithChildren.reduce((acc: IBuildTask[], x: IBuildTask)=> acc.concat(...x.childTasks), []);
-        if (childrenFlattened.length > 0) {
-            const resultFromChildren = this.recursivelyFilter(childrenFlattened, filter);
-            return result.concat(resultFromChildren);
-        }
-        return result;
-    }
 }
 
-export type BuildTaskType = 'update-stacks' | 'update-organization' | 'include' | 'include-dir';
+export type BuildTaskType = 'delete-stacks' | 'update-stacks' | 'update-organization' | 'include' | 'include-dir';
 
 export interface IBuildTaskConfiguration {
     Type: BuildTaskType;
@@ -159,4 +148,5 @@ export interface IBuildTask {
     isDependency(task: IBuildTask): boolean;
     childTasks: IBuildTask[];
     perform(): Promise<void>;
+    physicalIdForCleanup?: string;
 }

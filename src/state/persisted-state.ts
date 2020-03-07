@@ -39,6 +39,7 @@ export class PersistedState {
             stacks: {},
             values: {},
             previousTemplate: '',
+            trackedTasks: {},
         });
         empty.dirty = true;
 
@@ -69,12 +70,32 @@ export class PersistedState {
         this.dirty = true;
     }
     public getValue(key: string): string | undefined {
-        if (this.state.values === undefined) { return undefined; }
-        return this.state.values[key];
+        return this.state.values?.[key];
+    }
+
+    public getTrackedTasks(tasksFileName: string): ITrackedTask[] {
+        if (this.state.trackedTasks === undefined) {
+            return [];
+        }
+
+        const trackedForTasksFile = this.state.trackedTasks[tasksFileName];
+        if (trackedForTasksFile === undefined) {
+            return [];
+        }
+        return trackedForTasksFile;
+    }
+
+    public setTrackedTasks(tasksFileName: string, trackedTasks: ITrackedTask[]): void {
+        if (this.state.trackedTasks === undefined) {
+            this.state.trackedTasks = {};
+        }
+
+        this.state.trackedTasks[tasksFileName] = trackedTasks;
+        this.dirty = true;
     }
 
     public getTarget(stackName: string, accountId: string, region: string): ICfnTarget | undefined {
-        const accounts = this.state.stacks[stackName];
+        const accounts = this.state.stacks?.[stackName];
         if (!accounts) { return undefined; }
 
         const regions = accounts[accountId];
@@ -84,7 +105,12 @@ export class PersistedState {
     }
 
     public setTarget(templateTarget: ICfnTarget): void {
+        if (this.state.stacks === undefined) {
+            this.state.stacks = {};
+        }
+
         let accounts = this.state.stacks[templateTarget.stackName];
+
         if (!accounts) {
             accounts = this.state.stacks[templateTarget.stackName] = {};
         }
@@ -141,7 +167,7 @@ export class PersistedState {
     }
 
     public getBinding(type: string, logicalId: string): IBinding | undefined {
-        const typeDict = this.state.bindings[type];
+        const typeDict = this.state.bindings?.[type];
         if (!typeDict) { return undefined; }
 
         const result = typeDict[logicalId];
@@ -152,6 +178,9 @@ export class PersistedState {
     }
 
     public enumBindings(type: string): IBinding[] {
+        if (this.state.bindings === undefined) {
+            return [];
+        }
         const typeDict = this.state.bindings[type];
         if (!typeDict) { return []; }
 
@@ -162,6 +191,9 @@ export class PersistedState {
         return result;
     }
     public setUniqueBindingForType(binding: IBinding): void {
+        if (this.state.bindings === undefined) {
+            this.state.bindings = {};
+        }
         let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
         typeDict = this.state.bindings[binding.type] = {};
 
@@ -170,6 +202,9 @@ export class PersistedState {
     }
 
     public setBinding(binding: IBinding): void {
+        if (this.state.bindings === undefined) {
+            this.state.bindings = {};
+        }
         let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
         if (!typeDict) {
             typeDict = this.state.bindings[binding.type] = {};
@@ -181,6 +216,9 @@ export class PersistedState {
 
 
     public setBindingHash(type: string, logicalId: string, lastCommittedHash: string): void {
+        if (this.state.bindings === undefined) {
+            this.state.bindings = {};
+        }
         let typeDict: Record<string, IBinding> = this.state.bindings[type];
         if (!typeDict) {
             typeDict = this.state.bindings[type] = {};
@@ -249,6 +287,7 @@ export interface IState {
     bindings: Record<string, Record<string, IBinding>>;
     stacks: Record<string, Record<string, Record<string, ICfnTarget>>>;
     values: Record<string, string>;
+    trackedTasks: Record<string, ITrackedTask[]>;
     previousTemplate: string;
 }
 
@@ -266,4 +305,10 @@ export interface ICfnTarget {
     stackName: string;
     terminationProtection?: boolean;
     lastCommittedHash: string;
+}
+
+export interface ITrackedTask {
+    logicalName: string;
+    physicalIdForCleanup: string;
+    type: string;
 }

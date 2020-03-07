@@ -1,4 +1,4 @@
-import { PersistedState } from "~state/persisted-state";
+import { PersistedState, IState } from "~state/persisted-state";
 import Sinon = require("sinon");
 import { S3StorageProvider, IStorageProvider } from "~state/storage-provider";
 
@@ -18,6 +18,43 @@ describe('when creating empty persisted state', () => {
 
     test('previous template is empty', () => {
         expect(emptyState.getPreviousTemplate()).toBe('');
+    })
+
+    test('can get tracked tasks', () => {
+        const tasks = emptyState.getTrackedTasks('default');
+        expect(tasks.length).toBe(0);
+    })
+});
+
+describe('when deserializing empty state', () => {
+    let trulyEmptyState: PersistedState;
+
+    beforeEach(() => {
+        trulyEmptyState = new PersistedState({} as IState, null);
+    });
+    test('can get tracked tasks', () => {
+        const tasks = trulyEmptyState.getTrackedTasks('default');
+        expect(tasks.length).toBe(0);
+    });
+
+    test('can get binding', () => {
+        const tasks = trulyEmptyState.getBinding('type', 'xxx');
+        expect(tasks).toBeUndefined();
+    })
+
+    test('can enum bindings', () => {
+        const tasks = trulyEmptyState.enumBindings('aaaa')
+        expect(tasks.length).toBe(0);
+    })
+    test('can set bindings', () => {
+        trulyEmptyState.setBinding({type: 'type', physicalId: '123123', logicalId: 'xyz', lastCommittedHash: '123'})
+    })
+    test('can get target', () => {
+        const tasks = trulyEmptyState.getTarget('stack', '123123123123', 'region');
+        expect(tasks).toBeUndefined();
+    })
+    test('can set target', () => {
+        trulyEmptyState.setTarget({ stackName: 'stack', accountId: '123123123123', region: 'region', logicalAccountId: 'logical', lastCommittedHash: '123123'});
     })
 });
 
@@ -55,7 +92,6 @@ describe('when setting value', () => {
     })
 });
 
-
 describe('when saving state that is not dirty', () => {
     let emptyState: PersistedState;
     let storageProvider: IStorageProvider;
@@ -74,7 +110,6 @@ describe('when saving state that is not dirty', () => {
         expect(storageProviderPut.callCount).toBe(0);
     })
 });
-
 
 describe('when saving state that is dirty', () => {
     let emptyState: PersistedState;
@@ -177,7 +212,6 @@ describe('when setting bindings', () => {
         expect((state as any).dirty).toBe(true);
     })
 });
-
 
 describe('when setting binding for unique type', () => {
     let state: PersistedState;
@@ -377,6 +411,35 @@ describe('when setting targets', () => {
         expect(targets.length).toBe(0);
     });
 
+
+    test('state is marked as dirty', () => {
+        expect((state as any).dirty).toBe(true);
+    })
+});
+
+
+describe('when setting tracked tasks', () => {
+    let state: PersistedState;
+
+    beforeEach(() => {
+        state = PersistedState.CreateEmpty('123123123123');
+        state.setTrackedTasks('default', [
+            {logicalName: 'logical1', physicalIdForCleanup: '123123', type: 'xyz'},
+            {logicalName: 'logical2', physicalIdForCleanup: '123124', type: 'xyz'}
+        ]);
+        state.setTrackedTasks('tasksFile2', [
+            {logicalName: 'logical1', physicalIdForCleanup: '123121', type: 'xyz'},
+            {logicalName: 'logical2', physicalIdForCleanup: '123122', type: 'xyz'}
+        ]);
+    })
+
+    test('put tasks can be read', () => {
+        const trackedTasks = state.getTrackedTasks('default');
+        expect(trackedTasks).toBeDefined();
+        expect(trackedTasks.length).toBe(2);
+        expect(trackedTasks[0].logicalName).toBe('logical1');
+        expect(trackedTasks[1].logicalName).toBe('logical2');
+    })
 
     test('state is marked as dirty', () => {
         expect((state as any).dirty).toBe(true);
