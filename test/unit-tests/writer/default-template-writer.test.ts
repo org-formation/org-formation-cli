@@ -92,6 +92,7 @@ describe('when writing template for organization', () => {
         });
 
     });
+
     describe('and multiple accounts have the same name', () => {
 
         let consoleWarnMock: jest.SpyInstance;
@@ -217,6 +218,33 @@ describe('when writing template for organization', () => {
             expect(parent).toBeDefined();
             expect(parent.organizationalUnits?.length).toBe(1)
         })
+
+    });
+
+    describe('and master account is contained in OU', () => {
+
+        beforeEach(() => {
+
+            organization.organizationalUnits = [
+                {Name: 'ou', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: []}
+            ];
+            organization.organizationalUnits[0].Accounts.push(organization.masterAccount);
+        })
+
+
+        test('generated template contains organizational unit', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.organizationalUnits?.length).toBe(1);
+        });
+
+        test('generated template contains organizational unit to master account relationship', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            const ou = root.organizationSection.organizationalUnits[0];
+            expect(ou.accounts?.length).toBe(1);
+            expect(ou.accounts[0].TemplateResource.logicalId).toBe(root.organizationSection.masterAccount.logicalId);
+        });
 
     });
 });

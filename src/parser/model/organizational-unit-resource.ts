@@ -39,7 +39,7 @@ export class OrganizationalUnitResource extends Resource {
     }
 
     public resolveRefs(): void {
-        this.accounts = super.resolve(this.props.Accounts, this.root.organizationSection.accounts);
+        this.accounts = super.resolve(this.props.Accounts, this.root.organizationSection.accounts, this.root.organizationSection.masterAccount);
         this.organizationalUnits = super.resolve(this.props.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
         for(const child of this.organizationalUnits) {
             child.TemplateResource.parentOULogicalName = this.logicalId;

@@ -3,7 +3,7 @@ import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { CfnTaskProvider, ICfnTask } from './cfn-task-provider';
 import { CfnTemplate } from './cfn-template';
-import { IResourceTarget, OrgResourceTypes } from '~parser/model';
+import { IResourceTarget } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
 import { ICfnTarget, PersistedState } from '~state/persisted-state';
 
@@ -78,16 +78,11 @@ export class CloudFormationBinder {
         }
 
         for (const target of targets) {
-            let accountId = '';
-            if (this.template.organizationSection.masterAccount && this.template.organizationSection.masterAccount.logicalId === target.accountLogicalId) {
-                accountId = this.state.masterAccount;
-            } else  {
-                const accountBinding = this.state.getBinding(OrgResourceTypes.Account, target.accountLogicalId);
-                if (!accountBinding) {
-                    throw new OrgFormationError(`expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
-                }
-                accountId = accountBinding.physicalId;
+            const accountBinding = this.state.getAccountBinding(target.accountLogicalId);
+            if (!accountBinding) {
+                throw new OrgFormationError(`expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
             }
+            const accountId  = accountBinding.physicalId;
             const region = target.region;
             const stackName = this.stackName;
             const key = {accountId, region, stackName};
@@ -128,7 +123,7 @@ export class CloudFormationBinder {
             binding.regionDependencies = [...dependsOnRegions];
 
             for (const dependsOnLogicalAccount of dependsOnAccounts) {
-                const dependsOnAccountBinding = this.state.getBinding(OrgResourceTypes.Account, dependsOnLogicalAccount) || this.state.getBinding(OrgResourceTypes.MasterAccount, dependsOnLogicalAccount);
+                const dependsOnAccountBinding = this.state.getAccountBinding(dependsOnLogicalAccount);
                 if (!dependsOnAccountBinding) {
                     throw new OrgFormationError(`unable to find account with logical Id ${dependsOnLogicalAccount}`);
                 }

@@ -36,8 +36,6 @@ export class AwsOrganization {
         } catch (err) {
             throw err;
         }
-
-        await this.reader.hasMasterInOrganizationUnit(this.organization?.MasterAccountId);
     }
 
     public async endInitialize(): Promise<void> {

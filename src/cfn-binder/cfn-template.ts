@@ -6,7 +6,6 @@ import { SubExpression } from './cfn-sub-expression';
 import {
     AccountResource,
     IResourceTarget,
-    OrgResourceTypes,
     Resource,
 } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
@@ -121,8 +120,8 @@ export class CfnTemplate {
                 for (const accountName of resource.normalizedForeachAccounts) {
                     const resourceForAccount = JSON.parse(JSON.stringify(resource.resourceForTemplate));
                     const keywordReplaced = this._replaceKeyword(resourceForAccount, 'CurrentAccount', accountName);
-                    const resourceType =  (this.masterAccountLogicalId === accountName) ? OrgResourceTypes.MasterAccount : OrgResourceTypes.Account;
-                    const binding = this.state.getBinding(resourceType, accountName);
+
+                    const binding = this.state.getAccountBinding(accountName);
                     if (!binding) { throw new OrgFormationError(`unable to find account ${accountName} in state. Is your organization up to date?`); }
 
                     this.resources[resource.logicalId + binding.physicalId] = this._resolveOrganizationFunctions(keywordReplaced, this.accountResource);
