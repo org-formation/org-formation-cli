@@ -21,6 +21,7 @@ jobs:
           npm ci --no-optional
       - name: Publish Beta Package to NPM
         id: publishing-beta
+        if: "!(startsWith(github.ref, 'refs/tags/v'))"
         run: npm publish --access public --tag beta
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
