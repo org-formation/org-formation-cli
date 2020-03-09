@@ -1,16 +1,9 @@
-import { SharedIniFileCredentials, S3, Organizations } from "aws-sdk";
-import { UpdateOrganizationCommand, UpdateStacksCommand, DescribeStacksCommand, DeleteStacksCommand } from "~commands/index";
-import { v4 } from "uuid";
+import { UpdateStacksCommand, DescribeStacksCommand, DeleteStacksCommand } from "~commands/index";
 import { readFileSync } from "fs";
-import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { IIntegrationTestContext, baseAfterAll, baseBeforeAll, profileForTests } from "./base-integration-test";
-import { AwsUtil } from "../../src/aws-util";
 import { ConsoleUtil } from "../../src/console-util";
 
-jest.setTimeout(99999999);
-
 const basePathForScenario = './test/integration-tests/resources/scenario-create-buckets/';
-
 
 describe('when creating an S3 bucket in all accounts', () => {
     let context: IIntegrationTestContext;

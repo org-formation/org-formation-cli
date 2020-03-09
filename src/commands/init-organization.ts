@@ -10,7 +10,7 @@ const commandDescription = 'generate template & initialize organization';
 
 export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
 
-    static async Perform(command: IInitCommandArgs) {
+    static async Perform(command: IInitCommandArgs): Promise<void> {
         const x = new InitOrganizationCommand();
         await x.performCommand(command);
     }

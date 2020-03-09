@@ -1,13 +1,8 @@
-import { S3, SharedIniFileCredentials } from 'aws-sdk';
+
 import { unlinkSync } from 'fs';
 import { v4 } from 'uuid';
 import { InitOrganizationCommand } from '~commands/index';
-import { AwsUtil } from '../../src/aws-util';
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
-
-jest.setTimeout(99999999);
-
-const profileForTests = 'org-formation-test-v2'
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForTests } from './base-integration-test';
 
 describe('when calling org-formation init', () => {
     let context: IIntegrationTestContext;

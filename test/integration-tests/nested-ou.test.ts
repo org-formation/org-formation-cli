@@ -1,11 +1,8 @@
-import { SharedIniFileCredentials, S3, Organizations } from "aws-sdk";
+import { Organizations } from "aws-sdk";
 import { UpdateOrganizationCommand } from "~commands/index";
-import { v4 } from "uuid";
 import { readFileSync } from "fs";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
-import { AwsUtil } from "../../src/aws-util";
-import { ConsoleUtil } from "../../src/console-util";
 import { IIntegrationTestContext, baseBeforeAll, profileForTests, baseAfterAll } from "./base-integration-test";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-nested-ou/';

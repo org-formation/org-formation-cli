@@ -3,7 +3,7 @@ import { v4 } from "uuid";
 import { AwsUtil } from "../../src/aws-util";
 import { ConsoleUtil } from "../../src/console-util";
 
-export const profileForTests = 'org-formation-test-v2'
+export const profileForIntegrationTests = 'org-formation-test-v2'
 
 export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
     jest.setTimeout(99999999);
@@ -11,8 +11,8 @@ export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
     ConsoleUtil.verbose = true;
     ConsoleUtil.printStacktraces = true;
 
-    await AwsUtil.InitializeWithProfile(profileForTests);
-    const creds = new SharedIniFileCredentials({ profile: profileForTests });
+    await AwsUtil.InitializeWithProfile(profileForIntegrationTests);
+    const creds = new SharedIniFileCredentials({ profile: profileForIntegrationTests });
 
     return {
         stateBucketName: `${v4()}`,
