@@ -2,7 +2,7 @@
 import { unlinkSync } from 'fs';
 import { v4 } from 'uuid';
 import { InitOrganizationCommand } from '~commands/index';
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForTests } from './base-integration-test';
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
 
 describe('when calling org-formation init', () => {
     let context: IIntegrationTestContext;
@@ -10,7 +10,7 @@ describe('when calling org-formation init', () => {
 
     beforeAll(async () => {
         context = await baseBeforeAll();
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForTests, verbose: true, region: 'eu-west-1' };
+        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, region: 'eu-west-1' };
 
         await InitOrganizationCommand.Perform({...command, file: templatePath})
     });

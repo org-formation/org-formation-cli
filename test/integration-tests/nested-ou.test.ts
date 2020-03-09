@@ -3,7 +3,7 @@ import { UpdateOrganizationCommand } from "~commands/index";
 import { readFileSync } from "fs";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
-import { IIntegrationTestContext, baseBeforeAll, profileForTests, baseAfterAll } from "./base-integration-test";
+import { IIntegrationTestContext, baseBeforeAll, profileForIntegrationTests, baseAfterAll } from "./base-integration-test";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-nested-ou/';
 
@@ -21,7 +21,7 @@ describe('when nesting ou\'s', () => {
     beforeAll(async () => {
         context = await baseBeforeAll();
         orgClient = new Organizations({ credentials: context.creds, region: 'us-east-1' });
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForTests, verbose: true };
+        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true };
 
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
         await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();

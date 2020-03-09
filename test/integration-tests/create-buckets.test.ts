@@ -1,6 +1,6 @@
 import { UpdateStacksCommand, DescribeStacksCommand, DeleteStacksCommand } from "~commands/index";
 import { readFileSync } from "fs";
-import { IIntegrationTestContext, baseAfterAll, baseBeforeAll, profileForTests } from "./base-integration-test";
+import { IIntegrationTestContext, baseAfterAll, baseBeforeAll, profileForIntegrationTests } from "./base-integration-test";
 import { ConsoleUtil } from "../../src/console-util";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-create-buckets/';
@@ -13,7 +13,7 @@ describe('when creating an S3 bucket in all accounts', () => {
     beforeAll(async () => {
 
         context = await baseBeforeAll();
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', stackName: context.stackName, profile: profileForTests, verbose: true, maxConcurrentStacks: 10, failedStacksTolerance: 0 };
+        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', stackName: context.stackName, profile: profileForIntegrationTests, verbose: true, maxConcurrentStacks: 10, failedStacksTolerance: 0 };
 
         const consoleOutMock = jest.spyOn(ConsoleUtil, 'Out').mockImplementation();
 
