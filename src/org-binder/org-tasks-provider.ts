@@ -627,7 +627,7 @@ export class TaskProvider {
         return attachChildOuTask;
     }
 
-    private resolveIDs<TResource extends Resource>(list: Reference<TResource>[]) {
+    private resolveIDs<TResource extends Resource>(list: Reference<TResource>[]): IResolvedIDs<TResource> {
         const physicalIdsForServiceControlPolicies = list.filter(x => x.PhysicalId).map(x => x.PhysicalId);
         const unresolvedResources: TResource[] = [];
         const mapping: Record<string, Reference<TResource>> = {};
@@ -656,6 +656,12 @@ export class TaskProvider {
     }
 }
 
+
+interface IResolvedIDs<TResource extends Resource> {
+    physicalIds: string[];
+    unresolvedResources: TResource[];
+    mapping: Record<string, Reference<TResource>>;
+}
 export interface IBuildTask {
     type: string;
     logicalId: string;
