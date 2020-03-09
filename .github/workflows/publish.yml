@@ -3,8 +3,8 @@ name: Publish
 
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - master
 
 jobs:
   publish:
@@ -19,8 +19,14 @@ jobs:
         id: installation
         run: |
           npm ci --no-optional
-      - name: Publish Package to NPM
-        id: publishing
-        run: npm publish --access public
+      - name: Publish Beta Package to NPM
+        id: publishing-beta
+        run: npm publish --access public --tag beta
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Publish Latest Package to NPM
+        id: publishing-latest
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: npm publish --access public --tag latest
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
