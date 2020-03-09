@@ -9,7 +9,12 @@ const commandDescription = 'list all stacks deployed to accounts using org-forma
 
 export class DescribeStacksCommand extends BaseCliCommand<IDescribetackCommandArgs> {
 
-    constructor(command: Command) {
+    static async Perform(command: IDescribetackCommandArgs) {
+        const x = new DescribeStacksCommand();
+        await x.performCommand(command);
+    }
+
+    constructor(command?: Command) {
         super(command, commandName, commandDescription);
     }
 

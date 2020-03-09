@@ -7,3 +7,14 @@ Organization:
     Properties:
       AccountName: Organizational Master Account
       AccountId: '102625093955'
+
+  ParentOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: parent
+      OrganizationalUnits: !Ref ChildOU
+
+  ChildOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: child

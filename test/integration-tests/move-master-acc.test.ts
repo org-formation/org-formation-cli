@@ -1,23 +1,17 @@
-import { SharedIniFileCredentials, S3, Organizations } from "aws-sdk";
+import { Organizations } from "aws-sdk";
 import { UpdateOrganizationCommand } from "~commands/index";
-import { v4 } from "uuid";
 import { readFileSync } from "fs";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
 import { AwsUtil } from "../../src/aws-util";
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForTests } from "./base-integration-test";
 
-jest.setTimeout(99999999);
-
-const profileForTests = 'org-formation-test-v2'
 const basePathForScenario = './test/integration-tests/resources/scenario-move-master-acc/';
 
 
 describe('when moving master account around', () => {
-    const creds = new SharedIniFileCredentials({ profile: profileForTests });
-    const s3client = new S3({ credentials: creds });
-    const orgClient = new Organizations({ credentials: creds, region: 'us-east-1' });
-    const bucketName = `${v4()}`;
-    const command = {stateBucketName: bucketName, stateObject: 'state.json', profile: profileForTests, verbose: true };
+    let context: IIntegrationTestContext;
+    let orgClient: Organizations;
 
     let organizationAfterInit: AwsOrganization;
     let organizationAfterMove1: AwsOrganization;
@@ -26,11 +20,14 @@ describe('when moving master account around', () => {
     let masterAccountId: string;
 
     beforeAll(async () => {
-        await AwsUtil.InitializeWithProfile(profileForTests);
+
+        context = await baseBeforeAll();
+        orgClient = new Organizations({ credentials: context.creds, region: 'us-east-1' });
+        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForTests, verbose: true };
 
         masterAccountId = await AwsUtil.GetMasterAccountId();
-        await s3client.createBucket({ Bucket: bucketName }).promise();
-        await s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
+        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
+        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
         organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
@@ -72,9 +69,6 @@ describe('when moving master account around', () => {
     });
 
     afterAll(async () => {
-        const response = await s3client.listObjects({ Bucket: command.stateBucketName }).promise();
-        const objectIdentifiers = response.Contents.map((x) => ({ Key: x.Key }));
-        await s3client.deleteObjects({ Bucket: command.stateBucketName, Delete: { Objects: objectIdentifiers } }).promise();
-        await s3client.deleteBucket({ Bucket: command.stateBucketName }).promise();
+        await baseAfterAll(context);
     });
 })
