@@ -11,7 +11,11 @@ const commandDescription = 'performs all tasks from either a file or directory s
 
 export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs> {
 
-    constructor(command: Command) {
+    static async Perform(command: IPerformTasksCommandArgs): Promise<void> {
+        const x = new PerformTasksCommand();
+        await x.performCommand(command);
+    }
+    constructor(command?: Command) {
         super(command, commandName, commandDescription, 'tasksFile');
     }
 
