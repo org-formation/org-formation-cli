@@ -2,7 +2,7 @@
 All notable changes to aws organization formation will be documented in this file.
 
 
-**not yet released**
+**version 0.9.3**
 - Added flag --perform-cleanup to perform-tasks to automatically delete stacks removed from tasks file
 - Added support for moving master account to OU
 - Added support for multiple accounts that have the same account name
