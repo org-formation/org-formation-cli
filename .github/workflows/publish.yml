@@ -19,7 +19,7 @@ jobs:
         id: installation
         run: |
           npm ci --no-optional
-      - name: Publish Beta Package to NPM
+      # - name: Publish Beta Package to NPM
         # id: publishing-beta
         # if: "!(startsWith(github.ref, 'refs/tags/v'))"
         # run: npm publish --access public --tag beta
