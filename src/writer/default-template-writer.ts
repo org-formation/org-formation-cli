@@ -295,6 +295,8 @@ class LogicalNames {
             result = name + i;
             i++;
         }
+
+        this.takenNames.push(result);
         return result;
     }
 

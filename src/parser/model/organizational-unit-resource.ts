@@ -16,6 +16,7 @@ export class OrganizationalUnitResource extends Resource {
     public accounts: Reference<AccountResource>[] = [];
     public organizationalUnits: Reference<OrganizationalUnitResource>[] = [];
     public serviceControlPolicies: Reference<ServiceControlPolicyResource>[] = [];
+    public parentOULogicalName: string;
     private props: IOrganizationalUnitProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
@@ -40,6 +41,9 @@ export class OrganizationalUnitResource extends Resource {
     public resolveRefs(): void {
         this.accounts = super.resolve(this.props.Accounts, this.root.organizationSection.accounts);
         this.organizationalUnits = super.resolve(this.props.OrganizationalUnits, this.root.organizationSection.organizationalUnits);
+        for(const child of this.organizationalUnits) {
+            child.TemplateResource.parentOULogicalName = this.logicalId;
+        }
         this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
         const referenceToSelf = this.organizationalUnits.find(x=>x.TemplateResource === this);
         if (referenceToSelf !== undefined) {

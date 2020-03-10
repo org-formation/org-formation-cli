@@ -1,6 +1,7 @@
 import { bool } from 'aws-sdk/clients/signer';
 import { OrgFormationError } from '../../org-formation-error';
 import { IOrganization, IResource, TemplateRoot } from '../parser';
+import { ConsoleUtil } from '../../console-util';
 import { AccountResource } from './account-resource';
 import { MasterAccountResource } from './master-account-resource';
 import { OrganizationRootResource } from './organization-root-resource';
@@ -71,14 +72,12 @@ export class OrganizationSection {
                 accountNames.push(this.masterAccount.accountName);
             }
         }
-        const organizationUnitNames = this.organizationalUnits.map(ou => ou.organizationalUnitName);
         const serviceControlPolicies = this.serviceControlPolicies.map(policy => policy.policyName);
 
-        this.throwForDuplicateVale(accountIds, (duplicate: string) => new Error(`multiple accounts found with AccountId ${duplicate}`));
-        this.throwForDuplicateVale(rootEmails, (duplicate: string) => new Error(`multiple accounts found with RootEmail ${duplicate}`));
-        this.throwForDuplicateVale(accountNames, (duplicate: string) => new Error(`multiple accounts found with AccountName ${duplicate}`));
-        this.throwForDuplicateVale(organizationUnitNames, (duplicate: string) => new Error(`multiple organizational units found with OrganizationalUnitName ${duplicate}`));
-        this.throwForDuplicateVale(serviceControlPolicies, (duplicate: string) => new Error(`multiple service control policies found with policyName ${duplicate}`));
+        this.warnForDuplicateVal(accountNames, (duplicate: string) => `Multiple accounts found with AccountName ${duplicate}. This will not be a problem, but perhaps confusing?`);
+        this.throwForDuplicateVal(accountIds, (duplicate: string) => new Error(`multiple accounts found with AccountId ${duplicate}`));
+        this.throwForDuplicateVal(rootEmails, (duplicate: string) => new Error(`multiple accounts found with RootEmail ${duplicate}`));
+        this.throwForDuplicateVal(serviceControlPolicies, (duplicate: string) => new Error(`multiple service control policies found with policyName ${duplicate}`));
     }
 
     public resolveRefs(): void {
@@ -93,7 +92,13 @@ export class OrganizationSection {
                 throw new OrgFormationError(`unable to load references for organizational resource ${resource.logicalId}, reason: ${reason}`);
             }
         }
+
         this.throwForCircularOUReference(this.organizationalUnits);
+
+        const topLevelOrganizationalUnits = this.organizationalUnits.filter(x=>x.parentOULogicalName === undefined);
+        const organizationUnitNames = topLevelOrganizationalUnits.map(ou => ou.organizationalUnitName);
+        this.throwForDuplicateVal(organizationUnitNames, (duplicate: string) => new Error(`multiple organizational units found with OrganizationalUnitName ${duplicate}`));
+
     }
 
     public createResource(id: string, resource: IResource): Resource {
@@ -140,12 +145,24 @@ export class OrganizationSection {
         return list.filter(fn);
     }
 
-    private throwForDuplicateVale(arr: string[], fnError: (val: string) => Error): void {
+    private throwForDuplicateVal(arr: string[], fnError: (val: string) => Error): void {
         const sortedArr = arr.sort();
         for (let i = 0; i < sortedArr.length - 1; i++) {
             if (sortedArr[i + 1] === sortedArr[i]) {
                 const duplicate = sortedArr[i];
                 throw fnError(duplicate);
+            }
+        }
+    }
+
+
+    private warnForDuplicateVal(arr: string[], fnMessage: (val: string) => string): void {
+        const sortedArr = arr.sort();
+        for (let i = 0; i < sortedArr.length - 1; i++) {
+            if (sortedArr[i + 1] === sortedArr[i]) {
+                const duplicate = sortedArr[i];
+                const message = fnMessage(duplicate);
+                ConsoleUtil.LogWarning(message);
             }
         }
     }

@@ -4,6 +4,7 @@ import { IOrganizationalUnitProperties } from '~parser/model/organizational-unit
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { IServiceControlPolicyProperties } from '~parser/model/service-control-policy-resource';
 import { ITemplate, TemplateRoot } from '~parser/parser';
+import { ConsoleUtil } from '../../../src/console-util';
 
 describe('when validating organization section', () => {
     let contents: ITemplate;
@@ -158,9 +159,14 @@ describe('when validating organization section', () => {
         expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/additional/);
     });
 
-    test('error is thrown for duplicate account name', () => {
+    test('warning is logged for duplicate account name', () => {
         contents.Organization.Account.Properties.AccountName = contents.Organization.Account2.Properties.AccountName;
-        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/account2/);
+
+        const spy = jest.spyOn(ConsoleUtil, 'LogWarning').mockImplementation();
+        new TemplateRoot(contents, './');
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(expect.stringContaining('account2'));
+        spy.mockRestore();
     });
 
     test('error is thrown for duplicate account root email', () => {
@@ -173,12 +179,16 @@ describe('when validating organization section', () => {
         expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/123123123124/);
     });
 
-    test('error is thrown for duplicate account name (master)', () => {
+    test('warning is logged for duplicate account name (master)', () => {
         contents.Organization.Account.Properties.AccountName = contents.Organization.Account2.Properties.AccountName;
         contents.Organization.Account.Type = OrgResourceTypes.MasterAccount;
         delete contents.Organization.OU.Properties.Accounts;
 
-        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/account2/);
+        const spy = jest.spyOn(ConsoleUtil, 'LogWarning').mockImplementation();
+        new TemplateRoot(contents, './');
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(expect.stringContaining('account2'));
+        spy.mockRestore();
     });
 
     test('error is thrown for duplicate account root email (master)', () => {
@@ -199,7 +209,11 @@ describe('when validating organization section', () => {
 
     test('error is thrown for duplicate organizational unit name', () => {
         contents.Organization.OU2.Properties.OrganizationalUnitName = contents.Organization.OU.Properties.OrganizationalUnitName;
-        expect(() => { new TemplateRoot(contents, './'); }).toThrowError(/ou1/);
+        expect(() => {
+
+            const x = new TemplateRoot(contents, './');
+            x.organizationSection.resolveRefs();
+        }).toThrowError(/ou1/);
     });
 
     test('error is thrown for duplicate service control policy name', () => {
