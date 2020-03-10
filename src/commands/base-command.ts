@@ -1,9 +1,5 @@
-import { existsSync, readFileSync } from 'fs';
-import AWS, { Organizations, STS } from 'aws-sdk';
-import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
-import { SharedIniFileCredentialsOptions } from 'aws-sdk/lib/credentials/shared_ini_file_credentials';
+import { Organizations } from 'aws-sdk';
 import { Command } from 'commander';
-import * as ini from 'ini';
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -173,40 +169,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return parameters;
     }
 
-    private async customInitializationIncludingMFASupport(command: ICommandArgs): Promise<void>  {
-        const profileName = command.profile ? command.profile : 'default';
-        const homeDir = require('os').homedir();
-        // todo: add support for windows?
-        if (!existsSync(homeDir + '/.aws/config')) {
-            return;
-        }
-        const awsconfig = readFileSync(homeDir + '/.aws/config').toString('utf8');
-        const contents = ini.parse(awsconfig);
-        const profile = contents['profile ' + profileName];
-        if (profile && profile.source_profile) {
-            const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
-            const secrets = ini.parse(awssecrets);
-            const creds = secrets[profile.source_profile];
-            const sts = new STS({ credentials: { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key } });
-
-            const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profile.mfa_serial}`);
-            const assumeRoleReq: AssumeRoleRequest = {
-                RoleArn: profile.role_arn,
-                RoleSessionName: 'organization-build',
-                SerialNumber: profile.mfa_serial,
-                TokenCode: token,
-            };
-
-            try {
-                const tokens = await sts.assumeRole(assumeRoleReq).promise();
-                AWS.config.credentials = { accessKeyId: tokens.Credentials.AccessKeyId, secretAccessKey: tokens.Credentials.SecretAccessKey, sessionToken: tokens.Credentials.SessionToken };
-            } catch (err) {
-                throw new OrgFormationError(`unable to assume role, error: \n${err}`);
-            }
-        }
-    }
-
-    private async initialize(command: ICommandArgs): Promise<void> {
+    protected async initialize(command: ICommandArgs): Promise<void> {
         if (command.initialized) { return; }
 
         if (command.printStack === true) {
@@ -231,25 +194,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             printStack: command.printStack,
         }, undefined, 2)}`);
 
+        await AwsUtil.InitializeWithProfile(command.profile);
 
-        try {
-            await this.customInitializationIncludingMFASupport(command);
-        } catch (err) {
-            if (err instanceof OrgFormationError) {
-                throw err;
-            }
-            ConsoleUtil.LogInfo(`custom initialization failed, not support for MFA token\n${err}`);
-        }
-
-        const options: SharedIniFileCredentialsOptions = {};
-        if (command.profile) {
-            options.profile = command.profile;
-        }
-
-        const credentials = new AWS.SharedIniFileCredentials(options);
-        if (credentials.accessKeyId) {
-            AWS.config.credentials = credentials;
-        }
         command.initialized = true;
     }
 }

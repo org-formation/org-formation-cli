@@ -1,6 +1,7 @@
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../console-util';
 import { IStorageProvider } from './storage-provider';
+import { OrgResourceTypes } from '~parser/model';
 
 export class PersistedState {
     public static async Load(provider: IStorageProvider, masterAccountId: string): Promise<PersistedState> {
@@ -163,7 +164,19 @@ export class PersistedState {
                 delete this.state.stacks[stackName];
             }
         }
+    }
 
+    public getAccountBinding(logicalId: string): IBinding | undefined {
+        const typeDict = this.state.bindings?.[OrgResourceTypes.MasterAccount];
+        if (!typeDict) {
+            return this.getBinding(OrgResourceTypes.Account, logicalId);
+        }
+
+        const result = typeDict[logicalId];
+        if (result === undefined) {
+            return this.getBinding(OrgResourceTypes.Account, logicalId);
+        }
+        return result;
     }
 
     public getBinding(type: string, logicalId: string): IBinding | undefined {

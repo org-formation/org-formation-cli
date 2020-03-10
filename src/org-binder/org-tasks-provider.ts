@@ -553,17 +553,17 @@ export class TaskProvider {
             perform: async (task): Promise<void> => {
                 let accountId = account.PhysicalId;
                 if (accountId === undefined) {
-                    const binding = that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId);
+                    const binding = that.state.getBinding(account.TemplateResource.type, account.TemplateResource.logicalId);
                     accountId = binding.physicalId;
                 }
                 const targetId = getTargetId();
                 task.result = await that.writer.detachAccount(targetId, accountId);
             },
         };
-        if (account.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId)) {
+        if (account.TemplateResource && undefined === that.state.getBinding(account.TemplateResource.type, account.TemplateResource.logicalId)) {
             detachAccountTask.dependentTaskFilter = (task): boolean => task.logicalId === account.TemplateResource.logicalId &&
                 task.action === 'Create' &&
-                task.type === OrgResourceTypes.Account;
+                task.type === account.TemplateResource.type;
         }
         return detachAccountTask;
     }
@@ -580,17 +580,17 @@ export class TaskProvider {
             perform: async (task): Promise<void> => {
                 let accountId = account.PhysicalId;
                 if (accountId === undefined) {
-                    const binding = that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId);
+                    const binding = that.state.getBinding(account.TemplateResource.type, account.TemplateResource.logicalId);
                     accountId = binding.physicalId;
                 }
                 const targetId = getTargetId();
                 task.result = await that.writer.attachAccount(targetId, accountId);
             },
         };
-        if (account.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.Account, account.TemplateResource.logicalId)) {
+        if (account.TemplateResource && undefined === that.state.getBinding(account.TemplateResource.type, account.TemplateResource.logicalId)) {
             attachAccountTask.dependentTaskFilter = (task): boolean => task.logicalId === account.TemplateResource.logicalId &&
                 task.action === 'Create' &&
-                task.type === OrgResourceTypes.Account;
+                task.type === account.TemplateResource.type;
         }
         return attachAccountTask;
     }
@@ -627,7 +627,7 @@ export class TaskProvider {
         return attachChildOuTask;
     }
 
-    private resolveIDs<TResource extends Resource>(list: Reference<TResource>[]) {
+    private resolveIDs<TResource extends Resource>(list: Reference<TResource>[]): IResolvedIDs<TResource> {
         const physicalIdsForServiceControlPolicies = list.filter(x => x.PhysicalId).map(x => x.PhysicalId);
         const unresolvedResources: TResource[] = [];
         const mapping: Record<string, Reference<TResource>> = {};
@@ -656,6 +656,12 @@ export class TaskProvider {
     }
 }
 
+
+interface IResolvedIDs<TResource extends Resource> {
+    physicalIds: string[];
+    unresolvedResources: TResource[];
+    mapping: Record<string, Reference<TResource>>;
+}
 export interface IBuildTask {
     type: string;
     logicalId: string;

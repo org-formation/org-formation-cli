@@ -84,7 +84,7 @@ export class OrganizationSection {
         for (const resource of this.resources) {
             try {
                 resource.resolveRefs();
-            } catch (err) { // todo: move one level up!
+            } catch (err) {
                 let reason = 'unknown';
                 if (err && err.message) {
                     reason = err.message;

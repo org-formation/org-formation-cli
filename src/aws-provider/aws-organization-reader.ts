@@ -2,7 +2,6 @@ import { IAM, Organizations } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
-import { OrgFormationError } from '../org-formation-error';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
@@ -317,20 +316,6 @@ export class AwsOrganizationReader {
         this.accounts = new Lazy(this, AwsOrganizationReader.listAccounts);
         this.organization = new Lazy(this, AwsOrganizationReader.getOrganization);
         this.roots = new Lazy(this, AwsOrganizationReader.listRoots);
-    }
-
-    public async hasMasterInOrganizationUnit(masterAccountId: string): Promise<boolean> {
-        const organizationalUnits = await this.organizationalUnits.getValue();
-        if (masterAccountId && organizationalUnits) {
-            return organizationalUnits.some((ou: AWSOrganizationalUnit) => {
-                return ou.Accounts.some((x: AWSAccount) => {
-                    if (x.Id === masterAccountId) {
-                        throw new OrgFormationError('Master account outside root organization is not supported yet, apologies.');
-                    }
-                });
-            });
-        }
-        return false;
     }
 }
 

@@ -36,7 +36,7 @@ export abstract class Resource {
         Validator.ThrowForUnknownAttribute(obj, `resource ${id}`, ...knownAttributes);
     }
 
-    protected resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[] ): Reference<T>[] {
+    protected resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[], additional?: T ): Reference<T>[] {
         if (val === undefined) {
             return [];
         }
@@ -52,7 +52,10 @@ export abstract class Resource {
                 results.push({PhysicalId: '' + elm});
             } else if (elm instanceof Object) {
                 const ref = (elm as IResourceRefExpression).Ref;
-                const foundElm = list.find(x => x.logicalId === ref);
+                let foundElm = list.find(x => x.logicalId === ref);
+                if (foundElm === undefined && additional?.logicalId === ref) {
+                    foundElm = additional;
+                }
                 if (foundElm === undefined) {
                     if (this.root.contents.Parameters) {
                         const paramValue = this.root.contents.Parameters[ref];

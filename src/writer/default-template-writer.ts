@@ -229,9 +229,9 @@ export class DefaultTemplateWriter {
 
     private generateMasterAccount(lines: YamlLine[], masterAccount: AWSAccount): WriterResource {
         const policiesList = masterAccount.Policies.map(x => '!Ref ' + this.logicalNames.getName(x));
-
+        const name = this.logicalNames.setName(masterAccount, 'MasterAccount');
         lines.push(new Line('Organization', '', 0));
-        lines.push(new Line('MasterAccount', '', 2));
+        lines.push(new Line(name, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.MasterAccount, 4));
         lines.push(new Line('Properties', '', 4));
         lines.push(new Line('AccountName', masterAccount.Name, 6));
@@ -268,6 +268,12 @@ export class DefaultTemplate {
 class LogicalNames {
     public names: Record<string, string> = {};
     public takenNames: string[] = [];
+    public setName(element: IAWSObject, name: string): string {
+        const key = this.getKey(element);
+        this.names[key] = name;
+        return name;
+    }
+
     public getName(element: IAWSObject): string {
         const key = this.getKey(element);
         let name = this.names[key];

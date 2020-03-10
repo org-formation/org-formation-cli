@@ -1,6 +1,6 @@
 import { spawnSync } from 'child_process';
-describe('when calling org-formation --version', () => {
 
+describe('when calling org-formation --version', () => {
     let stdout: string;
 
     beforeEach(() => {
