@@ -4,6 +4,8 @@ All notable changes to aws organization formation will be documented in this fil
 
 **not yet released**
 - Added flag --perform-cleanup to perform-tasks to automatically delete stacks removed from tasks file
+- Added support for moving master account to OU
+- Added support for multiple accounts that have the same account name
 
 **version 0.9.2**
 - Fixed issue with init-pipeline failing due to wrong option on codebuild script
