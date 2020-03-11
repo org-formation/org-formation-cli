@@ -1,7 +1,7 @@
 
 service: create-account
 
-# Example serverless.org project that will use StepFunctions send an email after account is created.
+# Example serverless.com project that will use StepFunctions send an email after account is created.
 # This is intended as an example do demonstrate how to automate and extend the account creation process.
 
 # In your organization you might want to do something a lot less manual:
