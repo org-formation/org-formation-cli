@@ -1,7 +1,7 @@
 import path from 'path';
 import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { BuildConfiguration, BuildTaskType, IBuildTask, IBuildTaskConfiguration, IIncludeTaskConfiguration, IUpdateOrganizationTaskConfiguration, IUpdateStackTaskConfiguration } from './build-configuration';
+import { BuildConfiguration, BuildTaskType, IBuildTask, IBuildTaskConfiguration, IIncludeTaskConfiguration, IUpdateOrganizationTaskConfiguration, IUpdateStackTaskConfiguration, IServerlessComTaskConfiguration } from './build-configuration';
 import { BuildRunner } from './build-runner';
 import { Validator } from '~parser/validator';
 import { ITrackedTask } from '~state/persisted-state';
@@ -14,6 +14,8 @@ import {
     ValidateStacksCommand,
     IPerformTasksCommandArgs,
     DeleteStacksCommand,
+    UpdateSlsCommand,
+    IUpdateSlsCommandArgs,
 } from '~commands/index';
 
 
@@ -45,6 +47,9 @@ export class BuildTaskProvider {
 
             case 'include':
                 return new UpdateIncludeTask(configuration as IIncludeTaskConfiguration, command);
+
+            case 'update-serverless.com':
+                return new UpdateServerlessOrgTask(configuration as IServerlessComTaskConfiguration, command);
 
             default:
                 throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);
@@ -129,6 +134,69 @@ abstract class BaseIncludeTask implements IBuildTask {
     protected abstract innerPerform(command: ICommandArgs): Promise<void>;
 
     protected abstract expandChildTasks(command: ICommandArgs): IBuildTask[];
+}
+
+
+abstract class BaseServerlessOrgTask implements IBuildTask {
+    public name: string;
+    public type: BuildTaskType;
+    public dependsOn: string[];
+    public childTasks: IBuildTask[] = [];
+    public taskFilePath: string;
+    public slsPath: string;
+    protected config: IServerlessComTaskConfiguration;
+    private command: any;
+
+    constructor(config: IServerlessComTaskConfiguration, command: ICommandArgs) {
+        this.name = config.LogicalName;
+        if (config.Path === undefined) {
+            throw new OrgFormationError(`Required atrribute Path missing for task ${name}`);
+        }
+        this.type = config.Type;
+        if (typeof config.DependsOn === 'string') {
+            this.dependsOn = [config.DependsOn];
+        } else {
+            this.dependsOn = config.DependsOn;
+        }
+        this.config = config;
+        const dir = path.dirname(config.FilePath);
+        this.slsPath = path.join(dir, config.Path);
+        this.command = command;
+    }
+
+    public isDependency(task: IBuildTask): boolean {
+        if (task.type === 'update-organization') {
+            return true;
+        }
+        if (this.dependsOn) {
+            return this.dependsOn.includes(task.name);
+        }
+    }
+    public async perform(): Promise<void> {
+        await this.innerPerform(this.command);
+    }
+
+    protected abstract innerPerform(command: ICommandArgs): Promise<void>;
+
+}
+
+class UpdateServerlessOrgTask extends BaseServerlessOrgTask {
+
+    protected async innerPerform(command: ICommandArgs): Promise<void> {
+        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.taskFilePath}`);
+
+        const updateSlsCommand: IUpdateSlsCommandArgs = {
+            ...command,
+            name: this.config.LogicalName,
+            stage: this.config.Stage,
+            path: this.slsPath,
+            failedTolerance: this.config.FailedTaskTolerance,
+            maxConcurrent: this.config.MaxConcurrentTasks,
+            organizationBinding: this.config.OrganizationBinding,
+        };
+
+        await UpdateSlsCommand.Perform(updateSlsCommand);
+    }
 }
 
 class UpdateIncludeTask extends BaseIncludeTask {

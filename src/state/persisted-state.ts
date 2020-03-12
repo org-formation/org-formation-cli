@@ -63,6 +63,7 @@ export class PersistedState {
     public getTemplateHash(): string {
         return this.getValue('organization.template.hash');
     }
+
     public putValue(key: string, val: string): void {
         if (this.state.values === undefined) {
             this.state.values = {};
@@ -70,6 +71,7 @@ export class PersistedState {
         this.state.values[key] = val;
         this.dirty = true;
     }
+
     public getValue(key: string): string | undefined {
         return this.state.values?.[key];
     }
@@ -92,6 +94,43 @@ export class PersistedState {
         }
 
         this.state.trackedTasks[tasksFileName] = trackedTasks;
+        this.dirty = true;
+    }
+
+    public getGenericTarget<ITaskDefinition>(type: string, logicalName: string, accountId: string, region = 'default'): IGenericTarget<ITaskDefinition> | undefined {
+        const targetsOfType = this.state.targets?.[type];
+        if (!targetsOfType) { return undefined; }
+
+        const targetsWithName = targetsOfType[logicalName];
+        if (!targetsWithName) { return undefined; }
+
+        const targetsForAccount = targetsWithName[accountId];
+        if (!targetsForAccount) { return undefined; }
+
+        return targetsForAccount[region] as IGenericTarget<ITaskDefinition>;
+    }
+
+    public setGenericTarget<ITaskDefinition>(target: IGenericTarget<ITaskDefinition>): void {
+        if (this.state.targets === undefined) {
+            this.state.targets = {};
+        }
+
+        let targetsOfType = this.state.targets[target.targetType];
+        if (!targetsOfType) {
+            targetsOfType = this.state.targets[target.targetType] = {};
+        }
+
+        let targetsWithName = targetsOfType[target.logicalName];
+        if (!targetsWithName) {
+            targetsWithName = targetsOfType[target.logicalName] = {};
+        }
+
+        let targetsForAccount = targetsWithName[target.accountId];
+        if (!targetsForAccount) {
+            targetsForAccount = targetsWithName[target.accountId] = {};
+        }
+
+        targetsForAccount[target.region]  = target;
         this.dirty = true;
     }
 
@@ -145,6 +184,7 @@ export class PersistedState {
         }
         return result;
     }
+
     public removeTarget(stackName: string, accountId: string, region: string): void {
         const accounts = this.state.stacks[stackName];
         if (!accounts) {
@@ -203,6 +243,7 @@ export class PersistedState {
         }
         return result;
     }
+
     public setUniqueBindingForType(binding: IBinding): void {
         if (this.state.bindings === undefined) {
             this.state.bindings = {};
@@ -226,7 +267,6 @@ export class PersistedState {
         typeDict[binding.logicalId]  = binding;
         this.dirty = true;
     }
-
 
     public setBindingHash(type: string, logicalId: string, lastCommittedHash: string): void {
         if (this.state.bindings === undefined) {
@@ -296,6 +336,7 @@ export class PersistedState {
 }
 
 export interface IState {
+    targets?: Record<string, Record<string, Record<string, Record<string, IGenericTarget<unknown>>>>>;
     masterAccountId: string;
     bindings: Record<string, Record<string, IBinding>>;
     stacks: Record<string, Record<string, Record<string, ICfnTarget>>>;
@@ -318,6 +359,16 @@ export interface ICfnTarget {
     stackName: string;
     terminationProtection?: boolean;
     lastCommittedHash: string;
+}
+
+export interface IGenericTarget<TTaskDefinition> {
+    targetType: string;
+    logicalAccountId: string;
+    region?: string;
+    accountId: string;
+    logicalName: string;
+    lastCommittedHash: string;
+    definition: TTaskDefinition;
 }
 
 export interface ITrackedTask {

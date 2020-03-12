@@ -121,7 +121,7 @@ export class AwsUtil {
         return service;
     }
 
-    private static async getCredentials(accountId: string): Promise<CredentialsOptions> {
+    public static async getCredentials(accountId: string): Promise<CredentialsOptions> {
         const sts = new STS();
         const roleArn = 'arn:aws:iam::' + accountId + ':role/OrganizationAccountAccessRole';
         const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();

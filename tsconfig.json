@@ -26,7 +26,8 @@
             "~org-binder/*": ["src/org-binder/*"],
             "~parser/*": ["src/parser/*"],
             "~state/*": ["src/state/*"],
-            "~writer/*": ["src/writer/*"]
+            "~writer/*": ["src/writer/*"],
+            "~sls-com/*": ["src/sls-com/*"],
         },
         "plugins": [
             {

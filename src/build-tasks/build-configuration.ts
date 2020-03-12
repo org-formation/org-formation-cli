@@ -101,13 +101,22 @@ export class BuildConfiguration {
     }
 }
 
-export type BuildTaskType = 'delete-stacks' | 'update-stacks' | 'update-organization' | 'include' | 'include-dir';
+export type BuildTaskType = 'delete-stacks' | 'update-stacks' | 'update-organization' | 'update-serverless.com' | 'include' | 'include-dir';
 
 export interface IBuildTaskConfiguration {
     Type: BuildTaskType;
     DependsOn?: string | string[];
     LogicalName: string;
     FilePath?: string;
+}
+
+export interface IServerlessComTaskConfiguration extends IBuildTaskConfiguration {
+    Config?: string;
+    Path: string;
+    Stage?: string;
+    OrganizationBinding: IOrganizationBinding;
+    MaxConcurrentTasks?: number;
+    FailedTaskTolerance?: number;
 }
 
 export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {
