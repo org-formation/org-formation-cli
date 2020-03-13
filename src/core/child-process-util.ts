@@ -16,13 +16,17 @@ export class ChildProcessUtility {
         }
         const options: ExecOptions = {
             cwd,
-            env: {
-                ...process.env,
+            env: process.env
+        };
+
+        if (credentials !== undefined) {
+            options.env = {
+                ...options.env,
                 'AWS_ACCESS_KEY_ID': credentials.accessKeyId,
                 'AWS_SECRET_ACCESS_KEY': credentials.secretAccessKey,
-                'AWS_SESSION_TOKEN': credentials.sessionToken,
+                'AWS_SESSION_TOKEN': credentials.sessionToken
             }
-        };
+        }
 
         return this.SpawnProcess(command, options);
     };
