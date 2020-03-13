@@ -100,7 +100,11 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public getGenericTarget<ITaskDefinition>(type: string, logicalName: string, accountId: string, region = 'default'): IGenericTarget<ITaskDefinition> | undefined {
+    public getGenericTarget<ITaskDefinition>(type: string, logicalName: string, accountId: string, region?: string): IGenericTarget<ITaskDefinition> | undefined {
+        if (!region) {
+            region = 'no-region';
+        }
+
         const targetsOfType = this.state.targets?.[type];
         if (!targetsOfType) { return undefined; }
 
@@ -132,9 +136,53 @@ export class PersistedState {
         if (!targetsForAccount) {
             targetsForAccount = targetsWithName[target.accountId] = {};
         }
+        let region = target.region;
+        if (!region) {
+            region = 'no-region';
+        }
 
-        targetsForAccount[target.region]  = target;
+        targetsForAccount[region]  = target;
         this.dirty = true;
+    }
+
+    public removeGenericTarget(type: string, logicalName: string, accountId: string, region?: string): void {
+
+        if (!region) {
+            region = 'no-region';
+        }
+
+        const root = this.state.targets;
+        if (!root) {
+            return;
+        }
+        const names = root[type];
+        if (!names) {
+            return;
+        }
+
+        const accounts = names[logicalName];
+        if (!accounts) {
+            return;
+        }
+        const regions: Record<string, any> = accounts[accountId];
+        if (!regions) {
+            return;
+        }
+
+        delete regions[region];
+        this.dirty = true;
+
+        if (Object.keys(regions).length === 0) {
+            delete accounts[accountId];
+
+            if (Object.keys(accounts).length === 0) {
+                delete names[logicalName];
+
+                if (Object.keys(names).length === 0) {
+                    delete root[type];
+                }
+            }
+        }
     }
 
     public getTarget(stackName: string, accountId: string, region: string): ICfnTarget | undefined {

@@ -15,8 +15,12 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
         }
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
+        const that = this;
 
-        return () => ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId);
+        return async () => {
+            await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId);
+            that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
+        }
     }
 
     createPerformForUpdateOrCreate(binding: IGenericBinding<IServerlessComTask>): () => Promise<void> {
@@ -31,8 +35,9 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const that = this;
+
         return async () => {
-            ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId);
+            await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId);
             that.state.setGenericTarget<IServerlessComTask>(target);
         }
     }
