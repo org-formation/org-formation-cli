@@ -19,7 +19,7 @@ export class ChildProcessUtility {
             env: process.env
         };
 
-        if (credentials !== undefined) {
+        if (credentials) {
             options.env = {
                 ...options.env,
                 'AWS_ACCESS_KEY_ID': credentials.accessKeyId,

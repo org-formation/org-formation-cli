@@ -18,7 +18,7 @@ export class SlsTaskRunner {
                 ConsoleUtil.LogInfo(`stack ${task.logicalName} successfully ${task.action === 'Delete' ? 'deleted from' : 'updated in' } ${task.accountId}/${task.region}.`);
             },
             throwCircularDependency: ts => {
-                const targets = ts.map(x => x.accountId + '/' + x.region);
+                const targets = ts.map(x => x.accountId + (x.region ? '/' + x.region : ''));
                 throw new OrgFormationError(`circular dependency on stack ${logicalName} for targets ${targets.join(', ')}`);
              },
             throwDependencyOnSelfException: task => {throw new OrgFormationError(`stack ${task.logicalName} has dependency on self target account ${task.accountId} / ${task.region}`); },
