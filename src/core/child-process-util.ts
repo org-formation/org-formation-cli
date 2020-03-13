@@ -2,6 +2,7 @@ import { CredentialsOptions } from "aws-sdk/lib/credentials";
 import { exec, ExecException, ExecOptions } from "child_process";
 import { AwsUtil } from "../aws-util";
 import { ConsoleUtil } from "../console-util";
+import AWS from "aws-sdk";
 
 
 export class ChildProcessUtility {
@@ -9,7 +10,10 @@ export class ChildProcessUtility {
     public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string): Promise<void> {
         ConsoleUtil.LogInfo(`executing command: ${command} in account ${accountId}`);
 
-        const credentials = await AwsUtil.getCredentials(accountId);
+        let credentials: CredentialsOptions = AWS.config.credentials;
+        if (accountId !== await AwsUtil.GetMasterAccountId()) {
+            credentials = await AwsUtil.getCredentials(accountId);
+        }
         const options: ExecOptions = {
             cwd,
             env: {
