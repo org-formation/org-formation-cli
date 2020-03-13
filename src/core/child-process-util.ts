@@ -7,12 +7,13 @@ import { ConsoleUtil } from "../console-util";
 export class ChildProcessUtility {
 
     public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string): Promise<void> {
-        ConsoleUtil.LogDebug(`executing command: ${command} in account ${accountId}`);
+        ConsoleUtil.LogInfo(`executing command: ${command} in account ${accountId}`);
 
         const credentials = await AwsUtil.getCredentials(accountId);
-        const options = {
+        const options: ExecOptions = {
             cwd,
             env: {
+                ...process.env,
                 'AWS_ACCESS_KEY_ID': credentials.accessKeyId,
                 'AWS_SECRET_ACCESS_KEY': credentials.secretAccessKey,
                 'AWS_SESSION_TOKEN': credentials.sessionToken,
@@ -23,17 +24,22 @@ export class ChildProcessUtility {
     };
 
     public static SpawnProcess(command: string, options: ExecOptions): Promise<void> {
+        //options.shell = '/bin/bash';
         return new Promise((resolve, reject) => {
-            exec(command, options, (err: ExecException, stdout: string, stderr: string) => {
+            const childProcess = exec(command, options, (err: ExecException) => {
                 if (err) {
                     reject(err)
                     return;
                 }
-                if (stderr) {
-                    ConsoleUtil.LogError(stderr);
-                }
-                ConsoleUtil.LogDebug(stdout);
                 resolve();
+            });
+
+            childProcess.stdout.on('data', (x) => {
+                ConsoleUtil.LogDebug(x);
+            });
+
+            childProcess.stderr.on('data', (x) => {
+                ConsoleUtil.LogDebug(x);
             });
         });
     };

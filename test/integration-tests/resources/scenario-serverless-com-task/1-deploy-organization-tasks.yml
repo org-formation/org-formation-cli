@@ -1,0 +1,13 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+ServerlessWorkload:
+  Type: update-serverless.com              # type
+  Config: serverless.yml                   # serverless file, optional
+  Path: ./workload/                        # used to package / calculate hash
+  OrganizationBinding:
+    Account: !Ref AccountA
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10

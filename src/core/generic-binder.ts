@@ -5,7 +5,7 @@ import { TemplateRoot, IOrganizationBinding } from '~parser/parser';
 export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefinition> {
     private readonly template: TemplateRoot;
     private readonly task: ITaskDefinition;
-    private readonly state: PersistedState;
+    protected readonly state: PersistedState;
     private readonly organizationBinding: IOrganizationBinding;
 
     constructor(task: ITaskDefinition, state: PersistedState, template: TemplateRoot, organizationBinding: IOrganizationBinding) {
@@ -42,6 +42,22 @@ export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefiniti
             }
 
             result.push(binding);
+        }
+
+        const targetsInState = this.state.enumGenericTargets<ITaskDefinition>(this.task.type, this.task.name);
+        for(const targetToBeDeleted of targetsInState.filter(x=>!result.find(y=>y.target.accountId === x.accountId && y.target.region === x.region))) {
+            result.push({
+                action: 'Delete',
+                task: this.task,
+                target: {
+                    targetType: this.task.type,
+                    logicalAccountId: targetToBeDeleted.logicalAccountId,
+                    accountId: targetToBeDeleted.accountId,
+                    definition: this.task,
+                    logicalName: this.task.name,
+                    lastCommittedHash: this.task.hash
+                }
+            })
         }
         return result;
     }

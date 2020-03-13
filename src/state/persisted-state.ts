@@ -4,6 +4,7 @@ import { IStorageProvider } from './storage-provider';
 import { OrgResourceTypes } from '~parser/model';
 
 export class PersistedState {
+
     public static async Load(provider: IStorageProvider, masterAccountId: string): Promise<PersistedState> {
 
         try {
@@ -57,9 +58,11 @@ export class PersistedState {
         this.state = state;
         this.masterAccount = state.masterAccountId;
     }
+
     public putTemplateHash(val: string): void {
         this.putValue('organization.template.hash', val);
     }
+
     public getTemplateHash(): string {
         return this.getValue('organization.template.hash');
     }
@@ -240,6 +243,24 @@ export class PersistedState {
         const result: IBinding[] = [];
         for (const key in typeDict) {
             result.push(typeDict[key]);
+        }
+        return result;
+    }
+
+    public enumGenericTargets<ITaskDefinition>(type: string, name: string): Array<IGenericTarget<ITaskDefinition>> {
+
+        if (this.state.targets === undefined) {
+            return [];
+        }
+        const nameDict = this.state.targets[type];
+        if (!nameDict) { return []; }
+
+        const accountDict = nameDict[name];
+        const result: Array<IGenericTarget<ITaskDefinition>> = [];
+        for(const regionDict of Object.values(accountDict)) {
+            for(const target of Object.values(regionDict)) {
+                result.push(target as IGenericTarget<ITaskDefinition>);
+            }
         }
         return result;
     }

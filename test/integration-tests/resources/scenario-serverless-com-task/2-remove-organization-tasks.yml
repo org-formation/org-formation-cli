@@ -5,9 +5,9 @@ OrganizationUpdate:
 
 ServerlessWorkload:
   Type: update-serverless.com              # type
-  Config: ./workload/serverless.yml        # serverless file, optional
+  Config: serverless.yml                   # serverless file, optional
   Path: ./workload/                        # used to package / calculate hash
   OrganizationBinding:
-    IncludeMasterAccount: true
+    AccountsWithTag: sdfsdf
   MaxConcurrentStacks: 10
   FailedStackTolerance: 10
