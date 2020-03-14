@@ -8,6 +8,11 @@ const commandDescription = 'Will validate the tasks file, including configured t
 
 export class ValidateTasksCommand extends BaseCliCommand<IValidateTasksCommandArgs> {
 
+    public static async Perform(command: IValidateTasksCommandArgs): Promise<void> {
+        const x = new ValidateTasksCommand();
+        await x.performCommand(command);
+    }
+
     constructor(command?: Command) {
         super(command, commandName, commandDescription, 'tasksFile');
     }

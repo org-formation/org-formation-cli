@@ -19,7 +19,12 @@ export class UpdateSlsCommand extends BaseCliCommand<IUpdateSlsCommandArgs> {
     protected async performCommand(command: IUpdateSlsCommandArgs): Promise<void> {
 
         const hashOfServerlessDirectory = md5Dir(command.path);
-        const hashOfTask = md5(JSON.stringify({ path: hashOfServerlessDirectory })); // TODO: add the right values
+        const hashOfTask = md5(JSON.stringify({
+            binding: command.organizationBinding,
+            organizationFileHash: command.organizationFileHash,
+            stage: command.stage,
+            configFile: command.configFile,
+            path: hashOfServerlessDirectory }));
 
         const task: IServerlessComTask = {
             type: ServerlessGenericTaskType,

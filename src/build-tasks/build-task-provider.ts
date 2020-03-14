@@ -32,6 +32,9 @@ export class BuildTaskProvider {
             case 'include':
                 return new ValidateIncludeTask(configuration as IIncludeTaskConfiguration, command);
 
+            case 'update-serverless.com':
+                return new ValidateServerlessComTask(configuration as IServerlessComTaskConfiguration, command);
+
             default:
                 throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);
         }
@@ -49,7 +52,7 @@ export class BuildTaskProvider {
                 return new UpdateIncludeTask(configuration as IIncludeTaskConfiguration, command);
 
             case 'update-serverless.com':
-                return new UpdateServerlessOrgTask(configuration as IServerlessComTaskConfiguration, command);
+                return new UpdateServerlessComTask(configuration as IServerlessComTaskConfiguration, command);
 
             default:
                 throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);
@@ -60,6 +63,9 @@ export class BuildTaskProvider {
         switch (type) {
             case 'update-stacks':
                 return new DeleteStacksTask(logicalId, physicalId, command);
+
+            case 'update-serverless.com':
+                return new DeleteServerlessOrgTask(logicalId, physicalId, command);
         }
 
         return undefined;
@@ -137,7 +143,7 @@ abstract class BaseIncludeTask implements IBuildTask {
 }
 
 
-abstract class BaseServerlessOrgTask implements IBuildTask {
+abstract class BaseServerlessComTask implements IBuildTask {
     public name: string;
     public type: BuildTaskType;
     public dependsOn: string[];
@@ -145,6 +151,7 @@ abstract class BaseServerlessOrgTask implements IBuildTask {
     public taskFilePath: string;
     public slsPath: string;
     protected config: IServerlessComTaskConfiguration;
+    public physicalIdForCleanup?: string = undefined;
     private command: any;
 
     constructor(config: IServerlessComTaskConfiguration, command: ICommandArgs) {
@@ -180,7 +187,12 @@ abstract class BaseServerlessOrgTask implements IBuildTask {
 
 }
 
-class UpdateServerlessOrgTask extends BaseServerlessOrgTask {
+class UpdateServerlessComTask extends BaseServerlessComTask {
+
+    constructor(config: IServerlessComTaskConfiguration, command: ICommandArgs) {
+        super(config, command);
+        this.physicalIdForCleanup = config.LogicalName;
+    }
 
     protected async innerPerform(command: ICommandArgs): Promise<void> {
         ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.taskFilePath}`);
@@ -197,6 +209,33 @@ class UpdateServerlessOrgTask extends BaseServerlessOrgTask {
 
         await UpdateSlsCommand.Perform(updateSlsCommand);
     }
+}
+
+class ValidateServerlessComTask extends BaseServerlessComTask {
+
+    public async innerPerform(args: IUpdateStacksCommandArgs): Promise<void> {
+        //no-op
+    }
+}
+
+export class DeleteServerlessOrgTask implements IBuildTask {
+    name: string;
+    type: BuildTaskType;
+    childTasks: IBuildTask[];
+    physicalIdForCleanup?: string;
+
+    constructor(logicalId: string, physicalId: string, command: ICommandArgs) {
+        //todo:
+    }
+
+    isDependency(): boolean {
+        return false;
+    }
+
+    async perform(): Promise<void> {
+
+    }
+
 }
 
 class UpdateIncludeTask extends BaseIncludeTask {

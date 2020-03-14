@@ -111,8 +111,8 @@ export interface IBuildTaskConfiguration {
 }
 
 export interface IServerlessComTaskConfiguration extends IBuildTaskConfiguration {
-    Config?: string;
     Path: string;
+    Config?: string;
     Stage?: string;
     OrganizationBinding: IOrganizationBinding;
     MaxConcurrentTasks?: number;
