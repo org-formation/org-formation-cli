@@ -295,7 +295,7 @@ export class PersistedState {
         return result;
     }
 
-    public enumGenericTargets<ITaskDefinition>(type: string, name: string): Array<IGenericTarget<ITaskDefinition>> {
+    public enumGenericTargets<ITaskDefinition>(type: string, name: string): IGenericTarget<ITaskDefinition>[] {
 
         if (this.state.targets === undefined) {
             return [];
@@ -304,7 +304,7 @@ export class PersistedState {
         if (!nameDict) { return []; }
 
         const accountDict = nameDict[name];
-        const result: Array<IGenericTarget<ITaskDefinition>> = [];
+        const result: IGenericTarget<ITaskDefinition>[] = [];
         for(const regionDict of Object.values(accountDict)) {
             for(const target of Object.values(regionDict)) {
                 result.push(target as IGenericTarget<ITaskDefinition>);

@@ -101,7 +101,7 @@ export class BuildConfiguration {
     }
 }
 
-export type BuildTaskType = 'delete-stacks' | 'update-stacks' | 'update-organization' | 'update-serverless.com' | 'include' | 'include-dir';
+export type BuildTaskType = 'delete-stacks' | 'update-stacks' | 'update-organization' | 'update-serverless.com' | 'delete-serverless.com'  | 'include' | 'include-dir';
 
 export interface IBuildTaskConfiguration {
     Type: BuildTaskType;

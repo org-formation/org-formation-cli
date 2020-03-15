@@ -12,3 +12,4 @@ export * from './update-stacks';
 export * from './validate-stacks';
 export * from './validate-tasks';
 export * from './update-sls';
+export * from './delete-sls';

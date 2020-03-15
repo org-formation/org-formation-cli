@@ -1,12 +1,12 @@
+import path from 'path';
 import { GenericBinder, IGenericBinding } from '~core/generic-binder';
 import { ChildProcessUtility } from '~core/child-process-util';
-import path from 'path';
 
 export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
 
     createPerformForDelete(binding: IGenericBinding<IServerlessComTask>): () => Promise<void> {
         const { task, target } = binding;
-        let command = 'npx sls remove'
+        let command = 'npx sls remove';
         if (task.stage) {
             command += ' --stage ' + task.stage;
         }
@@ -17,15 +17,15 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
         const cwd = path.resolve(task.path);
         const that = this;
 
-        return async () => {
+        return async (): Promise<void> => {
             await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId);
             that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
-        }
+        };
     }
 
     createPerformForUpdateOrCreate(binding: IGenericBinding<IServerlessComTask>): () => Promise<void> {
         const { task, target } = binding;
-        let command = 'npm i && npx sls deploy'
+        let command = 'npm i && npx sls deploy';
         if (task.stage) {
             command += ' --stage ' + task.stage;
         }
@@ -36,10 +36,10 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
         const cwd = path.resolve(task.path);
         const that = this;
 
-        return async () => {
+        return async (): Promise<void> => {
             await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId);
             that.state.setGenericTarget<IServerlessComTask>(target);
-        }
+        };
     }
 }
 

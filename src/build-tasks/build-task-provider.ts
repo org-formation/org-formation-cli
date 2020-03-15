@@ -16,6 +16,7 @@ import {
     DeleteStacksCommand,
     UpdateSlsCommand,
     IUpdateSlsCommandArgs,
+    DeleteSlsCommand,
 } from '~commands/index';
 
 
@@ -213,19 +214,21 @@ class UpdateServerlessComTask extends BaseServerlessComTask {
 
 class ValidateServerlessComTask extends BaseServerlessComTask {
 
-    public async innerPerform(args: IUpdateStacksCommandArgs): Promise<void> {
-        //no-op
+    public async innerPerform(): Promise<void> {
+        // no-op
     }
 }
 
 export class DeleteServerlessOrgTask implements IBuildTask {
     name: string;
-    type: BuildTaskType;
-    childTasks: IBuildTask[];
-    physicalIdForCleanup?: string;
+    type: BuildTaskType = 'delete-serverless.com';
+    childTasks: IBuildTask[] = [];
+    physicalIdForCleanup?: string = undefined;
+    command: ICommandArgs;
 
     constructor(logicalId: string, physicalId: string, command: ICommandArgs) {
-        //todo:
+        this.name = physicalId;
+        this.command = command;
     }
 
     isDependency(): boolean {
@@ -233,7 +236,7 @@ export class DeleteServerlessOrgTask implements IBuildTask {
     }
 
     async perform(): Promise<void> {
-
+        await DeleteSlsCommand.Perform({ ...this.command,  name: this.name, maxConcurrentStacks: 10, failedStacksTolerance: 10 });
     }
 
 }

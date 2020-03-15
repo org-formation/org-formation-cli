@@ -3,6 +3,7 @@ import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegra
 import { readFileSync } from 'fs';
 import { ChildProcessUtility } from '~core/child-process-util';
 import { GetObjectOutput } from 'aws-sdk/clients/s3';
+import { S3StorageProvider } from '~state/storage-provider';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-serverless-com-task/';
 
@@ -72,17 +73,15 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     // test('after deploy workload state contains tracked task', () => {
-    //     const stateAsString = stateAfterDeploy.Body.toString();
+    //     const stateAsString = stateAfterDeploy2Targets.Body.toString();
     //     const state = JSON.parse(stateAsString);
     //     expect(state).toBeDefined();
     //     expect(state.trackedTasks).toBeDefined();
-
     // });
 
     test('after rerunning same serverless comn task without changing, nothing got executed', () => {
         expect(spawnProcessAfterRerunFileWithoutChanges.calls.length).toEqual(0);
     });
-
 
     test('after deploy 1 targets sls remove was called', () => {
         expect(spawnProcessAfterDeploy1Target.calls.length).toBe(1);
@@ -103,13 +102,12 @@ describe('when calling org-formation perform tasks', () => {
     })
 
     test('after removing task state does not contain removed target workload', () => {
-        const stateAsString = stateAfterDeploy1Target.Body.toString();
+        const stateAsString = stateAfterRemoveTask.Body.toString();
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
         expect(state.targets['serverless.com']).toBeUndefined();
     });
-
 
     afterAll(async () => {
         await baseAfterAll(context);

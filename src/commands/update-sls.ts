@@ -1,8 +1,8 @@
 import { readdirSync, statSync } from 'fs';
-import { ServerlessComBinder, IServerlessComTask } from '~sls-com/serverless-com-binder';
-import { SlsTaskRunner } from '~sls-com/serverless-com-task-runner';
 import { ConsoleUtil } from '../../src/console-util';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { ServerlessComBinder, IServerlessComTask } from '~sls-com/serverless-com-binder';
+import { SlsTaskRunner } from '~sls-com/serverless-com-task-runner';
 import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
 const crypto = require('crypto');
 const path = require('path');
@@ -20,7 +20,6 @@ export class UpdateSlsCommand extends BaseCliCommand<IUpdateSlsCommandArgs> {
 
         const hashOfServerlessDirectory = md5Dir(command.path);
         const hashOfTask = md5(JSON.stringify({
-            binding: command.organizationBinding,
             organizationFileHash: command.organizationFileHash,
             stage: command.stage,
             configFile: command.configFile,
@@ -74,6 +73,9 @@ const md5Dir = (dirname: string): string => {
     const hashForDir = crypto.createHash('md5');
 
     files.forEach(file => {
+        if( file === '.serverless') {
+            return;
+        }
         const filepath = path.join(dirname, file);
         const stat = statSync(filepath);
 

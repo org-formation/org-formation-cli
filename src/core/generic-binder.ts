@@ -1,4 +1,5 @@
 import { OrgFormationError } from '../../src/org-formation-error';
+import { ConsoleUtil } from '../../src/console-util';
 import { IGenericTarget, PersistedState } from '~state/persisted-state';
 import { TemplateRoot, IOrganizationBinding } from '~parser/parser';
 
@@ -41,6 +42,8 @@ export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefiniti
                 binding.action = 'None';
             }
 
+            ConsoleUtil.LogDebug(`setting build action for ${this.task.type} / ${this.task.name} for ${binding.target.accountId} to ${binding.action}`);
+
             result.push(binding);
         }
 
@@ -55,9 +58,12 @@ export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefiniti
                     accountId: targetToBeDeleted.accountId,
                     definition: this.task,
                     logicalName: this.task.name,
-                    lastCommittedHash: this.task.hash
-                }
-            })
+                    lastCommittedHash: this.task.hash,
+                },
+            });
+
+            ConsoleUtil.LogDebug(`setting build action for ${this.task.type} / ${this.task.name} for ${targetToBeDeleted.accountId} to Delete`);
+
         }
         return result;
     }
