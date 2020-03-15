@@ -44,6 +44,14 @@ module.exports = {
                 color: 'magenta',
             },
             testMatch: ['<rootDir>/test/integration-tests/**/*.test.ts'],
+        },
+        {
+            ...defaultConfig,
+            displayName: {
+                name: 'validation',
+                color: 'magenta',
+            },
+            testMatch: ['<rootDir>/test/validation/**/*.test.ts'],
         }
     ]
 };
