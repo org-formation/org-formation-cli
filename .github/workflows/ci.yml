@@ -41,3 +41,10 @@ jobs:
         with:
           name: artifacts
           path: coverage
+      - name: Run Integration Tests
+        id: integration-testing
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_CI_ACCESS_KEY }}
+          super_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          npm run test:integration
