@@ -6,6 +6,7 @@
 - [Task types](#task-types)
   - [update-organization](#update-organization)
   - [update-stacks](#update-stacks)
+  - [update-serverless.com](#update-serverlesscom)
   - [include](#include)
 
 <!-- /code_chunk_output -->
@@ -55,7 +56,7 @@ The ``update-organization`` task will update all the organization resources base
 
 ### update-stacks
 
-The ``update-stacks`` task will provision all resources in all accounts specified in  ``Template``.
+The `update-stacks` task will provision all resources in all accounts specified in  `Template`.
 
 |Attribute |Value|Remarks|
 |:---|:---|:---|
@@ -101,6 +102,32 @@ Roles:
       OrganizationalUnit: !Ref DevelopmentOU
     AssumeRoleBinding:
       Account: !Ref SharedUsersAccount
+```
+
+### update-serverless.com
+
+The ``update-serverless.com`` task will deploy the [serverless.com](https://serverless.com) workload defined in the directory specified as `Path`.
+
+
+|Attribute |Value|Remarks|
+|:---|:---|:---|
+|Path|relative path|This property is required. <br/><br/>Specifies which directory contains the serverless.com workload
+|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the serverless.com workload needs to be deployed to.|
+|Config| relative path |Name of the Serverless.com configuration file that contains information about the payload.<br/><br/>default is **./serverless.yml**|
+|Stage|string|Value used as stage when deploying the serverless.com workload|
+|DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
+
+**example**
+```yaml
+ServerlessWorkload:
+  Type: update-serverless.com
+  Config: serverless.yml
+  Path: ./workload/
+  Stage: dev
+  OrganizationBinding:
+    Account: !Ref AccountA
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10
 ```
 
 ### include
