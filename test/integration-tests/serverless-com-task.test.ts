@@ -3,7 +3,6 @@ import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegra
 import { readFileSync } from 'fs';
 import { ChildProcessUtility } from '~core/child-process-util';
 import { GetObjectOutput } from 'aws-sdk/clients/s3';
-import { S3StorageProvider } from '~state/storage-provider';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-serverless-com-task/';
 
@@ -111,6 +110,5 @@ describe('when calling org-formation perform tasks', () => {
 
     afterAll(async () => {
         await baseAfterAll(context);
-    })
-
+    });
 });
