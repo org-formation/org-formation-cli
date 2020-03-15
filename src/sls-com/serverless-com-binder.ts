@@ -10,7 +10,7 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
         command = appendArgumentIfTruthy(command, '--region', target.region);
         command = appendArgumentIfTruthy(command, '--config', task.configFile);
-
+        command = command + ' --conceal';
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const that = this;
@@ -27,6 +27,7 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
         command = appendArgumentIfTruthy(command, '--region', target.region);
         command = appendArgumentIfTruthy(command, '--config', task.configFile);
+        command = command + ' --conceal';
 
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
@@ -40,9 +41,9 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
 }
 
 const appendArgumentIfTruthy = (command: string, option: string, val?: string): string => {
-    if (!val) return command;
+    if (!val) {return command;}
     return `${command} ${option} ${val}`;
-}
+};
 
 
 export interface IServerlessComTask {
