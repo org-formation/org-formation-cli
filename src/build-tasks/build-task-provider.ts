@@ -16,7 +16,8 @@ import {
     DeleteStacksCommand,
     UpdateSlsCommand,
     IUpdateSlsCommandArgs,
-    DeleteSlsCommand,
+    CleanupCommand,
+    ServerlessGenericTaskType,
 } from '~commands/index';
 
 
@@ -225,10 +226,12 @@ export class DeleteServerlessOrgTask implements IBuildTask {
     childTasks: IBuildTask[] = [];
     physicalIdForCleanup?: string = undefined;
     command: ICommandArgs;
+    performCleanup = false;
 
     constructor(logicalId: string, physicalId: string, command: ICommandArgs) {
         this.name = physicalId;
         this.command = command;
+        this.performCleanup = (command as IPerformTasksCommandArgs).performCleanup;
     }
 
     isDependency(): boolean {
@@ -236,7 +239,19 @@ export class DeleteServerlessOrgTask implements IBuildTask {
     }
 
     async perform(): Promise<void> {
-        await DeleteSlsCommand.Perform({ ...this.command,  name: this.name, maxConcurrentStacks: 10, failedStacksTolerance: 10 });
+        if (!this.performCleanup) {
+            ConsoleUtil.LogWarning('Hi there, it seems you have removed a task!');
+            ConsoleUtil.LogWarning(`The task was called ${this.name} and used to deploy a serverless.com project.`);
+            ConsoleUtil.LogWarning('By default these tasks dont get cleaned up. You can change this by adding the option --perfom-cleanup.');
+            ConsoleUtil.LogWarning('You can remove the project manually by running the following command:');
+            ConsoleUtil.LogWarning('');
+            ConsoleUtil.LogWarning(`    org-formation cleanup --type ${ServerlessGenericTaskType} --name ${this.name}`);
+            ConsoleUtil.LogWarning('');
+            ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
+        } else {
+            ConsoleUtil.LogInfo(`executing: ${this.type} ${this.name}`);
+            await CleanupCommand.Perform({ ...this.command,  name: this.name, type: ServerlessGenericTaskType, maxConcurrentTasks: 10, failedTasksTolerance: 10 });
+        }
     }
 
 }

@@ -12,6 +12,7 @@ import {
     UpdateStacksCommand,
     ValidateStacksCommand,
     ValidateTasksCommand,
+    CleanupCommand,
 } from '~commands/index';
 
 export class CliProgram {
@@ -53,6 +54,7 @@ export class CliProgram {
 
         new ValidateStacksCommand(this.program);
         new ValidateTasksCommand(this.program);
+        new CleanupCommand(this.program);
     }
 
     public getCommand(): Command {
