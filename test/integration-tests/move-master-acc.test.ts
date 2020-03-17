@@ -8,7 +8,6 @@ import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegra
 
 const basePathForScenario = './test/integration-tests/resources/scenario-move-master-acc/';
 
-
 describe('when moving master account around', () => {
     let context: IIntegrationTestContext;
     let orgClient: Organizations;

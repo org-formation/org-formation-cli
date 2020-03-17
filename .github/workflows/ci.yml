@@ -17,6 +17,12 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12
+      - name: Test With Secrets
+        id: secret-testing
+        env:
+          MY_VAR: ${{ secrets.TEST }}
+        run: |
+          echo $MY_VAR
       - name: Install Dependencies with NPM
         id: installation
         run: |
