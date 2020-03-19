@@ -23,7 +23,7 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
 
     createPerformForUpdateOrCreate(binding: IGenericBinding<IServerlessComTask>): () => Promise<void> {
         const { task, target } = binding;
-        let command = 'npm i && npx sls deploy';
+        let command = 'npm ci && npx sls deploy';
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
         command = appendArgumentIfTruthy(command, '--region', target.region);
         command = appendArgumentIfTruthy(command, '--config', task.configFile);
