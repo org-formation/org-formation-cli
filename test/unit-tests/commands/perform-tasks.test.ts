@@ -1,11 +1,12 @@
 import { Command, Option } from 'commander';
 import { PerformTasksCommand, IPerformTasksCommandArgs } from '~commands/perform-tasks';
-import { BuildConfiguration, IUpdateOrganizationTaskConfiguration, IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
+import { BuildConfiguration, IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { PersistedState, ITrackedTask } from '~state/persisted-state';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ConsoleUtil } from '../../../src/console-util';
 import { DeleteStacksCommand } from '~commands/index';
+import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/organization-task';
 
 describe('when creating perform-tasks command', () => {
     let command: PerformTasksCommand;
