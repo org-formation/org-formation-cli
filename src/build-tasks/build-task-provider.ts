@@ -3,9 +3,9 @@ import { IBuildTask, IBuildTaskConfiguration } from './build-configuration';
 import { UpdateOrganizationTaskProvider } from './tasks/organization-task';
 import { UpdateStacksBuildTaskProvider } from './tasks/update-stacks-task';
 import { IncludeTaskProvider } from './tasks/include-task';
+import { UpdateServerlessComBuildTaskProvider } from './tasks/serverless-com-task';
 import { ICommandArgs }  from '~commands/index';
 import { ITrackedTask } from '~state/persisted-state';
-import { UpdateServerlessComBuildTaskProvider } from './tasks/serverless-com-task';
 
 export class BuildTaskProvider {
     private static SingleInstance: BuildTaskProvider;
