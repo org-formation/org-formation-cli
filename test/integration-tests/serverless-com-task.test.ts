@@ -34,7 +34,6 @@ describe('when calling org-formation perform tasks', () => {
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-serverless-workload-2targets.yml' });
         spawnProcessAfterDeploy2Targets = spawnProcessMock.mock;
         stateAfterDeploy2Targets = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
-
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-serverless-workload-2targets.yml' });
         spawnProcessAfterRerunFileWithoutChanges = spawnProcessMock.mock;
@@ -55,9 +54,9 @@ describe('when calling org-formation perform tasks', () => {
         stateAfterCleanup = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
     });
 
-    test('after deploy 2 targets npm i was called twice', () => {
-        expect(spawnProcessAfterDeploy2Targets.calls[0][0]).toEqual(expect.stringContaining('npm i'));
-        expect(spawnProcessAfterDeploy2Targets.calls[1][0]).toEqual(expect.stringContaining('npm i'));
+    test('after deploy 2 targets npm ci was called twice', () => {
+        expect(spawnProcessAfterDeploy2Targets.calls[0][0]).toEqual(expect.stringContaining('npm ci'));
+        expect(spawnProcessAfterDeploy2Targets.calls[1][0]).toEqual(expect.stringContaining('npm ci'));
     });
 
     test('after deploy 2 targets npx sls deploy was called twice', () => {
