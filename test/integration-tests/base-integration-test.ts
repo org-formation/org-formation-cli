@@ -1,4 +1,4 @@
-import { SharedIniFileCredentials, S3, Organizations } from "aws-sdk";
+import AWS, { SharedIniFileCredentials, S3, EnvironmentCredentials } from "aws-sdk";
 import { v4 } from "uuid";
 import { AwsUtil } from "../../src/aws-util";
 import { ConsoleUtil } from "../../src/console-util";
@@ -11,14 +11,15 @@ export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
     ConsoleUtil.verbose = true;
     ConsoleUtil.printStacktraces = true;
 
-    await AwsUtil.InitializeWithProfile(profileForIntegrationTests);
-    const creds = new SharedIniFileCredentials({ profile: profileForIntegrationTests });
+    await AwsUtil.InitializeWithCredentialsChainProvider([
+        () => new EnvironmentCredentials('TST_AWS'),
+        () => new SharedIniFileCredentials({ profile: profileForIntegrationTests }),
+    ]);
 
     return {
         stateBucketName: `${v4()}`,
         stackName: `a${Math.floor(Math.random() * 10000)}`,
-        creds,
-        s3client: new S3({ credentials: creds }),
+        s3client: new S3({credentialProvider: AWS.config.credentialProvider}),
     }
 }
 
@@ -35,6 +36,5 @@ export const baseAfterAll = async(context: IIntegrationTestContext): Promise<voi
 export interface IIntegrationTestContext {
     stateBucketName: string;
     stackName: string;
-    creds: SharedIniFileCredentials;
     s3client: S3;
 }

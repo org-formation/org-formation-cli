@@ -21,7 +21,7 @@ describe('when moving master account around', () => {
     beforeAll(async () => {
 
         context = await baseBeforeAll();
-        orgClient = new Organizations({ credentials: context.creds, region: 'us-east-1' });
+        orgClient = new Organizations({ region: 'us-east-1' });
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true };
 
         masterAccountId = await AwsUtil.GetMasterAccountId();
