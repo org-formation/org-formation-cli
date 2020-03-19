@@ -3,7 +3,7 @@ import { OrgFormationError } from '../org-formation-error';
 import { GenericTaskRunner, ITaskRunnerDelegates } from '~core/generic-task-runner';
 import { IGenericTask } from '~core/generic-binder';
 
-export class SlsTaskRunner {
+export class DefaultTaskRunner {
 
     public static async RunTasks(tasks: IGenericTask[], logicalName: string, maxConcurrentTasks: number, failedTasksTolerance: number): Promise<void> {
 

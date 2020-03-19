@@ -2,7 +2,7 @@ import { ConsoleUtil } from '../console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { ResourceUtil } from '../resource-util';
 import { IOrganizationBinding, IResourceRef, ITemplate } from './parser';
-import { IUpdateStackTaskConfiguration } from '~build-tasks/build-configuration';
+import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 
 export class Validator {
     public static ValidateUpdateStacksTask(config: IUpdateStackTaskConfiguration, taskName: string): void {

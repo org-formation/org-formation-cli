@@ -1,5 +1,5 @@
 import { BuildConfiguration, IBuildTask } from '~build-tasks/build-configuration';
-import { BaseOrganizationTask, BaseStacksTask } from '~build-tasks/build-task-provider';
+import { BaseOrganizationTask } from '~build-tasks/tasks/organization-task';
 import { ICommandArgs, BaseCliCommand } from '~commands/base-command';
 import Sinon = require('sinon');
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
@@ -7,6 +7,7 @@ import { PersistedState } from '~state/persisted-state';
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { ICfnTask } from '~cfn-binder/cfn-task-provider';
 import { ConsoleUtil } from '../../../src/console-util';
+import { BaseStacksTask } from '~build-tasks/tasks/update-stacks-task';
 
 describe('when loading task file configuration', () => {
     let buildconfig: BuildConfiguration;

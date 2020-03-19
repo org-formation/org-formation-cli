@@ -1,8 +1,8 @@
 import { readdirSync, statSync } from 'fs';
-import { ConsoleUtil } from '../../src/console-util';
-import { BaseCliCommand, ICommandArgs } from './base-command';
-import { ServerlessComBinder, IServerlessComTask } from '~sls-com/serverless-com-binder';
-import { SlsTaskRunner } from '~sls-com/serverless-com-task-runner';
+import { ConsoleUtil } from '../../console-util';
+import { BaseCliCommand, ICommandArgs } from '../base-command';
+import { ServerlessComBinder, IServerlessComTask } from '~commands/serverless/serverless-com-binder';
+import { DefaultTaskRunner } from '~core/default-task-runner';
 import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
 const crypto = require('crypto');
 const path = require('path');
@@ -43,7 +43,7 @@ export class UpdateSlsCommand extends BaseCliCommand<IUpdateSlsCommandArgs> {
             ConsoleUtil.LogInfo(`serverless.com workload ${command.name} already up to date.`);
         } else {
             try {
-                await SlsTaskRunner.RunTasks(tasks, command.name, command.maxConcurrent, command.failedTolerance);
+                await DefaultTaskRunner.RunTasks(tasks, command.name, command.maxConcurrent, command.failedTolerance);
             } finally {
                 await state.save();
             }

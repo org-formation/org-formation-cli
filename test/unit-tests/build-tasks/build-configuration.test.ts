@@ -1,9 +1,10 @@
 import Sinon from 'sinon';
-import { IBuildTask, IUpdateStackTaskConfiguration } from '~build-tasks/build-configuration';
-import { BuildTaskProvider, BaseStacksTask } from '~build-tasks/build-task-provider';
+import { IBuildTask } from '~build-tasks/build-configuration';
+import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ICommandArgs } from '~commands/base-command';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-stacks';
 import { ConsoleUtil } from '../../../src/console-util';
+import { BaseStacksTask, IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 
 describe('when creating build configuration with duplicate stack name', () => {
     let task: IBuildTask;

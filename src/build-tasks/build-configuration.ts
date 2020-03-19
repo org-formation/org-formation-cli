@@ -3,10 +3,10 @@ import path from 'path';
 import md5 from 'md5';
 import { yamlParse } from 'yaml-cfn';
 import { OrgFormationError } from '../org-formation-error';
-import { BaseStacksTask, BuildTaskProvider } from './build-task-provider';
+import { BuildTaskProvider } from './build-task-provider';
+import { BaseStacksTask } from './tasks/update-stacks-task';
+import { IUpdateOrganizationTaskConfiguration } from './tasks/organization-task';
 import { ICommandArgs, IUpdateStacksCommandArgs } from '~commands/index';
-import { IOrganizationBinding } from '~parser/parser';
-
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -22,7 +22,9 @@ export class BuildConfiguration {
         const result: IBuildTask[] = [];
         for (const taskConfig of this.tasks) {
             const task = BuildTaskProvider.createValidationTask(taskConfig, command);
-            result.push(task);
+            if (task !== undefined) {
+                result.push(task);
+            }
         }
 
         this.validateTasksFile(result);
@@ -110,46 +112,6 @@ export interface IBuildTaskConfiguration {
     FilePath?: string;
 }
 
-export interface IServerlessComTaskConfiguration extends IBuildTaskConfiguration {
-    Path: string;
-    Config?: string;
-    Stage?: string;
-    OrganizationBinding: IOrganizationBinding;
-    MaxConcurrentTasks?: number;
-    FailedTaskTolerance?: number;
-}
-
-export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {
-    Path: string;
-    MaxConcurrentTasks?: number;
-    FailedTaskTolerance?: number;
-}
-export interface IIncludeDirTaskConfiguration extends IBuildTaskConfiguration {
-    SearchPattern?: string;
-    MaxConcurrentTasks: number;
-    FailedTaskTolerance: number;
-}
-
-export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
-    Template: string;
-    StackName?: string;
-    StackDescription?: string;
-    Parameters?: Record<string, string>;
-    DeletionProtection?: boolean;
-    OrganizationFile?: string;
-    OrganizationBinding?: IOrganizationBinding; // old: dont use
-    OrganizationBindingRegion?: string | string[]; // old: dont use
-    DefaultOrganizationBinding?: IOrganizationBinding;
-    DefaultOrganizationBindingRegion?: string | string[];
-    OrganizationBindings?: Record<string, IOrganizationBinding>;
-    TerminationProtection?: boolean;
-    MaxConcurrentStacks: number;
-    FailedStackTolerance: number;
-
-}
-export interface IUpdateOrganizationTaskConfiguration extends IBuildTaskConfiguration {
-    Template: string;
-}
 
 export interface IBuildTask {
     name: string;

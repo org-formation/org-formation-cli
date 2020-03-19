@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import { ICommandArgs, BaseCliCommand } from '.';
-import { ServerlessComBinder } from '~sls-com/serverless-com-binder';
+import { ServerlessComBinder } from '~commands/serverless/serverless-com-binder';
 import { TemplateRoot } from '~parser/parser';
-import { SlsTaskRunner } from '~sls-com/serverless-com-task-runner';
+import { DefaultTaskRunner } from '~core/default-task-runner';
 
 export class CleanupCommand extends BaseCliCommand<ICleanupCommandArgs> {
 
@@ -28,7 +28,7 @@ export class CleanupCommand extends BaseCliCommand<ICleanupCommandArgs> {
         const tasks = binder.enumTasks();
 
         try {
-            await SlsTaskRunner.RunTasks(tasks, command.name, command.maxConcurrentTasks, command.failedTasksTolerance);
+            await DefaultTaskRunner.RunTasks(tasks, command.name, command.maxConcurrentTasks, command.failedTasksTolerance);
         } finally {
             await state.save();
         }
