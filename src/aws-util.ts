@@ -2,8 +2,8 @@
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import AWS from 'aws-sdk';
-import { PasswordPolicyResource, Reference } from '~parser/model';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
+import { PasswordPolicyResource, Reference } from '~parser/model';
 
 
 export class AwsUtil {
@@ -19,7 +19,7 @@ export class AwsUtil {
 
         if (profile) {
             await this.InitializeWithCredentialsChainProvider([
-                () => new AWS.SharedIniFileCredentials({profile: profile})
+                (): AWS.Credentials => new AWS.SharedIniFileCredentials({profile}),
             ]);
         } else {
             await this.InitializeWithCredentialsChainProvider(CredentialProviderChain.defaultProviders);
@@ -47,7 +47,7 @@ export class AwsUtil {
     public static async InitializeWithCredentialsChainProvider(providers: provider[]): Promise<void> {
         const chainProvider = new CredentialProviderChain(
             [
-                ...providers
+                ...providers,
             ]
         );
 
