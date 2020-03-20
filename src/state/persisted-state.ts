@@ -31,7 +31,6 @@ export class PersistedState {
             }
             throw err;
         }
-
     }
 
     public static CreateEmpty(masterAccountId: string): PersistedState {
@@ -304,6 +303,9 @@ export class PersistedState {
         if (!nameDict) { return []; }
 
         const accountDict = nameDict[name];
+        if (accountDict === undefined) {
+            return [];
+        }
         const result: IGenericTarget<ITaskDefinition>[] = [];
         for(const regionDict of Object.values(accountDict)) {
             for(const target of Object.values(regionDict)) {

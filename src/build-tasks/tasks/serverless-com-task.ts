@@ -5,7 +5,7 @@ import { BuildTaskType, IBuildTask, IBuildTaskConfiguration } from '~build-tasks
 import { ICommandArgs, IUpdateSlsCommandArgs, UpdateSlsCommand, IPerformTasksCommandArgs, ServerlessGenericTaskType, CleanupCommand} from '~commands/index';
 import { IOrganizationBinding } from '~parser/parser';
 import { IBuildTaskProvider } from '~build-tasks/build-task-provider';
-
+import { Validator } from '~parser/validator';
 
 abstract class BaseServerlessComTask implements IBuildTask {
     public name: string;
@@ -75,6 +75,19 @@ export class UpdateServerlessComTask extends BaseServerlessComTask {
     }
 }
 
+class ValidateServerlessComTask extends BaseServerlessComTask {
+    public async innerPerform(): Promise<void> {
+        if (!this.config.Path) {
+            throw new OrgFormationError(`task ${this.config.LogicalName} does not have required attribute Path`);
+        }
+        if (!this.config.OrganizationBinding) {
+            throw new OrgFormationError(`task ${this.config.LogicalName} does not have required attribute OrganizationBinding`);
+        }
+
+        Validator.ValidateOrganizationBinding(this.config.OrganizationBinding, this.config.LogicalName);
+    }
+}
+
 export class DeleteServerlessOrgTask implements IBuildTask {
     name: string;
     type: BuildTaskType = 'delete-serverless.com';
@@ -118,8 +131,8 @@ export class UpdateServerlessComBuildTaskProvider implements IBuildTaskProvider<
         return new UpdateServerlessComTask(config, command);
     }
 
-    createTaskForValidation(): IBuildTask | undefined {
-        return undefined;
+    createTaskForValidation(config: IServerlessComTaskConfiguration, command: ICommandArgs): IBuildTask | undefined {
+        return new ValidateServerlessComTask(config, command);
     }
 
     createTaskForCleanup(logicalId: string, physicalId: string, command: ICommandArgs): IBuildTask | undefined {
