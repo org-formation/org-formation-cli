@@ -23,28 +23,31 @@ export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefiniti
             const accountBinding = this.state.getAccountBinding(logicalTargetAccountName);
             if (!accountBinding) { throw new OrgFormationError(`unable to find account ${logicalTargetAccountName} in state. Is your organization up to date?`); }
 
-            const binding: IGenericBinding<ITaskDefinition> = {
-                action: 'UpdateOrCreate',
-                target: {
-                    targetType: this.task.type,
-                    logicalAccountId: logicalTargetAccountName,
-                    accountId: accountBinding.physicalId,
-                    definition: this.task,
-                    logicalName: this.task.name,
-                    lastCommittedHash: this.task.hash,
-                },
-                task: this.task,
-            };
+            for(const region of this.template.resolveNormalizedRegions(this.organizationBinding)) {
+                const binding: IGenericBinding<ITaskDefinition> = {
+                    action: 'UpdateOrCreate',
+                    target: {
+                        targetType: this.task.type,
+                        logicalAccountId: logicalTargetAccountName,
+                        region: region,
+                        accountId: accountBinding.physicalId,
+                        definition: this.task,
+                        logicalName: this.task.name,
+                        lastCommittedHash: this.task.hash,
+                    },
+                    task: this.task,
+                };
 
-            const existingTargetBinding = this.state.getGenericTarget(this.task.type, this.task.name, accountBinding.physicalId);
+                const existingTargetBinding = this.state.getGenericTarget(this.task.type, this.task.name, accountBinding.physicalId, region);
 
-            if (existingTargetBinding && existingTargetBinding.lastCommittedHash === binding.target.lastCommittedHash) {
-                binding.action = 'None';
+                if (existingTargetBinding && existingTargetBinding.lastCommittedHash === binding.target.lastCommittedHash) {
+                    binding.action = 'None';
+                }
+
+                ConsoleUtil.LogDebug(`setting build action for ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action}`);
+
+                result.push(binding);
             }
-
-            ConsoleUtil.LogDebug(`setting build action for ${this.task.type} / ${this.task.name} for ${binding.target.accountId} to ${binding.action}`);
-
-            result.push(binding);
         }
 
         const targetsInState = this.state.enumGenericTargets<ITaskDefinition>(this.task.type, this.task.name);
@@ -55,6 +58,7 @@ export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefiniti
                 target: {
                     targetType: this.task.type,
                     logicalAccountId: targetToBeDeleted.logicalAccountId,
+                    region: targetToBeDeleted.region,
                     accountId: targetToBeDeleted.accountId,
                     definition: this.task,
                     logicalName: this.task.name,

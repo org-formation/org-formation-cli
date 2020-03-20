@@ -64,6 +64,11 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterDeploy2Targets.calls[1][0]).toEqual(expect.stringContaining('npx sls deploy'));
     });
 
+    test('after deploy 2 targets region is passed to sls deploy command', () => {
+        expect(spawnProcessAfterDeploy2Targets.calls[0][0]).toEqual(expect.stringContaining('--region eu-central-1'));
+        expect(spawnProcessAfterDeploy2Targets.calls[1][0]).toEqual(expect.stringContaining('--region eu-central-1'));
+    });
+
     test('after deploy 2 targets state contains both deployed workload', () => {
         const stateAsString = stateAfterDeploy2Targets.Body.toString();
         const state = JSON.parse(stateAsString);
@@ -72,9 +77,9 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.targets['serverless.com']).toBeDefined();
         expect(state.targets['serverless.com']['ServerlessWorkload']).toBeDefined();
         expect(state.targets['serverless.com']['ServerlessWorkload']['102625093955']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['102625093955']['no-region']).toBeDefined();
+        expect(state.targets['serverless.com']['ServerlessWorkload']['102625093955']['eu-central-1']).toBeDefined();
         expect(state.targets['serverless.com']['ServerlessWorkload']['340381375986']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['340381375986']['no-region']).toBeDefined();
+        expect(state.targets['serverless.com']['ServerlessWorkload']['340381375986']['eu-central-1']).toBeDefined();
     });
 
     // test('after deploy workload state contains tracked task', () => {
@@ -91,6 +96,11 @@ describe('when calling org-formation perform tasks', () => {
     test('after deploy 1 targets sls remove was called', () => {
         expect(spawnProcessAfterDeploy1Target.calls.length).toBe(1);
         expect(spawnProcessAfterDeploy1Target.calls[0][0]).toEqual(expect.stringContaining('npx sls remove'));
+    })
+
+    test('sls remove contains region parameter', () => {
+        expect(spawnProcessAfterDeploy1Target.calls.length).toBe(1);
+        expect(spawnProcessAfterDeploy1Target.calls[0][0]).toEqual(expect.stringContaining('--region eu-central-1'));
     })
 
     test('after deploy 1 targets state does not contain removed target workload', () => {

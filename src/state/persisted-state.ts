@@ -433,7 +433,7 @@ export interface ICfnTarget {
 export interface IGenericTarget<TTaskDefinition> {
     targetType: string;
     logicalAccountId: string;
-    region?: string;
+    region: string;
     accountId: string;
     logicalName: string;
     lastCommittedHash: string;
