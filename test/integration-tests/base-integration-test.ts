@@ -11,7 +11,7 @@ export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
     ConsoleUtil.verbose = true;
     ConsoleUtil.printStacktraces = true;
 
-    await AwsUtil.InitializeWithCredentialsChainProvider([
+    await AwsUtil.Initialize([
         () => new EnvironmentCredentials('TST_AWS'),
         () => new SharedIniFileCredentials({ profile: profileForIntegrationTests }),
     ]);

@@ -21,7 +21,7 @@ describe('when attaching and detaching account', () => {
         logOut = jest.spyOn(ConsoleUtil, 'Out');
 
         context = await baseBeforeAll();
-        orgClient = new Organizations({ credentials: context.creds, region: 'us-east-1' });
+        orgClient = new Organizations({ region: 'us-east-1' });
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true };
 
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();

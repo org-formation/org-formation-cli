@@ -1,8 +1,12 @@
-
+import { existsSync, readFileSync } from 'fs';
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
+import * as ini from 'ini';
 import AWS from 'aws-sdk';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
+import { OrgFormationError } from './org-formation-error';
+import { ConsoleUtil } from './console-util';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 
 
@@ -18,75 +22,20 @@ export class AwsUtil {
     public static async InitializeWithProfile(profile?: string): Promise<void> {
 
         if (profile) {
-            await this.InitializeWithCredentialsChainProvider([
+            await this.Initialize([
+                (): AWS.Credentials => new CustomMFACredentials(profile),
                 (): AWS.Credentials => new AWS.SharedIniFileCredentials({profile}),
             ]);
         } else {
-            await this.InitializeWithCredentialsChainProvider(CredentialProviderChain.defaultProviders);
+            await this.Initialize(CredentialProviderChain.defaultProviders);
         }
-        // try {
-        //     await AwsUtil.CustomInitializationIncludingMFASupport(profile);
-        // } catch (err) {
-        //     if (err instanceof OrgFormationError) {
-        //         throw err;
-        //     }
-        //     ConsoleUtil.LogInfo(`custom initialization failed, not support for MFA token\n${err}`);
-        // }
 
-        // const options: SharedIniFileCredentialsOptions = {};
-        // if (profile) {
-        //     options.profile = profile;
-        // }
-
-        // const credentials = new AWS.SharedIniFileCredentials(options);
-        // if (credentials.accessKeyId) {
-        //     AWS.config.credentials = credentials;
-        // }
     }
 
-    public static async InitializeWithCredentialsChainProvider(providers: provider[]): Promise<void> {
-        const chainProvider = new CredentialProviderChain(
-            [
-                ...providers,
-            ]
-        );
-
+    public static async Initialize(providers: provider[]): Promise<void> {
+        const chainProvider = new CredentialProviderChain(providers);
         AWS.config.credentials = await chainProvider.resolvePromise();
     }
-
-
-    // private static async CustomInitializationIncludingMFASupport(profile?: string): Promise<void>  {
-    //     const profileName = profile ? profile : 'default';
-    //     const homeDir = require('os').homedir();
-    //     // todo: add support for windows?
-    //     if (!existsSync(homeDir + '/.aws/config')) {
-    //         return;
-    //     }
-    //     const awsconfig = readFileSync(homeDir + '/.aws/config').toString('utf8');
-    //     const contents = ini.parse(awsconfig);
-    //     const profileKey = contents['profile ' + profileName];
-    //     if (profileKey && profileKey.source_profile) {
-    //         const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
-    //         const secrets = ini.parse(awssecrets);
-    //         const creds = secrets[profileKey.source_profile];
-    //         const sts = new STS({ credentials: { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key } });
-
-    //         const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profileKey.mfa_serial}`);
-    //         const assumeRoleReq: AssumeRoleRequest = {
-    //             RoleArn: profileKey.role_arn,
-    //             RoleSessionName: 'organization-build',
-    //             SerialNumber: profileKey.mfa_serial,
-    //             TokenCode: token,
-    //         };
-
-    //         try {
-    //             const tokens = await sts.assumeRole(assumeRoleReq).promise();
-    //             AWS.config.credentials = { accessKeyId: tokens.Credentials.AccessKeyId, secretAccessKey: tokens.Credentials.SecretAccessKey, sessionToken: tokens.Credentials.SessionToken };
-    //         } catch (err) {
-    //             throw new OrgFormationError(`unable to assume role, error: \n${err}`);
-    //         }
-    //     }
-    // }
 
     public static async GetMasterAccountId(): Promise<string> {
         if (AwsUtil.masterAccountId !== undefined) {
@@ -200,3 +149,59 @@ export const passwordPolicEquals = (passwordPolicy: IAM.PasswordPolicy, pwdPolic
 
     return true;
 };
+
+
+class CustomMFACredentials extends AWS.Credentials {
+    profile: string;
+
+    constructor(profile: string) {
+        super(undefined);
+        this.profile = profile;
+    }
+
+    refresh(callback: (err: AWS.AWSError) => void): void {
+        const that = this;
+        this.innerRefresh()
+            .then(creds => {
+                that.accessKeyId = creds.accessKeyId;
+                that.secretAccessKey = creds.secretAccessKey;
+                that.sessionToken = creds.sessionToken;
+                callback(undefined);
+            })
+            .catch(err => { callback(err); });
+    };
+
+    async innerRefresh(): Promise<CredentialsOptions> {
+        const profileName = this.profile ? this.profile : 'default';
+        const homeDir = require('os').homedir();
+        // todo: add support for windows?
+        if (!existsSync(homeDir + '/.aws/config')) {
+            return;
+        }
+        const awsconfig = readFileSync(homeDir + '/.aws/config').toString('utf8');
+        const contents = ini.parse(awsconfig);
+        const profileKey = contents['profile ' + profileName];
+        if (profileKey && profileKey.source_profile) {
+            const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
+            const secrets = ini.parse(awssecrets);
+            const creds = secrets[profileKey.source_profile];
+            const sts = new STS({ credentials: { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key } });
+
+            const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profileKey.mfa_serial}`);
+            const assumeRoleReq: AssumeRoleRequest = {
+                RoleArn: profileKey.role_arn,
+                RoleSessionName: 'organization-build',
+                SerialNumber: profileKey.mfa_serial,
+                TokenCode: token,
+            };
+
+            try {
+                const tokens = await sts.assumeRole(assumeRoleReq).promise();
+                return { accessKeyId: tokens.Credentials.AccessKeyId, secretAccessKey: tokens.Credentials.SecretAccessKey, sessionToken: tokens.Credentials.SessionToken };
+            } catch (err) {
+                throw new OrgFormationError(`unable to assume role, error: \n${err}`);
+            }
+        }
+    }
+
+}
