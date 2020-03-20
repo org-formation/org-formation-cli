@@ -1,4 +1,5 @@
 import path from 'path';
+import { existsSync } from 'fs';
 import { ConsoleUtil } from '../../../src/console-util';
 import { OrgFormationError } from '../../../src/org-formation-error';
 import { BuildTaskType, IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
@@ -61,6 +62,8 @@ export class UpdateServerlessComTask extends BaseServerlessComTask {
     protected async innerPerform(command: ICommandArgs): Promise<void> {
         ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.taskFilePath}`);
 
+        ValidateServerlessComTask.ValidateConfig(this.config);
+
         const updateSlsCommand: IUpdateSlsCommandArgs = {
             ...command,
             name: this.config.LogicalName,
@@ -77,14 +80,43 @@ export class UpdateServerlessComTask extends BaseServerlessComTask {
 
 class ValidateServerlessComTask extends BaseServerlessComTask {
     public async innerPerform(): Promise<void> {
-        if (!this.config.Path) {
-            throw new OrgFormationError(`task ${this.config.LogicalName} does not have required attribute Path`);
+        ValidateServerlessComTask.ValidateConfig(this.config);
+    }
+
+    static ValidateConfig(config: IServerlessComTaskConfiguration): void {
+
+        const dir = path.dirname(config.FilePath);
+        const slsDirPath = path.join(dir, config.Path);
+        if (!config.Path) {
+            throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
         }
-        if (!this.config.OrganizationBinding) {
-            throw new OrgFormationError(`task ${this.config.LogicalName} does not have required attribute OrganizationBinding`);
+        if (!config.OrganizationBinding) {
+            throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute OrganizationBinding`);
         }
 
-        Validator.ValidateOrganizationBinding(this.config.OrganizationBinding, this.config.LogicalName);
+        if (!existsSync(slsDirPath)) {
+            throw new OrgFormationError(`task ${config.LogicalName} cannot find path ${config.Path}`);
+        }
+
+        const serverlessFileName = config.Config ? config.Config : 'serverless.yml';
+        const serverlessPath = path.join(slsDirPath, serverlessFileName);
+
+        if (!existsSync(serverlessPath)) {
+            throw new OrgFormationError(`task ${config.LogicalName} cannot find serverless configuration file ${serverlessPath}`);
+        }
+        const packageFilePath = path.join(slsDirPath, 'package.json');
+        if (!existsSync(packageFilePath)) {
+            const relative = path.join(config.Path, 'package.json');
+            throw new OrgFormationError(`task ${config.LogicalName} cannot find npm package file ${relative}`);
+        }
+
+        const packageLockFilePath = path.join(slsDirPath, 'package-lock.json');
+        if (!existsSync(packageLockFilePath)) {
+            const relative = path.join(config.Path, 'package-lock.json');
+            throw new OrgFormationError(`task ${config.LogicalName} cannot find npm package file ${relative}`);
+        }
+
+        Validator.ValidateOrganizationBinding(config.OrganizationBinding, config.LogicalName);
     }
 }
 
