@@ -29,7 +29,7 @@ export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefiniti
                     target: {
                         targetType: this.task.type,
                         logicalAccountId: logicalTargetAccountName,
-                        region: region,
+                        region,
                         accountId: accountBinding.physicalId,
                         definition: this.task,
                         logicalName: this.task.name,
