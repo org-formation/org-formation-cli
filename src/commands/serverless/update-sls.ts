@@ -32,6 +32,7 @@ export class UpdateSlsCommand extends BaseCliCommand<IUpdateSlsCommandArgs> {
             path: command.path,
             configFile: command.configFile,
             hash: hashOfTask,
+            runNpmInstall: command.runNpmInstall,
         };
 
         const state = await this.getState(command);
@@ -57,6 +58,7 @@ export interface IUpdateSlsCommandArgs extends ICommandArgs {
     stage?: string;
     path: string;
     configFile?: string;
+    runNpmInstall: boolean;
     organizationBinding: IOrganizationBinding;
     organizationFile?: string;
     organizationFileHash?: string;

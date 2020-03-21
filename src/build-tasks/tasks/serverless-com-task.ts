@@ -69,9 +69,11 @@ export class UpdateServerlessComTask extends BaseServerlessComTask {
             name: this.config.LogicalName,
             stage: this.config.Stage,
             path: this.slsPath,
+            runNpmInstall: this.config.RunNpmInstall === true,
             failedTolerance: this.config.FailedTaskTolerance,
             maxConcurrent: this.config.MaxConcurrentTasks,
             organizationBinding: this.config.OrganizationBinding,
+
         };
 
         await UpdateSlsCommand.Perform(updateSlsCommand);
@@ -104,18 +106,20 @@ class ValidateServerlessComTask extends BaseServerlessComTask {
         if (!existsSync(serverlessPath)) {
             throw new OrgFormationError(`task ${config.LogicalName} cannot find serverless configuration file ${serverlessPath}`);
         }
-        const packageFilePath = path.join(slsDirPath, 'package.json');
-        if (!existsSync(packageFilePath)) {
-            const relative = path.join(config.Path, 'package.json');
-            throw new OrgFormationError(`task ${config.LogicalName} cannot find npm package file ${relative}`);
-        }
 
-        const packageLockFilePath = path.join(slsDirPath, 'package-lock.json');
-        if (!existsSync(packageLockFilePath)) {
-            const relative = path.join(config.Path, 'package-lock.json');
-            throw new OrgFormationError(`task ${config.LogicalName} cannot find npm package file ${relative}`);
-        }
+        if (config.RunNpmInstall === true) {
+            const packageFilePath = path.join(slsDirPath, 'package.json');
+            if (!existsSync(packageFilePath)) {
+                const relative = path.join(config.Path, 'package.json');
+                throw new OrgFormationError(`task ${config.LogicalName} specifies 'RunNpmInstall' but cannot find npm package file ${relative}`);
+            }
 
+            const packageLockFilePath = path.join(slsDirPath, 'package-lock.json');
+            if (!existsSync(packageLockFilePath)) {
+                const relative = path.join(config.Path, 'package-lock.json');
+                ConsoleUtil.LogWarning(`task ${config.LogicalName} specifies 'RunNpmInstall' but cannot find npm package file ${relative}. Will perform 'npm i' as opposed to 'npm ci'.`);
+            }
+        }
         Validator.ValidateOrganizationBinding(config.OrganizationBinding, config.LogicalName);
     }
 }
@@ -179,4 +183,5 @@ export interface IServerlessComTaskConfiguration extends IBuildTaskConfiguration
     OrganizationBinding: IOrganizationBinding;
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
+    RunNpmInstall?: boolean;
 }

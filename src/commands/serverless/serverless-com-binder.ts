@@ -7,6 +7,11 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
     createPerformForDelete(binding: IGenericBinding<IServerlessComTask>): () => Promise<void> {
         const { task, target } = binding;
         let command = 'npx sls remove';
+
+        if (binding.task.runNpmInstall) {
+            command = 'npm ci && ' + command;
+        }
+
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
         command = appendArgumentIfTruthy(command, '--region', target.region);
         command = appendArgumentIfTruthy(command, '--config', task.configFile);
@@ -23,7 +28,12 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
 
     createPerformForUpdateOrCreate(binding: IGenericBinding<IServerlessComTask>): () => Promise<void> {
         const { task, target } = binding;
-        let command = 'npm ci && npx sls deploy';
+        let command = 'npx sls deploy';
+
+        if (binding.task.runNpmInstall) {
+            command = 'npm ci && ' + command;
+        }
+
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
         command = appendArgumentIfTruthy(command, '--region', target.region);
         command = appendArgumentIfTruthy(command, '--config', task.configFile);
@@ -53,4 +63,5 @@ export interface IServerlessComTask {
     stage: string;
     path: string;
     configFile?: string;
+    runNpmInstall: boolean;
 }
