@@ -6,7 +6,7 @@ import { OrgFormationError } from '../org-formation-error';
 import { BuildTaskProvider } from './build-task-provider';
 import { BaseStacksTask } from './tasks/update-stacks-task';
 import { IUpdateOrganizationTaskConfiguration } from './tasks/organization-task';
-import { ICommandArgs, IUpdateStacksCommandArgs } from '~commands/index';
+import { IPerformTasksCommandArgs } from '~commands/index';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -17,7 +17,7 @@ export class BuildConfiguration {
         this.tasks = this.enumBuildConfiguration(this.file);
     }
 
-    public enumValidationTasks(command: ICommandArgs): IBuildTask[] {
+    public enumValidationTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
         this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
         for (const taskConfig of this.tasks) {
@@ -32,7 +32,7 @@ export class BuildConfiguration {
         return result;
     }
 
-    public enumBuildTasks(command: ICommandArgs): IBuildTask[] {
+    public enumBuildTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
         this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
         for (const taskConfig of this.tasks) {
@@ -56,10 +56,9 @@ export class BuildConfiguration {
         }
     }
 
-    private fixateOrganizationFile(command: ICommandArgs): void{
-        const updateStacksCommand = command as IUpdateStacksCommandArgs;
+    private fixateOrganizationFile(command: IPerformTasksCommandArgs): void{
 
-        if (updateStacksCommand.organizationFile === undefined) {
+        if (command.organizationFile === undefined) {
             const updateOrgTasks = this.tasks.filter(x => x.Type === 'update-organization');
             if (updateOrgTasks.length === 0) {
                 throw new OrgFormationError('tasks file does not contain a task with type update-organization');
@@ -72,10 +71,12 @@ export class BuildConfiguration {
                 throw new OrgFormationError('update-organization task does not contain required Template attribute');
             }
             const dir = path.dirname(this.file);
-            updateStacksCommand.organizationFile = path.resolve(dir, updateOrgTask.Template);
-            const organizationTemplateContent = readFileSync(updateStacksCommand.organizationFile);
+            command.organizationFile = path.resolve(dir, updateOrgTask.Template);
+        }
 
-            updateStacksCommand.organizationFileHash = md5(organizationTemplateContent);
+        if (command.organizationFileHash === undefined) {
+            const organizationTemplateContent = readFileSync(command.organizationFile);
+            command.organizationFileHash = md5(organizationTemplateContent);
         }
     }
 

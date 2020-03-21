@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**not released**
+- added --organization-file to perform-tasks and validate-tasks command, can be used to specify the organization to be used when evaluating bindings (without having an update-organization task)
 
 **version 0.9.3**
 - Added flag --perform-cleanup to perform-tasks to automatically delete stacks removed from tasks file

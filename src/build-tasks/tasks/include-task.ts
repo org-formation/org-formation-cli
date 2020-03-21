@@ -2,7 +2,7 @@ import path from 'path';
 import { ConsoleUtil } from '../../../src/console-util';
 import { OrgFormationError } from '../../../src/org-formation-error';
 import { BuildTaskType, IBuildTask, BuildConfiguration, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
-import { ICommandArgs } from '~commands/index';
+import { ICommandArgs, IPerformTasksCommandArgs } from '~commands/index';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { IBuildTaskProvider } from '~build-tasks/build-task-provider';
 
@@ -55,7 +55,7 @@ export class UpdateIncludeTask extends BaseIncludeTask {
 
     protected expandChildTasks(command: ICommandArgs): IBuildTask[] {
         const buildConfig = new BuildConfiguration(this.taskFilePath);
-        const tasks = buildConfig.enumBuildTasks(command);
+        const tasks = buildConfig.enumBuildTasks(command as IPerformTasksCommandArgs);
         return tasks;
     }
 
@@ -69,7 +69,7 @@ export class ValidateIncludeTask extends BaseIncludeTask {
 
     protected expandChildTasks(command: ICommandArgs): IBuildTask[] {
         const buildConfig = new BuildConfiguration(this.taskFilePath);
-        const tasks = buildConfig.enumValidationTasks(command);
+        const tasks = buildConfig.enumValidationTasks(command as IPerformTasksCommandArgs);
         return tasks;
     }
 

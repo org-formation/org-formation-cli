@@ -1,7 +1,7 @@
 import path from 'path';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '../../console-util';
 import { BuildTaskType, IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
-import { ICommandArgs, IUpdateOrganizationCommandArgs, UpdateOrganizationCommand } from '~commands/index';
+import { ICommandArgs, IUpdateOrganizationCommandArgs, UpdateOrganizationCommand } from '../../commands/index';
 import { IBuildTaskProvider } from '~build-tasks/build-task-provider';
 
 export abstract class BaseOrganizationTask implements IBuildTask {

@@ -64,4 +64,5 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
     organizationFile?: string;
+    organizationFileHash?: string;
 }
