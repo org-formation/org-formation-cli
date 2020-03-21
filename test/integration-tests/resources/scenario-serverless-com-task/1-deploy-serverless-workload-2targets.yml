@@ -6,6 +6,7 @@ OrganizationUpdate:
 ServerlessWorkload:
   Type: update-serverless.com              # type
   Path: ./workload/                        # used to package / calculate hash
+  RunNpmInstall: true
   OrganizationBinding:
     IncludeMasterAccount: true
     Account: !Ref AccountA
