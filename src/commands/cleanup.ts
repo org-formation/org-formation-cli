@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { ICommandArgs, BaseCliCommand } from '.';
-import { ServerlessComBinder } from '~commands/serverless/serverless-com-binder';
+import { ServerlessComBinder, IServerlessComTask } from '~commands/serverless/serverless-com-binder';
 import { TemplateRoot } from '~parser/parser';
 import { DefaultTaskRunner } from '~core/default-task-runner';
 
@@ -24,7 +24,7 @@ export class CleanupCommand extends BaseCliCommand<ICleanupCommandArgs> {
         const state = await this.getState(command);
         const task = {name: command.name, type: command.type, hash: '', stage: '', path: ''};
         const emptyTemplate = TemplateRoot.createEmpty();
-        const binder = new ServerlessComBinder(task, state, emptyTemplate, undefined);
+        const binder = new ServerlessComBinder(task as IServerlessComTask, state, emptyTemplate, undefined);
         const tasks = binder.enumTasks();
 
         try {
