@@ -1,10 +1,10 @@
 import Sinon from 'sinon';
 import { IBuildTask } from '~build-tasks/build-configuration';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
-import { ICommandArgs } from '~commands/base-command';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-stacks';
 import { ConsoleUtil } from '../../../src/console-util';
-import { BaseStacksTask, IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
+import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
+import { IPerformTasksCommandArgs } from '~commands/index';
 
 describe('when creating build configuration with duplicate stack name', () => {
     let task: IBuildTask;
@@ -20,7 +20,7 @@ describe('when creating build configuration with duplicate stack name', () => {
             MaxConcurrentStacks: 1,
             FailedStackTolerance: 1,
         };
-        task = BuildTaskProvider.createBuildTask(config, {} as ICommandArgs);
+        task = BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs);
 
         updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
         sandbox.stub(ConsoleUtil, 'LogInfo')
@@ -34,7 +34,7 @@ describe('when creating build configuration with duplicate stack name', () => {
     });
 
     test('stackname is used for physicalIdForCleanup', () => {
-        expect(task.physicalIdForCleanup).toBe((task as BaseStacksTask).stackName);
+        expect(task.physicalIdForCleanup).toBe('stack');
     });
     test('template and stackname are passed to updateStackResources', async () => {
         await task.perform();

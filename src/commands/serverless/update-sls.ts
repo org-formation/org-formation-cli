@@ -1,12 +1,9 @@
-import { readdirSync, statSync } from 'fs';
 import { ConsoleUtil } from '../../console-util';
 import { BaseCliCommand, ICommandArgs } from '../base-command';
+import { Md5Util } from '../../../src/md5-util';
 import { ServerlessComBinder, IServerlessComTask } from '~commands/serverless/serverless-com-binder';
 import { DefaultTaskRunner } from '~core/default-task-runner';
 import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
-const crypto = require('crypto');
-const path = require('path');
-const md5File = require('md5-file');
 import md5 = require('md5');
 
 export class UpdateSlsCommand extends BaseCliCommand<IUpdateSlsCommandArgs> {
@@ -18,11 +15,12 @@ export class UpdateSlsCommand extends BaseCliCommand<IUpdateSlsCommandArgs> {
 
     protected async performCommand(command: IUpdateSlsCommandArgs): Promise<void> {
 
-        const hashOfServerlessDirectory = md5Dir(command.path);
+        const hashOfServerlessDirectory = Md5Util.Md5OfPath(command.path);
         const hashOfTask = md5(JSON.stringify({
             organizationFileHash: command.organizationFileHash,
             stage: command.stage,
             configFile: command.configFile,
+            runNpmInstall: command.runNpmInstall,
             path: hashOfServerlessDirectory }));
 
         const task: IServerlessComTask = {
@@ -67,35 +65,3 @@ export interface IUpdateSlsCommandArgs extends ICommandArgs {
 }
 
 export const ServerlessGenericTaskType = 'serverless.com';
-
-
-const md5Dir = (dirname: string): string => {
-    const files = readdirSync(dirname);
-    const hashes: string[] = [];
-    const hashForDir = crypto.createHash('md5');
-
-    files.forEach(file => {
-        if( file === '.serverless') {
-            return;
-        }
-        const filepath = path.join(dirname, file);
-        const stat = statSync(filepath);
-
-        let hashForFile;
-
-        if (stat.isFile()) {
-            hashForFile = md5File.sync(filepath);
-        } else if (stat.isDirectory()) {
-            hashForFile = md5Dir(filepath);
-        } else {
-            hashForFile = null;
-        }
-        hashes.push(hashForFile);
-    });
-
-    hashes.forEach(h => {
-        if (h !== null) { hashForDir.update(h); }
-    });
-
-    return hashForDir.digest('hex');
-};

@@ -1,12 +1,12 @@
 import path from 'path';
 import { ConsoleUtil } from '../../console-util';
 import { ICommandArgs, IUpdateOrganizationCommandArgs, UpdateOrganizationCommand } from '../../commands/index';
-import { BuildTaskType, IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
+import { IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IBuildTaskProvider } from '~build-tasks/build-task-provider';
 
 export abstract class BaseOrganizationTask implements IBuildTask {
     public name: string;
-    public type: BuildTaskType;
+    public type: string;
     public templatePath: string;
     public childTasks: IBuildTask[] = [];
     protected config: IUpdateOrganizationTaskConfiguration;

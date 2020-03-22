@@ -4,8 +4,8 @@ import md5 from 'md5';
 import { yamlParse } from 'yaml-cfn';
 import { OrgFormationError } from '../org-formation-error';
 import { BuildTaskProvider } from './build-task-provider';
-import { BaseStacksTask } from './tasks/update-stacks-task';
 import { IUpdateOrganizationTaskConfiguration } from './tasks/organization-task';
+import { IUpdateStacksBuildTask } from './tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
 
 export class BuildConfiguration {
@@ -46,11 +46,11 @@ export class BuildConfiguration {
     }
 
     private validateTasksFile(tasks: IBuildTask[]): void {
-        const updateStackTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-stacks') as BaseStacksTask[];
-        const stackNames = updateStackTasks.map(x => x.stackName);
+        const updateStackTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-stacks') as IUpdateStacksBuildTask[];
+        const stackNames = updateStackTasks.map(x => x.StackName);
         this.throwForDuplicateVal(stackNames, x => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
 
-        const updateOrgTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-organization') as BaseStacksTask[];
+        const updateOrgTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-organization');
         if (updateOrgTasks.length > 1) {
             throw new OrgFormationError('multiple update-organization tasks found');
         }
@@ -104,10 +104,9 @@ export class BuildConfiguration {
     }
 }
 
-export type BuildTaskType = 'delete-stacks' | 'update-stacks' | 'update-organization' | 'update-serverless.com' | 'delete-serverless.com'  | 'include' | 'include-dir';
 
 export interface IBuildTaskConfiguration {
-    Type: BuildTaskType;
+    Type: string;
     DependsOn?: string | string[];
     LogicalName: string;
     FilePath?: string;
@@ -116,7 +115,7 @@ export interface IBuildTaskConfiguration {
 
 export interface IBuildTask {
     name: string;
-    type: BuildTaskType;
+    type: string;
     isDependency(task: IBuildTask): boolean;
     childTasks: IBuildTask[];
     perform(): Promise<void>;

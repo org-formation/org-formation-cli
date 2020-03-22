@@ -1,4 +1,5 @@
 import path from 'path';
+import { existsSync } from 'fs';
 import { GenericBinder, IGenericBinding } from '~core/generic-binder';
 import { ChildProcessUtility } from '~core/child-process-util';
 
@@ -8,8 +9,11 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
         const { task, target } = binding;
         let command = 'npx sls remove';
 
-        if (binding.task.runNpmInstall) {
+        const pacakgeLockExists = existsSync(path.resolve(task.path, 'package-lock.json'));
+        if (binding.task.runNpmInstall && pacakgeLockExists) {
             command = 'npm ci && ' + command;
+        } else {
+            command = 'npm i && ' + command;
         }
 
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
@@ -30,8 +34,11 @@ export class ServerlessComBinder extends GenericBinder<IServerlessComTask> {
         const { task, target } = binding;
         let command = 'npx sls deploy';
 
-        if (binding.task.runNpmInstall) {
+        const hasPackageLock = existsSync(path.resolve(task.path, 'package-lock.json'));
+        if (binding.task.runNpmInstall && hasPackageLock) {
             command = 'npm ci && ' + command;
+        } else {
+            command = 'npm i && ' + command;
         }
 
         command = appendArgumentIfTruthy(command, '--stage', task.stage);

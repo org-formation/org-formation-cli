@@ -17,6 +17,7 @@ export class AwsUtil {
         AwsUtil.CfnServiceCache = {};
         AwsUtil.IamServiceCache = {};
         AwsUtil.SupportServiceCache = {};
+        AwsUtil.S3ServiceCache = {};
     }
 
     public static async InitializeWithProfile(profile?: string): Promise<void> {
@@ -50,7 +51,9 @@ export class AwsUtil {
     public static async GetSupportService(accountId: string): Promise<Support> {
         return await AwsUtil.getOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' });
     }
-
+    public static async GetS3Service(accountId: string, region: string): Promise<S3> {
+        return await AwsUtil.getOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region });
+    }
     public static async GetIamService(accountId: string): Promise<IAM> {
         return await AwsUtil.getOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, accountId, {});
     }
@@ -100,6 +103,7 @@ export class AwsUtil {
     private static IamServiceCache: Record<string, IAM> = {};
     private static SupportServiceCache: Record<string, Support> = {};
     private static CfnServiceCache: Record<string, CloudFormation> = {};
+    private static S3ServiceCache: Record<string, S3> = {};
 }
 
 export const passwordPolicEquals = (passwordPolicy: IAM.PasswordPolicy, pwdPolicyResource: Reference<PasswordPolicyResource>): boolean => {

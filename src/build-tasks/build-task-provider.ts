@@ -4,7 +4,8 @@ import { UpdateOrganizationTaskProvider } from './tasks/organization-task';
 import { UpdateStacksBuildTaskProvider } from './tasks/update-stacks-task';
 import { IncludeTaskProvider } from './tasks/include-task';
 import { UpdateServerlessComBuildTaskProvider } from './tasks/serverless-com-task';
-import { ICommandArgs }  from '~commands/index';
+import { CopyToS3TaskProvider } from './tasks/copy-to-s3-task';
+import { IPerformTasksCommandArgs }  from '~commands/index';
 import { ITrackedTask } from '~state/persisted-state';
 
 export class BuildTaskProvider {
@@ -25,13 +26,14 @@ export class BuildTaskProvider {
             new UpdateOrganizationTaskProvider(),
             new IncludeTaskProvider(),
             new UpdateServerlessComBuildTaskProvider(),
+            new CopyToS3TaskProvider(),
         ];
 
         return BuildTaskProvider.SingleInstance = new BuildTaskProvider(buildTaskProviders);
     }
 
 
-    public static createValidationTask(configuration: IBuildTaskConfiguration, command: ICommandArgs): IBuildTask {
+    public static createValidationTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[configuration.Type];
         if (provider === undefined) {throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);}
@@ -39,7 +41,7 @@ export class BuildTaskProvider {
         return validationTask;
     }
 
-    public static createBuildTask(configuration: IBuildTaskConfiguration, command: ICommandArgs): IBuildTask {
+    public static createBuildTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[configuration.Type];
         if (provider === undefined) {throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);}
@@ -47,7 +49,7 @@ export class BuildTaskProvider {
         return task;
     }
 
-    public static createDeleteTask(logicalId: string, type: string, physicalId: string, command: ICommandArgs): IBuildTask | undefined {
+    public static createDeleteTask(logicalId: string, type: string, physicalId: string, command: IPerformTasksCommandArgs): IBuildTask | undefined {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[type];
         if (provider === undefined) {throw new OrgFormationError(`unable to load file, unknown configuration type ${type}`);}
@@ -55,7 +57,7 @@ export class BuildTaskProvider {
         return task;
     }
 
-    public static enumTasksForCleanup(previouslyTracked: ITrackedTask[], tasks: IBuildTask[], command: ICommandArgs): IBuildTask[] {
+    public static enumTasksForCleanup(previouslyTracked: ITrackedTask[], tasks: IBuildTask[], command: IPerformTasksCommandArgs): IBuildTask[] {
         const result: IBuildTask[] = [];
         const currentTasks = BuildTaskProvider.recursivelyFilter(tasks, t => t.physicalIdForCleanup !== undefined);
         const physicalIds = currentTasks.map(x=>x.physicalIdForCleanup);
@@ -80,12 +82,25 @@ export class BuildTaskProvider {
         }
         return result;
     }
-}
 
+    public static  createIsDependency(buildTaskConfig: IBuildTaskConfiguration): (task: IBuildTask) => boolean {
+        return (task: IBuildTask): boolean => {
+            if (task.type === 'update-organization') {
+                return true;
+            }
+
+            if (typeof buildTaskConfig.DependsOn === 'string') {
+                return task.name === buildTaskConfig.DependsOn;
+            } else if (Array.isArray(buildTaskConfig.DependsOn)) {
+                return buildTaskConfig.DependsOn.includes(task.name);
+            }
+        };
+    }
+}
 
 export interface IBuildTaskProvider<TConfig extends IBuildTaskConfiguration> {
     type: string;
-    createTask(config: TConfig, command: ICommandArgs): IBuildTask;
-    createTaskForValidation(config: TConfig, command: ICommandArgs): IBuildTask | undefined;
-    createTaskForCleanup(logicalId: string, physicalId: string, command: ICommandArgs): IBuildTask | undefined;
+    createTask(config: TConfig, command: IPerformTasksCommandArgs): IBuildTask;
+    createTaskForValidation(config: TConfig, command: IPerformTasksCommandArgs): IBuildTask | undefined;
+    createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs): IBuildTask | undefined;
 }

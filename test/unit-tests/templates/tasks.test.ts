@@ -7,8 +7,8 @@ import { PersistedState } from '~state/persisted-state';
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { ICfnTask } from '~cfn-binder/cfn-task-provider';
 import { ConsoleUtil } from '../../../src/console-util';
-import { BaseStacksTask } from '~build-tasks/tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
+import { IUpdateStacksBuildTask } from '~build-tasks/tasks/update-stacks-task';
 
 describe('when loading task file configuration', () => {
     let buildconfig: BuildConfiguration;
@@ -194,19 +194,6 @@ describe('when including task file without update-organization', () => {
         expect(tasks.filter((x) => x.type === 'update-organization').length).toBe(1);
     });
 
-    test('organization file path is passed to included file ', () => {
-        const tasks = buildconfig.enumBuildTasks({} as any);
-        const includeTask = tasks.filter((x) => x.type === 'include')[0];
-        const updateOrgTask = tasks.filter((x) => x.type === 'update-organization')[0];
-        const command = (includeTask as any).command;
-        expect(command).toBeDefined();
-        expect(command.organizationFile).toBeDefined();
-        expect(command.organizationFile as string).toEqual(
-            expect.stringContaining((updateOrgTask as BaseOrganizationTask).templatePath)
-        );
-
-
-    });
 });
 
 describe('when referencing account on parameter', () => {
@@ -250,7 +237,7 @@ describe('when referencing account on parameter', () => {
     });
 
     test('account from param is part of binding', async () => {
-        const updateStacksAccount1 = tasks.filter((x) => x.type === 'update-stacks' && x.name === 'StackParamAccount1Ref')[0] as BaseStacksTask;
+        const updateStacksAccount1 = tasks.filter((x) => x.type === 'update-stacks' && x.name === 'StackParamAccount1Ref')[0] as IUpdateStacksBuildTask;
         await updateStacksAccount1.perform();
         expect(runTask.callCount).toBe(1);
         const taskRan: ICfnTask[] = runTask.getCall(0).args[0];

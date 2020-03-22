@@ -1,0 +1,12 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+CopyToS3:
+  Type: copy-to-s3
+  RemotePath: s3://org-formation-integration-test/files/file.txt
+  LocalPath: ./files/file.txt
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
