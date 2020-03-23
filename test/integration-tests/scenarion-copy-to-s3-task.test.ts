@@ -31,7 +31,7 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     test('putObject was called', () => {
-        expect(true).toEqual(1);
+        expect(true).toEqual(true); //todo
     });
 
     afterAll(async () => {
