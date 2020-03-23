@@ -428,6 +428,8 @@ export interface ICfnTarget {
     region: string;
     accountId: string;
     stackName: string;
+    customRoleName?: string;
+    cloudFormationRoleName?: string;
     terminationProtection?: boolean;
     lastCommittedHash: string;
 }

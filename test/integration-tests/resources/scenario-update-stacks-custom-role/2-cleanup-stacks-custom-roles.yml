@@ -1,0 +1,9 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+MyRole:
+  Type: update-stacks
+  StackName: integration-test-my-role
+  Template: ./my-role.yml

@@ -10,6 +10,9 @@ import { ConsoleUtil } from './console-util';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 
 
+export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = 'OrganizationAccountAccessRole';
+
+
 export class AwsUtil {
 
     public static ClearCache(): void {
@@ -49,17 +52,23 @@ export class AwsUtil {
     }
 
     public static async GetSupportService(accountId: string): Promise<Support> {
-        return await AwsUtil.getOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' });
-    }
-    public static async GetS3Service(accountId: string, region: string): Promise<S3> {
-        return await AwsUtil.getOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region });
-    }
-    public static async GetIamService(accountId: string): Promise<IAM> {
-        return await AwsUtil.getOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, accountId, {});
+        return await AwsUtil.getOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' }, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
     }
 
-    public static async GetCloudFormation(accountId: string, region: string): Promise<CloudFormation> {
-        return await AwsUtil.getOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId,  `${accountId}/${region}`, { region });
+    public static GetRoleArn(accountId: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): string {
+        return 'arn:aws:iam::' + accountId + ':role/' + roleInTargetAccount;
+    }
+
+    public static async GetS3Service(accountId: string, region: string): Promise<S3> {
+        return await AwsUtil.getOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region }, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
+    }
+
+    public static async GetIamService(accountId: string): Promise<IAM> {
+        return await AwsUtil.getOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, accountId, {}, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
+    }
+
+    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): Promise<CloudFormation> {
+        return await AwsUtil.getOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId,  `${accountId}/${region}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string): Promise<void> {
@@ -67,7 +76,7 @@ export class AwsUtil {
         await s3client.deleteObject({Bucket: bucketName, Key: objectKey}).promise();
     }
 
-    private static async getOrCreateService<TService>(ctr: new(args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}): Promise<TService> {
+    private static async getOrCreateService<TService>(ctr: new(args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string): Promise<TService> {
         const cachedService = cache[cacheKey];
         if (cachedService) {
             return cachedService;
@@ -76,7 +85,7 @@ export class AwsUtil {
         const config = clientConfig;
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         if (accountId !== masterAccountId) {
-            const credentialOptions: CredentialsOptions = await AwsUtil.getCredentials(accountId);
+            const credentialOptions: CredentialsOptions = await AwsUtil.getCredentials(accountId, roleInTargetAccount);
             config.credentials = credentialOptions;
         }
 
@@ -86,9 +95,9 @@ export class AwsUtil {
         return service;
     }
 
-    public static async getCredentials(accountId: string): Promise<CredentialsOptions> {
+    public static async getCredentials(accountId: string, roleInTargetAccount: string): Promise<CredentialsOptions> {
         const sts = new STS();
-        const roleArn = 'arn:aws:iam::' + accountId + ':role/OrganizationAccountAccessRole';
+        const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
         const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
         const credentialOptions: CredentialsOptions = {
             accessKeyId: response.Credentials.AccessKeyId,

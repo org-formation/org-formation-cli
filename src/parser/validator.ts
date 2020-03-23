@@ -28,7 +28,7 @@ export class Validator {
         Validator.ThrowForUnknownAttribute(config, `task ${taskName}`,
             'Type', 'DependsOn', 'Template', 'StackName', 'StackDescription', 'Parameters',
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
-            'OrganizationBindings', 'TerminationProtection',
+            'OrganizationBindings', 'TerminationProtection', 'CloudFormationRoleName', 'TaskRoleName',
             'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance' );
     }
 

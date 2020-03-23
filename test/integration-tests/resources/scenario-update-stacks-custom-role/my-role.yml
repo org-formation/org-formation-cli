@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+# Section contains a named set of Bindings.
+# Bindings determine what resources are deployed where
+# These bindings can be !Ref'd from the Resources in the resource section
+OrganizationBindings:
+  AssumeRoleBinding:
+    Region: eu-west-1
+    IncludeMasterAccount: true
+
+  RoleBinding:
+    Region: eu-west-1
+    Account: !Ref AccountA
+
+Resources:
+
+  MyTaskRole:
+    OrganizationBinding: !Ref RoleBinding
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/AdministratorAccess' # needs iam:PassRole on MyCloudFormmationRole
+      RoleName: MyTaskRole
+      AssumeRolePolicyDocument:
+       Version: 2012-10-17
+       Statement:
+         - Effect: Allow
+           Action: sts:AssumeRole
+           Principal:
+            AWS: Fn::EnumTargetAccounts AssumeRoleBinding '${account}'
+
+  MyCloudFormmationRole:
+    OrganizationBinding: !Ref RoleBinding
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/AdministratorAccess'
+      RoleName: MyCloudFormmationRole
+      AssumeRolePolicyDocument:
+       Version: 2012-10-17
+       Statement:
+         - Effect: Allow
+           Action: sts:AssumeRole
+           Principal:
+            Service: cloudformation.amazonaws.com

@@ -8,21 +8,19 @@ import { TemplateRoot } from '~parser/parser';
 import { ICfnTarget, PersistedState } from '~state/persisted-state';
 
 export class CloudFormationBinder {
-    private readonly template: TemplateRoot;
-    private readonly stackName: string;
-    private readonly state: PersistedState;
-    private readonly taskProvider: CfnTaskProvider;
     private readonly masterAccount: string;
     private readonly invocationHash: string;
     private readonly parameters: Record<string, string>;
-    private readonly terminationProtection: boolean;
 
-    constructor(stackName: string, template: TemplateRoot, state: PersistedState, parameters: Record<string, string> = {}, terminationProtection = false, taskProvider: CfnTaskProvider = new CfnTaskProvider(state)) {
-        this.template = template;
-        this.masterAccount = template.organizationSection.masterAccount.accountId;
-        this.state = state;
-        this.taskProvider = taskProvider;
-        this.stackName = stackName;
+    constructor(private readonly stackName: string,
+                private readonly template: TemplateRoot,
+                private readonly state: PersistedState,
+                parameters: Record<string, string> = {},
+                private readonly terminationProtection = false,
+                private readonly taskRoleName?: string,
+                private readonly customRoleName?: string,
+                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(state)) {
+                this.masterAccount = template.organizationSection.masterAccount.accountId;
 
         this.parameters = {};
         for (const [key, val] of Object.entries(parameters)) {
@@ -54,18 +52,25 @@ export class CloudFormationBinder {
             }
         }
 
-        this.terminationProtection = terminationProtection;
-
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new OrgFormationError('state and template do not belong to the same organization');
         }
 
-        const invocation = {
+        const invocation: any = {
             stackName,
             templateHash: template.hash,
             parameters,
             terminationProtection,
         };
+
+        if (this.customRoleName) {
+            invocation.cloudFormationRoleName = customRoleName;
+        }
+
+        if (this.taskRoleName) {
+            invocation.taskRoleName = taskRoleName;
+        }
+
         this.invocationHash = md5(JSON.stringify(invocation));
     }
 
@@ -98,6 +103,8 @@ export class CloudFormationBinder {
                 parameters: this.parameters,
                 templateHash: this.invocationHash,
                 terminationProtection: this.terminationProtection,
+                customRoleName: this.taskRoleName,
+                cloudFormationRoleName: this.customRoleName,
                 state: stored,
                 template: cfnTemplate,
                 dependencies: [],
@@ -159,6 +166,8 @@ export class CloudFormationBinder {
                     accountId,
                     region,
                     stackName,
+                    customRoleName: storedTarget.customRoleName,
+                    cloudFormationRoleName: storedTarget.cloudFormationRoleName,
                     templateHash: this.invocationHash,
                     action: 'Delete',
                     state: storedTarget,
@@ -166,7 +175,7 @@ export class CloudFormationBinder {
                     dependents: [],
                     regionDependencies: [],
                     accountDependencies: [],
-                });
+                }as ICfnBinding);
              }
         }
         return result;
@@ -207,6 +216,8 @@ export interface ICfnBinding {
     regionDependencies: string[];
     parameters?: Record<string, string>;
     terminationProtection?: boolean;
+    customRoleName?: string;
+    cloudFormationRoleName?: string;
 }
 
 export interface ICfnCrossAccountDependency {

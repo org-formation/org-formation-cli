@@ -1,18 +1,19 @@
 import { exec, ExecException, ExecOptions } from 'child_process';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import AWS from 'aws-sdk';
-import { AwsUtil } from '../aws-util';
+import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../aws-util';
 import { ConsoleUtil } from '../console-util';
 
 
 export class ChildProcessUtility {
 
-    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string): Promise<void> {
+    /* todo: make role not optional */
+    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): Promise<void> {
         ConsoleUtil.LogInfo(`executing command: ${command} in account ${accountId}`);
 
         let credentials: CredentialsOptions = AWS.config.credentials;
         if (accountId !== await AwsUtil.GetMasterAccountId()) {
-            credentials = await AwsUtil.getCredentials(accountId);
+            credentials = await AwsUtil.getCredentials(accountId,  roleInTargetAccount);
         }
         const options: ExecOptions = {
             cwd,

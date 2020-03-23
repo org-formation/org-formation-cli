@@ -121,6 +121,13 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         if (config.FailedStackTolerance) {
             args.failedStacksTolerance = config.FailedStackTolerance;
         }
+
+        if (config.CloudFormationRoleName) {
+            args.cloudFormationRoleName = config.CloudFormationRoleName;
+        }
+        if (config.TaskRoleName) {
+            args.taskRoleName = config.TaskRoleName;
+        }
         return args;
     }
 
@@ -145,5 +152,6 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     TerminationProtection?: boolean;
     MaxConcurrentStacks: number;
     FailedStackTolerance: number;
-
+    CloudFormationRoleName?: string;
+    TaskRoleName?: string;
 }

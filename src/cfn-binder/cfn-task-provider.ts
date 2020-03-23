@@ -41,18 +41,24 @@ export class CfnTaskProvider {
             perform: async (): Promise<void> => {
 
                 const templateBody = binding.template.createTemplateBody();
-                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region);
+                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, binding.customRoleName);
                 const clientToken = uuid();
+
+                let roleArn: string;
+                if (binding.cloudFormationRoleName) {
+                    roleArn = AwsUtil.GetRoleArn(binding.accountId, binding.cloudFormationRoleName);
+                }
                 const stackInput: CreateStackInput | UpdateStackInput = {
                     StackName: binding.stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
                     ClientRequestToken: clientToken,
+                    RoleARN: roleArn,
                     Parameters: [],
                 };
 
                 for (const dependency of dependencies) {
-                    const cfnRetrieveExport = await AwsUtil.GetCloudFormation(dependency.ExportAcountId, dependency.ExportRegion);
+                    const cfnRetrieveExport = await AwsUtil.GetCloudFormation(dependency.ExportAcountId, dependency.ExportRegion, binding.customRoleName);
                     const listExportsRequest: ListExportsInput = {};
                     const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
                     let didFindExport = false;
@@ -98,7 +104,7 @@ export class CfnTaskProvider {
                         if (err && err.code === 'ValidationError' && err.message) {
                             const message = err.message as string;
                             if (-1 !== message.indexOf('ROLLBACK_COMPLETE')) {
-                                await cfn.deleteStack({ StackName: binding.stackName }).promise();
+                                await cfn.deleteStack({ StackName: binding.stackName, RoleARN: roleArn }).promise();
                                 await cfn.waitFor('stackDeleteComplete', { StackName: binding.stackName, $waiter: { delay: 1 } }).promise();
                                 await cfn.createStack(stackInput).promise();
                                 await cfn.waitFor('stackCreateComplete', { StackName: binding.stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
@@ -178,9 +184,16 @@ export class CfnTaskProvider {
             action: 'Delete',
             perform: async (): Promise<void> => {
                 try {
-                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region);
+                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, binding.customRoleName);
+
+                    let roleArn: string;
+                    if (binding.cloudFormationRoleName) {
+                        roleArn = AwsUtil.GetRoleArn(binding.accountId, binding.cloudFormationRoleName);
+                    }
+
                     const deleteStackInput: DeleteStackInput = {
                         StackName: binding.stackName,
+                        RoleARN: roleArn,
                     };
                     await cfn.deleteStack(deleteStackInput).promise();
                     await cfn.waitFor('stackDeleteComplete', { StackName: deleteStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();

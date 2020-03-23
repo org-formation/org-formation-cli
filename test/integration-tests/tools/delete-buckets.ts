@@ -1,7 +1,7 @@
 import { S3, SharedIniFileCredentials } from "aws-sdk";
 
 const bucketsToDelete = /(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}/;
-const credentials = new SharedIniFileCredentials({profile: 'org-formation-test'});
+const credentials = new SharedIniFileCredentials({profile: 'oc'});
 
 deleteBuckets().then(x=>console.log('done'));
 
