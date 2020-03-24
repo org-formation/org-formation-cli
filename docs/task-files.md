@@ -7,6 +7,7 @@
   - [update-organization](#update-organization)
   - [update-stacks](#update-stacks)
   - [update-serverless.com](#update-serverlesscom)
+  - [copy-to-s3](#copy-to-s3)
   - [include](#include)
 
 <!-- /code_chunk_output -->
@@ -108,7 +109,6 @@ Roles:
 
 The ``update-serverless.com`` task will deploy the [serverless.com](https://serverless.com) workload defined in the directory specified as `Path`.
 
-
 |Attribute |Value|Remarks|
 |:---|:---|:---|
 |Path|relative path|This property is required. <br/><br/>Specifies which directory contains the serverless.com workload
@@ -129,6 +129,11 @@ ServerlessWorkload:
   MaxConcurrentStacks: 10
   FailedStackTolerance: 10
 ```
+
+### copy-to-s3
+
+The ``copy-to-s3`` task will upload a file from `LocalPath` to an S3 `RemotePath`.
+
 
 ### include
 

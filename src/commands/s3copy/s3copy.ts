@@ -30,6 +30,7 @@ export class S3CopyCommand extends BaseCliCommand<IS3CopyCommandArgs> {
             remotePath: command.remotePath,
             zipBeforePut: command.zipBeforePut,
             localPath: command.localPath,
+            taskRoleName: command.taskRoleName,
         };
 
         const state = await this.getState(command);
@@ -60,6 +61,7 @@ export interface IS3CopyCommandArgs extends ICommandArgs {
     organizationFileHash?: string;
     maxConcurrent: number;
     failedTolerance: number;
+    taskRoleName?: string;
 }
 
 export const S3CopyTaskType = 'copy-to-s3';

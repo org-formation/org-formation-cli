@@ -18,8 +18,21 @@ Resources:
     OrganizationBinding: !Ref RoleBinding
     Type: AWS::IAM::Role
     Properties:
-      ManagedPolicyArns:
-      - 'arn:aws:iam::aws:policy/AdministratorAccess' # needs iam:PassRole on MyCloudFormmationRole
+      Policies:
+        - PolicyName: allowCloudFormation
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: 'cloudformation:*'
+                Resource: '*'
+        - PolicyName: allowPassRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt MyCloudFormmationRole.Arn
       RoleName: MyTaskRole
       AssumeRolePolicyDocument:
        Version: 2012-10-17

@@ -31,6 +31,7 @@ export class UpdateSlsCommand extends BaseCliCommand<IUpdateSlsCommandArgs> {
             configFile: command.configFile,
             hash: hashOfTask,
             runNpmInstall: command.runNpmInstall,
+            taskRoleName: command.taskRoleName,
         };
 
         const state = await this.getState(command);
@@ -62,6 +63,7 @@ export interface IUpdateSlsCommandArgs extends ICommandArgs {
     organizationFileHash?: string;
     maxConcurrent: number;
     failedTolerance: number;
+    taskRoleName?: string;
 }
 
 export const ServerlessGenericTaskType = 'serverless.com';

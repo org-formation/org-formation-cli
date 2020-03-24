@@ -36,6 +36,7 @@ export class UpdateServerlessComBuildTaskProvider implements IBuildTaskProvider<
                     failedTolerance:config.FailedTaskTolerance,
                     maxConcurrent: config.MaxConcurrentTasks,
                     organizationBinding: config.OrganizationBinding,
+                    taskRoleName: config.TaskRoleName,
                 };
 
                 await UpdateSlsCommand.Perform(updateSlsCommand);
@@ -123,4 +124,5 @@ export interface IServerlessComTaskConfiguration extends IBuildTaskConfiguration
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
+    TaskRoleName?: string;
 }

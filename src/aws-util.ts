@@ -59,8 +59,8 @@ export class AwsUtil {
         return 'arn:aws:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
-    public static async GetS3Service(accountId: string, region: string): Promise<S3> {
-        return await AwsUtil.getOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region }, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
+    public static async GetS3Service(accountId: string, region: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): Promise<S3> {
+        return await AwsUtil.getOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region }, roleInTargetAccount);
     }
 
     public static async GetIamService(accountId: string): Promise<IAM> {

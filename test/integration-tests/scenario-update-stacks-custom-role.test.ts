@@ -2,25 +2,23 @@ import { PerformTasksCommand, ValidateTasksCommand, CleanupCommand } from '~comm
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
 import { readFileSync } from 'fs';
 import { AwsUtil } from '../../src/aws-util';
+import { CloudFormation } from 'aws-sdk';
+import { Stack, ListStacksOutput } from 'aws-sdk/clients/cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-update-stacks-custom-role/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
+    let cfnClient: CloudFormation;
 
-    let createCloudFormationServiceMock: jest.SpyInstance;
-    let createCloudFormationMockAfterDeploy: jest.MockContext<any, any>;
-    let createCloudFormationMockAfterCleanup: jest.MockContext<any, any>;
-    // let stateAfterRemoveTask: GetObjectOutput;
-    // let spawnProcessAfterRemoveTask: jest.MockContext<any, any>;
-    // let spawnProcessMock: jest.SpyInstance;
-    // let stateAfterCleanup: GetObjectOutput;
-    // let spawnProcessAfterCleanup: jest.MockContext<any, any>;
+    let stackAfterUpdateWithCustomRole: Stack;
+    let listStacksResponseAfterCleanup: ListStacksOutput;
 
     beforeAll(async () => {
-        // createCloudFormationServiceMock = jest.spyOn(AwsUtil, 'GetCloudFormation');
 
         context = await baseBeforeAll();
+        cfnClient = await AwsUtil.GetCloudFormation('340381375986', 'eu-west-1');
+
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, region: 'eu-west-1', performCleanup: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0, logicalName: 'default' };
 
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
@@ -28,29 +26,27 @@ describe('when calling org-formation perform tasks', () => {
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-stacks-custom-roles.yml' })
 
-        //createCloudFormationServiceMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-stacks-custom-roles.yml' });
-        //createCloudFormationMockAfterDeploy = createCloudFormationServiceMock.mock;
+        const responseAfterUpdate = await cfnClient.describeStacks({StackName: 'integration-test-custom-role'}).promise();
+        stackAfterUpdateWithCustomRole = responseAfterUpdate.Stacks[0];
 
-        //createCloudFormationServiceMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-cleanup-stacks-custom-roles.yml' });
-        //createCloudFormationMockAfterCleanup = createCloudFormationServiceMock.mock;
+        listStacksResponseAfterCleanup = await cfnClient.listStacks({StackStatusFilter: ['CREATE_COMPLETE']}).promise();
+
     });
 
     test('custom role was used to deploy stack in target account', () => {
-        //const argsWithLastCall = createCloudFormationServiceMock.mock.calls[1];
-        expect('340381375986').toBe('340381375986');
-        // expect(argsWithLastCall[1]).toBe('eu-west-1');
-        // expect(argsWithLastCall[2]).toEqual(expect.stringContaining('MyRole'));
+        expect(stackAfterUpdateWithCustomRole).toBeDefined();
+        expect(stackAfterUpdateWithCustomRole.RoleARN).toEqual(expect.stringContaining('MyCloudFormmationRole'));
+        expect(stackAfterUpdateWithCustomRole.StackStatus).toBe('CREATE_COMPLETE');
     });
 
-
-    // test('custom role was used to ceanup stack in target account', () => {
-    //     const argsWithLastCall = createCloudFormationServiceMock.mock.calls[0];
-    //     expect(argsWithLastCall[0]).toBe('340381375986');
-    //     expect(argsWithLastCall[1]).toBe('eu-west-1');
-    //     expect(argsWithLastCall[2]).toEqual(expect.stringContaining('MyRole'));
-    // });
+    test('cleanup will remove stack', () => {
+        expect(listStacksResponseAfterCleanup).toBeDefined();
+        expect(listStacksResponseAfterCleanup.StackSummaries).toBeDefined();
+        const found = listStacksResponseAfterCleanup.StackSummaries.find(x=>x.StackName === 'integration-test-custom-role');
+        expect(found).toBeUndefined();
+    });
 
     afterAll(async () => {
         await baseAfterAll(context);

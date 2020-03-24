@@ -9,10 +9,10 @@ export class DefaultTaskRunner {
 
         const delegate: ITaskRunnerDelegates<IGenericTask> = {
             onTaskRanFailed: (task, err) => {
-                ConsoleUtil.LogError(`failed executing stack ${task.logicalName} in account ${task.accountId} (${task.region}). Reason: ${err}`);
+                ConsoleUtil.LogError(`failed executing task ${task.logicalName} in account ${task.accountId} (${task.region}). Reason: ${err}`);
             },
             onTaskSkippedBecauseDependencyFailed: task => {
-                ConsoleUtil.LogError(`skip executing stack ${task.logicalName} in account ${task.accountId} (${task.region}). Reason: dependency has failed.`);
+                ConsoleUtil.LogError(`skip executing task ${task.logicalName} in account ${task.accountId} (${task.region}). Reason: dependency has failed.`);
             },
             onTaskRanSuccessfully: task => {
                 ConsoleUtil.LogInfo(`stack ${task.logicalName} successfully ${task.action === 'Delete' ? 'deleted from' : 'updated in' } ${task.accountId}/${task.region}.`);
@@ -23,7 +23,7 @@ export class DefaultTaskRunner {
              },
             throwDependencyOnSelfException: task => {throw new OrgFormationError(`stack ${task.logicalName} has dependency on self target account ${task.accountId} / ${task.region}`); },
             onFailureToleranceExceeded: (totalTasksFailed: number, tolerance: number) => {
-                throw new OrgFormationError(`number failed stacks ${totalTasksFailed} exceeded tolerance for failed stacks ${tolerance}`);
+                throw new OrgFormationError(`number failed tasks ${totalTasksFailed} exceeded tolerance for failed tasks ${tolerance}`);
             },
             maxConcurrentTasks,
             failedTasksTolerance,

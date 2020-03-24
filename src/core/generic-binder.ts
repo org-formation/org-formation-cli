@@ -4,16 +4,12 @@ import { IGenericTarget, PersistedState } from '~state/persisted-state';
 import { TemplateRoot, IOrganizationBinding } from '~parser/parser';
 
 export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefinition> {
-    private readonly template: TemplateRoot;
-    private readonly task: ITaskDefinition;
-    protected readonly state: PersistedState;
-    private readonly organizationBinding: IOrganizationBinding;
 
-    constructor(task: ITaskDefinition, state: PersistedState, template: TemplateRoot, organizationBinding: IOrganizationBinding) {
-        this.task = task;
-        this.state = state;
-        this.template = template;
-        this.organizationBinding = organizationBinding;
+    constructor(private readonly task: ITaskDefinition,
+                protected readonly state: PersistedState,
+                private readonly template: TemplateRoot,
+                private readonly organizationBinding: IOrganizationBinding) {
+
     }
 
     public enumBindings(): IGenericBinding<ITaskDefinition>[] {
@@ -82,6 +78,7 @@ export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefiniti
                 type: binding.task.type,
                 action: binding.action,
                 accountId: binding.target.accountId,
+                region: binding.target.region,
                 isDependency: (): boolean => false,
             };
 
@@ -109,7 +106,7 @@ export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefiniti
 export interface IGenericTask {
     action: GenericAction;
     accountId: string;
-    region?: string;
+    region: string;
     logicalName: string;
     type: string;
     perform: () => Promise<void>;
@@ -126,6 +123,7 @@ export interface IGenericTaskDefinition {
     name: string;
     type: string;
     hash: string;
+    taskRoleName?: string;
 }
 
 type GenericAction = 'UpdateOrCreate' | 'Delete' | 'None';

@@ -8,7 +8,7 @@ export class S3CopyBinder extends GenericBinder<IS3CopyTask> {
 
     createPerformForDelete(binding: IGenericBinding<IS3CopyTask>): () => Promise<void> {
         return async (): Promise<void> => {
-            const s3client = await AwsUtil.GetS3Service(binding.target.accountId, binding.target.region);
+            const s3client = await AwsUtil.GetS3Service(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
             const request: DeleteObjectRequest = {
                 ...S3CopyBinder.getBucketAndKey(binding.task),
             };
@@ -19,7 +19,7 @@ export class S3CopyBinder extends GenericBinder<IS3CopyTask> {
 
     createPerformForUpdateOrCreate(binding: IGenericBinding<IS3CopyTask>): () => Promise<void> {
         return async (): Promise<void> => {
-            const s3client = await AwsUtil.GetS3Service(binding.target.accountId, binding.target.region);
+            const s3client = await AwsUtil.GetS3Service(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
             const request: PutObjectRequest = {
                 ...S3CopyBinder.getBucketAndKey(binding.task),
             };
@@ -59,4 +59,5 @@ export interface IS3CopyTask {
     remotePath: string;
     localPath: string;
     zipBeforePut: boolean;
+    taskRoleName?: string;
 }

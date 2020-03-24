@@ -7,7 +7,6 @@ import { ConsoleUtil } from '../console-util';
 
 export class ChildProcessUtility {
 
-    /* todo: make role not optional */
     public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): Promise<void> {
         ConsoleUtil.LogInfo(`executing command: ${command} in account ${accountId}`);
 
