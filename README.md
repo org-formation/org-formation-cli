@@ -35,7 +35,7 @@ With [npm](https://npmjs.org/) installed, run
 > npm install -g aws-organization-formation
 ```
 
-You can now execute the commandline program `org-formation`. try:
+You can now execute the command line program `org-formation`. try:
 
 ```
 > org-formation --help
@@ -137,7 +137,7 @@ Organization:
 
 **Note**: If you prefer to set up CI/CD run ``org-formation init-pipeline`` instead. It will create a CodeCommit repository and CodePipeline that will update your organization upon every commit!
 
-You can make changes to the file you generated  and upate your organization using the ``update`` commmand. Alternatively you can run ``create-change-set`` and ``update-change-set``. Read more in the [cli reference](docs/cli-reference.md)
+You can make changes to the file you generated and update your organization using the ``update`` command. Alternatively, you can run ``create-change-set`` and ``update-change-set``. Read more in the [cli reference](docs/cli-reference.md)
 
 Once you got the hang of managing organization resources, use these organization resources to write smarter cloudformation that allows you to provision resources across your organization. Read more [about managing resources across accounts](docs/cloudformation-resources.md).
 
@@ -158,9 +158,9 @@ My operation takes a long time to complete / is slow.
 
 Especially if you have a lot of accounts this can happen.
 
-An easy way to speed things up is by specifying the commandline argument `--max-concurrent-stacks 10` where 10 is the number of stacks to run in concurrently.
+An easy way to speed things up is by specifying the command-line argument `--max-concurrent-stacks 10` where 10 is the number of stacks to run in concurrently.
 
-Another way to speed things up is to run tasks in parallel this can be done with the argument `--max-concurrent-tasks 10`. This, however, has the side-effect that the logging might be somewhat harder to ralate to a specific task (as it might be out of order).
+Another way to speed things up is to run tasks in parallel this can be done with the argument `--max-concurrent-tasks 10`. This, however, has the side-effect that the logging might be somewhat harder to relate to a specific task (as it might be out of order).
 
 &nbsp;
 </details>
@@ -171,16 +171,16 @@ Is there a way around having to create new email accounts per account?
 </summary>
 &nbsp;
 
-Every AWS Account needs a unique root email address, there is no way around this...
+Every AWS account needs a unique root email address, there is no way around this...
 
-What you **can do** however is however is see whether your mailserver allows you to append a '+' (plus sign) and another secondary name to your account to create new unique email addresses.
+What you **can do** is to check whether your mail server allows you to append a '+' (plus sign) and another secondary name to your account to create new unique email addresses.
 
-Email to there addresses will end up in the mailbox assigned to the alias before the plus sign and this will still be considered a valid and unique emailaddress when creating a new AWS Account.
+Email to there addresses will end up in the mailbox assigned to the alias before the plus sign and this will still be considered a valid and unique email address when creating a new AWS Account.
 
 **Example:**
-If your emailaddress is `name@gmail.com` you will receive email send to `name+awsaccount1@gmail.com` and `name+awsaccount2@gmail.com` to your inbox.
+If your email address is `name@gmail.com` you will receive email send to `name+awsaccount1@gmail.com` and `name+awsaccount2@gmail.com` to your inbox.
 
-Mailservers that support this are gmail, aws workmail and hotmail.
+Mail servers that support this are gmail, aws workmail and hotmail.
 
 &nbsp;
 </details>
@@ -191,7 +191,7 @@ How do i set up MFA for the account used by org-formation?
 </summary>
 &nbsp;
 
-`Org-formation` needs high priviledge access to your master account. If you run `org-formation` manually it is wise to set up MFA.
+`Org-formation` needs high privilege access to your master account. If you run `org-formation` manually it is wise to set up MFA.
 
 I assume you have credentials set up in `~/.aws/credentials` and this looks like (might well be called `default`):
 ``` ini
@@ -202,12 +202,12 @@ aws_secret_access_key = xxxxxxxxxxxxxxxxx
 
 This allows org-formation to assume the IAM User that corresponds to the access key and secret using the option `--profile org-formation`.
 
-In order to enforce MFA you need to do the following:
-1) Assign a MFA device to the IAM User in the console.
-2) Create a role in your master account that has high priviledged access and enforces the use of MFA. We call this `MyOrgFormationRole`.
+To enforce MFA you need to do the following:
+1) Assign an MFA device to the IAM User in the console.
+2) Create a role in your master account that has high privileged access and enforces the use of MFA. We call this `MyOrgFormationRole`.
 3) Create a profile that refers to the MyOrgFormation. We call this profile `org-formation-mfa`.
 4) Test whether MFA has been setup correctly by running `org-formation describe-stacks --profile org-formation-mfa`.
-5) If step #4 was succesfull you can strip the IAM user you use from permissions other than the once it needs to assume `MyOrgFormationRole`.
+5) If step #4 was successful you can strip the IAM user you use from permissions other than the once it needs to assume `MyOrgFormationRole`.
 
 Code snippets below:
 
@@ -251,7 +251,7 @@ mfa_serial = arn:aws:iam::000000000000:mfa/my-user
 \> org-formation describe-stacks --profile org-formation-mfa
 👋 Enter MFA code for arn:aws:iam::000000000000:mfa/my-user:
 XXXXXX # here you type in the  put the MFA code
-{ ...regular output } # if successfull the command will execute
+{ ...regular output } # if successful the command will execute
 ```
 
 4) The minimum set of permissions for your user
@@ -279,11 +279,11 @@ Accounts that are created have a root user but **no password**.
 
 You can create a password using the 'Forgot password' process using the root email.
 
-**Note:** Once you have created a password and used it consider to throw the password away. You are not supposed to log in using root anyway and storing your password somewhere could only lead to losing it. As we just figured out above you didnt need it in the first place.
+**Note:** Once you have created a password and used it consider throwing the password away. You are not supposed to log in using root anyway and storing your password somewhere could only lead to losing it. As we just figured out above you didn't need it in the first place.
 
 **Do bind** an MFA on your root user! Find info under the [IAM service section of the console](https://console.aws.amazon.com/iam/home?/security_credentials#/home)
 
-**Needless to add?** dont use a virtual MFA on the same device that has access to the email account used as RootEmail... this reduces your 'multi factor' authentication to a single factor 🤔🤣
+**Needless to add?** don't use a virtual MFA on the same device that has access to the email account used as RootEmail... this reduces your 'multi-factor' authentication to a single factor 🤔🤣
 
 &nbsp;
 </details>
@@ -294,9 +294,9 @@ What happens when I remove an account from the organization.yml?
 </summary>
 &nbsp;
 
-If you remove an account from the organization it will not be deleted. Deleting accounts using api calls is not supported by AWS.
+If you remove an account from the organization it will not be deleted. Deleting accounts using API calls is not supported by AWS.
 
-After running `update` the account that is removed from the organization will be not be able to be part of organization bindings.
+After running `update` the account that is removed from the organization will not be able to be part of organization bindings.
 
 ```
 \> org-formation update ./examples/organization.yml --profile org-formation
@@ -310,7 +310,7 @@ After running `update-stacks` any stack that was deployed to this account using 
 Obviously: having a task file will do both `update` and `update-stacks` in the right sequence and you're done!
 
 If you removed and account and want to re-add it:
-Just add it back to the organization.yml. Make sure you run `update` and `update-stacks` (or `perform-tasks`) and your account will particapate in all bindings and the stacks will be re-deployed to the account.
+Just add it back to the organization.yml. Make sure you run `update` and `update-stacks` (or `perform-tasks`) and your account will participate in all bindings and the stacks will be re-deployed to the account.
 
 As long as the account was not deleted in full `org-formation` will identify it by the `RootEmail` (or `AccountId`) attribute in the organization.yml
 
@@ -352,9 +352,9 @@ Why is XYZ not supported?
 </summary>
 &nbsp;
 
-No reason other than not running into this usecase so far.
+No reason other than not running into this use-case so far.
 
-Really happy to implement this based on someone else's usecase.
+Really happy to implement this based on someone else's use-case.
 
 &nbsp;
 </details>
@@ -370,7 +370,7 @@ Really happy to implement this based on someone else's usecase.
 - [Organization Annotated CloudFormation](docs/cloudformation-resources.md)
 - [Automating deployments](docs/task-files.md)
 - [Custom Account Creation Worklow](examples/automation/create-account/readme.md)
-- [CLI reference](docs/cli-reference.md)
+- [CLI reference](docs/cli-reference.md)
 - [Changelog](CHANGELOG.md)
 
 ## Sponsors & collaborators
