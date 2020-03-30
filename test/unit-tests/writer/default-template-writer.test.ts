@@ -1,6 +1,6 @@
 import { AwsOrganization } from "~aws-provider/aws-organization";
 import { DefaultTemplateWriter, DefaultTemplate } from "~writer/default-template-writer";
-import { ConsoleUtil } from "../../../src/console-util";
+import { ConsoleUtil } from "~util/console-util";
 import { TemplateRoot } from "~parser/parser";
 
 describe('when writing template for organization', () => {

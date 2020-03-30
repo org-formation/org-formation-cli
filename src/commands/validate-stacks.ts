@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { BaseCliCommand } from './base-command';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from './update-stacks';
 import { CloudFormationBinder } from '~cfn-binder/cfn-binder';

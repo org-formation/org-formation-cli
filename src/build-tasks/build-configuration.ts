@@ -110,6 +110,7 @@ export interface IBuildTaskConfiguration {
     DependsOn?: string | string[];
     LogicalName: string;
     FilePath?: string;
+    TaskRoleName?: string;
 }
 
 

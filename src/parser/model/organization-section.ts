@@ -1,7 +1,7 @@
 import { bool } from 'aws-sdk/clients/signer';
 import { OrgFormationError } from '../../org-formation-error';
 import { IOrganization, IResource, TemplateRoot } from '../parser';
-import { ConsoleUtil } from '../../console-util';
+import { ConsoleUtil } from '../../util/console-util';
 import { AccountResource } from './account-resource';
 import { MasterAccountResource } from './master-account-resource';
 import { OrganizationRootResource } from './organization-root-resource';

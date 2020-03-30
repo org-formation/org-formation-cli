@@ -1,6 +1,6 @@
 
 import Sinon from 'sinon';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 import { Validator } from '~parser/validator';
 
 describe('when validating region', () => {

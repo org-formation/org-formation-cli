@@ -1,5 +1,5 @@
 import path from 'path';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '../../util/console-util';
 import { OrgFormationError } from '../../../src/org-formation-error';
 import { IBuildTask, BuildConfiguration, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IPerformTasksCommandArgs } from '~commands/index';

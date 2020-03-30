@@ -1,5 +1,5 @@
 import { OrgFormationError } from '../org-formation-error';
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { IStorageProvider } from './storage-provider';
 import { OrgResourceTypes } from '~parser/model';
 

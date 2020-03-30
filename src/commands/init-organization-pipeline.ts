@@ -5,8 +5,8 @@ import { CreateStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformati
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { Command } from 'commander';
 import { WritableStream } from 'memory-streams';
-import { AwsUtil } from '../aws-util';
-import { ConsoleUtil } from '../console-util';
+import { AwsUtil } from '../util/aws-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { Validator } from '~parser/validator';

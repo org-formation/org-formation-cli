@@ -1,7 +1,7 @@
 import { Organizations } from 'aws-sdk';
 import { Command } from 'commander';
-import { AwsUtil } from '../aws-util';
-import { ConsoleUtil } from '../console-util';
+import { AwsUtil } from '../util/aws-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AwsOrganizationReader } from '~aws-provider/aws-organization-reader';

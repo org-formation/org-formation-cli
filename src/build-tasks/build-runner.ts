@@ -1,4 +1,4 @@
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { IBuildTask } from './build-configuration';
 import { GenericTaskRunner, ITaskRunnerDelegates } from '~core/generic-task-runner';

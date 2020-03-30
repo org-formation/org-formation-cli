@@ -2,7 +2,7 @@ import Sinon from 'sinon';
 import { IBuildTask } from '~build-tasks/build-configuration';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-stacks';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
 

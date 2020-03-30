@@ -1,9 +1,9 @@
 import { Organizations } from "aws-sdk";
 import { UpdateOrganizationCommand } from "~commands/index";
 import { readFileSync } from "fs";
-import { AwsUtil } from "../../src/aws-util";
+import { AwsUtil } from "~util/aws-util";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from "./base-integration-test";
-import { ConsoleUtil } from "../../src/console-util";
+import { ConsoleUtil } from "~util/console-util";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-attach-account/';
 

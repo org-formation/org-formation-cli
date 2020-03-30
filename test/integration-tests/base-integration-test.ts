@@ -1,7 +1,7 @@
 import AWS, { SharedIniFileCredentials, S3, EnvironmentCredentials } from "aws-sdk";
 import { v4 } from "uuid";
-import { AwsUtil } from "../../src/aws-util";
-import { ConsoleUtil } from "../../src/console-util";
+import { AwsUtil } from "~util/aws-util";
+import { ConsoleUtil } from "~util/console-util";
 
 export const profileForIntegrationTests = 'org-formation-test-v2'
 

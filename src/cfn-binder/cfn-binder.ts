@@ -1,5 +1,5 @@
 import md5 from 'md5';
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { CfnTaskProvider, ICfnTask } from './cfn-task-provider';
 import { CfnTemplate } from './cfn-template';

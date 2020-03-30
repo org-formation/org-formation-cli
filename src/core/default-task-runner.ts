@@ -1,7 +1,7 @@
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { GenericTaskRunner, ITaskRunnerDelegates } from '~core/generic-task-runner';
-import { IGenericTask } from '~core/generic-binder';
+import { IGenericTask } from '~plugin/plugin-binder';
 
 export class DefaultTaskRunner {
 

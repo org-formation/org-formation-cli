@@ -2,8 +2,9 @@
 All notable changes to aws organization formation will be documented in this file.
 
 **not released**
-- Added update-serverless.com task to perform-tasks
-- Added copy-to-s3 task to perform-tasks
+- Added update-cdk task type to perform-tasks to support deployment of cdk workloads
+- Added update-serverless.com task type to perform-tasks to support deployment of serverless.com workloads
+- Added copy-to-s3 task type to perform-tasks to support uploading files to S3 as part of a build pipeline
 - Added --organization-file to perform-tasks and validate-tasks command, can be used to specify the organization to be used when evaluating bindings (without having an update-organization task)
 - Added TaskRoleName to update-stacks, update-serverless.com & copy-to-s3 tasks to support least custom role for cross account access
 - Added CloudFormationRoleName to update-stacks to pass specific role to CloudFormation

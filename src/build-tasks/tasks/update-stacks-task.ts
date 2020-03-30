@@ -1,6 +1,6 @@
 
 import path from 'path';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '../../util/console-util';
 import { IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IPerformTasksCommandArgs, DeleteStacksCommand, IUpdateStacksCommandArgs, UpdateStacksCommand, ValidateStacksCommand } from '~commands/index';
 import { Validator } from '~parser/validator';
@@ -39,7 +39,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
-                ValidateStacksCommand.Perform(updateStacksCommand);
+                await ValidateStacksCommand.Perform(updateStacksCommand);
             },
         };
     }

@@ -1,4 +1,4 @@
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { IBuildTask } from './org-tasks-provider';
 
 export class TaskRunner {

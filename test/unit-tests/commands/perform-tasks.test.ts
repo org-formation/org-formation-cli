@@ -4,7 +4,7 @@ import { BuildConfiguration, IBuildTask, IBuildTaskConfiguration } from '~build-
 import { PersistedState, ITrackedTask } from '~state/persisted-state';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 import { DeleteStacksCommand } from '~commands/index';
 import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/organization-task';
 

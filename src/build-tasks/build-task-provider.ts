@@ -3,10 +3,10 @@ import { IBuildTask, IBuildTaskConfiguration } from './build-configuration';
 import { UpdateOrganizationTaskProvider } from './tasks/organization-task';
 import { UpdateStacksBuildTaskProvider } from './tasks/update-stacks-task';
 import { IncludeTaskProvider } from './tasks/include-task';
-import { UpdateServerlessComBuildTaskProvider } from './tasks/serverless-com-task';
-import { CopyToS3TaskProvider } from './tasks/copy-to-s3-task';
 import { IPerformTasksCommandArgs }  from '~commands/index';
 import { ITrackedTask } from '~state/persisted-state';
+import { PluginProvider } from '~plugin/plugin';
+import { PluginBuildTaskProvider } from '~plugin/plugin-task';
 
 export class BuildTaskProvider {
     private static SingleInstance: BuildTaskProvider;
@@ -25,9 +25,11 @@ export class BuildTaskProvider {
             new UpdateStacksBuildTaskProvider(),
             new UpdateOrganizationTaskProvider(),
             new IncludeTaskProvider(),
-            new UpdateServerlessComBuildTaskProvider(),
-            new CopyToS3TaskProvider(),
         ];
+
+        for(const plugin of  PluginProvider.GetPlugins()){
+            buildTaskProviders.push(new PluginBuildTaskProvider<any, any, any>(plugin));
+        }
 
         return BuildTaskProvider.SingleInstance = new BuildTaskProvider(buildTaskProviders);
     }

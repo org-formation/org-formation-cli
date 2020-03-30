@@ -1,12 +1,12 @@
 import { Command, Option } from 'commander';
 import { ExecuteChangeSetCommand, IExecuteChangeSetCommandArgs } from '~commands/execute-organization-changeset';
 import Sinon = require('sinon');
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { ICfnTask } from '~cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
-import { AwsUtil } from '../../../src/aws-util';
+import { AwsUtil } from '~util/aws-util';
 import { readFileSync } from 'fs';
 import { ChangeSetProvider, IStoredChangeSet, IOrganizationChange } from '~change-set/change-set-provider';
 import { S3StorageProvider } from '~state/storage-provider';

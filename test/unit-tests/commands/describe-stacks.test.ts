@@ -2,7 +2,7 @@ import { Command, Option } from 'commander';
 import Sinon from 'sinon';
 import { BaseCliCommand } from '~commands/base-command';
 import { DescribeStacksCommand, IDescribetackCommandArgs } from '~commands/describe-stacks';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 import { PersistedState } from '~state/persisted-state';
 
 describe('when creating describe stacks command', () => {

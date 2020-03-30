@@ -1,7 +1,7 @@
-import { PerformTasksCommand, ValidateTasksCommand, CleanupCommand } from '~commands/index';
+import { PerformTasksCommand, ValidateTasksCommand, CleanupCommand, UpdateOrganizationCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
 import { readFileSync } from 'fs';
-import { AwsUtil } from '../../src/aws-util';
+import { AwsUtil } from '~util/aws-util';
 import { CloudFormation } from 'aws-sdk';
 import { Stack, ListStacksOutput } from 'aws-sdk/clients/cloudformation';
 
@@ -23,6 +23,8 @@ describe('when calling org-formation perform tasks', () => {
 
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
         await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
+
+        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + 'organization.yml'});
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-stacks-custom-roles.yml' })
 

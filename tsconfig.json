@@ -28,6 +28,8 @@
             "~state/*": ["src/state/*"],
             "~writer/*": ["src/writer/*"],
             "~sls-com/*": ["src/sls-com/*"],
+            "~plugin/*": ["src/plugin/*"],
+            "~util/*": ["src/util/*"],
         },
         "plugins": [
             {

@@ -1,7 +1,7 @@
 import { CreateStackInput, DeleteStackInput, ListExportsInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import uuid = require('uuid');
-import { AwsUtil } from '../aws-util';
-import { ConsoleUtil } from '../console-util';
+import { AwsUtil } from '../util/aws-util';
+import { ConsoleUtil } from '../util/console-util';
 import { ICfnBinding } from './cfn-binder';
 import { PersistedState } from '~state/persisted-state';
 export class CfnTaskProvider {

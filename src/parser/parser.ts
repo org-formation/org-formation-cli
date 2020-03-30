@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import md5 = require('md5');
 import * as Path from 'path';
 import { yamlParse } from 'yaml-cfn';
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { OrganizationBindingsSection } from './model/organization-bindings-section';
 import { OrganizationSection } from './model/organization-section';

@@ -1,26 +1,28 @@
-import { OrgFormationError } from '../../src/org-formation-error';
-import { ConsoleUtil } from '../../src/console-util';
+import { OrgFormationError } from '../org-formation-error';
+import { ConsoleUtil } from '../util/console-util';
 import { IGenericTarget, PersistedState } from '~state/persisted-state';
 import { TemplateRoot, IOrganizationBinding } from '~parser/parser';
+import { IBuildTaskPlugin } from '~plugin/plugin';
 
-export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefinition> {
+export class PluginBinder<ITaskDefinition extends IPluginTask> {
 
     constructor(private readonly task: ITaskDefinition,
                 protected readonly state: PersistedState,
                 private readonly template: TemplateRoot,
-                private readonly organizationBinding: IOrganizationBinding) {
+                private readonly organizationBinding: IOrganizationBinding,
+                private readonly plugin: IBuildTaskPlugin<any, any, ITaskDefinition>) {
 
     }
 
-    public enumBindings(): IGenericBinding<ITaskDefinition>[] {
-        const result: IGenericBinding<ITaskDefinition>[] = [];
+    public enumBindings(): IPluginBinding<ITaskDefinition>[] {
+        const result: IPluginBinding<ITaskDefinition>[] = [];
         for(const logicalTargetAccountName of this.template.resolveNormalizedLogicalAccountIds(this.organizationBinding)) {
 
             const accountBinding = this.state.getAccountBinding(logicalTargetAccountName);
             if (!accountBinding) { throw new OrgFormationError(`unable to find account ${logicalTargetAccountName} in state. Is your organization up to date?`); }
 
             for(const region of this.template.resolveNormalizedRegions(this.organizationBinding)) {
-                const binding: IGenericBinding<ITaskDefinition> = {
+                const binding: IPluginBinding<ITaskDefinition> = {
                     action: 'UpdateOrCreate',
                     target: {
                         targetType: this.task.type,
@@ -98,8 +100,24 @@ export abstract class GenericBinder<ITaskDefinition extends IGenericTaskDefiniti
         return result;
     }
 
-    abstract createPerformForDelete(binding: IGenericBinding<ITaskDefinition>): () => Promise<void>;
-    abstract createPerformForUpdateOrCreate(binding: IGenericBinding<ITaskDefinition>): () => Promise<void>;
+    public createPerformForDelete(binding: IPluginBinding<ITaskDefinition>): () => Promise<void> {
+        const { task, target } = binding;
+        const that = this;
+
+        return async (): Promise<void> => {
+            that.plugin.performDelete(binding);
+            that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
+        };
+    }
+    public createPerformForUpdateOrCreate(binding: IPluginBinding<ITaskDefinition>): () => Promise<void> {
+        const { target } = binding;
+        const that = this;
+
+        return async (): Promise<void> => {
+            that.plugin.performCreateOrUpdate(binding);
+            that.state.setGenericTarget<ITaskDefinition>(target);
+        };
+    }
 }
 
 
@@ -113,13 +131,13 @@ export interface IGenericTask {
     isDependency: () => boolean;
 }
 
-export interface IGenericBinding<ITaskDefinition> {
+export interface IPluginBinding<ITaskDefinition> {
     action: GenericAction;
     target: IGenericTarget<ITaskDefinition>;
     task: ITaskDefinition;
 }
 
-export interface IGenericTaskDefinition {
+export interface IPluginTask {
     name: string;
     type: string;
     hash: string;

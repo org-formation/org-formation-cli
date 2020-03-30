@@ -1,8 +1,8 @@
 import { exec, ExecException, ExecOptions } from 'child_process';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import AWS from 'aws-sdk';
-import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../aws-util';
-import { ConsoleUtil } from '../console-util';
+import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util/aws-util';
+import { ConsoleUtil } from '../util/console-util';
 
 
 export class ChildProcessUtility {

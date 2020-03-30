@@ -1,4 +1,4 @@
-import { ResourceUtil } from "../../src/resource-util";
+import { ResourceUtil } from "~util/resource-util";
 
 describe('when fixing versions', () => {
     test('dates are converted to string using UTC', ()=> {

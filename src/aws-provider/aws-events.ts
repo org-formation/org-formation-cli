@@ -1,7 +1,7 @@
 import * as AWS from 'aws-sdk';
 
 import { PutEventsRequest } from 'aws-sdk/clients/cloudwatchevents';
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 
 const eventSource = 'oc.org-formation';
 const eventDetailType = 'events.org-formation.com';

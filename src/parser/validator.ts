@@ -1,6 +1,6 @@
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { ResourceUtil } from '../resource-util';
+import { ResourceUtil } from '../util/resource-util';
 import { IOrganizationBinding, IResourceRef, ITemplate } from './parser';
 import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 

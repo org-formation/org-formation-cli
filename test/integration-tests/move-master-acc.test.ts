@@ -3,7 +3,7 @@ import { UpdateOrganizationCommand } from "~commands/index";
 import { readFileSync } from "fs";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
-import { AwsUtil } from "../../src/aws-util";
+import { AwsUtil } from "~util/aws-util";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from "./base-integration-test";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-move-master-acc/';

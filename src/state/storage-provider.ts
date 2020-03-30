@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { S3 } from 'aws-sdk';
 import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
 import { OrgFormationError } from '../org-formation-error';
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 
 export interface IStorageProvider {
     get(): Promise<string | undefined>;

@@ -71,6 +71,9 @@ The `update-stacks` task will provision all resources in all accounts specified 
 |DefaultOrganizationBindingRegion|String or list of String|Region or regions that will be used for any binding without Region specified.<br/><br/> **note**:  This value overriddes values within the template or resources (value in taskfile is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
 |DefaultOrganizationBinding|[OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Organization binding used for any resource that has no binding specified.<br/><br/> **note**:  This value overriddes values within the template or resources (value in taskfile is leading). <br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
 |OrganizationBindings|Dictionary of Strign, [OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Set of named OrganizationBindings that can be `!Ref`'d by Resources.<br/><br/> **note**: This value overriddes values within the template or resources (value in taskfile is leading).|
+|CloudFormationRoleName|string|Specifies the name of the IAM Role that must be used to pass to the CloudFormation service. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+|TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+
 
 **example**
 ```yaml
@@ -116,6 +119,7 @@ The ``update-serverless.com`` task will deploy the [serverless.com](https://serv
 |Config| relative path |Name of the Serverless.com configuration file that contains information about the payload.<br/><br/>default is **./serverless.yml**|
 |Stage|string|Value used as stage when deploying the serverless.com workload|
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
+|TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
 
 **example**
 ```yaml
@@ -134,6 +138,24 @@ ServerlessWorkload:
 
 The ``copy-to-s3`` task will upload a file from `LocalPath` to an S3 `RemotePath`.
 
+|Attribute |Value|Remarks|
+|:---|:---|:---|
+|LocalPath|relative path|This property is required. <br/><br/>Specifies the file that needs to be uploaded.
+|RemotePath|S3 moniker|This property is required. <br/><br/>Specifies the location in S3 that the file should be uploaded to.
+|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the serverless.com workload needs to be deployed to.|
+|DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
+|TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+
+**example**
+```yaml
+CopyToS3:
+  Type: copy-to-s3
+  LocalPath: ./files/file.txt
+  RemotePath: s3://my-bucket/files/file.txt
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+```
 
 ### include
 

@@ -1,4 +1,4 @@
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
 import {
     AccountResource,

@@ -1,8 +1,8 @@
 import { UpdateOrganizationCommand, IUpdateOrganizationCommandArgs } from "~commands/update-organization";
 import { Command, Option } from 'commander';
 import Sinon = require("sinon");
-import { ConsoleUtil } from "../../../src/console-util";
-import { AwsUtil } from "../../../src/aws-util";
+import { ConsoleUtil } from "~util/console-util";
+import { AwsUtil } from "~util/aws-util";
 import { TemplateRoot } from "~parser/parser";
 import { PersistedState } from "~state/persisted-state";
 import { S3StorageProvider } from "~state/storage-provider";

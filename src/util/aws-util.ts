@@ -5,7 +5,7 @@ import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
 import AWS from 'aws-sdk';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
-import { OrgFormationError } from './org-formation-error';
+import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 

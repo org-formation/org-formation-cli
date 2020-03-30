@@ -1,8 +1,8 @@
 import { Command, Option } from 'commander';
 import { CreateChangeSetCommand, ICreateChangeSetCommandArgs } from '~commands/create-organization-changeset';
 import Sinon = require('sinon');
-import { ConsoleUtil } from '../../../src/console-util';
-import { AwsUtil } from '../../../src/aws-util';
+import { ConsoleUtil } from '~util/console-util';
+import { AwsUtil } from '~util/aws-util';
 import { TemplateRoot } from '~parser/parser';
 import { ChangeSetProvider, IStoredChangeSet, IOrganizationChange, IOrganizationChangeSet } from '~change-set/change-set-provider';
 import { OrgResourceTypes } from '~parser/model/resource-types';

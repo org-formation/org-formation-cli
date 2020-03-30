@@ -1,5 +1,5 @@
 import { bool } from 'aws-sdk/clients/signer';
-import { SubExpression } from './cfn-binder/cfn-sub-expression';
+import { SubExpression } from '../cfn-binder/cfn-sub-expression';
 
 const zeroPad = (num: number, places: number): string => String(num).padStart(places, '0');
 

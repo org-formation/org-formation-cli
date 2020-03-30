@@ -11,5 +11,4 @@ export * from './update-organization';
 export * from './update-stacks';
 export * from './validate-stacks';
 export * from './validate-tasks';
-export * from './serverless/update-sls';
 export * from './cleanup';

@@ -4,7 +4,7 @@ import { CreateAccountRequest, TagResourceRequest, UntagResourceRequest } from '
 import { AwsEvents } from '~aws-provider/aws-events';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 import { TestOrganizations } from '../test-organizations';
 
 AWSMock.setSDKInstance(AWS);

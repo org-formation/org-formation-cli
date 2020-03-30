@@ -1,0 +1,15 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+CdkWorkload:
+  Type: update-cdk
+  Path: ./workload/    # used to package / calculate hash
+  RunNpmInstall: true
+  RunNpmBuild: true
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 0

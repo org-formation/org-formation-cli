@@ -1,5 +1,5 @@
 import path from 'path';
-import { ConsoleUtil } from '../../console-util';
+import { ConsoleUtil } from '../../util/console-util';
 import { ICommandArgs, IUpdateOrganizationCommandArgs, UpdateOrganizationCommand } from '../../commands/index';
 import { IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IBuildTaskProvider } from '~build-tasks/build-task-provider';

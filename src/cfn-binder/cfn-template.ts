@@ -1,6 +1,6 @@
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { ResourceUtil } from '../resource-util';
+import { ResourceUtil } from '../util/resource-util';
 import { ICfnBinding, ICfnCrossAccountDependency, ICfnValue } from './cfn-binder';
 import { SubExpression } from './cfn-sub-expression';
 import {

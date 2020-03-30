@@ -1,5 +1,5 @@
 import Sinon from 'sinon';
-import { ConsoleUtil } from '../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 
 
 describe('when logging to cli', () => {

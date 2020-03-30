@@ -6,7 +6,7 @@ import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { PersistedState } from '~state/persisted-state';
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { ICfnTask } from '~cfn-binder/cfn-task-provider';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { IUpdateStacksBuildTask } from '~build-tasks/tasks/update-stacks-task';
 

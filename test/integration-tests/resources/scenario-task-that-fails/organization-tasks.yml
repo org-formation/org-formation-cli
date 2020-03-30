@@ -1,0 +1,9 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+CfnTemplate:
+  Type: update-stacks
+  Template: ./invalid-template.yml
+  StackName: invalid-template
