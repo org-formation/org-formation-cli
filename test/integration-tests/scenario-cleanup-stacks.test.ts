@@ -10,7 +10,6 @@ const basePathForScenario = './test/integration-tests/resources/scenario-cleanup
 describe('when cleaning up stacks', () => {
     let context: IIntegrationTestContext;
     let cfnClient: CloudFormation;
-
     let stacksBeforeAll: ListStacksOutput;
     let stacksAfterAddBucket: ListStacksOutput;
     let stacksAfterRenoveBucketNoCleanup: ListStacksOutput;

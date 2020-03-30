@@ -30,7 +30,7 @@ export class ChildProcessUtility {
             };
         }
 
-        return this.SpawnProcess(command, options);
+        return await this.SpawnProcess(command, options);
     };
 
     public static SpawnProcess(command: string, options: ExecOptions): Promise<void> {
