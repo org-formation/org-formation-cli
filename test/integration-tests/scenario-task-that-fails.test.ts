@@ -1,4 +1,4 @@
-import { PerformTasksCommand, ValidateTasksCommand } from "~commands/index";
+import { PerformTasksCommand, ValidateTasksCommand, UpdateOrganizationCommand } from "~commands/index";
 import { readFileSync } from "fs";
 import { IIntegrationTestContext, baseBeforeAll, profileForIntegrationTests, baseAfterAll } from "./base-integration-test";
 import { ConsoleUtil } from "~util/console-util";
@@ -24,6 +24,7 @@ describe('when cleaning up stacks', () => {
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
         await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
 
+        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + 'organization.yml'});
 
         consoleErrorSpy.mockReset();
         try{
@@ -48,7 +49,9 @@ describe('when cleaning up stacks', () => {
     });
 
     test('validate logs error', () => {
-        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('contents is empty'));
+        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('stack invalid-template'));
+        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('XX::S3::Bucket'));
+        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('Unrecognized resource types'));
     });
 
     test('perform tasks throws error', () => {
@@ -56,7 +59,9 @@ describe('when cleaning up stacks', () => {
     });
 
     test('perform tasks logs error', () => {
-        expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('contents is empty'));
+        expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('error updating cloudformation stack invalid-template in account'));
+        expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('XX::S3::Bucket'));
+        expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('Unrecognized resource types:'));
     });
 
     afterAll(async () => {

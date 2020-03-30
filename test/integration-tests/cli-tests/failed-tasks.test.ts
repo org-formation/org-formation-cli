@@ -12,8 +12,8 @@ describe('when org-formation perform-tasks fails', () => {
         expect(response.status).toBe(1);
     });
 
-    test('error is written to stdout', () =>{
-        const error = response.stdout.toString();
+    test('error is written to stderr', () =>{
+        const error = response.stderr.toString();
         expect(error).toContain('Template format error');
         expect(error).toContain('XX::S3::Bucket');
         expect(error).toContain('failed executing stack invalid-template in account');
