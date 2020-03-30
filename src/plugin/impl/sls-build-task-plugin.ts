@@ -1,19 +1,19 @@
 import path from 'path';
-import { IOrganizationBinding } from "~parser/parser";
-import { IBuildTaskConfiguration } from "~build-tasks/build-configuration";
-import { IPluginTask, IPluginBinding } from "~plugin/plugin-binder";
-import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin } from "../plugin";
-import { IPerformTasksCommandArgs } from "~commands/index";
 import { existsSync } from 'fs';
-import { ChildProcessUtility } from '~core/child-process-util';
+import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin } from '../plugin';
 import { OrgFormationError } from '../../../src/org-formation-error';
-import { Validator } from '~parser/validator';
 import { ConsoleUtil } from '../../util/console-util';
+import { IOrganizationBinding } from '~parser/parser';
+import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
+import { IPluginTask, IPluginBinding } from '~plugin/plugin-binder';
+import { IPerformTasksCommandArgs } from '~commands/index';
+import { ChildProcessUtility } from '~core/child-process-util';
+import { Validator } from '~parser/validator';
 import { Md5Util } from '~util/md5-util';
 
 export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskConfig, ISlsCommandArgs, ISlsTask> {
-    type: string = 'serverless.com';
-    typeForTask: string = 'update-serverless.com';
+    type = 'serverless.com';
+    typeForTask = 'update-serverless.com';
 
     convertToCommandArgs(config: IServerlessComTaskConfig, command: IPerformTasksCommandArgs): ISlsCommandArgs {
 
@@ -33,7 +33,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             maxConcurrent: config.MaxConcurrentTasks,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
-        }
+        };
     }
     validateCommandArgs(commandArgs: ISlsCommandArgs): void {
         if (!commandArgs.organizationBinding) {
@@ -71,7 +71,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             runNpmInstall: command.runNpmInstall,
             configFile: command.configFile,
             stage: command.stage,
-            path: hashOfServerlessDirectory
+            path: hashOfServerlessDirectory,
         };
     }
 
@@ -135,7 +135,6 @@ const appendArgumentIfTruthy = (command: string, option: string, val?: string): 
     if (!val) {return command;}
     return `${command} ${option} ${val}`;
 };
-
 
 
 export interface IServerlessComTaskConfig extends IBuildTaskConfiguration {

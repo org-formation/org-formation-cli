@@ -1,10 +1,10 @@
-import { IBuildTaskConfiguration, IBuildTask } from "~build-tasks/build-configuration";
-import { IBuildTaskProvider, BuildTaskProvider } from "~build-tasks/build-task-provider";
-import { IBuildTaskPlugin, IBuildTaskPluginCommandArgs } from "./plugin";
-import { IPerformTasksCommandArgs, CleanupCommand } from "~commands/index";
-import { ConsoleUtil } from "~util/console-util";
-import { PluginCliCommand } from "./plugin-command";
-import { IPluginTask } from "./plugin-binder";
+import { IBuildTaskPlugin, IBuildTaskPluginCommandArgs } from './plugin';
+import { PluginCliCommand } from './plugin-command';
+import { IPluginTask } from './plugin-binder';
+import { IBuildTaskConfiguration, IBuildTask } from '~build-tasks/build-configuration';
+import { IBuildTaskProvider, BuildTaskProvider } from '~build-tasks/build-task-provider';
+import { IPerformTasksCommandArgs, CleanupCommand } from '~commands/index';
+import { ConsoleUtil } from '~util/console-util';
 
 export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> implements IBuildTaskProvider<TBuildTaskConfiguration> {
 
@@ -41,7 +41,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
             perform: async (): Promise<void> => {
                 const commandArgs = this.plugin.convertToCommandArgs(config, command);
                 this.plugin.validateCommandArgs(commandArgs);
-            }
+            },
         };
     }
 
@@ -65,7 +65,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
                     ConsoleUtil.LogInfo(`executing: ${this.type} ${logicalId}`);
                     await CleanupCommand.Perform({ ...command,  name: logicalId, type: this.plugin.type, maxConcurrentTasks: 10, failedTasksTolerance: 10 });
                 }
-            }
+            },
         };
     }
 }

@@ -1,11 +1,11 @@
-import { IBuildTaskConfiguration } from "~build-tasks/build-configuration";
-import { ICommandArgs } from "~commands/base-command";
-import { IPluginBinding, IPluginTask } from "~plugin/plugin-binder";
-import { IPerformTasksCommandArgs } from "~commands/index";
-import { IOrganizationBinding } from "~parser/parser";
-import { CdkBuildTaskPlugin } from "./impl/cdk-build-task-plugin";
-import { SlsBuildTaskPlugin } from "./impl/sls-build-task-plugin";
-import { CopyToS3TaskPlugin } from "./impl/s3-copy-build-task-plugin";
+import { CdkBuildTaskPlugin } from './impl/cdk-build-task-plugin';
+import { SlsBuildTaskPlugin } from './impl/sls-build-task-plugin';
+import { CopyToS3TaskPlugin } from './impl/s3-copy-build-task-plugin';
+import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
+import { ICommandArgs } from '~commands/base-command';
+import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
+import { IPerformTasksCommandArgs } from '~commands/index';
+import { IOrganizationBinding } from '~parser/parser';
 
 export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> {
     type: string;
@@ -31,15 +31,15 @@ export interface IBuildTaskPluginCommandArgs extends ICommandArgs {
 }
 
 export class PluginProvider {
-    static GetPlugin(type: string) {
+    static GetPlugin(type: string): IBuildTaskPlugin<any, any, any> {
         return this.GetPlugins().find(x=>x.type === type);
     }
 
-    static GetPlugins(): Array<IBuildTaskPlugin<any, any, any>> {
+    static GetPlugins(): IBuildTaskPlugin<any, any, any>[] {
         return [
             new CdkBuildTaskPlugin(),
             new SlsBuildTaskPlugin(),
             new CopyToS3TaskPlugin(),
-        ]
+        ];
     }
 }

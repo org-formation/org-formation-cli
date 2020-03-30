@@ -1,19 +1,19 @@
 import path from 'path';
-import { IBuildTaskPlugin, IBuildTaskPluginCommandArgs } from "../plugin";
-import { IBuildTaskConfiguration } from "~build-tasks/build-configuration";
-import { IPluginBinding, IPluginTask } from "~plugin/plugin-binder";
-import { IOrganizationBinding } from "~parser/parser";
-import { IPerformTasksCommandArgs } from '~commands/index';
-import { Md5Util } from '~util/md5-util';
 import { existsSync } from 'fs';
-import { ChildProcessUtility } from '~core/child-process-util';
+import { IBuildTaskPlugin, IBuildTaskPluginCommandArgs } from '../plugin';
 import { OrgFormationError } from '../../../src/org-formation-error';
 import { ConsoleUtil } from '../../util/console-util';
+import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
+import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
+import { IOrganizationBinding } from '~parser/parser';
+import { IPerformTasksCommandArgs } from '~commands/index';
+import { Md5Util } from '~util/md5-util';
+import { ChildProcessUtility } from '~core/child-process-util';
 import { Validator } from '~parser/validator';
 
 export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig, ICdkCommandArgs, ICdkTask> {
-    type: string = 'cdk';
-    typeForTask: string = 'update-cdk';
+    type = 'cdk';
+    typeForTask = 'update-cdk';
 
     convertToCommandArgs(config: ICdkBuildTaskConfig, command: IPerformTasksCommandArgs): ICdkCommandArgs {
 
@@ -33,7 +33,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             maxConcurrent: config.MaxConcurrentTasks,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
-        }
+        };
     }
 
     validateCommandArgs(commandArgs: ICdkCommandArgs): void {
@@ -63,7 +63,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const hashOfCdkDirectory = Md5Util.Md5OfPath(command.path);
         return {
             runNpmInstall: command.runNpmInstall,
-            path: hashOfCdkDirectory
+            path: hashOfCdkDirectory,
         };
     }
 

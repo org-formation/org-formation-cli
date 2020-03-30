@@ -1,14 +1,14 @@
 import path from 'path';
-import { IPluginTask, IPluginBinding } from "../plugin-binder";
-import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin } from "../plugin";
-import { IBuildTaskConfiguration } from "~build-tasks/build-configuration";
-import { IPerformTasksCommandArgs } from "~commands/index";
-import { Md5Util } from '~util/md5-util';
-import { existsSync, readFileSync, statSync } from "fs";
-import { OrgFormationError } from '../../../src/org-formation-error';
-import { IOrganizationBinding } from "~parser/parser";
-import { AwsUtil } from '~util/aws-util';
+import { existsSync, readFileSync, statSync } from 'fs';
 import { PutObjectRequest, DeleteObjectRequest } from 'aws-sdk/clients/s3';
+import { IPluginTask, IPluginBinding } from '../plugin-binder';
+import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin } from '../plugin';
+import { OrgFormationError } from '../../../src/org-formation-error';
+import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
+import { IPerformTasksCommandArgs } from '~commands/index';
+import { Md5Util } from '~util/md5-util';
+import { IOrganizationBinding } from '~parser/parser';
+import { AwsUtil } from '~util/aws-util';
 
 export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConfig, IS3CopyCommandArgs, IS3CopyTask> {
     type = 'copy-to-s3';
@@ -32,7 +32,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             maxConcurrent: 1,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
-        }
+        };
     }
     validateCommandArgs(commandArgs: IS3CopyCommandArgs): void {
         if (!commandArgs.organizationBinding) {
@@ -53,12 +53,12 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         }
 
     }
-    getValuesForEquality(commandArgs: IS3CopyCommandArgs) {
+    getValuesForEquality(commandArgs: IS3CopyCommandArgs): any {
         const hashOfLocalDirectory = Md5Util.Md5OfPath(commandArgs.localPath);
         return {
             remotePath: commandArgs.remotePath,
             zipBeforePut: commandArgs.zipBeforePut,
-            path: hashOfLocalDirectory
+            path: hashOfLocalDirectory,
         };
     }
     concertToTask(command: IS3CopyCommandArgs, hashOfTask: string): IS3CopyTask {
@@ -95,8 +95,8 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
     static getBucketAndKey(task: IS3CopyTask): IBucketAndKey {
         // s3://bucket/path/to/file
         if (task.remotePath.startsWith('s3://')) {
-            const path = task.remotePath.substring(5);
-            const parts = path.split('/');
+            const objectPath = task.remotePath.substring(5);
+            const parts = objectPath.split('/');
             return {
                 Bucket: parts[0],
                 Key: parts.slice(1).join('/'),

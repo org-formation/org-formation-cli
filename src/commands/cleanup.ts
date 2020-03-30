@@ -26,7 +26,7 @@ export class CleanupCommand extends BaseCliCommand<ICleanupCommandArgs> {
         const task = {name: command.name, type: command.type, hash: '', stage: '', path: ''};
         const emptyTemplate = TemplateRoot.createEmpty();
 
-        const plugin = PluginProvider.GetPlugin(command.type)
+        const plugin = PluginProvider.GetPlugin(command.type);
 
         const binder = new PluginBinder<any>(task, state, emptyTemplate, undefined, plugin);
         const tasks = binder.enumTasks();

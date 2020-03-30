@@ -1,10 +1,10 @@
-import { ICommandArgs, BaseCliCommand } from "~commands/index";
-import { IBuildTaskPlugin, IBuildTaskPluginCommandArgs } from "~plugin/plugin";
-import md5 from "md5";
-import { TemplateRoot } from "~parser/parser";
-import { PluginBinder, IPluginTask } from "./plugin-binder";
-import { ConsoleUtil } from "~util/console-util";
-import { DefaultTaskRunner } from "../core/default-task-runner";
+import md5 from 'md5';
+import { DefaultTaskRunner } from '../core/default-task-runner';
+import { PluginBinder, IPluginTask } from './plugin-binder';
+import { BaseCliCommand } from '~commands/index';
+import { IBuildTaskPlugin, IBuildTaskPluginCommandArgs } from '~plugin/plugin';
+import { TemplateRoot } from '~parser/parser';
+import { ConsoleUtil } from '~util/console-util';
 
 export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> extends BaseCliCommand<TCommandArgs> {
 
@@ -20,7 +20,7 @@ export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, 
             organizationFileHash: command.organizationFileHash,
             taskRoleName: command.taskRoleName,
             ...usedInHash,
-        }
+        };
         const hash = md5(JSON.stringify(allUsedInHash));
         const task = this.plugin.concertToTask(command, hash);
         const state = await this.getState(command);
