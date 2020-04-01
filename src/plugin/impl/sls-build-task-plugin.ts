@@ -113,7 +113,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         }
 
         if (binding.task.customAdditionalSlsArguments) {
-            command = command + ' ' + binding.task.customAdditionalSlsArguments
+            command = command + ' ' + binding.task.customAdditionalSlsArguments;
         }
 
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
@@ -139,7 +139,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         }
 
         if (binding.task.customAdditionalSlsArguments) {
-            command = command + ' ' + binding.task.customAdditionalSlsArguments
+            command = command + ' ' + binding.task.customAdditionalSlsArguments;
         }
 
         command = appendArgumentIfTruthy(command, '--stage', task.stage);

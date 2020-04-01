@@ -110,7 +110,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         }
 
         if (binding.task.customAdditionalCdkArguments) {
-            command = command + ' ' + binding.task.customAdditionalCdkArguments
+            command = command + ' ' + binding.task.customAdditionalCdkArguments;
         }
 
         const accountId = target.accountId;
@@ -135,7 +135,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         }
 
         if (binding.task.customAdditionalCdkArguments) {
-            command = command + ' ' + binding.task.customAdditionalCdkArguments
+            command = command + ' ' + binding.task.customAdditionalCdkArguments;
         }
 
         const accountId = target.accountId;

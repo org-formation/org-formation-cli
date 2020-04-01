@@ -1,4 +1,4 @@
-import { existsSync } from "fs";
+import { existsSync } from 'fs';
 import path from 'path';
 
 export class PluginUtil {

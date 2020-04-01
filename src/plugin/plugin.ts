@@ -1,3 +1,4 @@
+import { OrgFormationError } from '../../src/org-formation-error';
 import { CdkBuildTaskPlugin } from './impl/cdk-build-task-plugin';
 import { SlsBuildTaskPlugin } from './impl/sls-build-task-plugin';
 import { CopyToS3TaskPlugin } from './impl/s3-copy-build-task-plugin';
@@ -6,7 +7,6 @@ import { ICommandArgs } from '~commands/base-command';
 import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { IOrganizationBinding } from '~parser/parser';
-import { OrgFormationError } from '../../src/org-formation-error';
 
 export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> {
     type: string;

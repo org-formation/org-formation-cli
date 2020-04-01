@@ -15,7 +15,7 @@ export class DefaultTaskRunner {
                 ConsoleUtil.LogError(`skip executing task ${task.logicalName} in ${where(task)}. Reason: dependency has failed.`);
             },
             onTaskRanSuccessfully: task => {
-                let what = task.action === 'Delete' ? 'deleted from' : 'updated in';
+                const what = task.action === 'Delete' ? 'deleted from' : 'updated in';
 
                 ConsoleUtil.LogInfo(`workload ${task.logicalName} successfully ${what} ${where(task)}.`);
             },
@@ -35,10 +35,10 @@ export class DefaultTaskRunner {
 
 }
 
-const where = (task: IGenericTask) => {
+const where = (task: IGenericTask): string => {
     let result = `${task.accountId}`;
     if (task.region) {
         result = `${result}/${task.region}`;
     }
     return result;
-}
+};
