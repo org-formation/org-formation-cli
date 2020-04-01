@@ -68,9 +68,9 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.targets['cdk']).toBeDefined();
         expect(state.targets['cdk']['CdkWorkload']).toBeDefined();
         expect(state.targets['cdk']['CdkWorkload']['102625093955']).toBeDefined();
-        expect(state.targets['cdk']['CdkWorkload']['102625093955']['eu-central-1']).toBeDefined();
+        expect(state.targets['cdk']['CdkWorkload']['102625093955']['no-region']).toBeDefined();
         expect(state.targets['cdk']['CdkWorkload']['340381375986']).toBeDefined();
-        expect(state.targets['cdk']['CdkWorkload']['340381375986']['eu-central-1']).toBeDefined();
+        expect(state.targets['cdk']['CdkWorkload']['340381375986']['no-region']).toBeDefined();
     });
 
     // test('after deploy workload state contains tracked task', () => {

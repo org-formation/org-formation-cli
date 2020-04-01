@@ -4,25 +4,33 @@ import { IGenericTarget, PersistedState } from '~state/persisted-state';
 import { TemplateRoot, IOrganizationBinding } from '~parser/parser';
 import { IBuildTaskPlugin } from '~plugin/plugin';
 
-export class PluginBinder<ITaskDefinition extends IPluginTask> {
+export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
-    constructor(private readonly task: ITaskDefinition,
+    constructor(private readonly task: TTaskDefinition,
                 protected readonly state: PersistedState,
                 private readonly template: TemplateRoot,
                 private readonly organizationBinding: IOrganizationBinding,
-                private readonly plugin: IBuildTaskPlugin<any, any, ITaskDefinition>) {
+                private readonly plugin: IBuildTaskPlugin<any, any, TTaskDefinition>) {
 
     }
 
-    public enumBindings(): IPluginBinding<ITaskDefinition>[] {
-        const result: IPluginBinding<ITaskDefinition>[] = [];
+    public enumBindings(): IPluginBinding<TTaskDefinition>[] {
+        const result: IPluginBinding<TTaskDefinition>[] = [];
         for(const logicalTargetAccountName of this.template.resolveNormalizedLogicalAccountIds(this.organizationBinding)) {
 
             const accountBinding = this.state.getAccountBinding(logicalTargetAccountName);
             if (!accountBinding) { throw new OrgFormationError(`unable to find account ${logicalTargetAccountName} in state. Is your organization up to date?`); }
 
-            for(const region of this.template.resolveNormalizedRegions(this.organizationBinding)) {
-                const binding: IPluginBinding<ITaskDefinition> = {
+            let regions = this.template.resolveNormalizedRegions(this.organizationBinding);
+            if (this.plugin.applyGlobally) {
+                if (regions.length > 0) {
+                    ConsoleUtil.LogWarning(`workload ${this.task.name} has an organization binding that includes region, workloads of type ${this.task.type} however will always be applied globally`);
+                }
+                regions = [undefined];
+            }
+
+            for(const region of regions) {
+                const binding: IPluginBinding<TTaskDefinition> = {
                     action: 'UpdateOrCreate',
                     target: {
                         targetType: this.task.type,
@@ -36,7 +44,7 @@ export class PluginBinder<ITaskDefinition extends IPluginTask> {
                     task: this.task,
                 };
 
-                const existingTargetBinding = this.state.getGenericTarget(this.task.type, this.task.name, accountBinding.physicalId, region);
+                const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.task.name, accountBinding.physicalId, region);
 
                 if (existingTargetBinding && existingTargetBinding.lastCommittedHash === binding.target.lastCommittedHash) {
                     binding.action = 'None';
@@ -48,7 +56,7 @@ export class PluginBinder<ITaskDefinition extends IPluginTask> {
             }
         }
 
-        const targetsInState = this.state.enumGenericTargets<ITaskDefinition>(this.task.type, this.task.name);
+        const targetsInState = this.state.enumGenericTargets<TTaskDefinition>(this.task.type, this.task.name);
         for(const targetToBeDeleted of targetsInState.filter(x=>!result.find(y=>y.target.accountId === x.accountId && y.target.region === x.region))) {
             result.push({
                 action: 'Delete',
@@ -100,7 +108,7 @@ export class PluginBinder<ITaskDefinition extends IPluginTask> {
         return result;
     }
 
-    public createPerformForDelete(binding: IPluginBinding<ITaskDefinition>): () => Promise<void> {
+    public createPerformForDelete(binding: IPluginBinding<TTaskDefinition>): () => Promise<void> {
         const { task, target } = binding;
         const that = this;
 
@@ -109,13 +117,13 @@ export class PluginBinder<ITaskDefinition extends IPluginTask> {
             that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
         };
     }
-    public createPerformForUpdateOrCreate(binding: IPluginBinding<ITaskDefinition>): () => Promise<void> {
+    public createPerformForUpdateOrCreate(binding: IPluginBinding<TTaskDefinition>): () => Promise<void> {
         const { target } = binding;
         const that = this;
 
         return async (): Promise<void> => {
             that.plugin.performCreateOrUpdate(binding);
-            that.state.setGenericTarget<ITaskDefinition>(target);
+            that.state.setGenericTarget<TTaskDefinition>(target);
         };
     }
 }

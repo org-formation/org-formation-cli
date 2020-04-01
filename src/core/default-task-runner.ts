@@ -9,19 +9,21 @@ export class DefaultTaskRunner {
 
         const delegate: ITaskRunnerDelegates<IGenericTask> = {
             onTaskRanFailed: (task, err) => {
-                ConsoleUtil.LogError(`failed executing task ${task.logicalName} in account ${task.accountId} (${task.region}). Reason: ${err}`);
+                ConsoleUtil.LogError(`failed executing task ${task.logicalName} in ${where(task)}. Reason: ${err}`);
             },
             onTaskSkippedBecauseDependencyFailed: task => {
-                ConsoleUtil.LogError(`skip executing task ${task.logicalName} in account ${task.accountId} (${task.region}). Reason: dependency has failed.`);
+                ConsoleUtil.LogError(`skip executing task ${task.logicalName} in ${where(task)}. Reason: dependency has failed.`);
             },
             onTaskRanSuccessfully: task => {
-                ConsoleUtil.LogInfo(`stack ${task.logicalName} successfully ${task.action === 'Delete' ? 'deleted from' : 'updated in' } ${task.accountId}/${task.region}.`);
+                let what = task.action === 'Delete' ? 'deleted from' : 'updated in';
+
+                ConsoleUtil.LogInfo(`workload ${task.logicalName} successfully ${what} ${where(task)}.`);
             },
             throwCircularDependency: ts => {
                 const targets = ts.map(x => x.accountId + (x.region ? '/' + x.region : ''));
                 throw new OrgFormationError(`circular dependency on stack ${logicalName} for targets ${targets.join(', ')}`);
              },
-            throwDependencyOnSelfException: task => {throw new OrgFormationError(`stack ${task.logicalName} has dependency on self target account ${task.accountId} / ${task.region}`); },
+            throwDependencyOnSelfException: task => {throw new OrgFormationError(`stack ${task.logicalName} has dependency on self target account ${where(task)}`); },
             onFailureToleranceExceeded: (totalTasksFailed: number, tolerance: number) => {
                 throw new OrgFormationError(`number failed tasks ${totalTasksFailed} exceeded tolerance for failed tasks ${tolerance}`);
             },
@@ -31,4 +33,12 @@ export class DefaultTaskRunner {
         await GenericTaskRunner.RunTasks<IGenericTask>(tasks, delegate);
     }
 
+}
+
+const where = (task: IGenericTask) => {
+    let result = `${task.accountId}`;
+    if (task.region) {
+        result = `${result}/${task.region}`;
+    }
+    return result;
 }

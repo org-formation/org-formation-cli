@@ -201,7 +201,7 @@ export class TemplateRoot {
     }
 
     public resolveNormalizedRegions(binding: IOrganizationBinding): string[] {
-        if (binding === null || binding === undefined) {
+        if (binding === null || binding === undefined || binding.Region === undefined) {
             return [];
         }
 
@@ -233,7 +233,7 @@ export class TemplateRoot {
             if (this.organizationSection.masterAccount) {
                 result.add(this.organizationSection.masterAccount.logicalId);
             } else {
-                new OrgFormationError('unable to include master account if master account is not part of the template');
+                throw new OrgFormationError('unable to include master account if master account is not part of the template');
             }
         }
 

@@ -10,10 +10,12 @@ import { IPerformTasksCommandArgs } from '~commands/index';
 import { Md5Util } from '~util/md5-util';
 import { ChildProcessUtility } from '~core/child-process-util';
 import { Validator } from '~parser/validator';
+import { PluginUtil } from '~plugin/plugin-util';
 
 export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig, ICdkCommandArgs, ICdkTask> {
     type = 'cdk';
     typeForTask = 'update-cdk';
+    applyGlobally = true;
 
     convertToCommandArgs(config: ICdkBuildTaskConfig, command: IPerformTasksCommandArgs): ICdkCommandArgs {
 
@@ -28,11 +30,14 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             ...command,
             name: config.LogicalName,
             runNpmInstall: config.RunNpmInstall === true,
+            runNpmBuild: config.RunNpmBuild === true,
             path: cdkPath,
             failedTolerance: config.FailedTaskTolerance,
             maxConcurrent: config.MaxConcurrentTasks,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
+            customAdditionalCdkArguments: config.CustomAdditionalCdkArguments,
+            customInstallCommand: config.CustomInstallCommand,
         };
     }
 
@@ -46,6 +51,11 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         }
 
         if (commandArgs.runNpmInstall) {
+
+            if (commandArgs.customInstallCommand !== undefined) {
+                throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' therefore cannot also specify 'CustomInstallCommand'`);
+            }
+
             const packageFilePath = path.join(commandArgs.path, 'package.json');
             if (!existsSync(packageFilePath)) {
                 throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' but cannot find npm package file ${packageFilePath}`);
@@ -64,29 +74,43 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         return {
             runNpmInstall: command.runNpmInstall,
             path: hashOfCdkDirectory,
+            customAdditionalArguments: command.customAdditionalCdkArguments,
+            customInstallCommand: command.customAdditionalCdkArguments,
         };
     }
 
-    concertToTask(command: ICdkCommandArgs, hashOfTask: string): ICdkTask {
+    convertToTask(command: ICdkCommandArgs, hashOfTask: string): ICdkTask {
         return {
             type: this.type,
             name: command.name,
             path: command.path,
             hash: hashOfTask,
             runNpmInstall: command.runNpmInstall,
+            runNpmBuild: command.runNpmBuild,
             taskRoleName: command.taskRoleName,
+            customAdditionalCdkArguments: command.customAdditionalCdkArguments,
+            customInstallCommand: command.customAdditionalCdkArguments,
         };
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<ICdkTask>): Promise<void> {
         const { task, target } = binding;
-        let command = 'npm run build && npx cdk deploy';
+        let command = 'npx cdk deploy';
 
-        const hasPackageLock = existsSync(path.resolve(task.path, 'package-lock.json'));
-        if (binding.task.runNpmInstall && hasPackageLock) {
-            command = 'npm ci && ' + command;
-        } else {
-            command = 'npm i && ' + command;
+        if (binding.task.runNpmBuild) {
+            command = 'npm run build && ' + command;
+        }
+
+        if (binding.task.runNpmInstall) {
+            command = PluginUtil.PrependNpmInstall(task.path, command);
+        }
+
+        if (binding.task.customInstallCommand) {
+            command = binding.task.customInstallCommand + ' && ' + command;
+        }
+
+        if (binding.task.customAdditionalCdkArguments) {
+            command = command + ' ' + binding.task.customAdditionalCdkArguments
         }
 
         const accountId = target.accountId;
@@ -98,11 +122,20 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const { task, target } = binding;
         let command = 'npx cdk destroy';
 
-        const pacakgeLockExists = existsSync(path.resolve(task.path, 'package-lock.json'));
-        if (binding.task.runNpmInstall && pacakgeLockExists) {
-            command = 'npm ci && ' + command;
-        } else {
-            command = 'npm i && ' + command;
+        if (binding.task.runNpmInstall) {
+            command = PluginUtil.PrependNpmInstall(task.path, command);
+        }
+
+        if (binding.task.runNpmBuild) {
+            command = 'npm run build && ' + command;
+        }
+
+        if (binding.task.customInstallCommand) {
+            command = binding.task.customInstallCommand + ' && ' + command;
+        }
+
+        if (binding.task.customAdditionalCdkArguments) {
+            command = command + ' ' + binding.task.customAdditionalCdkArguments
         }
 
         const accountId = target.accountId;
@@ -119,14 +152,23 @@ interface ICdkBuildTaskConfig extends IBuildTaskConfiguration {
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
+    RunNpmBuild?: boolean;
+    CustomInstallCommand?: string;
+    CustomAdditionalCdkArguments?: string;
 }
 
 interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
     path: string;
     runNpmInstall: boolean;
+    runNpmBuild: boolean;
+    customInstallCommand?: string;
+    customAdditionalCdkArguments?: string;
 }
 
 interface ICdkTask extends IPluginTask {
     path: string;
     runNpmInstall: boolean;
+    runNpmBuild: boolean;
+    customInstallCommand?: string;
+    customAdditionalCdkArguments?: string;
 }

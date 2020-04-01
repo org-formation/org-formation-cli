@@ -8,6 +8,7 @@
   - [update-stacks](#update-stacks)
   - [update-serverless.com](#update-serverlesscom)
   - [copy-to-s3](#copy-to-s3)
+  - [update-cdk](#update-cdk)
   - [include](#include)
 
 <!-- /code_chunk_output -->
@@ -110,7 +111,7 @@ Roles:
 
 ### update-serverless.com
 
-The ``update-serverless.com`` task will deploy the [serverless.com](https://serverless.com) workload defined in the directory specified as `Path`.
+The ``update-serverless.com`` task will deploy the [serverless.com](https://serverless.com) workload defined in the directory specified by `Path`.
 
 |Attribute |Value|Remarks|
 |:---|:---|:---|
@@ -118,6 +119,9 @@ The ``update-serverless.com`` task will deploy the [serverless.com](https://serv
 |OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the serverless.com workload needs to be deployed to.|
 |Config| relative path |Name of the Serverless.com configuration file that contains information about the payload.<br/><br/>default is **./serverless.yml**|
 |Stage|string|Value used as stage when deploying the serverless.com workload|
+|RunNpmInstall|boolean| When true, `npm ci` will be ran before serverless deployment and removal|
+|CustomInstallCommand| string| When specified command will be ran before serverless deployment and removal|
+|CustomAdditionalSlsArguments| string | When specified contains additional arguments that will be passed to the serverless deployment and removal commands|
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
 
@@ -155,6 +159,30 @@ CopyToS3:
   OrganizationBinding:
     Account: !Ref AccountA
     Region: eu-central-1
+```
+
+### update-cdk
+
+The ``update-cdk`` task will deploy the a CDK workload defined in the directory specified by `Path`.
+
+|Attribute |Value|Remarks|
+|:---|:---|:---|
+|Path|relative path|This property is required. <br/><br/>Specifies which directory contains the serverless.com workload
+|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the CDK workload needs to be deployed to.|
+|RunNpmInstall|boolean| When true, `npm ci` will be ran before CDK and removal|
+|RunNpmBuild|boolean| When true, `npm run build` will be ran before CDK and removal|
+|CustomInstallCommand| string| When specified command will be ran before SDK deployment and removal|
+|CustomAdditionalCdkArguments| string | When specified contains additional arguments that will be passed to the serverless deployment and removal commands|
+|DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
+|TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+
+**example**
+```yaml
+CdkWorkload:
+  Type: update-cdk
+  Path: ./workload/
+  RunNpmInstall: true
+  RunNpmBuild: true
 ```
 
 ### include

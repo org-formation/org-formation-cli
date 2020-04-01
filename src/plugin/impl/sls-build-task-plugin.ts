@@ -10,10 +10,12 @@ import { IPerformTasksCommandArgs } from '~commands/index';
 import { ChildProcessUtility } from '~core/child-process-util';
 import { Validator } from '~parser/validator';
 import { Md5Util } from '~util/md5-util';
+import { PluginUtil } from '~plugin/plugin-util';
 
 export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskConfig, ISlsCommandArgs, ISlsTask> {
     type = 'serverless.com';
     typeForTask = 'update-serverless.com';
+    applyGlobally = false;
 
     convertToCommandArgs(config: IServerlessComTaskConfig, command: IPerformTasksCommandArgs): ISlsCommandArgs {
 
@@ -33,6 +35,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             maxConcurrent: config.MaxConcurrentTasks,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
+            customAdditionalSlsArguments: config.CustomAdditionalSlsArguments,
+            customInstallCommand: config.CustomInstallCommand,
         };
     }
     validateCommandArgs(commandArgs: ISlsCommandArgs): void {
@@ -52,6 +56,11 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         }
 
         if (commandArgs.runNpmInstall) {
+
+            if (commandArgs.customInstallCommand !== undefined) {
+                throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' therefore cannot also specify 'CustomInstallCommand'`);
+            }
+
             const packageFilePath = path.join(commandArgs.path, 'package.json');
             if (!existsSync(packageFilePath)) {
                 throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' but cannot find npm package file ${packageFilePath}`);
@@ -72,10 +81,12 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             configFile: command.configFile,
             stage: command.stage,
             path: hashOfServerlessDirectory,
+            customAdditionalArguments: command.customAdditionalSlsArguments,
+            customInstallCommand: command.customAdditionalSlsArguments,
         };
     }
 
-    concertToTask(command: ISlsCommandArgs, hashOfTask: string): ISlsTask {
+    convertToTask(command: ISlsCommandArgs, hashOfTask: string): ISlsTask {
         return {
             type: this.type,
             stage: command.stage,
@@ -85,17 +96,24 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             hash: hashOfTask,
             runNpmInstall: command.runNpmInstall,
             taskRoleName: command.taskRoleName,
+            customAdditionalSlsArguments: command.customAdditionalSlsArguments,
+            customInstallCommand: command.customAdditionalSlsArguments,
         };
     }
     async performDelete(binding: IPluginBinding<ISlsTask>): Promise<void> {
         const { task, target } = binding;
         let command = 'npx sls remove';
 
-        const pacakgeLockExists = existsSync(path.resolve(task.path, 'package-lock.json'));
-        if (binding.task.runNpmInstall && pacakgeLockExists) {
-            command = 'npm ci && ' + command;
-        } else {
-            command = 'npm i && ' + command;
+        if (binding.task.runNpmInstall) {
+            command = PluginUtil.PrependNpmInstall(task.path, command);
+        }
+
+        if (binding.task.customInstallCommand) {
+            command = binding.task.customInstallCommand + ' && ' + command;
+        }
+
+        if (binding.task.customAdditionalSlsArguments) {
+            command = command + ' ' + binding.task.customAdditionalSlsArguments
         }
 
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
@@ -112,11 +130,16 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const { task, target } = binding;
         let command = 'npx sls deploy';
 
-        const hasPackageLock = existsSync(path.resolve(task.path, 'package-lock.json'));
-        if (binding.task.runNpmInstall && hasPackageLock) {
-            command = 'npm ci && ' + command;
-        } else {
-            command = 'npm i && ' + command;
+        if (binding.task.runNpmInstall) {
+            command = PluginUtil.PrependNpmInstall(task.path, command);
+        }
+
+        if (binding.task.customInstallCommand) {
+            command = binding.task.customInstallCommand + ' && ' + command;
+        }
+
+        if (binding.task.customAdditionalSlsArguments) {
+            command = command + ' ' + binding.task.customAdditionalSlsArguments
         }
 
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
@@ -145,6 +168,8 @@ export interface IServerlessComTaskConfig extends IBuildTaskConfiguration {
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
+    CustomInstallCommand?: string;
+    CustomAdditionalSlsArguments?: string;
 }
 
 export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -152,6 +177,8 @@ export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
     path: string;
     configFile?: string;
     runNpmInstall: boolean;
+    customInstallCommand?: string;
+    customAdditionalSlsArguments?: string;
 }
 
 export interface ISlsTask extends IPluginTask {
@@ -159,4 +186,6 @@ export interface ISlsTask extends IPluginTask {
     stage?: string;
     configFile?: string;
     runNpmInstall: boolean;
+    customInstallCommand?: string;
+    customAdditionalSlsArguments?: string;
 }

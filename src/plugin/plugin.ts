@@ -6,15 +6,17 @@ import { ICommandArgs } from '~commands/base-command';
 import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { IOrganizationBinding } from '~parser/parser';
+import { OrgFormationError } from '../../src/org-formation-error';
 
 export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> {
     type: string;
     typeForTask: string;
+    applyGlobally: boolean;
     convertToCommandArgs(config: TBuildTaskConfig, command: IPerformTasksCommandArgs): TCommandArgs;
     validateCommandArgs(command: TCommandArgs): void;
 
     getValuesForEquality(command: TCommandArgs): any;
-    concertToTask(command: TCommandArgs, hashOfTask: string): TTask;
+    convertToTask(command: TCommandArgs, hashOfTask: string): TTask;
 
     performDelete(binding: IPluginBinding<TTask>): Promise<void>;
     performCreateOrUpdate(binding: IPluginBinding<TTask>): Promise<void>;
@@ -32,7 +34,11 @@ export interface IBuildTaskPluginCommandArgs extends ICommandArgs {
 
 export class PluginProvider {
     static GetPlugin(type: string): IBuildTaskPlugin<any, any, any> {
-        return this.GetPlugins().find(x=>x.type === type);
+        const found = this.GetPlugins().find(x=>x.type === type);
+        if (found === undefined) {
+            throw new OrgFormationError(`unable to find plugin of type ${type}`);
+        }
+        return found;
     }
 
     static GetPlugins(): IBuildTaskPlugin<any, any, any>[] {

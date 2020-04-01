@@ -7,7 +7,6 @@ CdkWorkload:
   Type: update-cdk
   Path: ./workload/    # used to package / calculate hash
   RunNpmInstall: true
-  RunNpmBuild: true
   OrganizationBinding:
     Account: !Ref AccountA
     Region: eu-central-1
