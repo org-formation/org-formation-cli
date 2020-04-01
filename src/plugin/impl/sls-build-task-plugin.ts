@@ -35,8 +35,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             maxConcurrent: config.MaxConcurrentTasks,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
-            customAdditionalSlsArguments: config.CustomAdditionalSlsArguments,
-            customInstallCommand: config.CustomInstallCommand,
+            additionalSlsArguments: config.AdditionalSlsArguments,
+            installCommand: config.InstallCommand,
         };
     }
     validateCommandArgs(commandArgs: ISlsCommandArgs): void {
@@ -57,8 +57,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
         if (commandArgs.runNpmInstall) {
 
-            if (commandArgs.customInstallCommand !== undefined) {
-                throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' therefore cannot also specify 'CustomInstallCommand'`);
+            if (commandArgs.installCommand !== undefined) {
+                throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' therefore cannot also specify 'InstallCommand'`);
             }
 
             const packageFilePath = path.join(commandArgs.path, 'package.json');
@@ -81,8 +81,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             configFile: command.configFile,
             stage: command.stage,
             path: hashOfServerlessDirectory,
-            customAdditionalArguments: command.customAdditionalSlsArguments,
-            customInstallCommand: command.customAdditionalSlsArguments,
+            customAdditionalArguments: command.additionalSlsArguments,
+            installCommand: command.installCommand,
         };
     }
 
@@ -96,8 +96,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             hash: hashOfTask,
             runNpmInstall: command.runNpmInstall,
             taskRoleName: command.taskRoleName,
-            customAdditionalSlsArguments: command.customAdditionalSlsArguments,
-            customInstallCommand: command.customAdditionalSlsArguments,
+            additionalSlsArguments: command.additionalSlsArguments,
+            installCommand: command.additionalSlsArguments,
         };
     }
     async performDelete(binding: IPluginBinding<ISlsTask>): Promise<void> {
@@ -108,12 +108,12 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             command = PluginUtil.PrependNpmInstall(task.path, command);
         }
 
-        if (binding.task.customInstallCommand) {
-            command = binding.task.customInstallCommand + ' && ' + command;
+        if (binding.task.installCommand) {
+            command = binding.task.installCommand + ' && ' + command;
         }
 
-        if (binding.task.customAdditionalSlsArguments) {
-            command = command + ' ' + binding.task.customAdditionalSlsArguments;
+        if (binding.task.additionalSlsArguments) {
+            command = command + ' ' + binding.task.additionalSlsArguments;
         }
 
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
@@ -134,12 +134,12 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             command = PluginUtil.PrependNpmInstall(task.path, command);
         }
 
-        if (binding.task.customInstallCommand) {
-            command = binding.task.customInstallCommand + ' && ' + command;
+        if (binding.task.installCommand) {
+            command = binding.task.installCommand + ' && ' + command;
         }
 
-        if (binding.task.customAdditionalSlsArguments) {
-            command = command + ' ' + binding.task.customAdditionalSlsArguments;
+        if (binding.task.additionalSlsArguments) {
+            command = command + ' ' + binding.task.additionalSlsArguments;
         }
 
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
@@ -168,8 +168,8 @@ export interface IServerlessComTaskConfig extends IBuildTaskConfiguration {
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
-    CustomInstallCommand?: string;
-    CustomAdditionalSlsArguments?: string;
+    InstallCommand?: string;
+    AdditionalSlsArguments?: string;
 }
 
 export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -177,8 +177,8 @@ export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
     path: string;
     configFile?: string;
     runNpmInstall: boolean;
-    customInstallCommand?: string;
-    customAdditionalSlsArguments?: string;
+    installCommand?: string;
+    additionalSlsArguments?: string;
 }
 
 export interface ISlsTask extends IPluginTask {
@@ -186,6 +186,6 @@ export interface ISlsTask extends IPluginTask {
     stage?: string;
     configFile?: string;
     runNpmInstall: boolean;
-    customInstallCommand?: string;
-    customAdditionalSlsArguments?: string;
+    installCommand?: string;
+    additionalSlsArguments?: string;
 }

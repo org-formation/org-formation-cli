@@ -36,8 +36,8 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             maxConcurrent: config.MaxConcurrentTasks,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
-            customAdditionalCdkArguments: config.CustomAdditionalCdkArguments,
-            customInstallCommand: config.CustomInstallCommand,
+            additionalCdkArguments: config.AdditionalCdkArguments,
+            installCommand: config.InstallCommand,
         };
     }
 
@@ -52,8 +52,8 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
         if (commandArgs.runNpmInstall) {
 
-            if (commandArgs.customInstallCommand !== undefined) {
-                throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' therefore cannot also specify 'CustomInstallCommand'`);
+            if (commandArgs.installCommand !== undefined) {
+                throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' therefore cannot also specify 'InstallCommand'`);
             }
 
             const packageFilePath = path.join(commandArgs.path, 'package.json');
@@ -74,8 +74,8 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         return {
             runNpmInstall: command.runNpmInstall,
             path: hashOfCdkDirectory,
-            customAdditionalArguments: command.customAdditionalCdkArguments,
-            customInstallCommand: command.customAdditionalCdkArguments,
+            additionalArguments: command.additionalCdkArguments,
+            installCommand: command.installCommand,
         };
     }
 
@@ -88,8 +88,8 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             runNpmInstall: command.runNpmInstall,
             runNpmBuild: command.runNpmBuild,
             taskRoleName: command.taskRoleName,
-            customAdditionalCdkArguments: command.customAdditionalCdkArguments,
-            customInstallCommand: command.customAdditionalCdkArguments,
+            additionalCdkArguments: command.additionalCdkArguments,
+            installCommand: command.additionalCdkArguments,
         };
     }
 
@@ -105,12 +105,12 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             command = PluginUtil.PrependNpmInstall(task.path, command);
         }
 
-        if (binding.task.customInstallCommand) {
-            command = binding.task.customInstallCommand + ' && ' + command;
+        if (binding.task.installCommand) {
+            command = binding.task.installCommand + ' && ' + command;
         }
 
-        if (binding.task.customAdditionalCdkArguments) {
-            command = command + ' ' + binding.task.customAdditionalCdkArguments;
+        if (binding.task.additionalCdkArguments) {
+            command = command + ' ' + binding.task.additionalCdkArguments;
         }
 
         const accountId = target.accountId;
@@ -130,12 +130,12 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             command = 'npm run build && ' + command;
         }
 
-        if (binding.task.customInstallCommand) {
-            command = binding.task.customInstallCommand + ' && ' + command;
+        if (binding.task.installCommand) {
+            command = binding.task.installCommand + ' && ' + command;
         }
 
-        if (binding.task.customAdditionalCdkArguments) {
-            command = command + ' ' + binding.task.customAdditionalCdkArguments;
+        if (binding.task.additionalCdkArguments) {
+            command = command + ' ' + binding.task.additionalCdkArguments;
         }
 
         const accountId = target.accountId;
@@ -153,22 +153,22 @@ interface ICdkBuildTaskConfig extends IBuildTaskConfiguration {
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
     RunNpmBuild?: boolean;
-    CustomInstallCommand?: string;
-    CustomAdditionalCdkArguments?: string;
+    InstallCommand?: string;
+    AdditionalCdkArguments?: string;
 }
 
 interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
     path: string;
     runNpmInstall: boolean;
     runNpmBuild: boolean;
-    customInstallCommand?: string;
-    customAdditionalCdkArguments?: string;
+    installCommand?: string;
+    additionalCdkArguments?: string;
 }
 
 interface ICdkTask extends IPluginTask {
     path: string;
     runNpmInstall: boolean;
     runNpmBuild: boolean;
-    customInstallCommand?: string;
-    customAdditionalCdkArguments?: string;
+    installCommand?: string;
+    additionalCdkArguments?: string;
 }
