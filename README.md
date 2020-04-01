@@ -45,6 +45,8 @@ You can now execute the command line program `org-formation`. try:
 
 💡Need help getting started? [Get some on slack!](https://join.slack.com/t/org-formation/shared_invite/enQtOTA5NjM3Mzc4ODUwLTMxZjYxYzljZTE5YWUzODE2MTNmYjM5NTY5Nzc3MzljNjVlZGQ1ODEzZDgyMWVkMDg3Mzk1ZjQ1ZjM4MDhlOGM)
 
+🎧 Hear about org-formation in [Real-World Serverless podcast #5](https://open.spotify.com/episode/0VPwObFeQ68oImfqW3lIge?si=VNluO9ZaTc-p3cpps6IBQg)
+
 To get started you first need an ``org-formation`` template that describes all your Organization resources such as [Accounts](./docs/organization-resources.md#account), [OUs](./docs/organization-resources.md#organizationalunit) and [SCPs](docs/organization-resources.md#servicecontrolpolicy).
 
 After [Installation](#installation) you can generate this file using the following command:
