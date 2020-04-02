@@ -8,7 +8,7 @@ export class Md5Util {
 
         const outerStat = statSync(fileOrDir);
         if (outerStat.isFile()) {
-            return;
+            return md5File.sync(fileOrDir);
         }
 
         const files = readdirSync(fileOrDir);
