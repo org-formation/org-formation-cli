@@ -26,6 +26,12 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
                 ConsoleUtil.LogInfo(`executing: ${config.Type} ${config.LogicalName}`);
 
                 const commandArgs = this.plugin.convertToCommandArgs(config, command);
+                if (commandArgs.maxConcurrent === undefined) {
+                    commandArgs.maxConcurrent = 1;
+                }
+                if (commandArgs.failedTolerance === undefined) {
+                    commandArgs.failedTolerance = 0;
+                }
                 const pluginCommand = new PluginCliCommand<TCommandArgs, TTask>(this.plugin);
                 await pluginCommand.performCommand(commandArgs);
             },

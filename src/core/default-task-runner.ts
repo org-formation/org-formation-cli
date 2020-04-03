@@ -6,7 +6,12 @@ import { IGenericTask } from '~plugin/plugin-binder';
 export class DefaultTaskRunner {
 
     public static async RunTasks(tasks: IGenericTask[], logicalName: string, maxConcurrentTasks: number, failedTasksTolerance: number): Promise<void> {
-
+        if (maxConcurrentTasks === undefined) {
+            throw new OrgFormationError(`maxConcurrentTasks must not be undefined`);
+        }
+        if (failedTasksTolerance === undefined) {
+            throw new OrgFormationError(`maxConcurrentTasks must not be undefined`);
+        }
         const delegate: ITaskRunnerDelegates<IGenericTask> = {
             onTaskRanFailed: (task, err) => {
                 ConsoleUtil.LogError(`failed executing task ${task.logicalName} in ${where(task)}. Reason: ${err}`);

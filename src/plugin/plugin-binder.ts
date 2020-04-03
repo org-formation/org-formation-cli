@@ -122,7 +122,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
         const that = this;
 
         return async (): Promise<void> => {
-            that.plugin.performCreateOrUpdate(binding);
+            await that.plugin.performCreateOrUpdate(binding);
             that.state.setGenericTarget<TTaskDefinition>(target);
         };
     }
