@@ -89,7 +89,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             runNpmBuild: command.runNpmBuild,
             taskRoleName: command.taskRoleName,
             additionalCdkArguments: command.additionalCdkArguments,
-            installCommand: command.additionalCdkArguments,
+            installCommand: command.installCommand,
         };
     }
 
