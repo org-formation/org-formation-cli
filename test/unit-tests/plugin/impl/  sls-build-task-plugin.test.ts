@@ -44,6 +44,6 @@ describe('when createing sls plugin', () => {
         expect(commandArgs.organizationBinding).toBeDefined();
         expect(commandArgs.organizationBinding.IncludeMasterAccount).toBe(true);
         expect(commandArgs.runNpmInstall).toBe(false);
-        expect(commandArgs.additionalSlsArguments).toBeUndefined();
+        expect(commandArgs.customDeployCommand).toBeUndefined();
     });
 });

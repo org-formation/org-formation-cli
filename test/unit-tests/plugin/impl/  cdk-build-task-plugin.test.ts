@@ -41,6 +41,6 @@ describe('when createing cdk plugin', () => {
         expect(commandArgs.organizationBinding.IncludeMasterAccount).toBe(true);
         expect(commandArgs.runNpmBuild).toBe(false);
         expect(commandArgs.runNpmInstall).toBe(false);
-        expect(commandArgs.additionalCdkArguments).toBeUndefined();
+        expect(commandArgs.customDeployCommand).toBeUndefined();
     });
 });
