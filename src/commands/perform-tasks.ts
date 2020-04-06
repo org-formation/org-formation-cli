@@ -21,7 +21,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
     public addOptions(command: Command): void {
         command.option('--logical-name <tasks-logical-name>', 'logical name of the tasks file, allows multiple tasks files to be used together with --perform-cleanup action', 'default');
-        command.option('--perform-cleanup', 'when set will cleanup resources created by previous perform-tasks after task is removed from tasks file', false);
+        command.option('--perform-cleanup', 'when set will remove resources created by previous perform-tasks after task is removed from tasks file', false);
         command.option('--max-concurrent-tasks <max-concurrent-tasks>', 'maximum number of tasks to be executed concurrently', 1);
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks (within a task) to be executed concurrently', 1);
         command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed tasks after which execution stops', 0);

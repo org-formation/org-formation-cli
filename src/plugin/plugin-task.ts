@@ -3,7 +3,7 @@ import { PluginCliCommand } from './plugin-command';
 import { IPluginTask } from './plugin-binder';
 import { IBuildTaskConfiguration, IBuildTask } from '~build-tasks/build-configuration';
 import { IBuildTaskProvider, BuildTaskProvider } from '~build-tasks/build-task-provider';
-import { IPerformTasksCommandArgs, CleanupCommand } from '~commands/index';
+import { IPerformTasksCommandArgs, RemoveCommand } from '~commands/index';
 import { ConsoleUtil } from '~util/console-util';
 
 export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> implements IBuildTaskProvider<TBuildTaskConfiguration> {
@@ -64,12 +64,12 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
                     ConsoleUtil.LogWarning('By default these tasks dont get cleaned up. You can change this by adding the option --perfom-cleanup.');
                     ConsoleUtil.LogWarning('You can remove the project manually by running the following command:');
                     ConsoleUtil.LogWarning('');
-                    ConsoleUtil.LogWarning(`    org-formation cleanup --type ${this.plugin.type} --name ${logicalId}`);
+                    ConsoleUtil.LogWarning(`    org-formation remove --type ${this.plugin.type} --name ${logicalId}`);
                     ConsoleUtil.LogWarning('');
                     ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
                 } else {
                     ConsoleUtil.LogInfo(`executing: ${this.type} ${logicalId}`);
-                    await CleanupCommand.Perform({ ...command,  name: logicalId, type: this.plugin.type, maxConcurrentTasks: 10, failedTasksTolerance: 10 });
+                    await RemoveCommand.Perform({ ...command,  name: logicalId, type: this.plugin.type, maxConcurrentTasks: 10, failedTasksTolerance: 10 });
                 }
             },
         };

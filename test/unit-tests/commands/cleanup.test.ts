@@ -1,5 +1,5 @@
 import { Command, Option } from 'commander';
-import { CleanupCommand, ICleanupCommandArgs, BaseCliCommand } from '~commands/index';
+import { RemoveCommand, IRemoveCommandArgs, BaseCliCommand } from '~commands/index';
 
 import { PersistedState } from '~state/persisted-state';
 import { PluginProvider, IBuildTaskPlugin } from '~plugin/plugin';
@@ -8,20 +8,20 @@ import { DefaultTaskRunner } from '~core/default-task-runner';
 import { ConsoleUtil } from '~util/console-util';
 
 describe('when creating cleanup command', () => {
-    let command: CleanupCommand;
+    let command: RemoveCommand;
     let commanderCommand: Command;
     let subCommanderCommand: Command;
 
     beforeEach(() => {
         commanderCommand = new Command('root');
-        command = new CleanupCommand(commanderCommand);
+        command = new RemoveCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
     });
 
     test('cleanup command is created', () => {
         expect(command).toBeDefined();
         expect(subCommanderCommand).toBeDefined();
-        expect(subCommanderCommand.name()).toBe('cleanup');
+        expect(subCommanderCommand.name()).toBe('remove');
     });
 
     test('cleanup command has description', () => {
@@ -53,13 +53,13 @@ describe('when creating cleanup command', () => {
 
 
 describe('when executing cleanup command', () => {
-    let command: CleanupCommand;
+    let command: RemoveCommand;
     let commanderCommand: Command;
     let subCommanderCommand: Command;
     let getStateStub: jest.SpyInstance;
     let getPluginStub: jest.SpyInstance;
     let runTasksStub: jest.SpyInstance;
-    let commandArgs: ICleanupCommandArgs;
+    let commandArgs: IRemoveCommandArgs;
     let mockPlugin: IBuildTaskPlugin<any, any, any> = {
         performDelete: jest.fn()
     } as any;
@@ -69,7 +69,7 @@ describe('when executing cleanup command', () => {
     beforeEach(() => {
 
         commanderCommand = new Command('root');
-        command = new CleanupCommand(commanderCommand);
+        command = new RemoveCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
 
         const state = PersistedState.CreateEmpty('123456789012');
@@ -101,7 +101,7 @@ describe('when executing cleanup command', () => {
             ...subCommanderCommand,
             type: 'my-type',
             name: 'my-task',
-        } as unknown as ICleanupCommandArgs;
+        } as unknown as IRemoveCommandArgs;
     });
 
     afterEach(() => {

@@ -94,7 +94,6 @@ describe('when executing plugin command', () => {
         expect(instance.task.organizationBinding).toBeUndefined();
     });
 
-
     test('default task runner is used to execute tasks', async () => {
         await command.performCommand(commandArgs);
         expect(runTasksStub).toBeCalledTimes(1);

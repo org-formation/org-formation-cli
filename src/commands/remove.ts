@@ -5,13 +5,13 @@ import { DefaultTaskRunner } from '~core/default-task-runner';
 import { PluginProvider } from '~plugin/plugin';
 import { PluginBinder } from '~plugin/plugin-binder';
 
-const commandName = 'cleanup';
+const commandName = 'remove';
 const commandDescription = 'removes resources deployed using org-formation from target accounts';
 
-export class CleanupCommand extends BaseCliCommand<ICleanupCommandArgs> {
+export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
 
-    static async Perform(command: ICleanupCommandArgs): Promise<void> {
-        const x = new CleanupCommand();
+    static async Perform(command: IRemoveCommandArgs): Promise<void> {
+        const x = new RemoveCommand();
         await x.performCommand(command);
     }
 
@@ -27,7 +27,7 @@ export class CleanupCommand extends BaseCliCommand<ICleanupCommandArgs> {
         command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed stacks after which execution stops', 10);
 
     }
-    public async performCommand(command: ICleanupCommandArgs): Promise<void> {
+    public async performCommand(command: IRemoveCommandArgs): Promise<void> {
 
         const state = await this.getState(command);
         const task = {name: command.name, type: command.type, hash: '', stage: '', path: ''};
@@ -48,7 +48,7 @@ export class CleanupCommand extends BaseCliCommand<ICleanupCommandArgs> {
 }
 
 
-export interface ICleanupCommandArgs extends ICommandArgs {
+export interface IRemoveCommandArgs extends ICommandArgs {
     type: string;
     name: string;
     maxConcurrentTasks: number;
