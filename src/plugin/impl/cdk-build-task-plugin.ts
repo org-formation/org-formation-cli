@@ -145,22 +145,22 @@ interface ICdkBuildTaskConfig extends IBuildTaskConfiguration {
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
     RunNpmBuild?: boolean;
-    CustomDeployCommand?: string
-    CustomRemoveCommand?: string
+    CustomDeployCommand?: string;
+    CustomRemoveCommand?: string;
 }
 
 interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
     path: string;
     runNpmInstall: boolean;
     runNpmBuild: boolean;
-    customDeployCommand?: string
-    customRemoveCommand?: string
+    customDeployCommand?: string;
+    customRemoveCommand?: string;
 }
 
 interface ICdkTask extends IPluginTask {
     path: string;
     runNpmInstall: boolean;
     runNpmBuild: boolean;
-    customDeployCommand?: string
-    customRemoveCommand?: string
+    customDeployCommand?: string;
+    customRemoveCommand?: string;
 }

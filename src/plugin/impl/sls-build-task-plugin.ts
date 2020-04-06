@@ -168,8 +168,8 @@ export interface IServerlessComTaskConfig extends IBuildTaskConfiguration {
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
-    CustomDeployCommand?: string
-    CustomRemoveCommand?: string
+    CustomDeployCommand?: string;
+    CustomRemoveCommand?: string;
 }
 
 export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -177,8 +177,8 @@ export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
     path: string;
     configFile?: string;
     runNpmInstall: boolean;
-    customDeployCommand?: string
-    customRemoveCommand?: string
+    customDeployCommand?: string;
+    customRemoveCommand?: string;
 }
 
 export interface ISlsTask extends IPluginTask {
@@ -186,6 +186,6 @@ export interface ISlsTask extends IPluginTask {
     stage?: string;
     configFile?: string;
     runNpmInstall: boolean;
-    customDeployCommand?: string
-    customRemoveCommand?: string
+    customDeployCommand?: string;
+    customRemoveCommand?: string;
 }

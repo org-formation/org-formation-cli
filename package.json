@@ -4,6 +4,7 @@
   "description": "Infrastructure as code solution for AWS Organizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "pre-commit": [ "lint" ],
   "scripts": {
     "build": "npx ttsc",
     "prepublishOnly": "npm run build",
@@ -60,6 +61,7 @@
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-prefer-arrow": "^1.1.7",
     "jest": "^25.1.0",
+    "pre-commit": "^1.2.2",
     "sinon": "^7.4.1",
     "ts-jest": "^25.2.0",
     "ts-node": "^8.6.2",
