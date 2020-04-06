@@ -19,9 +19,9 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
     convertToCommandArgs(config: IServerlessComTaskConfig, command: IPerformTasksCommandArgs): ISlsCommandArgs {
 
-        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'Path', 'Type',
+        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'Path', 'Type', 'DependsOn',
             'FilePath', 'Stage', 'Config', 'RunNpmInstall', 'FailedTaskTolerance', 'MaxConcurrentTasks', 'OrganizationBinding',
-            'TaskRoleName', 'AdditionalSlsArguments', 'InstallCommand');
+            'TaskRoleName', 'AdditionalSlsArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -41,8 +41,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             maxConcurrent: config.MaxConcurrentTasks,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
-            additionalSlsArguments: config.AdditionalSlsArguments,
-            installCommand: config.InstallCommand,
+            customDeployCommand: config.CustomDeployCommand,
+            customRemoveCommand: config.CustomRemoveCommand,
         };
     }
     validateCommandArgs(commandArgs: ISlsCommandArgs): void {
@@ -62,10 +62,6 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         }
 
         if (commandArgs.runNpmInstall) {
-
-            if (commandArgs.installCommand !== undefined) {
-                throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' therefore cannot also specify 'InstallCommand'`);
-            }
 
             const packageFilePath = path.join(commandArgs.path, 'package.json');
             if (!existsSync(packageFilePath)) {
@@ -87,8 +83,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             configFile: command.configFile,
             stage: command.stage,
             path: hashOfServerlessDirectory,
-            customAdditionalArguments: command.additionalSlsArguments,
-            installCommand: command.installCommand,
+            customDeployCommand: command.customDeployCommand,
+            customRemoveCommand: command.customRemoveCommand,
         };
     }
 
@@ -102,8 +98,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             hash: hashOfTask,
             runNpmInstall: command.runNpmInstall,
             taskRoleName: command.taskRoleName,
-            additionalSlsArguments: command.additionalSlsArguments,
-            installCommand: command.additionalSlsArguments,
+            customDeployCommand: command.customDeployCommand,
+            customRemoveCommand: command.customRemoveCommand,
         };
     }
     async performDelete(binding: IPluginBinding<ISlsTask>): Promise<void> {
@@ -114,18 +110,18 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             command = PluginUtil.PrependNpmInstall(task.path, command);
         }
 
-        if (binding.task.installCommand) {
-            command = binding.task.installCommand + ' && ' + command;
-        }
-
-        if (binding.task.additionalSlsArguments) {
-            command = command + ' ' + binding.task.additionalSlsArguments;
-        }
 
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
         command = appendArgumentIfTruthy(command, '--region', target.region);
         command = appendArgumentIfTruthy(command, '--config', task.configFile);
         command = command + ' --conceal';
+
+        if (binding.task.customRemoveCommand) {
+            command = binding.task.customRemoveCommand.replace('${region}', target.region);
+            command = command.replace('${stage}', task.stage);
+            command = command.replace('${config}', task.configFile);
+        }
+
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
 
@@ -140,18 +136,16 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             command = PluginUtil.PrependNpmInstall(task.path, command);
         }
 
-        if (binding.task.installCommand) {
-            command = binding.task.installCommand + ' && ' + command;
-        }
-
-        if (binding.task.additionalSlsArguments) {
-            command = command + ' ' + binding.task.additionalSlsArguments;
-        }
-
         command = appendArgumentIfTruthy(command, '--stage', task.stage);
         command = appendArgumentIfTruthy(command, '--region', target.region);
         command = appendArgumentIfTruthy(command, '--config', task.configFile);
         command = command + ' --conceal';
+
+        if (binding.task.customRemoveCommand) {
+            command = binding.task.customRemoveCommand.replace('${region}', target.region);
+            command = command.replace('${stage}', task.stage);
+            command = command.replace('${config}', task.configFile);
+        }
 
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
@@ -174,8 +168,8 @@ export interface IServerlessComTaskConfig extends IBuildTaskConfiguration {
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
-    InstallCommand?: string;
-    AdditionalSlsArguments?: string;
+    CustomDeployCommand?: string
+    CustomRemoveCommand?: string
 }
 
 export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -183,8 +177,8 @@ export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
     path: string;
     configFile?: string;
     runNpmInstall: boolean;
-    installCommand?: string;
-    additionalSlsArguments?: string;
+    customDeployCommand?: string
+    customRemoveCommand?: string
 }
 
 export interface ISlsTask extends IPluginTask {
@@ -192,6 +186,6 @@ export interface ISlsTask extends IPluginTask {
     stage?: string;
     configFile?: string;
     runNpmInstall: boolean;
-    installCommand?: string;
-    additionalSlsArguments?: string;
+    customDeployCommand?: string
+    customRemoveCommand?: string
 }

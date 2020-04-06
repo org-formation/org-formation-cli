@@ -120,8 +120,8 @@ The ``update-serverless.com`` task will deploy the [serverless.com](https://serv
 |Config| relative path |Name of the Serverless.com configuration file that contains information about the payload.<br/><br/>default is **./serverless.yml**|
 |Stage|string|Value used as stage when deploying the serverless.com workload|
 |RunNpmInstall|boolean| When true, `npm ci` will be ran before serverless deployment and removal|
-|InstallCommand| string| When specified command will be ran before serverless deployment and removal|
-|AdditionalSlsArguments| string | When specified contains additional arguments that will be passed to the serverless deployment and removal commands|
+|CustomDeployCommand| string | When specified will override the default command used when deploying a serverless.com workload. <br/><br/>default command is: `npm ci && npmx sls deploy --region ${region} --stage ${stage} --config ${config}  --conceal`. |
+|CustomRemoveCommand| string | When specified will override the default command used when removing a serverless.com workload. <br/><br/>default command is: `npm ci && npmx sls remove --region ${region} --stage ${stage} --config ${config}  --conceal`. |
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
 
@@ -171,8 +171,8 @@ The ``update-cdk`` task will deploy the a CDK workload defined in the directory 
 |OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the CDK workload needs to be deployed to.|
 |RunNpmInstall|boolean| When true, `npm ci` will be ran before CDK and removal|
 |RunNpmBuild|boolean| When true, `npm run build` will be ran before CDK and removal|
-|InstallCommand| string| When specified command will be ran before SDK deployment and removal|
-|AdditionalCdkArguments| string | When specified contains additional arguments that will be passed to the serverless deployment and removal commands|
+|CustomDeployCommand| string | When specified will override the default command used when deploying a serverless.com workload. <br/><br/>default command is: `npm ci && npm run build && npx cdk deploy`. |
+|CustomRemoveCommand| string | When specified will override the default command used when removing a CDK workload. <br/><br/>default command is: `npm ci && npm run build && npx cdk destroy`.|
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
 

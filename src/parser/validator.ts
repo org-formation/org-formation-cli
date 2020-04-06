@@ -101,7 +101,7 @@ export class Validator {
     public static ThrowForUnknownAttribute(obj: any, id: string, ...knownAttributes: string[]): void {
         for (const att in obj) {
             if (knownAttributes.indexOf(att) < 0) {
-                throw new OrgFormationError(`unexpected attribute ${att} found on ${id}`);
+                throw new OrgFormationError(`unexpected attribute ${att} found on ${id}. expected attributes are ${knownAttributes.join(', ')}`);
             }
         }
     }

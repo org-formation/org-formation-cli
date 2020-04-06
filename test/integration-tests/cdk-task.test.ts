@@ -1,4 +1,4 @@
-import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
+import { PerformTasksCommand, ValidateTasksCommand, RemoveCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
 import { readFileSync } from 'fs';
 import { ChildProcessUtility } from '~util/child-process-util';
@@ -45,7 +45,7 @@ describe('when calling org-formation perform tasks', () => {
         stateAfterRemoveTask = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
-        await CleanupCommand.Perform({...command, type: 'cdk', name: 'CdkWorkload' });
+        await RemoveCommand.Perform({...command, type: 'cdk', name: 'CdkWorkload' });
         spawnProcessAfterCleanup = spawnProcessMock.mock;
         stateAfterCleanup = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
     });

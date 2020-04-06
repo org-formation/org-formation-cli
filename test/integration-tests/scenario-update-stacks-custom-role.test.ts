@@ -1,4 +1,4 @@
-import { PerformTasksCommand, ValidateTasksCommand, CleanupCommand, UpdateOrganizationCommand } from '~commands/index';
+import { PerformTasksCommand, ValidateTasksCommand,  UpdateOrganizationCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
 import { readFileSync } from 'fs';
 import { AwsUtil } from '~util/aws-util';

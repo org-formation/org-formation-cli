@@ -1,4 +1,4 @@
-import { PerformTasksCommand, ValidateTasksCommand, CleanupCommand } from '~commands/index';
+import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
 import { readFileSync, writeFileSync } from 'fs';
 import { S3 } from 'aws-sdk';
