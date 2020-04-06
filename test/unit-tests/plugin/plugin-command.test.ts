@@ -2,7 +2,7 @@ import { PluginCliCommand } from "~plugin/plugin-command";
 import { Command } from "commander";
 import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin, PluginProvider } from "~plugin/plugin";
 import { PersistedState } from "~state/persisted-state";
-import { BaseCliCommand, ICleanupCommandArgs } from "~commands/index";
+import { BaseCliCommand } from "~commands/index";
 import { PluginBinder } from "~plugin/plugin-binder";
 import { DefaultTaskRunner } from "~core/default-task-runner";
 import { TemplateRoot } from "~parser/parser";
@@ -60,6 +60,8 @@ describe('when executing plugin command', () => {
             organizationBinding: { IncludeMasterAccount: true},
             type: 'my-type',
             name: 'my-task',
+            maxConcurrent: 1,
+            failedTolerance: 0,
         } as unknown as IBuildTaskPluginCommandArgs;
     });
 

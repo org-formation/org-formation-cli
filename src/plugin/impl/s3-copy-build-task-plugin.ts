@@ -9,6 +9,7 @@ import { IPerformTasksCommandArgs } from '~commands/index';
 import { Md5Util } from '~util/md5-util';
 import { IOrganizationBinding } from '~parser/parser';
 import { AwsUtil } from '~util/aws-util';
+import { Validator } from '~parser/validator';
 
 export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConfig, IS3CopyCommandArgs, IS3CopyTask> {
     type = 'copy-to-s3';
@@ -16,6 +17,11 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
     applyGlobally = true;
 
     convertToCommandArgs(config: IS3CopyBuildTaskConfig, command: IPerformTasksCommandArgs): IS3CopyCommandArgs {
+
+
+        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'LocalPath', 'RemotePath',  'Type',
+            'FilePath', 'ZipBeforePut', 'OrganizationBinding', 'TaskRoleName', 'AdditionalCdkArguments', 'InstallCommand');
+
 
         if (!config.LocalPath) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute LocalPath`);

@@ -11,5 +11,5 @@ ServerlessWorkload:
   OrganizationBinding:
     Account: !Ref AccountA
     Region: eu-central-1
-  MaxConcurrentStacks: 10
-  FailedStackTolerance: 10
+  MaxConcurrentTasks: 10
+  FailedTaskTolerance: 10

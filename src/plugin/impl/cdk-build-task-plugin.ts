@@ -8,7 +8,7 @@ import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
 import { IOrganizationBinding } from '~parser/parser';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { Md5Util } from '~util/md5-util';
-import { ChildProcessUtility } from '~core/child-process-util';
+import { ChildProcessUtility } from '~util/child-process-util';
 import { Validator } from '~parser/validator';
 import { PluginUtil } from '~plugin/plugin-util';
 
@@ -18,6 +18,10 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
     applyGlobally = true;
 
     convertToCommandArgs(config: ICdkBuildTaskConfig, command: IPerformTasksCommandArgs): ICdkCommandArgs {
+
+        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'Path',  'Type',
+            'FilePath', 'RunNpmInstall', 'RunNpmBuild', 'FailedTaskTolerance', 'MaxConcurrentTasks', 'OrganizationBinding',
+            'TaskRoleName', 'AdditionalCdkArguments', 'InstallCommand');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -32,8 +36,8 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             runNpmInstall: config.RunNpmInstall === true,
             runNpmBuild: config.RunNpmBuild === true,
             path: cdkPath,
-            failedTolerance: config.FailedTaskTolerance,
-            maxConcurrent: config.MaxConcurrentTasks,
+            failedTolerance: config.FailedTaskTolerance ?? 0,
+            maxConcurrent: config.MaxConcurrentTasks ?? 1,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
             additionalCdkArguments: config.AdditionalCdkArguments,

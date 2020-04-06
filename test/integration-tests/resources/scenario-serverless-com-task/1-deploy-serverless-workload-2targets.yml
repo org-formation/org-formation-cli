@@ -5,11 +5,12 @@ OrganizationUpdate:
 
 ServerlessWorkload:
   Type: update-serverless.com              # type
+  Config: serverless.yml                   # serverless file, optional
   Path: ./workload/                        # used to package / calculate hash
   RunNpmInstall: true
   OrganizationBinding:
     IncludeMasterAccount: true
     Account: !Ref AccountA
     Region: eu-central-1
-  MaxConcurrentStacks: 10
-  FailedStackTolerance: 10
+  MaxConcurrentTasks: 10
+  FailedTaskTolerance: 10

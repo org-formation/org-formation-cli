@@ -12,5 +12,5 @@ CdkWorkload:
     IncludeMasterAccount: true
     Account: !Ref AccountA
     Region: eu-central-1
-  MaxConcurrentStacks: 10
-  FailedStackTolerance: 0
+  MaxConcurrentTasks: 10
+  FailedTaskTolerance: 0

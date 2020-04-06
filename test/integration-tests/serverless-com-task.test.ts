@@ -1,7 +1,7 @@
 import { PerformTasksCommand, ValidateTasksCommand, CleanupCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
 import { readFileSync } from 'fs';
-import { ChildProcessUtility } from '~core/child-process-util';
+import { ChildProcessUtility } from '~util/child-process-util';
 import { GetObjectOutput } from 'aws-sdk/clients/s3';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-serverless-com-task/';

@@ -7,7 +7,7 @@ import { IOrganizationBinding } from '~parser/parser';
 import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IPluginTask, IPluginBinding } from '~plugin/plugin-binder';
 import { IPerformTasksCommandArgs } from '~commands/index';
-import { ChildProcessUtility } from '~core/child-process-util';
+import { ChildProcessUtility } from '~util/child-process-util';
 import { Validator } from '~parser/validator';
 import { Md5Util } from '~util/md5-util';
 import { PluginUtil } from '~plugin/plugin-util';
@@ -19,18 +19,24 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
     convertToCommandArgs(config: IServerlessComTaskConfig, command: IPerformTasksCommandArgs): ISlsCommandArgs {
 
+        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'Path', 'Type',
+            'FilePath', 'Stage', 'Config', 'RunNpmInstall', 'FailedTaskTolerance', 'MaxConcurrentTasks', 'OrganizationBinding',
+            'TaskRoleName', 'AdditionalSlsArguments', 'InstallCommand');
+
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
         }
 
         const dir = path.dirname(config.FilePath);
-        const cdkPath = path.join(dir, config.Path);
+        const slsPath = path.join(dir, config.Path);
 
         return {
             ...command,
             name: config.LogicalName,
             runNpmInstall: config.RunNpmInstall === true,
-            path: cdkPath,
+            stage: config.Stage,
+            configFile: config.Config,
+            path: slsPath,
             failedTolerance: config.FailedTaskTolerance,
             maxConcurrent: config.MaxConcurrentTasks,
             organizationBinding: config.OrganizationBinding,
