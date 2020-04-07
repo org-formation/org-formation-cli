@@ -26,6 +26,7 @@ describe('when moving master account around', () => {
 
         masterAccountId = await AwsUtil.GetMasterAccountId();
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
+        await sleepForTest(100);
         await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});

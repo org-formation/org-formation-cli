@@ -1,5 +1,5 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from './base-integration-test';
 import { readFileSync, writeFileSync } from 'fs';
 import { S3 } from 'aws-sdk';
 import { CopyToS3TaskPlugin } from '~plugin/impl/s3-copy-build-task-plugin';
@@ -19,6 +19,7 @@ describe('when calling org-formation perform tasks', () => {
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, region: 'eu-west-1', performCleanup: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0, logicalName: 'default' };
 
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
+        await sleepForTest(200);
         await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
         performCreateOrUpdateMock = jest.spyOn(CopyToS3TaskPlugin.prototype, 'performCreateOrUpdate');
 

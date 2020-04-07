@@ -1,7 +1,7 @@
 import { CloudFormation } from "aws-sdk";
 import { PerformTasksCommand } from "~commands/index";
 import { readFileSync } from "fs";
-import { IIntegrationTestContext, baseBeforeAll, profileForIntegrationTests, baseAfterAll } from "./base-integration-test";
+import { IIntegrationTestContext, baseBeforeAll, profileForIntegrationTests, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { ListStacksOutput, ListStacksInput } from "aws-sdk/clients/cloudformation";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cleanup-stacks/';
@@ -22,6 +22,7 @@ describe('when cleaning up stacks', () => {
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, logicalName: 'cleanup-stacks', maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 };
 
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
+        await sleepForTest(200);
         await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
 
         const listStackInput: ListStacksInput = { StackStatusFilter: [ 'CREATE_COMPLETE', 'UPDATE_COMPLETE' ]  };

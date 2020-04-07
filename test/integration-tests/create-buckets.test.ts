@@ -1,6 +1,6 @@
 import { UpdateStacksCommand, DescribeStacksCommand, DeleteStacksCommand } from "~commands/index";
 import { readFileSync } from "fs";
-import { IIntegrationTestContext, baseAfterAll, baseBeforeAll, profileForIntegrationTests } from "./base-integration-test";
+import { IIntegrationTestContext, baseAfterAll, baseBeforeAll, profileForIntegrationTests, sleepForTest } from "./base-integration-test";
 import { ConsoleUtil } from "~util/console-util";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-create-buckets/';
@@ -18,6 +18,7 @@ describe('when creating an S3 bucket in all accounts', () => {
         const consoleOutMock = jest.spyOn(ConsoleUtil, 'Out').mockImplementation();
 
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
+        await sleepForTest(200);
         await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
 
         await UpdateStacksCommand.Perform({...command, templateFile: basePathForScenario + 'buckets.yml'});

@@ -32,6 +32,10 @@ export const baseAfterAll = async(context: IIntegrationTestContext): Promise<voi
 }
 
 
+export const sleepForTest = (time: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, time));
+};
+
 
 export interface IIntegrationTestContext {
     stateBucketName: string;
