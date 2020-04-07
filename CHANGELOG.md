@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**not released**
+**version 0.9.4**
 - Added update-cdk task type to perform-tasks to support deployment of cdk workloads
 - Added update-serverless.com task type to perform-tasks to support deployment of serverless.com workloads
 - Added copy-to-s3 task type to perform-tasks to support uploading files to S3 as part of a build pipeline
