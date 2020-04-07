@@ -1,4 +1,4 @@
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { IBuildTask } from './build-configuration';
 import { GenericTaskRunner, ITaskRunnerDelegates } from '~core/generic-task-runner';
@@ -6,7 +6,7 @@ import { GenericTaskRunner, ITaskRunnerDelegates } from '~core/generic-task-runn
 export class BuildRunner {
     public static async RunTasks(tasks: IBuildTask[], maxConcurrentTasks = 1, failedTasksTolerance = 0): Promise<void> {
         const delegate: ITaskRunnerDelegates<IBuildTask> = {
-            onTaskRanFailed: (task, err) => { ConsoleUtil.LogError(`task ${task.name} failed`, err); },
+            onTaskRanFailed: (task, err) => { ConsoleUtil.LogError(`task ${task.name} failed, reason: ${err.message}`, err); },
             onTaskSkippedBecauseDependencyFailed: task => {
                 ConsoleUtil.LogError(`task ${task.name} failed, reason: dependency had failed`);
             },
@@ -23,7 +23,7 @@ export class BuildRunner {
     }
     public static async RunValidationTasks(tasks: IBuildTask[], maxConcurrentTasks = 1, failedTasksTolerance = 0): Promise<void> {
         const delegate: ITaskRunnerDelegates<IBuildTask> = {
-            onTaskRanFailed: (task, err) => { ConsoleUtil.LogError(`task ${task.name} failed`, err); },
+            onTaskRanFailed: (task, err) => { ConsoleUtil.LogError(`task ${task.name} failed, reason: ${err.message}`, err); },
             onTaskSkippedBecauseDependencyFailed: task => {
                 ConsoleUtil.LogError(`task ${task.name} failed, reason: dependency had failed`);
             },

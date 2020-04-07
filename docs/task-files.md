@@ -6,6 +6,9 @@
 - [Task types](#task-types)
   - [update-organization](#update-organization)
   - [update-stacks](#update-stacks)
+  - [update-serverless.com](#update-serverlesscom)
+  - [copy-to-s3](#copy-to-s3)
+  - [update-cdk](#update-cdk)
   - [include](#include)
 
 <!-- /code_chunk_output -->
@@ -55,7 +58,7 @@ The ``update-organization`` task will update all the organization resources base
 
 ### update-stacks
 
-The ``update-stacks`` task will provision all resources in all accounts specified in  ``Template``.
+The `update-stacks` task will provision all resources in all accounts specified in  `Template`.
 
 |Attribute |Value|Remarks|
 |:---|:---|:---|
@@ -69,6 +72,9 @@ The ``update-stacks`` task will provision all resources in all accounts specifie
 |DefaultOrganizationBindingRegion|String or list of String|Region or regions that will be used for any binding without Region specified.<br/><br/> **note**:  This value overriddes values within the template or resources (value in taskfile is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
 |DefaultOrganizationBinding|[OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Organization binding used for any resource that has no binding specified.<br/><br/> **note**:  This value overriddes values within the template or resources (value in taskfile is leading). <br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
 |OrganizationBindings|Dictionary of Strign, [OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Set of named OrganizationBindings that can be `!Ref`'d by Resources.<br/><br/> **note**: This value overriddes values within the template or resources (value in taskfile is leading).|
+|CloudFormationRoleName|string|Specifies the name of the IAM Role that must be used to pass to the CloudFormation service. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+|TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+
 
 **example**
 ```yaml
@@ -101,6 +107,82 @@ Roles:
       OrganizationalUnit: !Ref DevelopmentOU
     AssumeRoleBinding:
       Account: !Ref SharedUsersAccount
+```
+
+### update-serverless.com
+
+The ``update-serverless.com`` task will deploy the [serverless.com](https://serverless.com) workload defined in the directory specified by `Path`.
+
+|Attribute |Value|Remarks|
+|:---|:---|:---|
+|Path|relative path|This property is required. <br/><br/>Specifies which directory contains the serverless.com workload
+|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the serverless.com workload needs to be deployed to.|
+|Config| relative path |Name of the Serverless.com configuration file that contains information about the payload.<br/><br/>default is **./serverless.yml**|
+|Stage|string|Value used as stage when deploying the serverless.com workload|
+|RunNpmInstall|boolean| When true, `npm ci` will be ran before serverless deployment and removal|
+|CustomDeployCommand| string | When specified will override the default command used when deploying a serverless.com workload. <br/><br/>default command is: `npm ci && npmx sls deploy --region ${region} --stage ${stage} --config ${config}  --conceal`. |
+|CustomRemoveCommand| string | When specified will override the default command used when removing a serverless.com workload. <br/><br/>default command is: `npm ci && npmx sls remove --region ${region} --stage ${stage} --config ${config}  --conceal`. |
+|DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
+|TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+
+**example**
+```yaml
+ServerlessWorkload:
+  Type: update-serverless.com
+  Config: serverless.yml
+  Path: ./workload/
+  Stage: dev
+  OrganizationBinding:
+    Account: !Ref AccountA
+  MaxConcurrentStacks: 10
+  FailedStackTolerance: 10
+```
+
+### copy-to-s3
+
+The ``copy-to-s3`` task will upload a file from `LocalPath` to an S3 `RemotePath`.
+
+|Attribute |Value|Remarks|
+|:---|:---|:---|
+|LocalPath|relative path|This property is required. <br/><br/>Specifies the file that needs to be uploaded.
+|RemotePath|S3 moniker|This property is required. <br/><br/>Specifies the location in S3 that the file should be uploaded to.
+|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the serverless.com workload needs to be deployed to.|
+|DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
+|TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+
+**example**
+```yaml
+CopyToS3:
+  Type: copy-to-s3
+  LocalPath: ./files/file.txt
+  RemotePath: s3://my-bucket/files/file.txt
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+```
+
+### update-cdk
+
+The ``update-cdk`` task will deploy the a CDK workload defined in the directory specified by `Path`.
+
+|Attribute |Value|Remarks|
+|:---|:---|:---|
+|Path|relative path|This property is required. <br/><br/>Specifies which directory contains the serverless.com workload
+|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the CDK workload needs to be deployed to.|
+|RunNpmInstall|boolean| When true, `npm ci` will be ran before CDK and removal|
+|RunNpmBuild|boolean| When true, `npm run build` will be ran before CDK and removal|
+|CustomDeployCommand| string | When specified will override the default command used when deploying a serverless.com workload. <br/><br/>default command is: `npm ci && npm run build && npx cdk deploy`. |
+|CustomRemoveCommand| string | When specified will override the default command used when removing a CDK workload. <br/><br/>default command is: `npm ci && npm run build && npx cdk destroy`.|
+|DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
+|TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+
+**example**
+```yaml
+CdkWorkload:
+  Type: update-cdk
+  Path: ./workload/
+  RunNpmInstall: true
+  RunNpmBuild: true
 ```
 
 ### include

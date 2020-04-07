@@ -1,0 +1,14 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+CdkWorkload:
+  Type: update-cdk
+  Path: ./workload/    # used to package / calculate hash
+  RunNpmInstall: true
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+  MaxConcurrentTasks: 10
+  FailedTaskTolerance: 0

@@ -4,7 +4,7 @@ import { IOrganizationalUnitProperties } from '~parser/model/organizational-unit
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { IServiceControlPolicyProperties } from '~parser/model/service-control-policy-resource';
 import { ITemplate, TemplateRoot } from '~parser/parser';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 
 describe('when validating organization section', () => {
     let contents: ITemplate;

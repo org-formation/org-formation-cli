@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as AWSMock from 'aws-sdk-mock';
 import { examples as stsExamples } from 'aws-sdk/apis/sts-2011-06-15.examples.json';
-import { AwsUtil } from '../../src/aws-util';
+import { AwsUtil } from '~util/aws-util';
 
 const mockResult = (output: any): jest.Mock => {
     return jest.fn().mockResolvedValue(output);

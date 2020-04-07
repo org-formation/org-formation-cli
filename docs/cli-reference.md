@@ -174,6 +174,7 @@ Will perform tasks from *tasksFile*.
 |option|default|description|
 |---|---|---|
 |<nobr>--logical-name</nobr>| 'default' | logical name of the tasks file, allows multiple tasks files to be used together with --perform-cleanup action |
+|<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
 |<nobr>--perform-cleanup</nobr>| false | when set will cleanup resources created by previous perform-tasks after task is removed from tasks file |
 |<nobr>--max-concurrent-tasks</nobr> | 1 | Maximum number of tasks to be executed concurrently|
 |<nobr>--failed-tasks-tolerance</nobr> | 0 | The number of failed tasks after which execution stops|
@@ -186,6 +187,10 @@ Will perform tasks from *tasksFile*.
 Will validate the *tasks-file*, including configured tasks.
 
 ``> org-formation validate-tasks tasks.yml ``
+
+|option|default|description|
+|---|---|---|
+|<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
 
 ## Global options
 

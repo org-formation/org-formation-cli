@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import md5 = require('md5');
 import * as Path from 'path';
 import { yamlParse } from 'yaml-cfn';
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { OrganizationBindingsSection } from './model/organization-bindings-section';
 import { OrganizationSection } from './model/organization-section';
@@ -201,7 +201,7 @@ export class TemplateRoot {
     }
 
     public resolveNormalizedRegions(binding: IOrganizationBinding): string[] {
-        if (binding === null || binding === undefined) {
+        if (binding === null || binding === undefined || binding.Region === undefined) {
             return [];
         }
 
@@ -233,7 +233,7 @@ export class TemplateRoot {
             if (this.organizationSection.masterAccount) {
                 result.add(this.organizationSection.masterAccount.logicalId);
             } else {
-                new OrgFormationError('unable to include master account if master account is not part of the template');
+                throw new OrgFormationError('unable to include master account if master account is not part of the template');
             }
         }
 

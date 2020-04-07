@@ -17,12 +17,6 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12
-      - name: Test With Secrets
-        id: secret-testing
-        env:
-          MY_VAR: ${{ secrets.TEST }}
-        run: |
-          echo $MY_VAR
       - name: Install Dependencies with NPM
         id: installation
         run: |
@@ -47,3 +41,10 @@ jobs:
         with:
           name: artifacts
           path: coverage
+      - name: Run Integration Tests
+        id: integration-testing
+        env:
+          TST_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          TST_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          npm run test:integration

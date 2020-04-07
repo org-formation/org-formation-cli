@@ -1,6 +1,6 @@
 # Custom Account Creation Workflow
 
-Example [serverless.org](http://www.serverless.org) project that will use StepFunctions send an email after account is created. This is intended as an example do demonstrate how to automate and extend the account creation process.
+Example [serverless.com](http://www.serverless.com) project that will use StepFunctions send an email after account is created. This is intended as an example do demonstrate how to automate and extend the account creation process.
 
 Custom account creation workflows are implemented using a CloudWatch/EventBridge rule. Use the following event pattern to subscribe to `AccountCreated` events (must be `us-east-1`)
 

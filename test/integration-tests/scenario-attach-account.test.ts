@@ -1,9 +1,9 @@
 import { Organizations } from "aws-sdk";
 import { UpdateOrganizationCommand } from "~commands/index";
 import { readFileSync } from "fs";
-import { AwsUtil } from "../../src/aws-util";
+import { AwsUtil } from "~util/aws-util";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from "./base-integration-test";
-import { ConsoleUtil } from "../../src/console-util";
+import { ConsoleUtil } from "~util/console-util";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-attach-account/';
 
@@ -21,7 +21,7 @@ describe('when attaching and detaching account', () => {
         logOut = jest.spyOn(ConsoleUtil, 'Out');
 
         context = await baseBeforeAll();
-        orgClient = new Organizations({ credentials: context.creds, region: 'us-east-1' });
+        orgClient = new Organizations({ region: 'us-east-1' });
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true };
 
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();

@@ -1,7 +1,7 @@
 import { IAM, Organizations } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
-import { AwsUtil } from '../aws-util';
-import { ConsoleUtil } from '../console-util';
+import { AwsUtil } from '../util/aws-util';
+import { ConsoleUtil } from '../util/console-util';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 

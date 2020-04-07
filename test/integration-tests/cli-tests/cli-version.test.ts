@@ -11,7 +11,7 @@ describe('when calling org-formation --version', () => {
     test('returns version to stdout', () => {
         expect(stdout).toBeDefined();
 
-        const pjson = require('../../package.json');
+        const pjson = require('../../../package.json');
         expect(stdout).toBe(pjson.version + '\n');
     });
 });

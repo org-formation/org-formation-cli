@@ -10,7 +10,6 @@ const basePathForScenario = './test/integration-tests/resources/scenario-cleanup
 describe('when cleaning up stacks', () => {
     let context: IIntegrationTestContext;
     let cfnClient: CloudFormation;
-
     let stacksBeforeAll: ListStacksOutput;
     let stacksAfterAddBucket: ListStacksOutput;
     let stacksAfterRenoveBucketNoCleanup: ListStacksOutput;
@@ -19,7 +18,7 @@ describe('when cleaning up stacks', () => {
 
     beforeAll(async () => {
         context = await baseBeforeAll();
-        cfnClient = new CloudFormation({ credentials: context.creds, region: 'eu-west-1' });
+        cfnClient = new CloudFormation({ region: 'eu-west-1' });
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, logicalName: 'cleanup-stacks', maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 };
 
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();

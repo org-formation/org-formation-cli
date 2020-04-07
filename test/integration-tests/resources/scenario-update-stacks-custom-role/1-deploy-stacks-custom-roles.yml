@@ -1,0 +1,17 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+MyRoles:
+  Type: update-stacks
+  StackName: integration-test-my-roles
+  Template: ./my-roles.yml
+
+TestCustomRole:
+  DependsOn: MyRoles
+  Type: update-stacks
+  StackName: integration-test-custom-role
+  Template: ./buckets.yml
+  CloudFormationRoleName: MyCloudFormmationRole
+  TaskRoleName: MyTaskRole

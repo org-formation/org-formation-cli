@@ -1,0 +1,15 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+ServerlessWorkload:
+  Type: update-serverless.com              # type
+  Config: serverless.yml                   # serverless file, optional
+  Path: ./workload/                        # used to package / calculate hash
+  RunNpmInstall: true
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+  MaxConcurrentTasks: 10
+  FailedTaskTolerance: 10

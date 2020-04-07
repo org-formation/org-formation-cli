@@ -1,7 +1,7 @@
 import { ICfnTask } from '~cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import Sinon from 'sinon';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 
 describe('when running cfn tasks', () => {
     let sandbox = Sinon.createSandbox();

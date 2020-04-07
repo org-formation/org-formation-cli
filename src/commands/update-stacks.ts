@@ -1,12 +1,11 @@
 import { Command } from 'commander';
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/parser';
 import { Validator } from '~parser/validator';
-
 
 const commandName = 'update-stacks <templateFile>';
 const commandDescription = 'update cloudformation resources in accounts';
@@ -69,13 +68,15 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         Validator.validateBoolean(command.terminationProtection, 'terminationProtection');
 
         const terminationProtection = command.terminationProtection === true;
+        const cloudFormationRoleName = command.cloudFormationRoleName;
+        const taskRoleName = command.taskRoleName;
         const stackName = command.stackName;
         const templateFile = command.templateFile;
 
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseStackParameters(command.parameters);
         const state = await this.getState(command);
-        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, terminationProtection);
+        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, terminationProtection, taskRoleName, cloudFormationRoleName);
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
@@ -105,4 +106,6 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     terminationProtection?: boolean;
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
+    cloudFormationRoleName?: string;
+    taskRoleName?: string;
 }

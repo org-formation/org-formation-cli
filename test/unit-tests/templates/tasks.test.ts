@@ -1,12 +1,14 @@
 import { BuildConfiguration, IBuildTask } from '~build-tasks/build-configuration';
-import { BaseOrganizationTask, BaseStacksTask } from '~build-tasks/build-task-provider';
-import { ICommandArgs, BaseCliCommand } from '~commands/base-command';
+import { BaseOrganizationTask } from '~build-tasks/tasks/organization-task';
+import { BaseCliCommand } from '~commands/base-command';
 import Sinon = require('sinon');
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { PersistedState } from '~state/persisted-state';
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { ICfnTask } from '~cfn-binder/cfn-task-provider';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
+import { IPerformTasksCommandArgs } from '~commands/index';
+import { IUpdateStacksBuildTask } from '~build-tasks/tasks/update-stacks-task';
 
 describe('when loading task file configuration', () => {
     let buildconfig: BuildConfiguration;
@@ -63,7 +65,7 @@ describe('when getting build tasks for task file without update-organization', (
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-empty.yml');
-            config.enumBuildTasks({} as ICommandArgs);
+            config.enumBuildTasks({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('update-organization'));
@@ -76,7 +78,7 @@ describe('when getting validation tasks for task file without update-organizatio
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-empty.yml');
-            config.enumValidationTasks({} as ICommandArgs);
+            config.enumValidationTasks({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('update-organization'));
@@ -89,7 +91,7 @@ describe('when getting validation tasks for task file with duplicate stackName',
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-duplicate-stackname.yml');
-            config.enumValidationTasks({} as ICommandArgs);
+            config.enumValidationTasks({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('stackName'));
@@ -102,7 +104,7 @@ describe('when getting build tasks for task file with duplicate stackName', () =
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-duplicate-stackname.yml');
-            config.enumBuildTasks({} as ICommandArgs);
+            config.enumBuildTasks({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('stackName'));
@@ -115,7 +117,7 @@ describe('when getting build tasks for task file with duplicate stackName throug
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-duplicate.yml');
-            config.enumBuildTasks({} as ICommandArgs);
+            config.enumBuildTasks({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('stackName'));
@@ -129,7 +131,7 @@ describe('when getting validation tasks for task file with duplicate stackName t
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-duplicate.yml');
-            config.enumValidationTasks({} as ICommandArgs);
+            config.enumValidationTasks({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('stackName'));
@@ -143,7 +145,7 @@ describe('when getting build tasks for task file with duplicate stackName throug
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-duplicate-nested.yml');
-            config.enumBuildTasks({} as ICommandArgs);
+            config.enumBuildTasks({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('stackName'));
@@ -156,7 +158,7 @@ describe('when getting validation tasks for task file with duplicate stackName t
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-duplicate-nested.yml');
-            config.enumValidationTasks({} as ICommandArgs);
+            config.enumValidationTasks({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('stackName'));
@@ -169,7 +171,7 @@ describe('when including task file with update-organization', () => {
     test('then error is thrown', () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-include-with-update-org.yml');
-            config.enumValidationTasks({} as ICommandArgs);
+            config.enumValidationTasks({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('multiple update-organization tasks found'));
@@ -192,19 +194,6 @@ describe('when including task file without update-organization', () => {
         expect(tasks.filter((x) => x.type === 'update-organization').length).toBe(1);
     });
 
-    test('organization file path is passed to included file ', () => {
-        const tasks = buildconfig.enumBuildTasks({} as any);
-        const includeTask = tasks.filter((x) => x.type === 'include')[0];
-        const updateOrgTask = tasks.filter((x) => x.type === 'update-organization')[0];
-        const command = (includeTask as any).command;
-        expect(command).toBeDefined();
-        expect(command.organizationFile).toBeDefined();
-        expect(command.organizationFile as string).toEqual(
-            expect.stringContaining((updateOrgTask as BaseOrganizationTask).templatePath)
-        );
-
-
-    });
 });
 
 describe('when referencing account on parameter', () => {
@@ -248,7 +237,7 @@ describe('when referencing account on parameter', () => {
     });
 
     test('account from param is part of binding', async () => {
-        const updateStacksAccount1 = tasks.filter((x) => x.type === 'update-stacks' && x.name === 'StackParamAccount1Ref')[0] as BaseStacksTask;
+        const updateStacksAccount1 = tasks.filter((x) => x.type === 'update-stacks' && x.name === 'StackParamAccount1Ref')[0] as IUpdateStacksBuildTask;
         await updateStacksAccount1.perform();
         expect(runTask.callCount).toBe(1);
         const taskRan: ICfnTask[] = runTask.getCall(0).args[0];

@@ -1,7 +1,7 @@
 import { UpdateStacksCommand, DescribeStacksCommand, DeleteStacksCommand } from "~commands/index";
 import { readFileSync } from "fs";
 import { IIntegrationTestContext, baseAfterAll, baseBeforeAll, profileForIntegrationTests } from "./base-integration-test";
-import { ConsoleUtil } from "../../src/console-util";
+import { ConsoleUtil } from "~util/console-util";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-create-buckets/';
 

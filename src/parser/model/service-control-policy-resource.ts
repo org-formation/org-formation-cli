@@ -1,5 +1,5 @@
 import { OrgFormationError } from '../../org-formation-error';
-import { ResourceUtil } from '../../resource-util';
+import { ResourceUtil } from '../../util/resource-util';
 import { IResource, TemplateRoot } from '../parser';
 import { Resource } from './resource';
 

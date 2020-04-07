@@ -1,8 +1,8 @@
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
-import { ResourceUtil } from '../resource-util';
+import { ResourceUtil } from '../util/resource-util';
 import { IOrganizationBinding, IResourceRef, ITemplate } from './parser';
-import { IUpdateStackTaskConfiguration } from '~build-tasks/build-configuration';
+import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 
 export class Validator {
     public static ValidateUpdateStacksTask(config: IUpdateStackTaskConfiguration, taskName: string): void {
@@ -28,7 +28,7 @@ export class Validator {
         Validator.ThrowForUnknownAttribute(config, `task ${taskName}`,
             'Type', 'DependsOn', 'Template', 'StackName', 'StackDescription', 'Parameters',
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
-            'OrganizationBindings', 'TerminationProtection',
+            'OrganizationBindings', 'TerminationProtection', 'CloudFormationRoleName', 'TaskRoleName',
             'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance' );
     }
 
@@ -101,7 +101,7 @@ export class Validator {
     public static ThrowForUnknownAttribute(obj: any, id: string, ...knownAttributes: string[]): void {
         for (const att in obj) {
             if (knownAttributes.indexOf(att) < 0) {
-                throw new OrgFormationError(`unexpected attribute ${att} found on ${id}`);
+                throw new OrgFormationError(`unexpected attribute ${att} found on ${id}. expected attributes are ${knownAttributes.join(', ')}`);
             }
         }
     }

@@ -10,22 +10,23 @@ const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
 
 export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs> {
-
     static async Perform(command: IPerformTasksCommandArgs): Promise<void> {
         const x = new PerformTasksCommand();
         await x.performCommand(command);
     }
+
     constructor(command?: Command) {
         super(command, commandName, commandDescription, 'tasksFile');
     }
 
     public addOptions(command: Command): void {
         command.option('--logical-name <tasks-logical-name>', 'logical name of the tasks file, allows multiple tasks files to be used together with --perform-cleanup action', 'default');
-        command.option('--perform-cleanup', 'when set will cleanup resources created by previous perform-tasks after task is removed from tasks file', false);
+        command.option('--perform-cleanup', 'when set will remove resources created by previous perform-tasks after task is removed from tasks file', false);
         command.option('--max-concurrent-tasks <max-concurrent-tasks>', 'maximum number of tasks to be executed concurrently', 1);
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks (within a task) to be executed concurrently', 1);
         command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed tasks after which execution stops', 0);
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
+        command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         super.addOptions(command);
     }
 
@@ -62,4 +63,6 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     failedTasksTolerance: number;
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
+    organizationFile?: string;
+    organizationFileHash?: string;
 }

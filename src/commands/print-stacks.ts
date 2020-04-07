@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { ConsoleUtil } from '../console-util';
+import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { TemplateRoot } from '~parser/parser';

@@ -1,5 +1,5 @@
 import md5 = require('md5');
-import { ConsoleUtil } from '../../console-util';
+import { ConsoleUtil } from '../../util/console-util';
 import { OrgFormationError } from '../../org-formation-error';
 import { Validator } from '../validator';
 import { IOrganizationBinding, IResource, IResourceRef, TemplateRoot } from '../parser';

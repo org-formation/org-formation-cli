@@ -1,0 +1,27 @@
+{
+  "masterAccountId": "102625093955",
+  "bindings": {
+    "OC::ORG::MasterAccount": {
+      "MasterAccount": {
+        "type": "OC::ORG::MasterAccount",
+        "logicalId": "MasterAccount",
+        "physicalId": "102625093955",
+        "lastCommittedHash": "281db6b2c685159c8f11b2c8289abd7b"
+      }
+    },
+    "OC::ORG::OrganizationRoot": {
+      "OrganizationRoot": {
+        "type": "OC::ORG::OrganizationRoot",
+        "logicalId": "OrganizationRoot",
+        "physicalId": "r-kvte",
+        "lastCommittedHash": "6be66ccf6b2a5417439fec93c294f165"
+      }
+    },
+    "OC::ORG::OrganizationalUnit": {}
+  },
+  "stacks": {},
+  "values": {
+    "organization.template.hash": "1f7c06baf83ee72e843890bce9790d2f"
+  },
+  "previousTemplate": "{\"AWSTemplateFormatVersion\":\"2010-09-09-OC\",\"Description\":\"default template generated for organization with master account 102625093955\",\"Organization\":{\"MasterAccount\":{\"Type\":\"OC::ORG::MasterAccount\",\"Properties\":{\"AccountName\":\"Olaf Conijn\",\"AccountId\":\"102625093955\"}},\"OrganizationRoot\":{\"Type\":\"OC::ORG::OrganizationRoot\",\"Properties\":null}}}"
+}

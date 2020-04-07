@@ -6,7 +6,7 @@ import { ValidateStacksCommand } from '~commands/validate-stacks';
 import { GenericTaskRunner } from '~core/generic-task-runner';
 import { TemplateRoot } from '~parser/parser';
 import { TestTemplates } from '../test-templates';
-import { ConsoleUtil } from '../../../src/console-util';
+import { ConsoleUtil } from '~util/console-util';
 
 describe('when creating validate stacks command', () => {
     let command: ValidateStacksCommand;
