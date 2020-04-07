@@ -4,7 +4,7 @@ import { readFileSync } from "fs";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
 import { AwsUtil } from "~util/aws-util";
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from "./base-integration-test";
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from "./base-integration-test";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-move-master-acc/';
 
@@ -26,7 +26,7 @@ describe('when moving master account around', () => {
 
         masterAccountId = await AwsUtil.GetMasterAccountId();
         await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(100);
+        await sleepForTest(200);
         await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
