@@ -2,9 +2,10 @@
 name: Publish
 
 on:
-  push:
-    branches:
-      - master
+  # TODO: integrate with the release feature of github
+  # push:
+  #   branches:
+  #     - master
 
 jobs:
   publish:
