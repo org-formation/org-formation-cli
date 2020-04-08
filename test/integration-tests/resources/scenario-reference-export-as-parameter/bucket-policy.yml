@@ -5,6 +5,12 @@ Parameters:
   bucketArn:
     Type: String
 
+  bucketArn2:
+    Type: String
+
+  bucketArn3:
+    Type: String
+
 Resources:
   BucketPolicy:
     Type: AWS::IAM::ManagedPolicy

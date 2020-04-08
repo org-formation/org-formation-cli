@@ -8,4 +8,4 @@ Outputs:
   BucketName:
     Value: !GetAtt Bucket.Arn
     Export:
-      Name: BucketName
+      Name: BucketArn

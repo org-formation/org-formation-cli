@@ -20,4 +20,6 @@ PolicyTemplate:
   DefaultOrganizationBinding:
     IncludeMasterAccount: true
   Parameters:
-    bucketArn: !CopyValue BucketName
+    bucketArn: !CopyValue BucketArn
+    bucketArn2: !CopyValue [BucketArn, 102625093955]
+    bucketArn3: !CopyValue [BucketArn, 102625093955, 'eu-west-1']
