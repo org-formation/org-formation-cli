@@ -1,7 +1,7 @@
 ---
 name: Publish
 
-on:
+# on:
   # TODO: integrate with the release feature of github
   # push:
   #   branches:
