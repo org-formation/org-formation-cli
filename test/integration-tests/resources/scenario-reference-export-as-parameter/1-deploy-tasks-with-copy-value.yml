@@ -1,0 +1,23 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+BucketTemplate:
+  Type: update-stacks
+  Template: ./bucket.yml
+  StackName: scenario-export-bucket
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+
+PolicyTemplate:
+  DependsOn: BucketTemplate
+  Type: update-stacks
+  Template: ./bucket-policy.yml
+  StackName: scenario-export-bucket-role
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+  Parameters:
+    bucketArn: !CopyValue BucketName

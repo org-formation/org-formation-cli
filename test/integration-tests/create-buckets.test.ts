@@ -13,13 +13,11 @@ describe('when creating an S3 bucket in all accounts', () => {
     beforeAll(async () => {
 
         context = await baseBeforeAll();
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', stackName: context.stackName, profile: profileForIntegrationTests, verbose: true, maxConcurrentStacks: 10, failedStacksTolerance: 0 };
-
         const consoleOutMock = jest.spyOn(ConsoleUtil, 'Out').mockImplementation();
 
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
+        await context.prepareStateBucket(basePathForScenario + '0-state.json')
+        const { command } = context;
+
 
         await UpdateStacksCommand.Perform({...command, templateFile: basePathForScenario + 'buckets.yml'});
         await DescribeStacksCommand.Perform(command);

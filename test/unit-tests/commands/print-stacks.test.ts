@@ -1,6 +1,6 @@
 import { PrintStacksCommand, IPrintStacksCommandArgs } from "~commands/print-stacks";
 import { Command, Option } from "commander";
-import { DescribeStacksCommand, IDescribetackCommandArgs } from "~commands/describe-stacks";
+import { DescribeStacksCommand, IDescribeStackCommandArgs } from "~commands/describe-stacks";
 import { ConsoleUtil } from "~util/console-util";
 import Sinon = require("sinon");
 import { AwsUtil } from "~util/aws-util";

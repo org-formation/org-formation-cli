@@ -13,7 +13,7 @@ describe('when nesting ou\'s', () => {
     let orgClient: Organizations;
 
     let organizationAfterInit: AwsOrganization;
-    let organizationAfterCreateParentchild: AwsOrganization;
+    let organizationAfterCreateParentChild: AwsOrganization;
     let organizationAfterSwapChildParent: AwsOrganization;
     let organizationAfterDeleteParentOfChild: AwsOrganization;
     let organizationAfterCleanup: AwsOrganization;
@@ -32,8 +32,8 @@ describe('when nesting ou\'s', () => {
         await organizationAfterInit.initialize();
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '2-create-parent-child-ou.yml'});
-        organizationAfterCreateParentchild = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterCreateParentchild.initialize();
+        organizationAfterCreateParentChild = new AwsOrganization(new AwsOrganizationReader(orgClient));
+        await organizationAfterCreateParentChild.initialize();
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '3-swap-child-parent-ou.yml'});
         organizationAfterSwapChildParent = new AwsOrganization(new AwsOrganizationReader(orgClient));
@@ -54,12 +54,12 @@ describe('when nesting ou\'s', () => {
     });
 
     test('after create parent and child both exists', async () => {
-        const parentOrChild = organizationAfterCreateParentchild.organizationalUnits.filter(x=>x.Name === 'child' || x.Name === 'parent');
+        const parentOrChild = organizationAfterCreateParentChild.organizationalUnits.filter(x=>x.Name === 'child' || x.Name === 'parent');
         expect(parentOrChild.length).toBe(2);
     });
 
     test('after create parent and child there is parent/child relationship', async () => {
-        const parent = organizationAfterCreateParentchild.organizationalUnits.find(x=>x.Name === 'parent');
+        const parent = organizationAfterCreateParentChild.organizationalUnits.find(x=>x.Name === 'parent');
         expect(parent).toBeDefined();
         expect(parent.OrganizationalUnits.length).toBe(1);
         expect(parent.OrganizationalUnits[0].Name).toBe('child')

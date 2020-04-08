@@ -10,12 +10,12 @@ import { ICfnTarget, PersistedState } from '~state/persisted-state';
 export class CloudFormationBinder {
     private readonly masterAccount: string;
     private readonly invocationHash: string;
-    private readonly parameters: Record<string, string>;
+    private readonly parameters: Record<string, string | ICfnCopyValue>;
 
     constructor(private readonly stackName: string,
                 private readonly template: TemplateRoot,
                 private readonly state: PersistedState,
-                parameters: Record<string, string> = {},
+                parameters: Record<string, string | ICfnCopyValue> = {},
                 private readonly terminationProtection = false,
                 private readonly taskRoleName?: string,
                 private readonly customRoleName?: string,
@@ -29,15 +29,23 @@ export class CloudFormationBinder {
             } else if (typeof val  === 'object') {
                 const entries = Object.entries(val);
                 if (entries.length === 1) {
-                    const [valKey, logicalId] = entries[0];
+                    const [valKey, leafValue] = entries[0];
+                    if (valKey === 'Fn::CopyValue') {
+                        if (!Array.isArray(leafValue)) {
+                            this.parameters[key] = { 'Fn::CopyValue': [leafValue]};
+                        } else {
+                            this.parameters[key] = { 'Fn::CopyValue': leafValue};
+                        }
+                        continue;
+                    }
                     if (valKey === 'Ref') {
-                        const account = template.organizationSection.findAccount(x => x.logicalId === logicalId);
+                        const account = template.organizationSection.findAccount(x => x.logicalId === leafValue);
                         if (!account) {
-                            throw new OrgFormationError(`unable to resolve reference to account ${logicalId}`);
+                            throw new OrgFormationError(`unable to resolve reference to account ${leafValue}`);
                         }
                         const binding = state.getBinding(account.type, account.logicalId);
                         if (!binding) {
-                            throw new OrgFormationError(`unable to find binding for account ${logicalId}. is your organization up to date?`);
+                            throw new OrgFormationError(`unable to find binding for account ${leafValue}. is your organization up to date?`);
 
                         }
                         this.parameters[key] = binding.physicalId;
@@ -214,7 +222,7 @@ export interface ICfnBinding {
     dependents: ICfnCrossAccountDependency[];
     accountDependencies: string[];
     regionDependencies: string[];
-    parameters?: Record<string, string>;
+    parameters?: Record<string, string | ICfnCopyValue>;
     terminationProtection?: boolean;
     customRoleName?: string;
     cloudFormationRoleName?: string;
@@ -236,6 +244,7 @@ export interface ICfnCrossAccountDependency {
 
 type CfnBindingAction = 'UpdateOrCreate' | 'Delete' | 'None';
 
+export interface ICfnCopyValue { 'Fn::CopyValue': string[] }
 export interface ICfnRefValue { Ref: string }
 export interface ICfnGetAttValue  { 'Fn::GetAtt': string[] }
 export interface ICfnJoinValue  { 'Fn::Join': ICfnValue[] }

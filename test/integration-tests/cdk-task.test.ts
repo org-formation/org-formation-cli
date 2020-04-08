@@ -22,33 +22,31 @@ describe('when calling org-formation perform tasks', () => {
     beforeAll(async () => {
         spawnProcessMock = jest.spyOn(ChildProcessUtility, 'SpawnProcess');
         context = await baseBeforeAll();
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, region: 'eu-west-1', performCleanup: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0, logicalName: 'default' };
 
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
+        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        const { command, stateBucketName, s3client } = context;
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-cdk-workload-2targets.yml' })
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-cdk-workload-2targets.yml' });
         spawnProcessAfterDeploy2Targets = spawnProcessMock.mock;
-        stateAfterDeploy2Targets = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterDeploy2Targets = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-deploy-cdk-workload-1target.yml' })
         spawnProcessAfterDeploy1Target = spawnProcessMock.mock;
-        stateAfterDeploy1Target = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterDeploy1Target = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-remove-cdk-workload-task.yml', performCleanup: false })
         spawnProcessAfterRemoveTask = spawnProcessMock.mock;
-        stateAfterRemoveTask = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterRemoveTask = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
         await RemoveCommand.Perform({...command, type: 'cdk', name: 'CdkWorkload' });
         spawnProcessAfterCleanup = spawnProcessMock.mock;
-        stateAfterCleanup = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterCleanup = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
     });
 
     test('after deploy 2 targets npm ci was called twice', () => {

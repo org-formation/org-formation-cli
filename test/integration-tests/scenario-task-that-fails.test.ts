@@ -7,7 +7,7 @@ import { ConsoleUtil } from "~util/console-util";
 const basePathForScenario = './test/integration-tests/resources/scenario-task-that-fails/';
 
 
-describe('when cleaning up stacks', () => {
+describe('when task fails', () => {
     let context: IIntegrationTestContext;
     let errorAfterPerformTasks: Error;
     let errorAfterValidateTasks: Error;
@@ -18,12 +18,8 @@ describe('when cleaning up stacks', () => {
     beforeAll(async () => {
         consoleErrorSpy = jest.spyOn(ConsoleUtil, 'LogError');
         context = await baseBeforeAll();
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, region: 'eu-west-1', performCleanup: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0, logicalName: 'default' };
-
-
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
+        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        const command = context.command;
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + 'organization.yml'});
 
@@ -60,7 +56,7 @@ describe('when cleaning up stacks', () => {
     });
 
     test('perform tasks logs error', () => {
-        expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('error updating cloudformation stack invalid-template in account'));
+        expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('error updating CloudFormation stack invalid-template in account'));
         expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('XX::S3::Bucket'));
         expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('Unrecognized resource types:'));
     });

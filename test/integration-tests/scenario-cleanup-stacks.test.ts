@@ -9,21 +9,16 @@ const basePathForScenario = './test/integration-tests/resources/scenario-cleanup
 
 describe('when cleaning up stacks', () => {
     let context: IIntegrationTestContext;
-    let cfnClient: CloudFormation;
     let stacksBeforeAll: ListStacksOutput;
     let stacksAfterAddBucket: ListStacksOutput;
-    let stacksAfterRenoveBucketNoCleanup: ListStacksOutput;
+    let stacksAfterRemoveBucketNoCleanup: ListStacksOutput;
     let stacksAfterAddBucket2: ListStacksOutput;
     let stacksAfterRemoveBucketWithCleanup: ListStacksOutput;
 
     beforeAll(async () => {
         context = await baseBeforeAll();
-        cfnClient = new CloudFormation({ region: 'eu-west-1' });
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, logicalName: 'cleanup-stacks', maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 };
-
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
+        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        const { command, cfnClient} = context;
 
         const listStackInput: ListStacksInput = { StackStatusFilter: [ 'CREATE_COMPLETE', 'UPDATE_COMPLETE' ]  };
         stacksBeforeAll = await cfnClient.listStacks(listStackInput).promise();
@@ -32,7 +27,7 @@ describe('when cleaning up stacks', () => {
         stacksAfterAddBucket = await cfnClient.listStacks(listStackInput).promise();
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'organization-tasks-empty.yml', performCleanup: false});
-        stacksAfterRenoveBucketNoCleanup = await cfnClient.listStacks(listStackInput).promise();
+        stacksAfterRemoveBucketNoCleanup = await cfnClient.listStacks(listStackInput).promise();
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'organization-tasks-buckets.yml', performCleanup: false});
         stacksAfterAddBucket2 = await cfnClient.listStacks(listStackInput).promise();
@@ -52,7 +47,7 @@ describe('when cleaning up stacks', () => {
     })
 
     test('after remove bucket without cleanup scenario-cleanup-buckets is found', () => {
-        const foundStack = stacksAfterRenoveBucketNoCleanup.StackSummaries.find(x=>x.StackName === 'scenario-cleanup-buckets');
+        const foundStack = stacksAfterRemoveBucketNoCleanup.StackSummaries.find(x=>x.StackName === 'scenario-cleanup-buckets');
         expect(foundStack).toBeDefined();
     })
 

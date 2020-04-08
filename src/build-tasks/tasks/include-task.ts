@@ -13,7 +13,7 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
     createTask(config: IIncludeTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
 
         if (config.Path === undefined) {
-            throw new OrgFormationError(`Required atrribute Path missing for task ${config.LogicalName}`);
+            throw new OrgFormationError(`Required attribute Path missing for task ${config.LogicalName}`);
         }
 
         const dir = path.dirname(config.FilePath);

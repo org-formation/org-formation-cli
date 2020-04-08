@@ -18,12 +18,8 @@ describe('when calling org-formation perform tasks', () => {
 
         context = await baseBeforeAll();
         cfnClient = await AwsUtil.GetCloudFormation('340381375986', 'eu-west-1');
-
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, region: 'eu-west-1', performCleanup: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0, logicalName: 'default' };
-
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
+        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        const command = context.command;
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + 'organization.yml'});
 
@@ -33,7 +29,7 @@ describe('when calling org-formation perform tasks', () => {
         const responseAfterUpdate = await cfnClient.describeStacks({StackName: 'integration-test-custom-role'}).promise();
         stackAfterUpdateWithCustomRole = responseAfterUpdate.Stacks[0];
 
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-cleanup-stacks-custom-roles.yml' });
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-cleanup-stacks-custom-roles.yml', performCleanup: true });
         listStacksResponseAfterCleanup = await cfnClient.listStacks({StackStatusFilter: ['CREATE_COMPLETE']}).promise();
 
     });

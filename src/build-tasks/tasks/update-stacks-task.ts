@@ -54,7 +54,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
                 if (!command.performCleanup) {
                     ConsoleUtil.LogWarning('Hi there, it seems you have removed a task!');
                     ConsoleUtil.LogWarning(`The task was called ${logicalId} and used to deploy stacks by name of ${physicalId}.`);
-                    ConsoleUtil.LogWarning('By default these stacks dont get cleaned up. You can change this by adding the option --perfom-cleanup.');
+                    ConsoleUtil.LogWarning('By default these stacks don\'t get cleaned up. You can change this by adding the option --perform-cleanup.');
                     ConsoleUtil.LogWarning('You can remove the stacks manually by running the following command:');
                     ConsoleUtil.LogWarning('');
                     ConsoleUtil.LogWarning(`    org-formation delete-stacks --stack-name ${physicalId}`);
@@ -86,12 +86,12 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         }
 
         if (config.OrganizationBinding) {
-            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBinding wich is deprecated. use DefaultOrganizationBinding instead`);
+            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBinding which is deprecated. use DefaultOrganizationBinding instead`);
             args.defaultOrganizationBinding = config.OrganizationBinding;
         }
 
         if (config.OrganizationBindingRegion) {
-            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBindingRegion wich is deprecated. use DefaultOrganizationBindingRegion instead`);
+            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBindingRegion which is deprecated. use DefaultOrganizationBindingRegion instead`);
             args.defaultOrganizationBindingRegion = config.OrganizationBindingRegion;
         }
 
@@ -108,7 +108,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         }
 
         if (config.OrganizationFile) {
-            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationFile which is ingored. The Template specified in the update-organization task is always used as OrganizationFile for update-stacks tasks`);
+            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationFile which is ignored. The Template specified in the update-organization task is always used as OrganizationFile for update-stacks tasks`);
         }
         if (config.TerminationProtection !== undefined) {
             args.terminationProtection = config.TerminationProtection;
@@ -141,7 +141,7 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     Template: string;
     StackName: string;
     StackDescription?: string;
-    Parameters?: Record<string, string>;
+    Parameters?: Record<string, string | object>;
     DeletionProtection?: boolean;
     OrganizationFile?: string;
     OrganizationBinding?: IOrganizationBinding; // old: dont use
