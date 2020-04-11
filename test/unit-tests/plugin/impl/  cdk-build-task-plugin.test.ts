@@ -16,13 +16,13 @@ describe('when createing cdk plugin', () => {
         expect(plugin.typeForTask).toBe('update-cdk');
     });
 
-    test('plugin is applied globally',() => {
-        expect(plugin.applyGlobally).toBe(true);
+    test('plugin is not applied globally',() => {
+        expect(plugin.applyGlobally).toBe(false);
     });
 
     test('plugin can translate config to command args',() => {
         const commandArgs = plugin.convertToCommandArgs( {
-            FilePath: './tasks.ytml',
+            FilePath: './tasks.yaml',
             Type: 'cdk',
             MaxConcurrentTasks: 6,
             FailedTaskTolerance: 4,

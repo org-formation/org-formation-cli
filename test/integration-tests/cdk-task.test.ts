@@ -1,8 +1,8 @@
 import { PerformTasksCommand, ValidateTasksCommand, RemoveCommand } from '~commands/index';
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from './base-integration-test';
-import { readFileSync } from 'fs';
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
 import { ChildProcessUtility } from '~util/child-process-util';
 import { GetObjectOutput } from 'aws-sdk/clients/s3';
+import { ExecOptions } from 'child_process';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cdk-task/';
 
@@ -34,12 +34,12 @@ describe('when calling org-formation perform tasks', () => {
         stateAfterDeploy2Targets = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-deploy-cdk-workload-1target.yml' })
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-update-cdk-workload-with-parameters.yml' })
         spawnProcessAfterDeploy1Target = spawnProcessMock.mock;
         stateAfterDeploy1Target = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-remove-cdk-workload-task.yml', performCleanup: false })
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '4-remove-cdk-workload-task.yml', performCleanup: false })
         spawnProcessAfterRemoveTask = spawnProcessMock.mock;
         stateAfterRemoveTask = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
@@ -57,6 +57,16 @@ describe('when calling org-formation perform tasks', () => {
     test('after deploy 2 targets npx sls deploy was called twice', () => {
         expect(spawnProcessAfterDeploy2Targets.calls[0][0]).toEqual(expect.stringContaining('npx cdk deploy'));
         expect(spawnProcessAfterDeploy2Targets.calls[1][0]).toEqual(expect.stringContaining('npx cdk deploy'));
+    });
+
+    test('after deploy 2 targets CDK_DEFAULT_REGION and CDK_DEFAULT_ACCOUNT are set', () => {
+        const contexts: ExecOptions[] = [spawnProcessAfterDeploy2Targets.calls[0][1], spawnProcessAfterDeploy2Targets.calls[1][1]];
+
+        const noRegion = contexts.find(x=>x.env['CDK_DEFAULT_REGION'] === undefined);
+        const noAccount = contexts.find(x=>x.env['CDK_DEFAULT_ACCOUNT'] === undefined);
+
+        expect(noRegion).toBeUndefined();
+        expect(noAccount).toBeUndefined();
     });
 
     test('after deploy 2 targets state contains both deployed workload', () => {

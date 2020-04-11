@@ -11,11 +11,12 @@ import { Md5Util } from '~util/md5-util';
 import { ChildProcessUtility } from '~util/child-process-util';
 import { Validator } from '~parser/validator';
 import { PluginUtil } from '~plugin/plugin-util';
+import { IGenericTarget } from '~state/persisted-state';
 
 export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig, ICdkCommandArgs, ICdkTask> {
     type = 'cdk';
     typeForTask = 'update-cdk';
-    applyGlobally = true;
+    applyGlobally = false;
 
     convertToCommandArgs(config: ICdkBuildTaskConfig, command: IPerformTasksCommandArgs): ICdkCommandArgs {
 
@@ -111,7 +112,8 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName);
+        const env = CdkBuildTaskPlugin.GetEnvironmentVariables(target);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env);
     }
 
     async performDelete(binding: IPluginBinding<ICdkTask>): Promise<void> {
@@ -132,8 +134,15 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
+        const env = CdkBuildTaskPlugin.GetEnvironmentVariables(target);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env);
+    }
 
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName);
+    static GetEnvironmentVariables(target: IGenericTarget<ICdkTask>): Record<string, string> {
+        return {
+            CDK_DEFAULT_REGION: target.region,
+            CDK_DEFAULT_ACCOUNT: target.accountId,
+        };
     }
 }
 

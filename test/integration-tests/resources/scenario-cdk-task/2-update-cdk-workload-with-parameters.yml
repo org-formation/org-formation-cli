@@ -5,7 +5,7 @@ OrganizationUpdate:
 
 CdkWorkload:
   Type: update-cdk
-  Path: ./workload/    # used to package / calculate hash
+  Path: ./workload/
   RunNpmInstall: true
   OrganizationBinding:
     Account: !Ref AccountA

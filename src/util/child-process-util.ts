@@ -7,7 +7,7 @@ import { ConsoleUtil } from './console-util';
 
 export class ChildProcessUtility {
 
-    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): Promise<void> {
+    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS, env: Record<string, string> = {} ): Promise<void> {
         ConsoleUtil.LogInfo(`executing command: ${command} in account ${accountId}`);
 
         let credentials: CredentialsOptions = AWS.config.credentials;
@@ -18,7 +18,7 @@ export class ChildProcessUtility {
         }
         const options: ExecOptions = {
             cwd,
-            env: process.env,
+            env: {...process.env, ...env},
         };
 
         if (credentials) {

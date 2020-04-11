@@ -7,9 +7,7 @@ CdkWorkload:
   Type: update-cdk
   Path: ./workload/
   RunNpmInstall: true
-  RunNpmBuild: true
   OrganizationBinding:
-    IncludeMasterAccount: true
     Account: !Ref AccountA
     Region: eu-central-1
   MaxConcurrentTasks: 10
