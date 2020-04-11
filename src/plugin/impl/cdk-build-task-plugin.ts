@@ -22,7 +22,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'Path', 'DependsOn', 'Type',
             'FilePath', 'RunNpmInstall', 'RunNpmBuild', 'FailedTaskTolerance', 'MaxConcurrentTasks', 'OrganizationBinding',
-            'TaskRoleName', 'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand');
+            'TaskRoleName', 'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -43,6 +43,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             taskRoleName: config.TaskRoleName,
             customDeployCommand: config.CustomDeployCommand,
             customRemoveCommand: config.CustomRemoveCommand,
+            parameters: config.Parameters,
         };
     }
 
@@ -77,6 +78,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             path: hashOfCdkDirectory,
             customDeployCommand: command.customDeployCommand,
             customRemoveCommand: command.customRemoveCommand,
+            parameters: command.parameters,
         };
     }
 
@@ -91,6 +93,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             taskRoleName: command.taskRoleName,
             customDeployCommand: command.customDeployCommand,
             customRemoveCommand: command.customRemoveCommand,
+            parameters: command.parameters,
         };
     }
 
@@ -104,6 +107,10 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
         if (binding.task.runNpmInstall) {
             command = PluginUtil.PrependNpmInstall(task.path, command);
+        }
+
+        if (task.parameters) {
+            command = command + CdkBuildTaskPlugin.GetParametersAsArgument(task.parameters);
         }
 
         if (binding.task.customDeployCommand) {
@@ -120,15 +127,19 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const { task, target } = binding;
         let command = 'npx cdk destroy';
 
-        if (binding.task.runNpmInstall) {
+        if (task.runNpmInstall) {
             command = PluginUtil.PrependNpmInstall(task.path, command);
         }
 
-        if (binding.task.runNpmBuild) {
+        if (task.runNpmBuild) {
             command = 'npm run build && ' + command;
         }
 
-        if (binding.task.customRemoveCommand) {
+        if (task.parameters) {
+            command = command + CdkBuildTaskPlugin.GetParametersAsArgument(task.parameters);
+        }
+
+        if (task.customRemoveCommand) {
             command = binding.task.customRemoveCommand;
         }
 
@@ -144,6 +155,11 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             CDK_DEFAULT_ACCOUNT: target.accountId,
         };
     }
+
+    static GetParametersAsArgument(parameters: Record<string, any>): string {
+        const entries = Object.entries(parameters);
+        return entries.reduce((prev, curr) => prev + ` -c ${curr[0]}=${curr[1]}`, '')
+    }
 }
 
 
@@ -156,6 +172,7 @@ interface ICdkBuildTaskConfig extends IBuildTaskConfiguration {
     RunNpmBuild?: boolean;
     CustomDeployCommand?: string;
     CustomRemoveCommand?: string;
+    Parameters?: Record<string, any>
 }
 
 interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -164,6 +181,7 @@ interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
     runNpmBuild: boolean;
     customDeployCommand?: string;
     customRemoveCommand?: string;
+    parameters?: Record<string, any>;
 }
 
 interface ICdkTask extends IPluginTask {
@@ -172,4 +190,5 @@ interface ICdkTask extends IPluginTask {
     runNpmBuild: boolean;
     customDeployCommand?: string;
     customRemoveCommand?: string;
+    parameters?: Record<string, any>;
 }

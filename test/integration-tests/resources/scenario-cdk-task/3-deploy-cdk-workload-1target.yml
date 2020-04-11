@@ -7,6 +7,9 @@ CdkWorkload:
   Type: update-cdk
   Path: ./workload/
   RunNpmInstall: true
+  Parameters:
+    param1: val
+    param2: val
   OrganizationBinding:
     Account: !Ref AccountA
     Region: eu-central-1

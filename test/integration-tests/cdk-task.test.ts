@@ -16,6 +16,8 @@ describe('when calling org-formation perform tasks', () => {
     let stateAfterRemoveTask: GetObjectOutput;
     let spawnProcessAfterRemoveTask: jest.MockContext<any, any>;
     let spawnProcessMock: jest.SpyInstance;
+    let spawnProcessAfterUpdateWithParameters: jest.MockContext<any, any>;
+    let stateAfterUpdateWithParameters: GetObjectOutput;
     let stateAfterCleanup: GetObjectOutput;
     let spawnProcessAfterCleanup: jest.MockContext<any, any>;
 
@@ -35,6 +37,11 @@ describe('when calling org-formation perform tasks', () => {
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-update-cdk-workload-with-parameters.yml' })
+        spawnProcessAfterUpdateWithParameters = spawnProcessMock.mock;
+        stateAfterUpdateWithParameters = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+
+        spawnProcessMock.mockReset();
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-deploy-cdk-workload-1target.yml' })
         spawnProcessAfterDeploy1Target = spawnProcessMock.mock;
         stateAfterDeploy1Target = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
@@ -69,6 +76,13 @@ describe('when calling org-formation perform tasks', () => {
         expect(noAccount).toBeUndefined();
     });
 
+
+    test('when updating with parameters, parameters are passed to CDK invocation', () => {
+        const command = spawnProcessAfterUpdateWithParameters.calls[0][0];
+        expect(command).toEqual(expect.stringContaining(' -c param1=val -c param2=val'));
+    });
+
+
     test('after deploy 2 targets state contains both deployed workload', () => {
         const stateAsString = stateAfterDeploy2Targets.Body.toString();
         const state = JSON.parse(stateAsString);
@@ -77,9 +91,9 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.targets['cdk']).toBeDefined();
         expect(state.targets['cdk']['CdkWorkload']).toBeDefined();
         expect(state.targets['cdk']['CdkWorkload']['102625093955']).toBeDefined();
-        expect(state.targets['cdk']['CdkWorkload']['102625093955']['no-region']).toBeDefined();
+        expect(state.targets['cdk']['CdkWorkload']['102625093955']['eu-central-1']).toBeDefined();
         expect(state.targets['cdk']['CdkWorkload']['340381375986']).toBeDefined();
-        expect(state.targets['cdk']['CdkWorkload']['340381375986']['no-region']).toBeDefined();
+        expect(state.targets['cdk']['CdkWorkload']['340381375986']['eu-central-1']).toBeDefined();
     });
 
     // test('after deploy workload state contains tracked task', () => {

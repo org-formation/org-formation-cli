@@ -8,7 +8,11 @@ CdkWorkload:
   Path: ./workload/
   RunNpmInstall: true
   OrganizationBinding:
+    IncludeMasterAccount: true
     Account: !Ref AccountA
     Region: eu-central-1
+  Parameters:
+    param1: val
+    param2: val
   MaxConcurrentTasks: 10
   FailedTaskTolerance: 0
