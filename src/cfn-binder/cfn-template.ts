@@ -1,15 +1,16 @@
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { ResourceUtil } from '../util/resource-util';
-import { ICfnBinding, ICfnCrossAccountDependency, ICfnValue } from './cfn-binder';
+import { ICfnBinding, ICfnCrossAccountDependency } from './cfn-binder';
 import { SubExpression } from './cfn-sub-expression';
 import {
     AccountResource,
     IResourceTarget,
-    Resource,
 } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
+import { ICfnExpression } from '~core/cfn-expression';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class CfnTemplate {
 
@@ -518,39 +519,11 @@ export class CfnTemplate {
         return result;
     }
 
-    private resolveResourceRef(resource: Resource): string {
-        const binding = this.state.getBinding(resource.type, resource.logicalId);
-        if (binding === undefined) {
-            throw new OrgFormationError(`unable to find ${resource.logicalId} in state. Is your organization up to date?`);
-        }
-        return binding.physicalId;
-    }
 
     private resolveAccountGetAtt(account: AccountResource, path?: string): string | undefined {
-        if (path === undefined) {
-            return this.resolveResourceRef(account);
-        }
-        if (path.startsWith('Tags.')) {
-            const tagName = path.substring(5);
-            if (!account.tags) {
-                throw new OrgFormationError(`unable to resolve account attribute ${account.logicalId}.${path}. Account has no Tags`);
-            }
-            const tagValue = account.tags[tagName];
-            if (tagValue === undefined) {
-                throw new OrgFormationError(`unable to resolve account attribute ${account.logicalId}.${path}. Tag ${tagName} not found on account`);
-            }
-            return tagValue;
-        } else if (path === 'AccountName') {
-            if (!account.accountName) { return ''; }
-            return account.accountName;
-        } else if (path === 'Alias') {
-            if (!account.alias) { return ''; }
-            return account.alias;
-        } else if (path === 'AccountId') {
-            return this.resolveResourceRef(account);
-        } else if (path === 'RootEmail') {
-            if (!account.rootEmail) { return ''; }
-            return account.rootEmail;
+        const val = CfnExpressionResolver.ResolveAccountExpression(account, path, this.state);
+        if (val !== undefined) {
+            return val;
         }
         if (!path.startsWith('Resources.')) {
             throw new OrgFormationError(`unable to resolve account attribute ${account.logicalId}.${path}`);
@@ -572,7 +545,7 @@ export interface ICfnExport {
 }
 export interface ICfnOutput {
     Export: ICfnExport;
-    Value: ICfnValue;
+    Value: ICfnExpression;
     Description: string;
     Condition: string;
 }
@@ -586,7 +559,7 @@ interface ICfnCrossAccountReference {
     referenceType: 'GetAtt' | 'Ref';
     valueType: 'String' | 'CommaDelimitedList';
     uniqueNameForExport: string;
-    expressionForExport: ICfnValue;
+    expressionForExport: ICfnExpression;
     uniqueNameForImport: string;
     conditionForExport?: string;
 }

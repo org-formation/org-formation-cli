@@ -6,6 +6,7 @@ import { CfnTemplate } from './cfn-template';
 import { IResourceTarget } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
 import { ICfnTarget, PersistedState } from '~state/persisted-state';
+import { ICfnCopyValue, ICfnExpression } from '~core/cfn-expression';
 
 export class CloudFormationBinder {
     private readonly masterAccount: string;
@@ -238,15 +239,8 @@ export interface ICfnCrossAccountDependency {
     outputRegion: string;
     outputStackName: string;
     outputName: string;
-    outputValueExpression: ICfnValue;
+    outputValueExpression: ICfnExpression;
     outputCondition: string;
 }
 
 type CfnBindingAction = 'UpdateOrCreate' | 'Delete' | 'None';
-
-export interface ICfnCopyValue { 'Fn::CopyValue': string[] }
-export interface ICfnRefValue { Ref: string }
-export interface ICfnGetAttValue  { 'Fn::GetAtt': string[] }
-export interface ICfnJoinValue  { 'Fn::Join': ICfnValue[] }
-export interface ICfnSubValue  { 'Fn::Sub': any }
-export type ICfnValue = string | ICfnRefValue  | ICfnGetAttValue | ICfnJoinValue;

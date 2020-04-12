@@ -61,7 +61,7 @@ describe('when executing cleanup command', () => {
     let runTasksStub: jest.SpyInstance;
     let commandArgs: IRemoveCommandArgs;
     let mockPlugin: IBuildTaskPlugin<any, any, any> = {
-        performDelete: jest.fn()
+        performRemove: jest.fn()
     } as any;
     let enumBindingsStub: jest.SpyInstance;
     let consoleInfo: jest.SpyInstance;
@@ -132,7 +132,7 @@ describe('when executing cleanup command', () => {
 
     test('delete task is called ', async () => {
         await command.performCommand(commandArgs);
-        expect(mockPlugin.performDelete).toBeCalled();
+        expect(mockPlugin.performRemove).toBeCalled();
     });
 
     test('default task runner is used to execute tasks', async () => {

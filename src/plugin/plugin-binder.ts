@@ -3,6 +3,7 @@ import { ConsoleUtil } from '../util/console-util';
 import { IGenericTarget, PersistedState } from '~state/persisted-state';
 import { TemplateRoot, IOrganizationBinding } from '~parser/parser';
 import { IBuildTaskPlugin } from '~plugin/plugin';
+import { ICfnExpression } from '~core/cfn-expression';
 
 export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
@@ -113,7 +114,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
         const that = this;
 
         return async (): Promise<void> => {
-            that.plugin.performDelete(binding);
+            that.plugin.performRemove(binding, this.template, this.state);
             that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
         };
     }
@@ -122,7 +123,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
         const that = this;
 
         return async (): Promise<void> => {
-            await that.plugin.performCreateOrUpdate(binding);
+            await that.plugin.performCreateOrUpdate(binding, this.template, this.state);
             that.state.setGenericTarget<TTaskDefinition>(target);
         };
     }
@@ -150,6 +151,7 @@ export interface IPluginTask {
     type: string;
     hash: string;
     taskRoleName?: string;
+    parameters?: Record<string, ICfnExpression>;
 }
 
 type GenericAction = 'UpdateOrCreate' | 'Delete' | 'None';

@@ -3,8 +3,9 @@ import uuid = require('uuid');
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../../src/org-formation-error';
-import { ICfnBinding, ICfnCopyValue } from './cfn-binder';
+import { ICfnBinding } from './cfn-binder';
 import { PersistedState } from '~state/persisted-state';
+import { ICfnCopyValue } from '~core/cfn-expression';
 export class CfnTaskProvider {
     private state: PersistedState;
 

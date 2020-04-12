@@ -5,13 +5,14 @@ import { OrgFormationError } from '../../../src/org-formation-error';
 import { ConsoleUtil } from '../../util/console-util';
 import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
-import { IOrganizationBinding } from '~parser/parser';
+import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { Md5Util } from '~util/md5-util';
 import { ChildProcessUtility } from '~util/child-process-util';
 import { Validator } from '~parser/validator';
 import { PluginUtil } from '~plugin/plugin-util';
-import { IGenericTarget } from '~state/persisted-state';
+import { IGenericTarget, PersistedState } from '~state/persisted-state';
+import { ICfnExpression, ICfnSubValue } from '~core/cfn-expression';
 
 export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig, ICdkCommandArgs, ICdkTask> {
     type = 'cdk';
@@ -97,24 +98,24 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         };
     }
 
-    async performCreateOrUpdate(binding: IPluginBinding<ICdkTask>): Promise<void> {
+    async performCreateOrUpdate(binding: IPluginBinding<ICdkTask>, template: TemplateRoot, state: PersistedState): Promise<void> {
         const { task, target } = binding;
-        let command = 'npx cdk deploy';
-
-        if (binding.task.runNpmBuild) {
-            command = 'npm run build && ' + command;
-        }
-
-        if (binding.task.runNpmInstall) {
-            command = PluginUtil.PrependNpmInstall(task.path, command);
-        }
-
-        if (task.parameters) {
-            command = command + CdkBuildTaskPlugin.GetParametersAsArgument(task.parameters);
-        }
+        let command: string;
+        const resolver = PluginUtil.CreateExpressionResolver(task, target, template, state, CdkBuildTaskPlugin.GetParametersAsArgument);
 
         if (binding.task.customDeployCommand) {
-            command = binding.task.customDeployCommand;
+            command = resolver.resolveSingleExpression(binding.task.customDeployCommand);
+        } else {
+            const commandExpression = { 'Fn::Sub': 'npx cdk deploy ${CurrentTask.Parameters}' } as ICfnSubValue;
+            command = resolver.resolveSingleExpression(commandExpression);
+
+            if (binding.task.runNpmBuild) {
+                command = 'npm run build && ' + command;
+            }
+
+            if (binding.task.runNpmInstall) {
+                command = PluginUtil.PrependNpmInstall(task.path, command);
+            }
         }
 
         const accountId = target.accountId;
@@ -123,24 +124,24 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env);
     }
 
-    async performDelete(binding: IPluginBinding<ICdkTask>): Promise<void> {
+    async performRemove(binding: IPluginBinding<ICdkTask>, template: TemplateRoot, state: PersistedState): Promise<void> {
         const { task, target } = binding;
-        let command = 'npx cdk destroy';
+        let command: string;
+        const resolver = PluginUtil.CreateExpressionResolver(task, target, template, state, CdkBuildTaskPlugin.GetParametersAsArgument);
 
-        if (task.runNpmInstall) {
-            command = PluginUtil.PrependNpmInstall(task.path, command);
-        }
+        if (binding.task.customRemoveCommand) {
+            command = resolver.resolveSingleExpression(binding.task.customRemoveCommand);
+        } else {
+            const commandExpression = { 'Fn::Sub': 'npx cdk destroy ${CurrentTask.Parameters}' } as ICfnSubValue;
+            command = resolver.resolveSingleExpression(commandExpression);
 
-        if (task.runNpmBuild) {
-            command = 'npm run build && ' + command;
-        }
+            if (binding.task.runNpmBuild) {
+                command = 'npm run build && ' + command;
+            }
 
-        if (task.parameters) {
-            command = command + CdkBuildTaskPlugin.GetParametersAsArgument(task.parameters);
-        }
-
-        if (task.customRemoveCommand) {
-            command = binding.task.customRemoveCommand;
+            if (binding.task.runNpmInstall) {
+                command = PluginUtil.PrependNpmInstall(task.path, command);
+            }
         }
 
         const accountId = target.accountId;
@@ -157,8 +158,9 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
     }
 
     static GetParametersAsArgument(parameters: Record<string, any>): string {
+        if (!parameters) {return '';}
         const entries = Object.entries(parameters);
-        return entries.reduce((prev, curr) => prev + ` -c ${curr[0]}=${curr[1]}`, '')
+        return entries.reduce((prev, curr) => prev + ` -c ${curr[0]}=${curr[1]}`, '');
     }
 }
 
@@ -170,25 +172,24 @@ interface ICdkBuildTaskConfig extends IBuildTaskConfiguration {
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
     RunNpmBuild?: boolean;
-    CustomDeployCommand?: string;
-    CustomRemoveCommand?: string;
-    Parameters?: Record<string, any>
+    CustomDeployCommand?: ICfnExpression;
+    CustomRemoveCommand?: ICfnExpression;
+    Parameters?: Record<string, ICfnExpression>;
 }
 
-interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
+export interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
     path: string;
     runNpmInstall: boolean;
     runNpmBuild: boolean;
-    customDeployCommand?: string;
-    customRemoveCommand?: string;
-    parameters?: Record<string, any>;
+    customDeployCommand?: ICfnExpression;
+    customRemoveCommand?: ICfnExpression;
+    parameters?: Record<string, ICfnExpression>;
 }
 
-interface ICdkTask extends IPluginTask {
+export interface ICdkTask extends IPluginTask {
     path: string;
     runNpmInstall: boolean;
     runNpmBuild: boolean;
-    customDeployCommand?: string;
-    customRemoveCommand?: string;
-    parameters?: Record<string, any>;
+    customDeployCommand?: ICfnExpression;
+    customRemoveCommand?: ICfnExpression;
 }

@@ -1,8 +1,9 @@
-import { CloudFormationBinder, ICfnBinding, ICfnGetAttValue, ICfnRefValue, ICfnSubValue } from '~cfn-binder/cfn-binder';
+import { CloudFormationBinder, ICfnBinding } from '~cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
-import { ICfnResource, ICfnTemplate } from '../cfn-types';
+import { ICfnResource, ICfnTemplate, ICfnGetAttValue, ICfnRefValue } from '../cfn-types';
+import { ICfnSubValue } from '~core/cfn-expression';
 
 describe('when loading reference to multiple', () => {
     test('fails with exception', () => {
@@ -72,11 +73,11 @@ describe('when loading cross account references through sub', () => {
         expect(outputGetAtt).toBeDefined();
         expect(outputRef).toBeDefined();
 
-        const getatt = (outputGetAtt.Value as ICfnGetAttValue)['Fn::GetAtt'];
-        const getref = (outputRef.Value as ICfnRefValue).Ref;
+        const getAtt = (outputGetAtt.Value as ICfnGetAttValue)['Fn::GetAtt'];
+        const getRef = (outputRef.Value as ICfnRefValue).Ref;
 
-        expect(getatt).toBeDefined();
-        expect(getref).toBeDefined();
+        expect(getAtt).toBeDefined();
+        expect(getRef).toBeDefined();
 
         expect(outputGetAtt.Export.Name).toBe('reference-using-sub-Topic-TopicName');
         expect(outputRef.Export.Name).toBe('reference-using-sub-Topic');

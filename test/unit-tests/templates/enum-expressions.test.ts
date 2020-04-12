@@ -1,8 +1,9 @@
-import { CloudFormationBinder, ICfnBinding, ICfnSubValue } from '~cfn-binder/cfn-binder';
+import { CloudFormationBinder, ICfnBinding } from '~cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { ICfnTemplate } from '../cfn-types';
+import { ICfnSubValue } from '~core/cfn-expression';
 
 describe('when resolving enum-expressions', () => {
     let template: TemplateRoot;

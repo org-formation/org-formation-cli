@@ -8,7 +8,7 @@ export class OrganizationBindingsSection {
 
     constructor(root: TemplateRoot, bindings?: Record<string, IOrganizationBinding>) {
         this.bindings = bindings;
-        this.defaultBinding = root.defautOrganizationBinding;
+        this.defaultBinding = root.defaultOrganizationBinding;
         this.defaultRegion = root.defaultOrganizationBindingRegion;
 
         if (this.defaultBinding !== undefined && this.defaultBinding.Region === undefined) {

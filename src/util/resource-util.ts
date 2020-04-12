@@ -38,13 +38,13 @@ export class ResourceUtil {
         return ResourceUtil.EnumExpressionsForResource(resource, resourceIds, resourceParent, resourceKey);
     }
 
-    public static EnumExpressionsForResource(resource: any, resourceIds: string[], resourceParent?: any, resourceKey?: string): IResourceExpression[] {
+    public static EnumExpressionsForResource(resource: any, resourceIds: string[] | 'any', resourceParent?: any, resourceKey?: string): IResourceExpression[] {
         const result: IResourceExpression[] = [];
         if (resource !== null && typeof resource === 'object') {
             const entries = Object.entries(resource);
             if (entries.length === 1 && resourceParent !== undefined && resourceKey !== undefined) {
                 const [key, val]: [string, unknown] = entries[0];
-                if (key === 'Ref' && typeof val === 'string' && resourceIds.includes(val)) {
+                if (key === 'Ref' && typeof val === 'string' && (resourceIds === 'any' || resourceIds.includes(val))) {
                     result.push({
                         resolveToValue: createResolveExpression(resourceParent, resourceKey),
                         rewriteExpression: createRewriteExpression(resourceParent, resourceKey),
@@ -52,7 +52,7 @@ export class ResourceUtil {
                     });
                 } else if (key === 'Fn::GetAtt') {
                     if (Array.isArray(val) && val.length === 2) {
-                        if (resourceIds.includes(val[0])) {
+                        if (resourceIds === 'any' || resourceIds.includes(val[0])) {
                             result.push({
                                 resolveToValue: createResolveExpression(resourceParent, resourceKey),
                                 rewriteExpression: createRewriteExpression(resourceParent, resourceKey),
@@ -64,7 +64,7 @@ export class ResourceUtil {
                 } else if (key === 'Fn::Sub') {
                     const sub = new SubExpression(val as string | any[]);
                     for (const variable of sub.variables) {
-                        if (resourceIds.includes(variable.resource)) {
+                        if (resourceIds === 'any' || resourceIds.includes(variable.resource)) {
                             result.push({
                                 resolveToValue: replacement => {
                                     variable.replace(replacement);

@@ -81,7 +81,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         };
     }
 
-    async performDelete(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
+    async performRemove(binding: IPluginBinding<IS3CopyTask>/* , template: TemplateRoot, state: PersistedState*/): Promise<void> {
         const s3client = await AwsUtil.GetS3Service(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
         const request: DeleteObjectRequest = {
             ...CopyToS3TaskPlugin.getBucketAndKey(binding.task),
@@ -90,7 +90,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         await s3client.deleteObject(request).promise();
     }
 
-    async performCreateOrUpdate(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
+    async performCreateOrUpdate(binding: IPluginBinding<IS3CopyTask>/* , template: TemplateRoot, state: PersistedState*/): Promise<void> {
         const s3client = await AwsUtil.GetS3Service(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
         const request: PutObjectRequest = {
             ...CopyToS3TaskPlugin.getBucketAndKey(binding.task),

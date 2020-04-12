@@ -155,7 +155,7 @@ export class TemplateRoot {
     public readonly contents: ITemplate;
     public readonly dirname: string;
     public readonly organizationSection: OrganizationSection;
-    public readonly defautOrganizationBinding: IOrganizationBinding;
+    public readonly defaultOrganizationBinding: IOrganizationBinding;
     public readonly defaultOrganizationBindingRegion: string | string[];
     public readonly resourcesSection: ResourcesSection;
     public readonly bindingSection: OrganizationBindingsSection;
@@ -187,7 +187,7 @@ export class TemplateRoot {
             delete contents.OrganizationBindingRegion;
         }
         this.defaultOrganizationBindingRegion = contents.DefaultOrganizationBindingRegion;
-        this.defautOrganizationBinding = contents.DefaultOrganizationBinding;
+        this.defaultOrganizationBinding = contents.DefaultOrganizationBinding;
         this.organizationSection = new OrganizationSection(this, contents.Organization);
         this.bindingSection = new OrganizationBindingsSection(this, contents.OrganizationBindings);
         this.resourcesSection = new ResourcesSection(this, contents.Resources);
@@ -334,5 +334,4 @@ export class TemplateRoot {
         }
         return result;
     }
-
 }

@@ -6,7 +6,8 @@ import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { ICommandArgs } from '~commands/base-command';
 import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
 import { IPerformTasksCommandArgs } from '~commands/index';
-import { IOrganizationBinding } from '~parser/parser';
+import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
+import { PersistedState } from '~state/persisted-state';
 
 export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> {
     type: string;
@@ -18,8 +19,8 @@ export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfigurati
     getValuesForEquality(command: TCommandArgs): any;
     convertToTask(command: TCommandArgs, hashOfTask: string): TTask;
 
-    performDelete(binding: IPluginBinding<TTask>): Promise<void>;
-    performCreateOrUpdate(binding: IPluginBinding<TTask>): Promise<void>;
+    performRemove(binding: IPluginBinding<TTask>, template: TemplateRoot, state: PersistedState): Promise<void>;
+    performCreateOrUpdate(binding: IPluginBinding<TTask>, template: TemplateRoot, state: PersistedState): Promise<void>;
 }
 
 export interface IBuildTaskPluginCommandArgs extends ICommandArgs {
