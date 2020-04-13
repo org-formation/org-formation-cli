@@ -102,7 +102,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             customRemoveCommand: command.customRemoveCommand,
         };
     }
-    async performRemove(binding: IPluginBinding<ISlsTask>/* , template: TemplateRoot, state: PersistedState*/): Promise<void> {
+    async performRemove(binding: IPluginBinding<ISlsTask>): Promise<void> {
         const { task, target } = binding;
         let command = 'npx sls remove';
 
@@ -128,7 +128,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName);
     }
 
-    async performCreateOrUpdate(binding: IPluginBinding<ISlsTask>/* , template: TemplateRoot, state: PersistedState*/): Promise<void> {
+    async performCreateOrUpdate(binding: IPluginBinding<ISlsTask>): Promise<void> {
         const { task, target } = binding;
         let command = 'npx sls deploy';
 
@@ -151,6 +151,10 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const cwd = path.resolve(task.path);
 
         await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName);
+    }
+
+    appendResolvers(): Promise<void> {
+        return Promise.resolve();
     }
 }
 

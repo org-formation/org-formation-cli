@@ -99,6 +99,41 @@ export class ResourceUtil {
         return result;
     }
 
+    public static EnumFunctionsForResource(resource: any, resourceParent?: any, resourceKey?: string): ICopyValueExpression[] {
+        const result: ICopyValueExpression[] = [];
+        if (resource !== null && typeof resource === 'object') {
+            const entries = Object.entries(resource);
+            if (entries.length === 1 && resourceParent !== undefined && resourceKey !== undefined) {
+                const [key, val]: [string, unknown] = entries[0];
+                if (key === 'Fn::CopyValue') {
+                    if (typeof val === 'string') {
+                        result.push({
+                            resolveToValue: createResolveExpression(resourceParent, resourceKey),
+                            exportName: val,
+                        });
+                    } else if (Array.isArray(val) && val.length >= 1 && val.length <= 3) {
+                        const expression: ICopyValueExpression = {
+                            resolveToValue: createResolveExpression(resourceParent, resourceKey),
+                            exportName: val[0],
+                        };
+                        if (val.length >= 2) {
+                            expression.accountId = val[1];
+                        }
+                        if (val.length >= 3) {
+                            expression.accountId = val[2];
+                        }
+                        result.push(expression);
+                    }
+                }
+            }
+            for (const [key, val] of entries) {
+                if (val !== null && typeof val === 'object') {
+                   result.push(...this.EnumFunctionsForResource(val, resource, key));
+                }
+            }
+        }
+        return result;
+    }
 }
 
 const createRewriteExpression = (parent: any, key: string) => {
@@ -121,5 +156,12 @@ interface IResourceExpression {
     resource: string;
     path?: string;
     rewriteExpression(resource: string, path?: string): void;
+    resolveToValue(val: string): void;
+}
+
+interface ICopyValueExpression {
+    exportName: string;
+    accountId?: string;
+    region?: string;
     resolveToValue(val: string): void;
 }

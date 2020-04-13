@@ -78,8 +78,10 @@ describe('when calling org-formation perform tasks', () => {
 
 
     test('when updating with parameters, parameters are passed to CDK invocation', () => {
-        const command = spawnProcessAfterUpdateWithParameters.calls[0][0];
-        expect(command).toEqual(expect.stringContaining(' -c param1=val -c param2=val'));
+        const command0 = spawnProcessAfterUpdateWithParameters.calls[0][0];
+        const command1 = spawnProcessAfterUpdateWithParameters.calls[1][0];
+        expect(command0).toEqual(expect.stringContaining('param2=Account A'));
+        expect(command0 !== command1).toBeTruthy();
     });
 
 
@@ -103,7 +105,7 @@ describe('when calling org-formation perform tasks', () => {
     //     expect(state.trackedTasks).toBeDefined();
     // });
 
-    test('after deploy 1 targets sls remove was called', () => {
+    test('after deploy 1 targets cdk destroy was called', () => {
         expect(spawnProcessAfterDeploy1Target.calls.length).toBe(1);
         expect(spawnProcessAfterDeploy1Target.calls[0][0]).toEqual(expect.stringContaining('npx cdk destroy'));
     })
@@ -116,7 +118,7 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.targets['cdk']['CdkWorkload']['102625093955']).toBeUndefined();
     });
 
-    test('after removing task sls remove was not called', () => {
+    test('after removing task cdk destroy was not called', () => {
         expect(spawnProcessAfterRemoveTask.calls.length).toBe(0);
     })
 

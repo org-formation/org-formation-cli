@@ -3,7 +3,7 @@ import { OrgResourceTypes } from '~parser/model/resource-types';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { ICfnTemplate } from '../cfn-types';
-import { ICfnSubValue } from '~core/cfn-expression';
+import { ICfnSubExpression } from '~core/cfn-expression';
 
 describe('when resolving enum-expressions', () => {
     let template: TemplateRoot;
@@ -69,7 +69,7 @@ describe('when resolving enum-expressions', () => {
 
     test('enum accounts for results in Sub expression if variables are found', () => {
         const resource = masterAccountTemplate.Resources.Resource;
-        const val: ICfnSubValue = resource.Properties.EnumWithOtherParameter;
+        const val: ICfnSubExpression = resource.Properties.EnumWithOtherParameter;
         expect(val['Fn::Sub']).toBeDefined();
         expect(val['Fn::Sub']).toBe('blabla-111111111111-${something}-blabla');
     });
@@ -113,7 +113,7 @@ describe('when resolving enum-expressions', () => {
 
     test('enum accounts for results in Sub expression if variables are found (single qoutes)', () => {
         const resource = masterAccountTemplate.Resources.Resource2;
-        const val: ICfnSubValue = resource.Properties.EnumWithOtherParameter;
+        const val: ICfnSubExpression = resource.Properties.EnumWithOtherParameter;
         expect(val['Fn::Sub']).toBeDefined();
         expect(val['Fn::Sub']).toBe('blabla 111111111111 ${something} blabla');
     });

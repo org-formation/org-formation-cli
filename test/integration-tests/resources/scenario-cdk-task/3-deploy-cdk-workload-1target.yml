@@ -8,8 +8,8 @@ CdkWorkload:
   Path: ./workload/
   RunNpmInstall: true
   Parameters:
-    param1: val
-    param2: val
+    param1: !Sub 'sub expression ${AWS::AccountId}'
+    param2: !GetAtt AccountA.AccountName
   OrganizationBinding:
     Account: !Ref AccountA
     Region: eu-central-1

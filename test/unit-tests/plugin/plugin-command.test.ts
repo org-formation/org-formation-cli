@@ -25,6 +25,7 @@ describe('when executing plugin command', () => {
         validateCommandArgs: jest.fn(),
         getValuesForEquality: jest.fn(() => ({att: 'val'})),
         convertToTask:  jest.fn(() => ({name: 'my-task', type: 'my-type'})),
+        appendResolvers: jest.fn(),
     } as any;
     let enumBindingsStub: jest.SpyInstance;
 

@@ -4,6 +4,7 @@ import { IGenericTarget, PersistedState } from '~state/persisted-state';
 import { TemplateRoot, IOrganizationBinding } from '~parser/parser';
 import { IBuildTaskPlugin } from '~plugin/plugin';
 import { ICfnExpression } from '~core/cfn-expression';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
@@ -101,7 +102,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
             } else if (binding.action === 'Delete') {
                 result.push({
                     ...task,
-                    perform: this.createPerformForDelete(binding),
+                    perform: this.createPerformForRemove(binding),
                 });
             }
         }
@@ -109,21 +110,31 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
         return result;
     }
 
-    public createPerformForDelete(binding: IPluginBinding<TTaskDefinition>): () => Promise<void> {
+    public createPerformForRemove(binding: IPluginBinding<TTaskDefinition>): () => Promise<void> {
         const { task, target } = binding;
         const that = this;
 
         return async (): Promise<void> => {
-            that.plugin.performRemove(binding, this.template, this.state);
+
+            const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, this.template, this.state);
+            await this.plugin.appendResolvers(expressionResolver, binding);
+            binding.task = await expressionResolver.resolve(binding.task);
+
+            await that.plugin.performRemove(binding, expressionResolver);
             that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
         };
     }
     public createPerformForUpdateOrCreate(binding: IPluginBinding<TTaskDefinition>): () => Promise<void> {
-        const { target } = binding;
+        const { task, target } = binding;
         const that = this;
 
         return async (): Promise<void> => {
-            await that.plugin.performCreateOrUpdate(binding, this.template, this.state);
+
+            const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, this.template, this.state);
+            await this.plugin.appendResolvers(expressionResolver, binding);
+            binding.task = await expressionResolver.resolve(binding.task);
+
+            await that.plugin.performCreateOrUpdate(binding, expressionResolver);
             that.state.setGenericTarget<TTaskDefinition>(target);
         };
     }

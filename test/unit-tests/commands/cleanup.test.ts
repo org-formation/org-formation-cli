@@ -61,7 +61,8 @@ describe('when executing cleanup command', () => {
     let runTasksStub: jest.SpyInstance;
     let commandArgs: IRemoveCommandArgs;
     let mockPlugin: IBuildTaskPlugin<any, any, any> = {
-        performRemove: jest.fn()
+        appendResolvers: jest.fn(),
+        performRemove: jest.fn(),
     } as any;
     let enumBindingsStub: jest.SpyInstance;
     let consoleInfo: jest.SpyInstance;

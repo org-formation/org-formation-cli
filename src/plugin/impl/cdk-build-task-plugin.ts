@@ -5,16 +5,18 @@ import { OrgFormationError } from '../../../src/org-formation-error';
 import { ConsoleUtil } from '../../util/console-util';
 import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
-import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
+import { IOrganizationBinding } from '~parser/parser';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { Md5Util } from '~util/md5-util';
 import { ChildProcessUtility } from '~util/child-process-util';
 import { Validator } from '~parser/validator';
 import { PluginUtil } from '~plugin/plugin-util';
-import { IGenericTarget, PersistedState } from '~state/persisted-state';
-import { ICfnExpression, ICfnSubValue } from '~core/cfn-expression';
+import { IGenericTarget } from '~state/persisted-state';
+import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig, ICdkCommandArgs, ICdkTask> {
+
     type = 'cdk';
     typeForTask = 'update-cdk';
     applyGlobally = false;
@@ -98,16 +100,16 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         };
     }
 
-    async performCreateOrUpdate(binding: IPluginBinding<ICdkTask>, template: TemplateRoot, state: PersistedState): Promise<void> {
+    async performCreateOrUpdate(binding: IPluginBinding<ICdkTask>, resolver: CfnExpressionResolver): Promise<void> {
         const { task, target } = binding;
         let command: string;
-        const resolver = PluginUtil.CreateExpressionResolver(task, target, template, state, CdkBuildTaskPlugin.GetParametersAsArgument);
+        // const resolver = PluginUtil.CreateExpressionResolver(task, target, template, state, CdkBuildTaskPlugin.GetParametersAsArgument);
 
         if (binding.task.customDeployCommand) {
-            command = resolver.resolveSingleExpression(binding.task.customDeployCommand);
+            command = await resolver.resolveSingleExpression(binding.task.customDeployCommand);
         } else {
-            const commandExpression = { 'Fn::Sub': 'npx cdk deploy ${CurrentTask.Parameters}' } as ICfnSubValue;
-            command = resolver.resolveSingleExpression(commandExpression);
+            const commandExpression = { 'Fn::Sub': 'npx cdk deploy ${CurrentTask.Parameters}' } as ICfnSubExpression;
+            command = await resolver.resolveSingleExpression(commandExpression);
 
             if (binding.task.runNpmBuild) {
                 command = 'npm run build && ' + command;
@@ -124,16 +126,16 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env);
     }
 
-    async performRemove(binding: IPluginBinding<ICdkTask>, template: TemplateRoot, state: PersistedState): Promise<void> {
+    async performRemove(binding: IPluginBinding<ICdkTask>, resolver: CfnExpressionResolver): Promise<void> {
         const { task, target } = binding;
         let command: string;
-        const resolver = PluginUtil.CreateExpressionResolver(task, target, template, state, CdkBuildTaskPlugin.GetParametersAsArgument);
+        // const resolver = PluginUtil.CreateExpressionResolver(task, target, template, state, CdkBuildTaskPlugin.GetParametersAsArgument);
 
         if (binding.task.customRemoveCommand) {
-            command = resolver.resolveSingleExpression(binding.task.customRemoveCommand);
+            command = await resolver.resolveSingleExpression(binding.task.customRemoveCommand);
         } else {
-            const commandExpression = { 'Fn::Sub': 'npx cdk destroy ${CurrentTask.Parameters}' } as ICfnSubValue;
-            command = resolver.resolveSingleExpression(commandExpression);
+            const commandExpression = { 'Fn::Sub': 'npx cdk destroy ${CurrentTask.Parameters}' } as ICfnSubExpression;
+            command = await resolver.resolveSingleExpression(commandExpression);
 
             if (binding.task.runNpmBuild) {
                 command = 'npm run build && ' + command;
@@ -148,6 +150,14 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const cwd = path.resolve(task.path);
         const env = CdkBuildTaskPlugin.GetEnvironmentVariables(target);
         await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env);
+    }
+
+    async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ICdkTask>): Promise<void> {
+        const { task } = binding;
+        task.parameters = await resolver.resolve(task.parameters);
+        const parametersAsString = CdkBuildTaskPlugin.GetParametersAsArgument(task.parameters);
+        resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString });
+
     }
 
     static GetEnvironmentVariables(target: IGenericTarget<ICdkTask>): Record<string, string> {

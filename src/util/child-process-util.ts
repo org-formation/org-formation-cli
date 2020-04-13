@@ -12,9 +12,9 @@ export class ChildProcessUtility {
 
         let credentials: CredentialsOptions = AWS.config.credentials;
         if (accountId !== await AwsUtil.GetMasterAccountId()) {
-            credentials = await AwsUtil.getCredentials(accountId,  roleInTargetAccount);
+            credentials = await AwsUtil.GetCredentials(accountId,  roleInTargetAccount);
         } else if (roleInTargetAccount !== DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS) {
-            credentials = await AwsUtil.getCredentials(accountId,  roleInTargetAccount);
+            credentials = await AwsUtil.GetCredentials(accountId,  roleInTargetAccount);
         }
         const options: ExecOptions = {
             cwd,

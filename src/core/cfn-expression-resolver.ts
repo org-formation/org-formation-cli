@@ -4,19 +4,26 @@ import { ResourceUtil } from '~util/resource-util';
 import { AccountResource, Resource } from '~parser/model';
 import { PersistedState } from '~state/persisted-state';
 import { TemplateRoot } from '~parser/parser';
+import { AwsUtil } from '~util/aws-util';
 
 
 interface IResolver {
-    resolve: (resource: string, path?: string) => string;
+    resolve: (resolver: CfnExpressionResolver, resource: string, path?: string) => string;
 }
+
+interface ITreeResolver<T> {
+    resolve: (resolver: CfnExpressionResolver, obj: T) => Promise<T>;
+}
+
 
 export class CfnExpressionResolver {
     readonly parameters: Record<string, string> = {};
     readonly globalResolvers: IResolver[] = [];
     readonly resolvers: Record<string, IResolver> = {};
+    readonly treeResolvers: ITreeResolver<any>[] = [];
 
     addResourceWithAttributes(resource: string, attributes: Record<string, string>): void {
-        this.resolvers[resource] = { resolve: (resourceName: string, path?: string): string => {
+        this.resolvers[resource] = { resolve: (resolver: CfnExpressionResolver, resourceName: string, path?: string): string => {
             const val = attributes[path];
             if (val === undefined) {
                 throw new OrgFormationError(`unable to resolve expression, resource ${resourceName} does not have attribute ${path}`);
@@ -29,21 +36,25 @@ export class CfnExpressionResolver {
         this.parameters[key] = value;
     }
 
-    addResolver(resolve: (resource: string, path?: string) => string): void {
+    addResolver(resolve: (resolver: CfnExpressionResolver, resource: string, path?: string) => string): void {
         this.globalResolvers.push( { resolve } );
     }
 
-    addResourceWithResolverFn(resource: string, resolve: (resource: string, path?: string) => string): void {
+    addTreeResolver<T>(resolve: (resolver: CfnExpressionResolver, obj: T) => Promise<T>): void {
+        this.treeResolvers.push( { resolve });
+    }
+
+    addResourceWithResolverFn(resource: string, resolve: (resolver: CfnExpressionResolver, resource: string, path?: string) => string): void {
         this.resolvers[resource] = { resolve };
     }
 
-    public resolveSingleExpression(expression: ICfnExpression): string {
+    public async resolveSingleExpression(expression: ICfnExpression): Promise<string> {
         if (typeof expression === 'string') {
             return expression;
         }
         const container = {val: expression};
 
-        const resolved = this.resolve(container);
+        const resolved = await this.resolve(container);
 
         if (typeof resolved.val === 'string') {
             return resolved.val;
@@ -51,8 +62,11 @@ export class CfnExpressionResolver {
         throw new OrgFormationError(`unable to completely resolve expression. Parts unable to resolve: ${container.val}`);
     }
 
-    public resolve<T>(obj: T): T {
-        const expressions = ResourceUtil.EnumExpressionsForResource(obj, 'any');
+    public async resolve<T>(obj: T): Promise<T> {
+        if (obj === undefined) {return undefined;}
+
+        const clone = JSON.parse(JSON.stringify(obj)) as T;
+        const expressions = ResourceUtil.EnumExpressionsForResource(clone, 'any');
         for(const expression of expressions) {
 
             const paramVal = this.parameters[expression.resource];
@@ -63,32 +77,37 @@ export class CfnExpressionResolver {
 
             const resource = this.resolvers[expression.resource];
             if (resource) {
-                const resourceVal = resource.resolve(expression.resource, expression.path);
+                const resourceVal = resource.resolve(this, expression.resource, expression.path);
                 expression.resolveToValue(resourceVal);
                 continue;
             }
 
             for(const resolver of this.globalResolvers) {
-                const resolverVal = resolver.resolve(expression.resource, expression.path);
+                const resolverVal = resolver.resolve(this, expression.resource, expression.path);
                 if (resolverVal) {
                     expression.resolveToValue(resolverVal);
                     break;
                 }
             }
         }
-        return obj;
+
+        for(const treeResolver of this.treeResolvers) {
+            await treeResolver.resolve(this, clone);
+        }
+
+        return clone;
 
     }
 
     static ResolveAccountExpressionByLogicalName(logicalName: string, path: string | undefined, template: TemplateRoot, state: PersistedState): string | undefined {
         const account = template.organizationSection.findAccount(x=>x.logicalId === logicalName);
-        if (account === undefined) {throw new OrgFormationError(`cannot find account with logical name ${logicalName}`);}
+        if (account === undefined) { return undefined; }
         return CfnExpressionResolver.ResolveAccountExpression(account, path, state);
     }
 
     static ResolveAccountExpression(account: AccountResource, path: string | undefined, state: PersistedState): string | undefined {
         if (path === undefined || path === 'AccountId') {
-            return CfnExpressionResolver.resolveResourceRef(account, state);
+            return CfnExpressionResolver.ResolveResourceRef(account, state);
         }
         if (path.startsWith('Tags.')) {
             const tagName = path.substring(5);
@@ -116,7 +135,7 @@ export class CfnExpressionResolver {
         return undefined;
     }
 
-    private static resolveResourceRef(resource: Resource, state: PersistedState): string {
+    private static ResolveResourceRef(resource: Resource, state: PersistedState): string {
         const binding = state.getBinding(resource.type, resource.logicalId);
         if (binding === undefined) {
             throw new OrgFormationError(`unable to find ${resource.logicalId} in state. Is your organization up to date?`);
@@ -124,4 +143,32 @@ export class CfnExpressionResolver {
         return binding.physicalId;
     }
 
+    private static async ResolveCopyValueFunctions<T>(resolver: CfnExpressionResolver, targetAccount: string, targetRegion: string, taskRoleName: string,  obj: T): Promise<T> {
+
+        const functions = ResourceUtil.EnumFunctionsForResource(obj);
+        for(const fn of functions) {
+            const processed = await resolver.resolve(fn);
+            const exportName = processed.exportName;
+            const accountId = processed.accountId ?? targetAccount;
+            const region = processed.region ?? targetRegion;
+            const val = await AwsUtil.GetCloudFormationExport(exportName, accountId, region, taskRoleName);
+            if (val === undefined) {
+                throw new OrgFormationError(`unable to find export ${exportName} in account ${accountId}/${region}.`);
+            }
+            fn.resolveToValue(val);
+        }
+
+        return obj;
+    }
+
+    public static CreateDefaultResolver(logicalAccountName: string, accountId: string, region: string, taskRoleName: string, template: TemplateRoot, state: PersistedState): CfnExpressionResolver {
+        const resolver = new CfnExpressionResolver();
+        resolver.addParameter('AWS::AccountId', accountId);
+        resolver.addParameter('AWS::Region', region);
+        resolver.addResourceWithResolverFn('CurrentAccount', (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(logicalAccountName, resourcePath, template, state));
+        resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(resource, resourcePath, template, state));
+        resolver.addTreeResolver((that: CfnExpressionResolver, obj) => CfnExpressionResolver.ResolveCopyValueFunctions(that, accountId, region, taskRoleName, obj));
+
+        return resolver;
+    }
 }

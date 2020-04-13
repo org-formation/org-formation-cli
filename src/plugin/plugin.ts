@@ -6,8 +6,8 @@ import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { ICommandArgs } from '~commands/base-command';
 import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
 import { IPerformTasksCommandArgs } from '~commands/index';
-import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
-import { PersistedState } from '~state/persisted-state';
+import { IOrganizationBinding } from '~parser/parser';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> {
     type: string;
@@ -19,8 +19,10 @@ export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfigurati
     getValuesForEquality(command: TCommandArgs): any;
     convertToTask(command: TCommandArgs, hashOfTask: string): TTask;
 
-    performRemove(binding: IPluginBinding<TTask>, template: TemplateRoot, state: PersistedState): Promise<void>;
-    performCreateOrUpdate(binding: IPluginBinding<TTask>, template: TemplateRoot, state: PersistedState): Promise<void>;
+    performRemove(binding: IPluginBinding<TTask>, resolver: CfnExpressionResolver): Promise<void>;
+    performCreateOrUpdate(binding: IPluginBinding<TTask>, resolver: CfnExpressionResolver): Promise<void>;
+
+    appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<TTask>):  Promise<void>;
 }
 
 export interface IBuildTaskPluginCommandArgs extends ICommandArgs {

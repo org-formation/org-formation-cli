@@ -3,7 +3,7 @@ import { OrgResourceTypes } from '~parser/model/resource-types';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { ICfnResource, ICfnTemplate, ICfnGetAttValue, ICfnRefValue } from '../cfn-types';
-import { ICfnSubValue } from '~core/cfn-expression';
+import { ICfnSubExpression } from '~core/cfn-expression';
 
 describe('when loading reference to multiple', () => {
     test('fails with exception', () => {
@@ -98,7 +98,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 1 Bucketname gets rewritten to parameter reference',
         () => {
-            const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket1.Properties.BucketName;
+            const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket1.Properties.BucketName;
             expect(bucketName['Fn::Sub']).toBe('${TopicDotTopicName}-bucket');
         }
     );
@@ -106,7 +106,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 2 Bucketname gets rewritten to parameter reference',
         () => {
-            const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket2.Properties.BucketName;
+            const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket2.Properties.BucketName;
             expect(bucketName['Fn::Sub']).toEqual(expect.not.stringContaining('Account1.Resource'));
             expect(bucketName['Fn::Sub']).toBe('${Account1DotResourcesDotTopicDotTopicName}-bucket');
         }
@@ -115,7 +115,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 3 Bucketname gets rewritten to parameter reference',
         () => {
-            const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket3.Properties.BucketName;
+            const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket3.Properties.BucketName;
             const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
 
             expect(refExpression).toBeDefined();
@@ -127,7 +127,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 4 Bucketname gets rewritten to parameter reference',
         () => {
-            const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket4.Properties.BucketName;
+            const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket4.Properties.BucketName;
             const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
 
             expect(refExpression.Ref).toBe('Topic');
@@ -140,7 +140,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 5 Bucketname gets rewritten to local GetAtt reference',
         () => {
-            const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket5.Properties.BucketName;
+            const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket5.Properties.BucketName;
             const getAttExpression = bucketName['Fn::Sub'][1].var as ICfnGetAttValue;
 
             expect(getAttExpression['Fn::GetAtt']).toBeDefined();
@@ -152,7 +152,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 6 Bucketname gets rewritten to local GetAtt reference',
         () => {
-            const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket6.Properties.BucketName;
+            const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket6.Properties.BucketName;
             const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
 
             expect(refExpression.Ref).toBeDefined();
@@ -163,7 +163,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 7 Bucketname gets rewritten to local GetAtt reference',
         () => {
-            const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket7.Properties.BucketName;
+            const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket7.Properties.BucketName;
             const getAttExpression = bucketName['Fn::Sub'] as string;
 
             expect(getAttExpression).toBeDefined();
@@ -173,7 +173,7 @@ describe('when loading cross account references through sub', () => {
     );
 
     test('Account 2 S3Bucket 9 Bucketname gets rewritten to parameter', () => {
-        const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket9.Properties.BucketName;
+        const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket9.Properties.BucketName;
         expect(bucketName['Fn::Sub']).toEqual(expect.not.stringContaining('MasterAccount.Resource'));
         expect(bucketName['Fn::Sub']).toBe('${MasterAccountDotResourcesDotTopicMasterDotTopicName}-bucket');
     });
@@ -181,7 +181,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 10 Bucketname gets rewritten to local GetAtt reference',
         () => {
-            const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket10.Properties.BucketName;
+            const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket10.Properties.BucketName;
             const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
 
             expect(refExpression.Ref).toBeDefined();
@@ -190,7 +190,7 @@ describe('when loading cross account references through sub', () => {
     );
 
     test('Account 2 S3Bucket 11 Bucketname gets rewritten to value', () => {
-        const bucketName: ICfnSubValue = templateAccount2.Resources.S3Bucket11.Properties.BucketName;
+        const bucketName: ICfnSubExpression = templateAccount2.Resources.S3Bucket11.Properties.BucketName;
         const refExpression = bucketName['Fn::Sub'][1].var as ICfnRefValue;
 
         expect(refExpression).toBeDefined();
@@ -219,7 +219,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 12 Attributes to local !Sub using Resources resolves to !Sub',
         () => {
-            const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubRef;
+            const val: ICfnSubExpression  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubRef;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic}'));
@@ -228,7 +228,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 12 Attributes to local !Sub using Resources resolves to !Sub with path',
         () => {
-            const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubGetAtt;
+            const val: ICfnSubExpression  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubGetAtt;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic.Arn}'));
@@ -259,7 +259,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 13 Attributes to AWSAccount !Sub using Resources resolves to !Sub',
         () => {
-            const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubRef;
+            const val: ICfnSubExpression  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubRef;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic}'));
@@ -269,7 +269,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 13 Attributes to AWSAccount !Sub using Resources resolves to !Sub with path',
         () => {
-            const val: ICfnSubValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubGetAtt;
+            const val: ICfnSubExpression  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubGetAtt;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic.Arn}'));
@@ -305,7 +305,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 14 Attributes to other account !Sub using Resources resolves to !Sub',
         () => {
-            const val: ICfnSubValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubRef;
+            const val: ICfnSubExpression  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubRef;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Account1DotResourcesDotTopic}'));
@@ -315,7 +315,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 14 Attributes to other account !Sub using Resources resolves to !Sub with path',
         () => {
-            const val: ICfnSubValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubGetAtt;
+            const val: ICfnSubExpression  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubGetAtt;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Account1DotResourcesDotTopicDotArn}'));

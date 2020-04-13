@@ -12,7 +12,7 @@ CdkWorkload:
     Account: !Ref AccountA
     Region: eu-central-1
   Parameters:
-    param1: val
-    param2: val
+    param1: !Sub 'sub expression ${AWS::AccountId}'
+    param2: !GetAtt AccountA.AccountName
   MaxConcurrentTasks: 10
   FailedTaskTolerance: 0

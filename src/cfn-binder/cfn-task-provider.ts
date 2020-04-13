@@ -1,4 +1,4 @@
-import { CreateStackInput, DeleteStackInput, ListExportsInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
+import { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import uuid = require('uuid');
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
@@ -92,24 +92,15 @@ export class CfnTaskProvider {
                 };
 
                 for (const dependency of dependencies) {
-                    const cfnRetrieveExport = await AwsUtil.GetCloudFormation(dependency.ExportAccountId, dependency.ExportRegion, binding.customRoleName);
-                    const listExportsRequest: ListExportsInput = {};
-                    const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
-                    let didFindExport = false;
-                    do {
-                        listExportsRequest.NextToken = listExportsResponse.NextToken;
-                        const foundExport = listExportsResponse.Exports.find(x => x.Name === dependency.ExportName);
-                        if (foundExport) {
-                            stackInput.Parameters.push( {
-                                ParameterKey: dependency.ParameterKey,
-                                ParameterValue: foundExport.Value,
-                            });
-                            didFindExport = true;
-                            break;
-                        }
-                    } while (listExportsRequest.NextToken);
 
-                    if (!didFindExport) {
+                    const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, binding.customRoleName);
+
+                    if (foundExport !== undefined) {
+                        stackInput.Parameters.push( {
+                            ParameterKey: dependency.ParameterKey,
+                            ParameterValue: foundExport,
+                        });
+                    } else {
                         // this is somewhat lame, but is here to support cross account references where the dependency has a condition.
                         // the dependency and dependent both have conditions
                         // the generated export has a condition
