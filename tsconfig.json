@@ -4,6 +4,7 @@
         "compiler": "ttypescript"
     },
     "compilerOptions": {
+        "allowJs": true,
         "declaration": true,
         "noEmitOnError" : true,
         "noImplicitAny": true,
