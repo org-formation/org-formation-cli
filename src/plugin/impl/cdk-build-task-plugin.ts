@@ -16,7 +16,6 @@ import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig, ICdkCommandArgs, ICdkTask> {
-
     type = 'cdk';
     typeForTask = 'update-cdk';
     applyGlobally = false;

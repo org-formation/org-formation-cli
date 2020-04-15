@@ -14,6 +14,8 @@ describe('when calling org-formation perform tasks', () => {
     let spawnProcessAfterDeploy1Target: jest.MockContext<any, any>;
     let stateAfterDeploy1Target: GetObjectOutput;
     let spawnProcessAfterRerunFileWithoutChanges: jest.MockContext<any, any>;
+    let spawnProcessAfterUpdateWithParams: jest.MockContext<any, any>;
+    let stateAfterUpdateWithParams: GetObjectOutput;
     let stateAfterRemoveTask: GetObjectOutput;
     let spawnProcessAfterRemoveTask: jest.MockContext<any, any>;
     let spawnProcessMock: jest.SpyInstance;
@@ -36,13 +38,20 @@ describe('when calling org-formation perform tasks', () => {
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-serverless-workload-2targets.yml' });
         spawnProcessAfterRerunFileWithoutChanges = spawnProcessMock.mock;
 
+
+
         spawnProcessMock.mockReset();
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-deploy-serverless-workload-1target.yml' })
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-update-serverless-workload-with-parameters.yml' })
+        spawnProcessAfterUpdateWithParams = spawnProcessMock.mock;
+        stateAfterUpdateWithParams = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
+
+        spawnProcessMock.mockReset();
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-deploy-serverless-workload-1target.yml' })
         spawnProcessAfterDeploy1Target = spawnProcessMock.mock;
         stateAfterDeploy1Target = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-remove-serverless-workload-task.yml', performCleanup: false })
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '4-remove-serverless-workload-task.yml', performCleanup: false })
         spawnProcessAfterRemoveTask = spawnProcessMock.mock;
         stateAfterRemoveTask = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
 
@@ -87,7 +96,15 @@ describe('when calling org-formation perform tasks', () => {
     //     expect(state.trackedTasks).toBeDefined();
     // });
 
-    test('after rerunning same serverless comn task without changing, nothing got executed', () => {
+    test('after updating workload with params', () => {
+        const command0 = spawnProcessAfterUpdateWithParams.calls[0][0];
+        const command1 = spawnProcessAfterUpdateWithParams.calls[1][0];
+        expect(command0).toEqual(expect.stringContaining('--param2 "Account A'));
+        expect(command0 !== command1).toBeTruthy();
+    });
+
+
+    test('after rerunning same serverless com task without changing, nothing got executed', () => {
         expect(spawnProcessAfterRerunFileWithoutChanges.calls.length).toEqual(0);
     });
 

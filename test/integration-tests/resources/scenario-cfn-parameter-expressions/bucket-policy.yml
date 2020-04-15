@@ -20,6 +20,9 @@ Parameters:
   someSubExpression:
     Type: String
 
+  currentAccount:
+    Type: String
+
 Resources:
   BucketPolicy:
     Type: AWS::IAM::ManagedPolicy

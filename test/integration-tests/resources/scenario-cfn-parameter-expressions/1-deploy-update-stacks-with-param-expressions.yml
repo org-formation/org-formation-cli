@@ -28,3 +28,4 @@ PolicyTemplate:
     someSubExpression: !Sub
     - '--${a}--${b}'
     - {a: !GetAtt MasterAccount.AccountId, b: !Ref AWS::AccountId}
+    currentAccount: !Ref CurrentAccount

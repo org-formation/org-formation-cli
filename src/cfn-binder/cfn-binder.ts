@@ -68,6 +68,7 @@ export class CloudFormationBinder {
 
             const binding: ICfnBinding = {
                 ...key,
+                accountLogicalId: target.accountLogicalId,
                 action: 'None',
                 target,
                 parameters: this.parameters,
@@ -172,6 +173,7 @@ export class CloudFormationBinder {
 }
 
 export interface ICfnBinding {
+    accountLogicalId: string;
     accountId: string;
     region: string;
     stackName: string;

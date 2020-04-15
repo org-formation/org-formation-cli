@@ -77,6 +77,14 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe('--102625093955--102625093955');
     })
 
+    test('Stack parameter Ref on CurrentAccount gets resolved ', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'currentAccount');
+        expect(parameter.ParameterValue).toBe('102625093955');
+    })
+
+
     afterAll(()=> {
         baseAfterAll(context);
     })

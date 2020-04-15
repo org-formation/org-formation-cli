@@ -40,7 +40,16 @@ describe('when calling org-formation perform tasks', () => {
         expect(mockAfterInitialUpload.calls.length).toBe(1);
     });
 
-    test('perform create or update is not called if file didnt change', () => {
+
+    test('perform create or update is called with the right remotePath', () => {
+        expect(mockAfterInitialUpload.calls.length).toBe(1);
+        const call = mockAfterInitialUpload.calls[0];
+        const arg = call[0];
+
+        expect(arg.task.remotePath).toEqual(expect.stringContaining('102625093955'))
+    });
+
+    test('perform create or update is not called if file didn\'t change', () => {
         expect(mockAfterAfterUpdateWithoutChanging.calls.length).toBe(0);
     });
 

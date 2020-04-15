@@ -88,7 +88,7 @@ export class CfnTaskProvider {
                 }
 
                 if (parameters) {
-                    const expressionResolver = CfnExpressionResolver.CreateDefaultResolver('', binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+                    const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
 
                     for (const [key, value] of Object.entries(parameters)) {
 
