@@ -7,3 +7,5 @@ Organization:
     Properties:
       AccountName: Organizational Master Account
       AccountId: '102625093955'
+      Tags:
+        Tag: tag-value

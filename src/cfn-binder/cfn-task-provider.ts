@@ -2,15 +2,15 @@ import { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/cl
 import uuid = require('uuid');
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
-import { OrgFormationError } from '../../src/org-formation-error';
 import { ICfnBinding } from './cfn-binder';
 import { PersistedState } from '~state/persisted-state';
-import { ICfnCopyValue } from '~core/cfn-expression';
-export class CfnTaskProvider {
-    private state: PersistedState;
+import { ICfnExpression } from '~core/cfn-expression';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
+import { TemplateRoot } from '~parser/parser';
 
-    constructor(state: PersistedState) {
-        this.state = state;
+export class CfnTaskProvider {
+    constructor(private readonly template: TemplateRoot, private readonly state: PersistedState) {
+
     }
 
     public createUpdateTemplateTask(binding: ICfnBinding): ICfnTask {
@@ -34,35 +34,9 @@ export class CfnTaskProvider {
             delete param.ExportRegion;
         }
 
-        const parameters: Record<string,string> = {};
+        const parameters: Record<string,ICfnExpression> = {};
         for(const [paramName, paramValue] of Object.entries(binding.parameters)) {
-            if (typeof paramValue === 'string') {
-                parameters[paramName] = paramValue;
-                continue;
-            } else if (typeof paramValue === 'object') {
-                const paramValueAsCopyValue: ICfnCopyValue = paramValue;
-                const copyValue = paramValueAsCopyValue['Fn::CopyValue'];
-                if (copyValue && Array.isArray(copyValue)) {
-                    if (copyValue.length === 0) {
-                        throw new OrgFormationError(`parameter ${paramName} has CopyValue expression without any arguments`);
-                    }
-                    const dependency: ICrossAccountParameterDependency = {
-                        ExportAccountId: binding.accountId,
-                        ExportRegion: binding.region,
-                        ExportName: copyValue[0],
-                        ParameterKey: paramName,
-                    };
-                    if (copyValue.length > 1) {
-                        dependency.ExportAccountId = copyValue[1];
-                    }
-                    if (copyValue.length > 2) {
-                        dependency.ExportRegion = copyValue[2];
-                    }
-                    dependencies.push(dependency);
-                    continue;
-                }
-                throw new OrgFormationError(`parameter ${paramName} has invalid value`);
-            }
+            parameters[paramName] = paramValue;
         }
 
 
@@ -114,10 +88,19 @@ export class CfnTaskProvider {
                 }
 
                 if (parameters) {
+                    const expressionResolver = CfnExpressionResolver.CreateDefaultResolver('', binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+
                     for (const [key, value] of Object.entries(parameters)) {
+
+                        let paramValue = value;
+                        if (typeof paramValue === 'object') {
+                            paramValue = await expressionResolver.resolve(paramValue);
+                            paramValue = await expressionResolver.collapse(paramValue);
+                        }
+
                         stackInput.Parameters.push( {
                             ParameterKey: key,
-                            ParameterValue: value as string,
+                            ParameterValue: paramValue as string,
                         });
                     }
                 }

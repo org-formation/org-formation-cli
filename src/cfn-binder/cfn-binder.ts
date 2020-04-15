@@ -11,55 +11,16 @@ import { ICfnCopyValue, ICfnExpression } from '~core/cfn-expression';
 export class CloudFormationBinder {
     private readonly masterAccount: string;
     private readonly invocationHash: string;
-    private readonly parameters: Record<string, string | ICfnCopyValue>;
 
     constructor(private readonly stackName: string,
                 private readonly template: TemplateRoot,
                 private readonly state: PersistedState,
-                parameters: Record<string, string | ICfnCopyValue> = {},
+                private readonly parameters: Record<string, string | ICfnCopyValue> = {},
                 private readonly terminationProtection = false,
                 private readonly taskRoleName?: string,
                 private readonly customRoleName?: string,
-                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(state)) {
+                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state)) {
                 this.masterAccount = template.organizationSection.masterAccount.accountId;
-
-        this.parameters = {};
-        for (const [key, val] of Object.entries(parameters)) {
-            if (Array.isArray(val)) {
-                this.parameters[key] = val.join(',');
-            } else if (typeof val  === 'object') {
-                const entries = Object.entries(val);
-                if (entries.length === 1) {
-                    const [valKey, leafValue] = entries[0];
-                    if (valKey === 'Fn::CopyValue') {
-                        if (!Array.isArray(leafValue)) {
-                            this.parameters[key] = { 'Fn::CopyValue': [leafValue]};
-                        } else {
-                            this.parameters[key] = { 'Fn::CopyValue': leafValue};
-                        }
-                        continue;
-                    }
-                    if (valKey === 'Ref') {
-                        const account = template.organizationSection.findAccount(x => x.logicalId === leafValue);
-                        if (!account) {
-                            throw new OrgFormationError(`unable to resolve reference to account ${leafValue}`);
-                        }
-                        const binding = state.getBinding(account.type, account.logicalId);
-                        if (!binding) {
-                            throw new OrgFormationError(`unable to find binding for account ${leafValue}. is your organization up to date?`);
-
-                        }
-                        this.parameters[key] = binding.physicalId;
-                        continue;
-                    }
-                }
-
-                throw new OrgFormationError(`parameter ${key} has invalid value, value must not be an object`);
-
-            } else {
-                this.parameters[key] = '' + val;
-            }
-        }
 
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new OrgFormationError('state and template do not belong to the same organization');
@@ -223,7 +184,7 @@ export interface ICfnBinding {
     dependents: ICfnCrossAccountDependency[];
     accountDependencies: string[];
     regionDependencies: string[];
-    parameters?: Record<string, string | ICfnCopyValue>;
+    parameters?: Record<string, ICfnExpression>;
     terminationProtection?: boolean;
     customRoleName?: string;
     cloudFormationRoleName?: string;

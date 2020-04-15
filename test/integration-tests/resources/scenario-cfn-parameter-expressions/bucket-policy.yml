@@ -11,6 +11,15 @@ Parameters:
   bucketArn3:
     Type: String
 
+  tagVal:
+    Type: String
+
+  masterAccountId:
+    Type: String
+
+  someSubExpression:
+    Type: String
+
 Resources:
   BucketPolicy:
     Type: AWS::IAM::ManagedPolicy

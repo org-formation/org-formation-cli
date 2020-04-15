@@ -1,5 +1,5 @@
 import { OrgFormationError } from '../org-formation-error';
-import { ICfnExpression } from '~core/cfn-expression';
+import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
 import { ResourceUtil } from '~util/resource-util';
 import { AccountResource, Resource } from '~parser/model';
 import { PersistedState } from '~state/persisted-state';
@@ -18,8 +18,8 @@ interface ITreeResolver<T> {
 
 export class CfnExpressionResolver {
     readonly parameters: Record<string, string> = {};
-    readonly globalResolvers: IResolver[] = [];
     readonly resolvers: Record<string, IResolver> = {};
+    readonly globalResolvers: IResolver[] = [];
     readonly treeResolvers: ITreeResolver<any>[] = [];
 
     addResourceWithAttributes(resource: string, attributes: Record<string, string>): void {
@@ -66,7 +66,9 @@ export class CfnExpressionResolver {
         if (obj === undefined) {return undefined;}
 
         const clone = JSON.parse(JSON.stringify(obj)) as T;
-        const expressions = ResourceUtil.EnumExpressionsForResource(clone, 'any');
+
+        const container = {val: clone};
+        const expressions = ResourceUtil.EnumExpressionsForResource(container, 'any');
         for(const expression of expressions) {
 
             const paramVal = this.parameters[expression.resource];
@@ -92,11 +94,39 @@ export class CfnExpressionResolver {
         }
 
         for(const treeResolver of this.treeResolvers) {
-            await treeResolver.resolve(this, clone);
+            await treeResolver.resolve(this, container);
         }
 
-        return clone;
+        return container.val;
+    }
 
+    public async collapse<T>(obj: T): Promise<T> {
+        if (obj === undefined) {return undefined;}
+
+        const clone = JSON.parse(JSON.stringify(obj)) as T;
+        const container = {val: clone};
+        const expressions = ResourceUtil.EnumCfnFunctionsForResource(container);
+        for(const expression of expressions.reverse()) {
+            if (expression.type === 'Sub') {
+                const subExpression = expression.target as ICfnSubExpression;
+                if (Array.isArray(subExpression['Fn::Sub'])) {
+                    const arr = subExpression['Fn::Sub'];
+                    if (arr.length !== 2) {
+                        throw new OrgFormationError('Complex Fn::Sub expression expected to have 2 array elements (expression and object with parameters)');
+                    }
+                    const resolver = new CfnExpressionResolver();
+                    const parameters = Object.entries(arr[1]);
+                    for(const param of parameters) {
+                        resolver.addParameter(param[0], param[1] as string);
+                    }
+
+                    const value = await resolver.resolveSingleExpression({'Fn::Sub': arr[0]} as ICfnSubExpression);
+                    expression.resolveToValue(value);
+                }
+            }
+        }
+
+        return container.val;
     }
 
     static ResolveAccountExpressionByLogicalName(logicalName: string, path: string | undefined, template: TemplateRoot, state: PersistedState): string | undefined {
@@ -144,7 +174,6 @@ export class CfnExpressionResolver {
     }
 
     private static async ResolveCopyValueFunctions<T>(resolver: CfnExpressionResolver, targetAccount: string, targetRegion: string, taskRoleName: string,  obj: T): Promise<T> {
-
         const functions = ResourceUtil.EnumFunctionsForResource(obj);
         for(const fn of functions) {
             const processed = await resolver.resolve(fn);

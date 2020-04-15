@@ -23,3 +23,8 @@ PolicyTemplate:
     bucketArn: !CopyValue BucketArn
     bucketArn2: !CopyValue [BucketArn, 102625093955]
     bucketArn3: !CopyValue [BucketArn, 102625093955, 'eu-west-1']
+    tagVal: !GetAtt MasterAccount.Tags.Tag
+    masterAccountId: !Ref MasterAccount
+    someSubExpression: !Sub
+    - '--${a}--${b}'
+    - {a: !GetAtt MasterAccount.AccountId, b: !Ref AWS::AccountId}

@@ -103,10 +103,9 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
     async performCreateOrUpdate(binding: IPluginBinding<ICdkTask>, resolver: CfnExpressionResolver): Promise<void> {
         const { task, target } = binding;
         let command: string;
-        // const resolver = PluginUtil.CreateExpressionResolver(task, target, template, state, CdkBuildTaskPlugin.GetParametersAsArgument);
 
         if (binding.task.customDeployCommand) {
-            command = await resolver.resolveSingleExpression(binding.task.customDeployCommand);
+            command = binding.task.customDeployCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx cdk deploy ${CurrentTask.Parameters}' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression);
@@ -132,7 +131,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         // const resolver = PluginUtil.CreateExpressionResolver(task, target, template, state, CdkBuildTaskPlugin.GetParametersAsArgument);
 
         if (binding.task.customRemoveCommand) {
-            command = await resolver.resolveSingleExpression(binding.task.customRemoveCommand);
+            command = binding.task.customRemoveCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx cdk destroy ${CurrentTask.Parameters}' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression);
