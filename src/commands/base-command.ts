@@ -12,6 +12,7 @@ import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { S3StorageProvider } from '~state/storage-provider';
 import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template-writer';
+import { CfnParameters } from '~core/cfn-parameters';
 
 
 export abstract class BaseCliCommand<T extends ICommandArgs> {
@@ -93,7 +94,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}');
         command.option('--state-object [state-object]', 'key for object used to store state', 'state.json');
         command.option('--profile [profile]', 'aws profile to use');
-        command.option('--print-stack', 'will print stacktraces for errors');
+        command.option('--print-stack', 'will print stack traces for errors');
         command.option('--verbose', 'will enable debug logging');
         command.option('--no-color', 'will disable colorization of console logs');
     }
@@ -138,35 +139,16 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return bucketName;
     }
 
-    protected parseStackParameters(commandParameters?: string | {}): Record<string, string>  {
-        if (commandParameters && typeof commandParameters === 'object') {
+    protected parseCfnParameters(commandParameters?: string | undefined | {}): Record<string, string>  {
+
+        if (typeof commandParameters === 'object') {
             return commandParameters;
         }
-        const parameters: Record<string, string> = {};
-        if (commandParameters && typeof commandParameters === 'string') {
-            const parameterParts = commandParameters.split(' ');
-            for (const parameterPart of parameterParts) {
-                const parameterAttributes = parameterPart.split(',');
-                if (parameterAttributes.length === 1) {
-                    const parts = parameterAttributes[0].split('=');
-                    if (parts.length !== 2) {
-                        throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected either key=val or ParameterKey=key,ParameterVaue=val.`);
-                    }
-                    parameters[parts[0]] = parts[1];
-                } else {
-                    const key = parameterAttributes.find(x => x.startsWith('ParameterKey='));
-                    const value = parameterAttributes.find(x => x.startsWith('ParameterValue='));
-                    if (key === undefined || value === undefined) {
-                        throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected ParameterKey=key,ParameterVaue=val`);
-                    }
-                    const paramKey = key.substr(13);
-                    const paramVal = value.substr(15);
-                    parameters[paramKey] = paramVal;
-                }
-            }
+        if (typeof commandParameters === 'string') {
+            return CfnParameters.ParseParameterValues(commandParameters);
         }
 
-        return parameters;
+        return {};
     }
 
     protected async initialize(command: ICommandArgs): Promise<void> {

@@ -56,11 +56,28 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe(output.OutputValue);
     })
 
+    test('Stack parameter with logical account Id and region has value of Output', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'bucketArn4');
+        const output = describedBucketStack.Stacks[0].Outputs[0];
+        expect(output.ExportName).toBe('BucketArn');
+        expect(parameter.ParameterValue).toBe(output.OutputValue);
+    })
+
+
     test('Stack parameter with !Ref gets resolved ', () =>{
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'masterAccountId');
         expect(parameter.ParameterValue).toBe('102625093955');
+    })
+
+    test('Stack parameter with numeric value gets converted to a string ', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'numericValue');
+        expect(parameter.ParameterValue).toBe('123');
     })
 
     test('Stack parameter with !GetAtt gets resolved ', () =>{

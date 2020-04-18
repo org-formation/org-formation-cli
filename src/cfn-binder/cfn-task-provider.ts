@@ -2,6 +2,7 @@ import { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/cl
 import uuid = require('uuid');
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
+import { OrgFormationError } from '../../src/org-formation-error';
 import { ICfnBinding } from './cfn-binder';
 import { PersistedState } from '~state/persisted-state';
 import { ICfnExpression } from '~core/cfn-expression';
@@ -98,9 +99,15 @@ export class CfnTaskProvider {
                             paramValue = await expressionResolver.collapse(paramValue);
                         }
 
+                        if (typeof paramValue === 'object') {
+                            throw new OrgFormationError(`unable to fully resolve expression ${paramValue}`);
+                        } else if (typeof paramValue === 'undefined') {
+                            paramValue = '';
+                        }
+
                         stackInput.Parameters.push( {
                             ParameterKey: key,
-                            ParameterValue: paramValue as string,
+                            ParameterValue: '' + paramValue as string,
                         });
                     }
                 }

@@ -11,6 +11,9 @@ Parameters:
   bucketArn3:
     Type: String
 
+  bucketArn4:
+    Type: String
+
   tagVal:
     Type: String
 
@@ -22,6 +25,10 @@ Parameters:
 
   currentAccount:
     Type: String
+
+  numericValue:
+    Type: Number
+
 
 Resources:
   BucketPolicy:

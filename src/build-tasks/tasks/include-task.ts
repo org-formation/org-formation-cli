@@ -18,7 +18,7 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const buildConfig = new BuildConfiguration(taskFilePath);
+        const buildConfig = new BuildConfiguration(taskFilePath, command);
         const childTasks = buildConfig.enumBuildTasks(command as IPerformTasksCommandArgs);
 
         return {
@@ -36,12 +36,12 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
     createTaskForValidation(config: IIncludeTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask | undefined {
 
         if (config.Path === undefined) {
-            throw new OrgFormationError(`Required atrribute Path missing for task ${config.LogicalName}`);
+            throw new OrgFormationError(`Required attribute Path missing for task ${config.LogicalName}`);
         }
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const buildConfig = new BuildConfiguration(taskFilePath);
+        const buildConfig = new BuildConfiguration(taskFilePath, command);
         const childTasks = buildConfig.enumValidationTasks(command as IPerformTasksCommandArgs);
 
         return {

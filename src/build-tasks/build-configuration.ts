@@ -7,12 +7,14 @@ import { IUpdateOrganizationTaskConfiguration } from './tasks/organization-task'
 import { IUpdateStacksBuildTask } from './tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { yamlParse } from '~yaml-cfn/index';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
+    public parameters: Record<string, IBuildFileParameter>;
     private file: string;
 
-    constructor(input: string) {
+    constructor(input: string, private readonly parameterValues: Record<string, string>) {
         this.file = input;
         this.tasks = this.enumBuildConfiguration(this.file);
     }
@@ -35,6 +37,7 @@ export class BuildConfiguration {
     public enumBuildTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
         this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
+
         for (const taskConfig of this.tasks) {
             const task = BuildTaskProvider.createBuildTask(taskConfig, command);
             result.push(task);
@@ -81,16 +84,70 @@ export class BuildConfiguration {
     }
 
     public enumBuildConfiguration(filePath: string): IBuildTaskConfiguration[] {
+        const buildFile = this.loadBuildFile(filePath);
+        return this.enumBuildConfigurationFromBuildFile(filePath, buildFile);
+    }
+
+    public loadBuildFile(filePath: string): IBuildFile {
         const buffer = fs.readFileSync(filePath);
         const contents = buffer.toString('utf-8');
-        const buildFile = yamlParse(contents) as Record<string, IBuildTaskConfiguration>;
+
+        return yamlParse(contents) as IBuildFile;
+    }
+    public enumBuildConfigurationFromBuildFile(filePath: string, buildFile: IBuildFile): IBuildTaskConfiguration[] {
+
+        this.parameters = buildFile.Parameters;
+        delete buildFile.Parameters;
+
+        const expressionResolver = new CfnExpressionResolver();
+        for(const paramName in this.parameters) {
+            const param = this.parameters[paramName];
+            const paramType = param.Type;
+
+            if (paramType === undefined) {
+                throw new OrgFormationError(`expected Type on parameter ${paramName} declared in tasks file ${filePath}`);
+            }
+
+
+            const supportedParamTypes = ['String', 'Number', 'Boolean'];
+            if (!supportedParamTypes.includes(paramType)) {
+                throw new OrgFormationError(`unsupported Type on parameter ${paramName} expected one of ${supportedParamTypes.join(', ')}, found: ${paramType}`);
+            }
+
+            let value: any = this.parameterValues[paramName];
+            if (value === undefined) {
+                value = param.Default;
+            }
+
+            if (value === undefined) {
+                throw new OrgFormationError(`expected value for parameter ${paramName} declared in tasks file ${filePath}`);
+            }
+
+            if (paramType === 'Boolean') {
+                if (value === 'true' || value === 1 || value === true){
+                    value = true;
+                } else if (value === 'false' || value === 0 || value === false) {
+                    value = false;
+                } else {
+                    throw new OrgFormationError(`unable to convert value for parameter ${paramName} to boolean. Expected: 'true', 'false', 0 or 1. received ${value}`);
+                }
+            }
+
+            if (paramType === 'Number') {
+                value = parseInt(value, 10);
+            }
+
+            expressionResolver.addParameter(paramName, value);
+        }
+        const resolvedContents = expressionResolver.resolveParameters(buildFile);
 
         const result: IBuildTaskConfiguration[] = [];
-        for (const name in buildFile) {
-            const config = buildFile[name];
+        for (const name in resolvedContents) {
+            const config = resolvedContents[name] as IBuildTaskConfiguration;
             result.push({...config, LogicalName: name, FilePath: filePath});
         }
         return result;
+
     }
 
     private throwForDuplicateVal(arr: string[], fnError: (val: string) => Error): void {
@@ -121,4 +178,13 @@ export interface IBuildTask {
     childTasks: IBuildTask[];
     perform(): Promise<void>;
     physicalIdForCleanup?: string;
+}
+
+export interface IBuildFile extends Record<string, IBuildTaskConfiguration | {}>{
+    Parameters?: Record<string, IBuildFileParameter>;
+}
+
+export interface IBuildFileParameter {
+    Type: string;
+    Default: string;
 }

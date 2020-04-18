@@ -62,9 +62,8 @@ export class CfnExpressionResolver {
         throw new OrgFormationError(`unable to completely resolve expression. Parts unable to resolve: ${container.val}`);
     }
 
-    public async resolve<T>(obj: T): Promise<T> {
+    public resolveParameters<T>(obj: T): T {
         if (obj === undefined) {return undefined;}
-
         const clone = JSON.parse(JSON.stringify(obj)) as T;
 
         const container = {val: clone};
@@ -72,7 +71,7 @@ export class CfnExpressionResolver {
         for(const expression of expressions) {
 
             const paramVal = this.parameters[expression.resource];
-            if (paramVal && !expression.path) {
+            if (paramVal !== undefined && !expression.path) {
                 expression.resolveToValue(paramVal);
                 continue;
             }
@@ -92,6 +91,15 @@ export class CfnExpressionResolver {
                 }
             }
         }
+
+        return container.val;
+    }
+
+    public async resolve<T>(obj: T): Promise<T> {
+        if (obj === undefined) {return undefined;}
+
+        const resolved = this.resolveParameters(obj);
+        const container = {val: resolved};
 
         for(const treeResolver of this.treeResolvers) {
             await treeResolver.resolve(this, container);

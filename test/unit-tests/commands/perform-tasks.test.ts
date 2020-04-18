@@ -64,6 +64,13 @@ describe('when creating perform-tasks command', () => {
         expect(performCleanupOpt).toBeDefined();
         expect(subCommanderCommand.performCleanup).toBeFalsy();
     });
+
+    test('perform-tasks has parameters attribute', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const parametersOpt = opts.find((x) => x.long === '--parameters');
+        expect(parametersOpt).toBeDefined();
+        expect(parametersOpt.required).toBe(false);
+    });
 });
 
 

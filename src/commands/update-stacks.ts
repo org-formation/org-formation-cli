@@ -8,7 +8,7 @@ import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/
 import { Validator } from '~parser/validator';
 
 const commandName = 'update-stacks <templateFile>';
-const commandDescription = 'update cloudformation resources in accounts';
+const commandDescription = 'update CloudFormation resources in accounts';
 
 export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs> {
 
@@ -50,9 +50,9 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
     }
 
     public addOptions(command: Command): void {
-        command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation');
-        command.option('--stack-description [description]', 'description of the stack that will be displayed cloudformation');
-        command.option('--parameters [parameters]', 'parameter values passed to cloudformation when executing stacks');
+        command.option('--stack-name <stack-name>', 'name of the stack that will be used in CloudFormation');
+        command.option('--stack-description [description]', 'description of the stack that will be displayed CloudFormation');
+        command.option('--parameters [parameters]', 'parameter values passed to CloudFormation when executing stacks');
         command.option('--termination-protection', 'value that indicates whether stack must have deletion protection');
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks after which execution stops', 0);
@@ -74,7 +74,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const templateFile = command.templateFile;
 
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
-        const parameters = this.parseStackParameters(command.parameters);
+        const parameters = this.parseCfnParameters(command.parameters);
         const state = await this.getState(command);
         const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, terminationProtection, taskRoleName, cloudFormationRoleName);
 
