@@ -18,7 +18,8 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const buildConfig = new BuildConfiguration(taskFilePath, command);
+        const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
+        const buildConfig = new BuildConfiguration(taskFilePath, parameters);
         const childTasks = buildConfig.enumBuildTasks(command as IPerformTasksCommandArgs);
 
         return {
@@ -41,7 +42,8 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const buildConfig = new BuildConfiguration(taskFilePath, command);
+        const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
+        const buildConfig = new BuildConfiguration(taskFilePath, parameters);
         const childTasks = buildConfig.enumValidationTasks(command as IPerformTasksCommandArgs);
 
         return {
@@ -60,6 +62,7 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 }
 export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {
     Path: string;
+    Parameters: Record<string, any>;
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
 }

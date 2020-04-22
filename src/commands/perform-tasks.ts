@@ -39,8 +39,8 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
 
-        const parameters = this.parseCfnParameters(command.parameters);
-        const config = new BuildConfiguration(tasksFile, parameters);
+        command.parsedParameters = this.parseCfnParameters(command.parameters);
+        const config = new BuildConfiguration(tasksFile, command.parsedParameters);
         const tasks = config.enumBuildTasks(command);
         const state = await this.getState(command);
 
@@ -68,4 +68,5 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     organizationFile?: string;
     organizationFileHash?: string;
     parameters?: string;
+    parsedParameters?: Record<string, string>;
 }

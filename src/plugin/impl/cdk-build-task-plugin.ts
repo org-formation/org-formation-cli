@@ -168,7 +168,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
     static GetParametersAsArgument(parameters: Record<string, any>): string {
         if (!parameters) {return '';}
         const entries = Object.entries(parameters);
-        return entries.reduce((prev, curr) => prev + ` -c ${curr[0]}=${curr[1]}`, '');
+        return entries.reduce((prev, curr) => prev + ` -c '${curr[0]}=${curr[1]}'`, '');
     }
 }
 

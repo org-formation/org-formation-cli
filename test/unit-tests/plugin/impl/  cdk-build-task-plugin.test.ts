@@ -106,7 +106,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c param=val'), expect.anything(), undefined, expect.anything());
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything());
     });
 
 
@@ -119,7 +119,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c param=val'), expect.anything(), undefined, expect.anything());
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything());
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything());
     });
 
@@ -225,7 +225,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c param=val'), expect.anything(), undefined, expect.anything());
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything());
     });
 
 
@@ -238,7 +238,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c param=val'), expect.anything(), undefined, expect.anything());
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything());
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything());
     });
 

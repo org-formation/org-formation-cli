@@ -14,7 +14,7 @@ export class BuildConfiguration {
     public parameters: Record<string, IBuildFileParameter>;
     private file: string;
 
-    constructor(input: string, private readonly parameterValues: Record<string, string>) {
+    constructor(input: string, private readonly parameterValues: Record<string, string> = {}) {
         this.file = input;
         this.tasks = this.enumBuildConfiguration(this.file);
     }
@@ -107,7 +107,6 @@ export class BuildConfiguration {
             if (paramType === undefined) {
                 throw new OrgFormationError(`expected Type on parameter ${paramName} declared in tasks file ${filePath}`);
             }
-
 
             const supportedParamTypes = ['String', 'Number', 'Boolean'];
             if (!supportedParamTypes.includes(paramType)) {
