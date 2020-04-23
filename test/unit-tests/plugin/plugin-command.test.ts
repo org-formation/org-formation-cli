@@ -58,7 +58,7 @@ describe('when executing plugin command', () => {
 
         commandArgs = {
             ...subCommanderCommand,
-            organizationBinding: { IncludeMasterAccount: true},
+            organizationBinding: { IncludeMasterAccount: true, Region: 'eu-central-1' },
             type: 'my-type',
             name: 'my-task',
             maxConcurrent: 1,

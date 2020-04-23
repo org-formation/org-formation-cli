@@ -24,12 +24,6 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
             if (!accountBinding) { throw new OrgFormationError(`unable to find account ${logicalTargetAccountName} in state. Is your organization up to date?`); }
 
             let regions = this.template.resolveNormalizedRegions(this.organizationBinding);
-            if (this.plugin.applyGlobally) {
-                if (regions.length > 0) {
-                    ConsoleUtil.LogWarning(`workload ${this.task.name} has an organization binding that includes region, workloads of type ${this.task.type} however will always be applied globally`);
-                }
-                regions = [undefined];
-            }
 
             for(const region of regions) {
                 const binding: IPluginBinding<TTaskDefinition> = {

@@ -22,10 +22,6 @@ describe('when creating cdk plugin', () => {
         expect(plugin.typeForTask).toBe('update-cdk');
     });
 
-    test('plugin is not applied globally',() => {
-        expect(plugin.applyGlobally).toBe(false);
-    });
-
     test('plugin can translate config to command args',() => {
         const commandArgs = plugin.convertToCommandArgs( {
             FilePath: './tasks.yaml',

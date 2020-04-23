@@ -17,7 +17,6 @@ import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
 export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskConfig, ISlsCommandArgs, ISlsTask> {
     type = 'serverless.com';
     typeForTask = 'update-serverless.com';
-    applyGlobally = false;
 
     convertToCommandArgs(config: IServerlessComTaskConfig, command: IPerformTasksCommandArgs): ISlsCommandArgs {
 

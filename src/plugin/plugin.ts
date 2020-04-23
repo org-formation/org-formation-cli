@@ -12,7 +12,6 @@ import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> {
     type: string;
     typeForTask: string;
-    applyGlobally: boolean;
     convertToCommandArgs(config: TBuildTaskConfig, command: IPerformTasksCommandArgs): TCommandArgs;
     validateCommandArgs(command: TCommandArgs): void;
 

@@ -16,10 +16,6 @@ describe('when createing s3 copy plugin', () => {
         expect(plugin.typeForTask).toBe('copy-to-s3');
     });
 
-    test('plugin is applied globally',() => {
-        expect(plugin.applyGlobally).toBe(true);
-    });
-
     test('plugin can translate config to command args',() => {
         const commandArgs = plugin.convertToCommandArgs( {
             FilePath: './tasks.ytml',

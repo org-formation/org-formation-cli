@@ -18,7 +18,6 @@ import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig, ICdkCommandArgs, ICdkTask> {
     type = 'cdk';
     typeForTask = 'update-cdk';
-    applyGlobally = false;
 
     convertToCommandArgs(config: ICdkBuildTaskConfig, command: IPerformTasksCommandArgs): ICdkCommandArgs {
 

@@ -16,10 +16,6 @@ describe('when createing sls plugin', () => {
         expect(plugin.typeForTask).toBe('update-serverless.com');
     });
 
-    test('plugin is not applied globally',() => {
-        expect(plugin.applyGlobally).toBe(false);
-    });
-
     test('plugin can translate config to command args',() => {
         const commandArgs = plugin.convertToCommandArgs( {
             FilePath: './tasks.ytml',
