@@ -14,7 +14,7 @@ import { Validator } from '~parser/validator';
 export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConfig, IS3CopyCommandArgs, IS3CopyTask> {
     type = 'copy-to-s3';
     typeForTask = 'copy-to-s3';
-    applyGlobally = true;
+    applyGlobally = false;
 
     convertToCommandArgs(config: IS3CopyBuildTaskConfig, command: IPerformTasksCommandArgs): IS3CopyCommandArgs {
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'LocalPath', 'RemotePath', 'DependsOn', 'Type',
