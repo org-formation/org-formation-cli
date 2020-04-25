@@ -53,6 +53,10 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             throw new OrgFormationError(`task ${commandArgs.name} does not have required attribute OrganizationBinding`);
         }
 
+        if (commandArgs.maxConcurrent > 1) {
+            throw new OrgFormationError(`task ${commandArgs.name} does not support a MaxConcurrentTasks higher than 1`);
+        }
+
         if (!existsSync(commandArgs.path)) {
             throw new OrgFormationError(`task ${commandArgs.name} cannot find path ${commandArgs.path}`);
         }

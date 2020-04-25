@@ -56,6 +56,10 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             throw new OrgFormationError(`task ${commandArgs.name} cannot find path ${commandArgs.path}`);
         }
 
+        if (commandArgs.maxConcurrent > 1) {
+            throw new OrgFormationError(`task ${commandArgs.name} does not support a MaxConcurrentTasks higher than 1`);
+        }
+
         const serverlessFileName = commandArgs.configFile ? commandArgs.configFile : 'serverless.yml';
         const serverlessPath = path.join(commandArgs.path, serverlessFileName);
 
