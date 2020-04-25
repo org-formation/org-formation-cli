@@ -13,7 +13,6 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                 private readonly template: TemplateRoot,
                 private readonly organizationBinding: IOrganizationBinding,
                 private readonly plugin: IBuildTaskPlugin<any, any, TTaskDefinition>) {
-
     }
 
     public enumBindings(): IPluginBinding<TTaskDefinition>[] {

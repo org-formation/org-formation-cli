@@ -14,14 +14,45 @@ import { S3StorageProvider } from '~state/storage-provider';
 import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template-writer';
 import { CfnParameters } from '~core/cfn-parameters';
 
+const DEFAULT_STATE_OBJECT = 'state.json';
 
 export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected command: Command;
     protected firstArg: any;
 
+    static CliCommandArgs: ICommandArgs;
+
+    static async CreateAdditionalArgsForInvocation(): Promise<string> {
+        let additionalArgs = '';
+        const cliArgs = BaseCliCommand.CliCommandArgs;
+        if (cliArgs) {
+            const profile = cliArgs.profile;
+            const stateBucketName = cliArgs.stateBucketName;
+            const stateObject = cliArgs.stateObject;
+
+            if (profile !== undefined) {
+                additionalArgs += `--profile ${profile} `;
+            }
+
+            const defaultStateBucketName = await BaseCliCommand.GetStateBucketName({} as ICommandArgs);
+
+            if (stateBucketName !== undefined && stateBucketName !== defaultStateBucketName) {
+                additionalArgs += `--state-bucket-name ${stateBucketName} `;
+            }
+
+            if (stateObject !== undefined && stateObject !== DEFAULT_STATE_OBJECT) {
+                additionalArgs += `--state-object ${stateObject} `;
+            }
+        }
+        return additionalArgs;
+    }
+
     constructor(command?: Command, name?: string, description?: string, firstArgName?: string) {
         if (command !== undefined && name !== undefined) {
+            if (BaseCliCommand.CliCommandArgs === undefined) {
+                BaseCliCommand.CliCommandArgs = command as any as ICommandArgs;
+            }
             this.command = command.command(name);
             if (description !== undefined) {
                 this.command.description(description);
@@ -92,7 +123,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected addOptions(command: Command): void {
         command.option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}');
-        command.option('--state-object [state-object]', 'key for object used to store state', 'state.json');
+        command.option('--state-object [state-object]', 'key for object used to store state', DEFAULT_STATE_OBJECT);
         command.option('--profile [profile]', 'aws profile to use');
         command.option('--print-stack', 'will print stack traces for errors');
         command.option('--verbose', 'will enable debug logging');
@@ -125,12 +156,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected async getStateBucket(command: ICommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
-        const stateBucketName = await this.GetStateBucketName(command);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
         const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 
-    protected async GetStateBucketName(command: ICommandArgs): Promise<string> {
+    protected static async GetStateBucketName(command: ICommandArgs): Promise<string> {
         const bucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
             const accountId = await AwsUtil.GetMasterAccountId();

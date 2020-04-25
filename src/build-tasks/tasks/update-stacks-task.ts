@@ -2,7 +2,7 @@
 import path from 'path';
 import { ConsoleUtil } from '../../util/console-util';
 import { IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
-import { IPerformTasksCommandArgs, DeleteStacksCommand, IUpdateStacksCommandArgs, UpdateStacksCommand, ValidateStacksCommand } from '~commands/index';
+import { IPerformTasksCommandArgs, DeleteStacksCommand, IUpdateStacksCommandArgs, UpdateStacksCommand, ValidateStacksCommand, BaseCliCommand } from '~commands/index';
 import { Validator } from '~parser/validator';
 import { IBuildTaskProvider, BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { IOrganizationBinding } from '~parser/parser';
@@ -52,12 +52,13 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
                 if (!command.performCleanup) {
+                    const additionalArgs = await BaseCliCommand.CreateAdditionalArgsForInvocation();
                     ConsoleUtil.LogWarning('Hi there, it seems you have removed a task!');
                     ConsoleUtil.LogWarning(`The task was called ${logicalId} and used to deploy stacks by name of ${physicalId}.`);
                     ConsoleUtil.LogWarning('By default these stacks don\'t get cleaned up. You can change this by adding the option --perform-cleanup.');
                     ConsoleUtil.LogWarning('You can remove the stacks manually by running the following command:');
                     ConsoleUtil.LogWarning('');
-                    ConsoleUtil.LogWarning(`    org-formation delete-stacks --stack-name ${physicalId}`);
+                    ConsoleUtil.LogWarning(`    org-formation delete-stacks --stack-name ${physicalId} ${additionalArgs}`);
                     ConsoleUtil.LogWarning('');
                     ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
                 } else {
