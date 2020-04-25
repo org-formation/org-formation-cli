@@ -85,6 +85,9 @@ export class BuildConfiguration {
 
     public enumBuildConfiguration(filePath: string): IBuildTaskConfiguration[] {
         const buildFile = this.loadBuildFile(filePath);
+        if (buildFile.AWSTemplateFormatVersion !== undefined) {
+            throw new OrgFormationError(`Error loading tasks file ${filePath}, seems like you are loading a template where a tasks file was expected...`);
+        }
         return this.enumBuildConfigurationFromBuildFile(filePath, buildFile);
     }
 
@@ -95,7 +98,6 @@ export class BuildConfiguration {
         return yamlParse(contents) as IBuildFile;
     }
     public enumBuildConfigurationFromBuildFile(filePath: string, buildFile: IBuildFile): IBuildTaskConfiguration[] {
-
         this.parameters = buildFile.Parameters;
         delete buildFile.Parameters;
 
