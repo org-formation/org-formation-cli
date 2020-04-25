@@ -31,3 +31,6 @@ PolicyTemplate:
     - '--${a}--${b}'
     - {a: !GetAtt MasterAccount.AccountId, b: !Ref AWS::AccountId}
     currentAccount: !Ref CurrentAccount
+    paramArray:
+      - val1
+      - val2

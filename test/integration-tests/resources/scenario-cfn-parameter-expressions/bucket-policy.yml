@@ -29,6 +29,8 @@ Parameters:
   numericValue:
     Type: Number
 
+  paramArray:
+    Type: List<String>
 
 Resources:
   BucketPolicy:

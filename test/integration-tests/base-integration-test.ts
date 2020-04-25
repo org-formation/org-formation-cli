@@ -12,6 +12,10 @@ export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
 
     ConsoleUtil.verbose = true;
     ConsoleUtil.printStacktraces = true;
+    process.on('unhandledRejection', error => {
+        // Will print "unhandledRejection err is not defined"
+        expect(`${error}`).toBeUndefined();
+      });
 
     const logDebugMock = jest.spyOn(ConsoleUtil, 'LogDebug').mockImplementation();
     const logInfoMock = jest.spyOn(ConsoleUtil, 'LogInfo').mockImplementation();
