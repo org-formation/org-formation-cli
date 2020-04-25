@@ -23,8 +23,10 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
             const accountBinding = this.state.getAccountBinding(logicalTargetAccountName);
             if (!accountBinding) { throw new OrgFormationError(`unable to find account ${logicalTargetAccountName} in state. Is your organization up to date?`); }
 
-            let regions = this.template.resolveNormalizedRegions(this.organizationBinding);
-
+            const regions = this.template.resolveNormalizedRegions(this.organizationBinding);
+            if (regions.length === 0) {
+                ConsoleUtil.LogWarning(`Task ${this.task.type} / ${this.task.name} is not bind to any region. Therefore, this task will not be executed.`);
+            }
             for(const region of regions) {
                 const binding: IPluginBinding<TTaskDefinition> = {
                     action: 'UpdateOrCreate',
