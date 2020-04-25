@@ -100,7 +100,11 @@ export class CfnTaskProvider {
                         }
 
                         if (typeof paramValue === 'object') {
-                            throw new OrgFormationError(`unable to fully resolve expression ${paramValue}`);
+                            if (Array.isArray(paramValue)) {
+                                paramValue = paramValue.join(', ');
+                            } else {
+                                throw new OrgFormationError(`unable to fully resolve expression ${paramValue}`);
+                            }
                         } else if (typeof paramValue === 'undefined') {
                             paramValue = '';
                         }
