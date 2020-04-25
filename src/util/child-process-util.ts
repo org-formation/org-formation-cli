@@ -45,11 +45,24 @@ export class ChildProcessUtility {
             });
 
             childProcess.stdout.on('data', x => {
-                ConsoleUtil.LogDebug(x);
+                if (typeof x === 'string') {
+                    const trimmed = x.trim();
+                    if (trimmed.length === 0) {return;}
+
+                    const emptyIfOnlyDots = trimmed.replace(/\./g, '');
+                    if (emptyIfOnlyDots.length === 0) {return;}
+
+                    ConsoleUtil.LogDebug(trimmed);
+                }
             });
 
             childProcess.stderr.on('data', x => {
-                ConsoleUtil.LogDebug(x);
+                if (typeof x === 'string') {
+                    const trimmed = x.trim();
+                    if (trimmed.length === 0) {return;}
+
+                    ConsoleUtil.LogDebug(trimmed);
+                }
             });
         });
     };
