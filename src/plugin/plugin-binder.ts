@@ -117,10 +117,10 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
             const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, this.template, this.state);
             await this.plugin.appendResolvers(expressionResolver, binding);
-            let t = await expressionResolver.resolve(binding.task);
-            t = await expressionResolver.collapse(t);
+            let myTask = await expressionResolver.resolve(binding.task);
+            myTask = await expressionResolver.collapse(myTask);
 
-            await that.plugin.performRemove({ ...binding, task: t}, expressionResolver);
+            await that.plugin.performRemove({ ...binding, task: myTask}, expressionResolver);
             that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
         };
     }
@@ -132,10 +132,10 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
             const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, this.template, this.state);
             await this.plugin.appendResolvers(expressionResolver, binding);
-            let t = await expressionResolver.resolve(binding.task);
-            t = await expressionResolver.collapse(t);
+            let myTask = await expressionResolver.resolve(binding.task);
+            myTask = await expressionResolver.collapse(myTask);
 
-            await that.plugin.performCreateOrUpdate({ ...binding, task: t}, expressionResolver);
+            await that.plugin.performCreateOrUpdate({ ...binding, task: myTask}, expressionResolver);
             that.state.setGenericTarget<TTaskDefinition>(target);
         };
     }

@@ -3,6 +3,7 @@ import { UpdateOrganizationCommand } from "~commands/index";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
+import { AwsUtil } from "~util/aws-util";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-move-master-acc/';
 
@@ -17,8 +18,8 @@ describe('when moving master account around', () => {
     let masterAccountId: string;
 
     beforeAll(async () => {
-
         context = await baseBeforeAll();
+        masterAccountId = await AwsUtil.GetMasterAccountId();
         orgClient = new Organizations({ region: 'us-east-1' });
 
         await context.prepareStateBucket(basePathForScenario + '0-state.json');
