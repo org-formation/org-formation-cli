@@ -15,5 +15,5 @@ ServerlessWorkload:
   Parameters:
     param1: !Sub 'sub expression ${AWS::AccountId}'
     param2: !GetAtt AccountA.AccountName
-  MaxConcurrentTasks: 10
-  FailedTaskTolerance: 10
+  MaxConcurrentTasks: 1
+  FailedTaskTolerance: 0

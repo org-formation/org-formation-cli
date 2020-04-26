@@ -75,7 +75,18 @@ export class CfnExpressionResolver {
                 expression.resolveToValue(paramVal);
                 continue;
             }
+        }
 
+        return container.val;
+    }
+
+    public async resolve<T>(obj: T): Promise<T> {
+        if (obj === undefined) {return undefined;}
+
+        const resolved = this.resolveParameters(obj);
+        const container = {val: resolved};
+        const expressions = ResourceUtil.EnumExpressionsForResource(container, 'any');
+        for(const expression of expressions) {
             const resource = this.resolvers[expression.resource];
             if (resource) {
                 const resourceVal = resource.resolve(this, expression.resource, expression.path);
@@ -91,16 +102,6 @@ export class CfnExpressionResolver {
                 }
             }
         }
-
-        return container.val;
-    }
-
-    public async resolve<T>(obj: T): Promise<T> {
-        if (obj === undefined) {return undefined;}
-
-        const resolved = this.resolveParameters(obj);
-        const container = {val: resolved};
-
         for(const treeResolver of this.treeResolvers) {
             await treeResolver.resolve(this, container);
         }

@@ -31,7 +31,8 @@
             "~sls-com/*": ["src/sls-com/*"],
             "~plugin/*": ["src/plugin/*"],
             "~util/*": ["src/util/*"],
-            "~yaml-cfn/*": ["src/yaml-cfn/*"]
+            "~yaml-cfn/*": ["src/yaml-cfn/*"],
+            "~org-formation-error": ["src/org-formation-error"]
         },
         "plugins": [
             {

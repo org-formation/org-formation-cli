@@ -28,7 +28,7 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
             childTasks,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
-                ConsoleUtil.LogInfo(`executing: ${config.Type} ${taskFilePath}`);
+                ConsoleUtil.LogInfo(`Executing: ${config.Type} ${taskFilePath}.`);
                 await BuildRunner.RunValidationTasks(childTasks, 1, 999);
             },
         };

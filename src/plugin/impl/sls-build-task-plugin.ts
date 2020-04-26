@@ -146,13 +146,13 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const { task, target } = binding;
         let command: string;
 
-        if (binding.task.customDeployCommand) {
-            command = binding.task.customDeployCommand as string;
+        if (task.customDeployCommand) {
+            command = task.customDeployCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx sls deploy ${CurrentTask.Parameters}' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression);
 
-            if (binding.task.runNpmInstall) {
+            if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);
             }
 
@@ -161,7 +161,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             command = appendArgumentIfTruthy(command, '--config', task.configFile);
             command = command + ' --conceal';
 
-            if (binding.task.customRemoveCommand) {
+            if (task.customRemoveCommand) {
                 command = binding.task.customRemoveCommand.replace('${region}', target.region);
                 command = command.replace('${stage}', task.stage);
                 command = command.replace('${config}', task.configFile);
@@ -176,8 +176,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ISlsTask>): Promise<void> {
         const { task } = binding;
-        task.parameters = await resolver.resolve(task.parameters);
-        const parametersAsString = SlsBuildTaskPlugin.GetParametersAsArgument(task.parameters);
+        const p = await resolver.resolve(task.parameters);
+        const parametersAsString = SlsBuildTaskPlugin.GetParametersAsArgument(p);
         resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString, Stage: task.stage, Config: task.configFile });
     }
 

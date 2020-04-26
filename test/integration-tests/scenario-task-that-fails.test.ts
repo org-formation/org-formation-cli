@@ -45,7 +45,7 @@ describe('when task fails', () => {
     });
 
     test('validate logs error', () => {
-        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('stack invalid-template'));
+        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('Stack invalid-template'));
         expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('XX::S3::Bucket'));
         expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('Unrecognized resource types'));
     });

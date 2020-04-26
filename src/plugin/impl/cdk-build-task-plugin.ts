@@ -155,8 +155,8 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ICdkTask>): Promise<void> {
         const { task } = binding;
-        task.parameters = await resolver.resolve(task.parameters);
-        const parametersAsString = CdkBuildTaskPlugin.GetParametersAsArgument(task.parameters);
+        const p = await resolver.resolve(task.parameters);
+        const parametersAsString = CdkBuildTaskPlugin.GetParametersAsArgument(p);
         resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString });
 
     }

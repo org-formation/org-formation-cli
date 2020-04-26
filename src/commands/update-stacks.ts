@@ -80,14 +80,13 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
-            ConsoleUtil.LogInfo(`stack ${stackName} already up to date.`);
+            ConsoleUtil.LogInfo(`Stack ${stackName} already up to date.`);
         } else {
             try {
                 await CfnTaskRunner.RunTasks(cfnTasks, stackName, command.maxConcurrentStacks, command.failedStacksTolerance);
             } finally {
                 await state.save();
             }
-            ConsoleUtil.LogInfo('done');
         }
 
     }

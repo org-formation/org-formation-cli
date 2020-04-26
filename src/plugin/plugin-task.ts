@@ -23,7 +23,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
-                ConsoleUtil.LogInfo(`executing: ${config.Type} ${config.LogicalName}`);
+                ConsoleUtil.LogInfo(`Executing: ${config.Type} ${config.LogicalName}.`);
 
                 const commandArgs = this.plugin.convertToCommandArgs(config, command);
                 if (commandArgs.maxConcurrent === undefined) {

@@ -116,11 +116,11 @@ describe('when running cfn tasks', () => {
             await CfnTaskRunner.RunTasks([task1, task2], 'stack', 1, 0);
             throw new Error('expected error to have been thrown');
         } catch (err) {
-            expect(err.message).toEqual(expect.stringContaining('circular dependency'));
+            expect(err.message).toEqual(expect.stringContaining('Circular dependency'));
             expect(err.message).toEqual(expect.stringContaining('123123123123'));
             expect(err.message).toEqual(expect.stringContaining('eu-central-1'));
         }
-        expect(consoleErr.callCount).toBe(0);
+        expect(consoleErr.callCount).toBe(4);
     });
 
     test('will throw for dependency on self', async () => {
@@ -138,10 +138,10 @@ describe('when running cfn tasks', () => {
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('dependency on self'));
         }
-        expect(consoleErr.callCount).toBe(0);
+        expect(consoleErr.callCount).toBe(3);
     });
 
-    test('will not run dependee after dependency failed', async () => {
+    test('will not run dependent after dependency failed', async () => {
         type MyTask = ICfnTask & { callCount: number };
         const task1: MyTask = {
             action: 'UpdateOrCreate',
@@ -169,7 +169,7 @@ describe('when running cfn tasks', () => {
         expect(consoleErr.getCall(0).args[0]).toContain('failed');
     });
 
-    test('skipped task increases error count (and raises expection above threshold)', async () => {
+    test('skipped task increases error count (and raises exception above threshold)', async () => {
         type MyTask = ICfnTask & { callCount: number };
         const task1: MyTask = {
             action: 'UpdateOrCreate',
@@ -196,7 +196,7 @@ describe('when running cfn tasks', () => {
             expect(err.message).toContain('tolerance');
             expect(err.message).toContain('2');
         }
-        expect(consoleErr.callCount).toBe(1);
+        expect(consoleErr.callCount).toBe(6);
         expect(consoleErr.getCall(0).args[0]).toContain('task1');
         expect(consoleErr.getCall(0).args[0]).toContain('123123123123');
         expect(consoleErr.getCall(0).args[0]).toContain('failed');

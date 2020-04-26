@@ -24,7 +24,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
-                ConsoleUtil.LogInfo(`executing: ${config.Type} ${updateStacksCommand.templateFile} ${updateStacksCommand.stackName}`);
+                ConsoleUtil.LogInfo(`Executing: ${config.Type} ${updateStacksCommand.templateFile} ${updateStacksCommand.stackName}.`);
                 await UpdateStacksCommand.Perform(updateStacksCommand);
             },
         };
@@ -62,7 +62,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
                     ConsoleUtil.LogWarning('');
                     ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
                 } else {
-                    ConsoleUtil.LogInfo(`executing: delete-stacks ${physicalId}`);
+                    ConsoleUtil.LogInfo(`Executing: delete-stacks ${physicalId}.`);
                     await DeleteStacksCommand.Perform({...command, stackName: physicalId, maxConcurrentStacks: 1, failedStacksTolerance: 0});
                 }},
         };

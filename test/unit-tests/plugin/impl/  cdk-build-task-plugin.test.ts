@@ -292,7 +292,7 @@ describe('when resolving attribute expressions on remove', () => {
 
         await binder.createPerformForRemove(binding)();
 
-        expect(getExportMock).toHaveBeenCalledTimes(1);
+        expect(getExportMock).toHaveBeenCalled();
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('XYZ'), expect.anything(), undefined, expect.anything());
     });

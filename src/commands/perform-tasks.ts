@@ -5,6 +5,7 @@ import { ITrackedTask } from '~state/persisted-state';
 import { Validator } from '~parser/validator';
 import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
+import { ConsoleUtil } from '~util/console-util';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -43,6 +44,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
         const tasks = config.enumBuildTasks(command);
         const state = await this.getState(command);
+        ConsoleUtil.state = state;
 
         await BuildRunner.RunTasks(tasks, command.maxConcurrentTasks, command.failedTasksTolerance);
         const tracked = state.getTrackedTasks(command.logicalName);

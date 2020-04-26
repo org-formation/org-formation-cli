@@ -38,7 +38,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
 
 export class UpdateOrganizationTask extends BaseOrganizationTask {
     protected async innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
-        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath}`);
+        ConsoleUtil.LogInfo(`Executing: ${this.config.Type} ${this.templatePath}.`);
         await UpdateOrganizationCommand.Perform(commandArgs);
     }
 

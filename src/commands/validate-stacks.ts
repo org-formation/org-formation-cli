@@ -29,6 +29,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         const templateFile = command.templateFile;
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);
+        ConsoleUtil.state = state;
         const parameters = this.parseCfnParameters(command.parameters);
         const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, false);
 
@@ -36,8 +37,6 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
 
         const validationTaskProvider = new CfnValidateTaskProvider();
         const tasks = validationTaskProvider.enumTasks(bindings);
-        await CfnTaskRunner.ValidateTemplates(tasks, command.stackName);
-        ConsoleUtil.LogInfo('done');
-
+        await CfnTaskRunner.ValidateTemplates(tasks);
     }
 }

@@ -197,10 +197,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         // create a copy of `command` to ensure no circular references
         ConsoleUtil.LogDebug(`initializing, arguments: \n${JSON.stringify({
-
             stateBucketName: command.stateBucketName,
             stateObject: command.stateObject,
-            state: typeof command.state,
             profile: command.profile,
             color: command.color,
             verbose: command.verbose,

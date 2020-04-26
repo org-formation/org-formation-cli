@@ -43,11 +43,15 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
                 const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.task.name, accountBinding.physicalId, region);
 
-                if (existingTargetBinding && existingTargetBinding.lastCommittedHash === binding.target.lastCommittedHash) {
+                if (!existingTargetBinding)
+                {
+                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - no existing target was found in state.`);
+                } else if (existingTargetBinding.lastCommittedHash !== binding.target.lastCommittedHash) {
+                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - hash from state did not match.`);
+                } else {
                     binding.action = 'None';
+                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - hash matches stored target.`);
                 }
-
-                ConsoleUtil.LogDebug(`setting build action for ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action}`);
 
                 result.push(binding);
             }
@@ -69,7 +73,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                 },
             });
 
-            ConsoleUtil.LogDebug(`setting build action for ${this.task.type} / ${this.task.name} for ${targetToBeDeleted.accountId} to Delete`);
+            ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${targetToBeDeleted.accountId} to Delete`);
 
         }
         return result;
@@ -113,10 +117,10 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
             const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, this.template, this.state);
             await this.plugin.appendResolvers(expressionResolver, binding);
-            binding.task = await expressionResolver.resolve(binding.task);
-            binding.task = await expressionResolver.collapse(binding.task);
+            let t = await expressionResolver.resolve(binding.task);
+            t = await expressionResolver.collapse(t);
 
-            await that.plugin.performRemove(binding, expressionResolver);
+            await that.plugin.performRemove({ ...binding, task: t}, expressionResolver);
             that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
         };
     }
@@ -128,10 +132,10 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
             const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, this.template, this.state);
             await this.plugin.appendResolvers(expressionResolver, binding);
-            binding.task = await expressionResolver.resolve(binding.task);
-            binding.task = await expressionResolver.collapse(binding.task);
+            let t = await expressionResolver.resolve(binding.task);
+            t = await expressionResolver.collapse(t);
 
-            await that.plugin.performCreateOrUpdate(binding, expressionResolver);
+            await that.plugin.performCreateOrUpdate({ ...binding, task: t}, expressionResolver);
             that.state.setGenericTarget<TTaskDefinition>(target);
         };
     }

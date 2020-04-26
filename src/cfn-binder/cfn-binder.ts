@@ -55,7 +55,7 @@ export class CloudFormationBinder {
         for (const target of targets) {
             const accountBinding = this.state.getAccountBinding(target.accountLogicalId);
             if (!accountBinding) {
-                throw new OrgFormationError(`expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
+                throw new OrgFormationError(`Expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
             }
             const accountId  = accountBinding.physicalId;
             const region = target.region;
@@ -109,10 +109,15 @@ export class CloudFormationBinder {
             }
             /* end move elsewhere */
 
-            if (!stored || stored.lastCommittedHash !== this.invocationHash) {
+            if (!stored) {
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - no existing target was found in state.`);
                 binding.action = 'UpdateOrCreate';
+            } else if (stored.lastCommittedHash !== this.invocationHash) {
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash from state did not match.`);
+                binding.action = 'UpdateOrCreate';
+            } else {
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash matches stored target.`);
             }
-
             result.push(binding);
         }
 
@@ -146,7 +151,9 @@ export class CloudFormationBinder {
                     dependents: [],
                     regionDependencies: [],
                     accountDependencies: [],
-                }as ICfnBinding);
+                } as ICfnBinding);
+
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to Delete - target found in state but not in binding.`);
              }
         }
         return result;

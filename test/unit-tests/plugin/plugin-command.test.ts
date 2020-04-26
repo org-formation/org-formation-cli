@@ -102,7 +102,6 @@ describe('when executing plugin command', () => {
 
     test('success is logged to info', async () => {
         await command.performCommand(commandArgs);
-        expect(consoleInfoStub).toBeCalledWith(expect.stringContaining('workload my-task successfully updated'));
-        expect(consoleInfoStub).toBeCalledWith(expect.stringContaining('123456789012'));
+        expect(consoleInfoStub).toBeCalledWith(expect.stringContaining('Workload my-task in 123456789012/eu-central-1 updated successful.'));
     });
 });
