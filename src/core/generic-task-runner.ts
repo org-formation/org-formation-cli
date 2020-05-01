@@ -102,6 +102,14 @@ export class GenericTaskRunner {
     private static async performTask<TTask>(task: IGenericTaskInternal<TTask>, delegate: ITaskRunnerDelegates<TTask>): Promise<void> {
         let retryWhenRateLimited = false;
         let retryAttemptRateLimited = 0;
+
+        if (task.skipTask) {
+            ConsoleUtil.LogInfo(`${delegate.getName(task)} ${delegate.getVerb(task)} skipped.`);
+            task.done = true;
+            task.failed = false;
+            return;
+        }
+
         do {
             try {
                 ConsoleUtil.LogDebug(`${delegate.getName(task)} ${delegate.getVerb(task)} starting...`);
@@ -141,6 +149,7 @@ export type IGenericTaskInternal<TTask> = IGenericTask<TTask> & IGenericTaskStat
 export interface IGenericTask<TTask> {
     isDependency(task: TTask): boolean;
     perform(): Promise<void>;
+    skipTask?: boolean;
 }
 
 export interface IGenericTaskState {

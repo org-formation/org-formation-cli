@@ -95,7 +95,11 @@ export class BuildConfiguration {
         const buffer = fs.readFileSync(filePath);
         const contents = buffer.toString('utf-8');
 
-        return yamlParse(contents) as IBuildFile;
+        const buildFile = yamlParse(contents) as IBuildFile;
+        if (buildFile === undefined) {
+            return {};
+        }
+        return buildFile;
     }
     public enumBuildConfigurationFromBuildFile(filePath: string, buildFile: IBuildFile): IBuildTaskConfiguration[] {
         this.parameters = buildFile.Parameters;
@@ -168,6 +172,7 @@ export interface IBuildTaskConfiguration {
     DependsOn?: string | string[];
     LogicalName: string;
     FilePath?: string;
+    SkipTask?: boolean;
     TaskRoleName?: string;
 }
 
@@ -175,6 +180,7 @@ export interface IBuildTaskConfiguration {
 export interface IBuildTask {
     name: string;
     type: string;
+    skipTask: boolean;
     isDependency(task: IBuildTask): boolean;
     childTasks: IBuildTask[];
     perform(): Promise<void>;

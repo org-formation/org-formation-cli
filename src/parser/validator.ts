@@ -9,10 +9,10 @@ export class Validator {
         if (config === undefined) { return; }
 
         if (config.Template === undefined) {
-            throw new OrgFormationError(`Required atrribute Template missing for task ${taskName}`);
+            throw new OrgFormationError(`Required attribute Template missing for task ${taskName}`);
         }
         if (config.StackName === undefined) {
-            throw new OrgFormationError(`Required atrribute StackName missing for task ${taskName}`);
+            throw new OrgFormationError(`Required attribute StackName missing for task ${taskName}`);
         }
         if (config.OrganizationBinding !== undefined) {
             Validator.ValidateOrganizationBinding(config.OrganizationBinding, `task ${taskName}`);
@@ -26,7 +26,7 @@ export class Validator {
         }
 
         Validator.ThrowForUnknownAttribute(config, `task ${taskName}`,
-            'Type', 'DependsOn', 'Template', 'StackName', 'StackDescription', 'Parameters',
+            'Type', 'DependsOn', 'SkipTask', 'Template', 'StackName', 'StackDescription', 'Parameters',
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
             'OrganizationBindings', 'TerminationProtection', 'CloudFormationRoleName', 'TaskRoleName',
             'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance' );

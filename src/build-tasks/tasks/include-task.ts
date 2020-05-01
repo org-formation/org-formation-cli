@@ -26,6 +26,7 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
             type: config.Type,
             name: config.LogicalName,
             childTasks,
+            skipTask: config.SkipTask === true,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 ConsoleUtil.LogInfo(`Executing: ${config.Type} ${taskFilePath}.`);
@@ -49,6 +50,7 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
         return {
             type: config.Type,
             name: config.LogicalName,
+            skipTask: config.SkipTask === true,
             childTasks,
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => await BuildRunner.RunValidationTasks(childTasks, 1, 999),

@@ -16,7 +16,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
     typeForTask = 'copy-to-s3';
 
     convertToCommandArgs(config: IS3CopyBuildTaskConfig, command: IPerformTasksCommandArgs): IS3CopyCommandArgs {
-        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'LocalPath', 'RemotePath', 'DependsOn', 'Type',
+        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'LocalPath', 'RemotePath', 'DependsOn', 'SkipTask', 'Type',
             'FilePath', 'ZipBeforePut', 'OrganizationBinding', 'TaskRoleName', 'AdditionalCdkArguments', 'InstallCommand');
 
 

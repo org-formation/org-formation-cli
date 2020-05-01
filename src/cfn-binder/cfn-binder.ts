@@ -110,11 +110,11 @@ export class CloudFormationBinder {
             /* end move elsewhere */
 
             if (!stored) {
+                binding.action = 'UpdateOrCreate';
                 ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - no existing target was found in state.`);
-                binding.action = 'UpdateOrCreate';
             } else if (stored.lastCommittedHash !== this.invocationHash) {
-                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash from state did not match.`);
                 binding.action = 'UpdateOrCreate';
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash from state did not match.`);
             } else {
                 ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash matches stored target.`);
             }

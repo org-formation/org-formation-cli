@@ -20,6 +20,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
             type: config.Type,
             name: config.LogicalName,
             physicalIdForCleanup: config.LogicalName,
+            skipTask: config.SkipTask === true,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
@@ -42,6 +43,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
         return {
             type: config.Type,
             name: config.LogicalName,
+            skipTask: config.SkipTask === true,
             childTasks: [],
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
@@ -55,6 +57,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
         return {
             type: 'cleanup-' + this.type,
             name: logicalId,
+            skipTask: false,
             childTasks: [],
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {

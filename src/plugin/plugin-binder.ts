@@ -43,8 +43,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
                 const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.task.name, accountBinding.physicalId, region);
 
-                if (!existingTargetBinding)
-                {
+                if (!existingTargetBinding) {
                     ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - no existing target was found in state.`);
                 } else if (existingTargetBinding.lastCommittedHash !== binding.target.lastCommittedHash) {
                     ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - hash from state did not match.`);
@@ -120,7 +119,9 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
             let myTask = await expressionResolver.resolve(binding.task);
             myTask = await expressionResolver.collapse(myTask);
 
-            await that.plugin.performRemove({ ...binding, task: myTask}, expressionResolver);
+            if (binding.target.region !== undefined && binding.target.region !== 'no-region') {
+                await that.plugin.performRemove({ ...binding, task: myTask}, expressionResolver);
+            }
             that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
         };
     }
