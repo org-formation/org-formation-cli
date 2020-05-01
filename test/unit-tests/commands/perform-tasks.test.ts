@@ -5,7 +5,7 @@ import { PersistedState, ITrackedTask } from '~state/persisted-state';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ConsoleUtil } from '~util/console-util';
-import { DeleteStacksCommand } from '~commands/index';
+import { DeleteStacksCommand, BaseCliCommand } from '~commands/index';
 import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/organization-task';
 
 describe('when creating perform-tasks command', () => {
@@ -197,6 +197,7 @@ describe('when executing perform-tasks command', () => {
             let buildTaskProviderCreateDeleteTaskMock: jest.SpyInstance;
 
             beforeEach(() => {
+
                 const trackedTasks: ITrackedTask[] = [
                     { logicalName: 'updateStacks1', type: 'update-stacks', physicalIdForCleanup: 'stack-name-1' },
                     { logicalName: 'updateStacks2', type: 'update-stacks', physicalIdForCleanup: 'stack-name-2' },
@@ -206,7 +207,7 @@ describe('when executing perform-tasks command', () => {
                 state.setTrackedTasks('default', trackedTasks);
                 buildTaskProviderCreateDeleteTaskMock = jest.spyOn(BuildTaskProvider, 'createDeleteTask');
                 deleteStacksCommandPerformMock = jest.spyOn(DeleteStacksCommand, 'Perform').mockImplementation();
-
+                jest.spyOn(BaseCliCommand, 'CreateAdditionalArgsForInvocation').mockReturnValue(Promise.resolve(''));
                 logWarningMock = jest.spyOn(ConsoleUtil, 'LogWarning').mockImplementation();
                 logInfoMock = jest.spyOn(ConsoleUtil, 'LogInfo').mockImplementation();
             });
