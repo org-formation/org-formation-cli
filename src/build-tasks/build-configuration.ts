@@ -172,7 +172,7 @@ export interface IBuildTaskConfiguration {
     DependsOn?: string | string[];
     LogicalName: string;
     FilePath?: string;
-    SkipTask?: boolean;
+    Skip?: boolean;
     TaskRoleName?: string;
 }
 
@@ -180,7 +180,7 @@ export interface IBuildTaskConfiguration {
 export interface IBuildTask {
     name: string;
     type: string;
-    skipTask: boolean;
+    skip: boolean;
     isDependency(task: IBuildTask): boolean;
     childTasks: IBuildTask[];
     perform(): Promise<void>;

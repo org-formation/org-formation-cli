@@ -20,7 +20,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             name: config.LogicalName,
             physicalIdForCleanup: config.StackName,
             StackName: config.StackName,
-            skipTask: config.SkipTask === true,
+            skip: config.Skip === true,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
@@ -36,7 +36,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             type: config.Type,
             name: config.LogicalName,
             childTasks: [],
-            skipTask: config.SkipTask === true,
+            skip: config.Skip === true,
             StackName: config.StackName,
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
@@ -51,7 +51,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             type: 'delete-stacks',
             name: logicalId,
             childTasks: [],
-            skipTask: false,
+            skip: false,
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
                 if (!command.performCleanup) {

@@ -103,7 +103,7 @@ export class CfnTaskProvider {
                             if (Array.isArray(paramValue)) {
                                 paramValue = paramValue.join(', ');
                             } else {
-                                throw new OrgFormationError(`unable to fully resolve expression ${paramValue}`);
+                                throw new OrgFormationError(`unable to fully resolve expression ${JSON.stringify(paramValue)}`);
                             }
                         } else if (typeof paramValue === 'undefined') {
                             paramValue = '';
@@ -165,7 +165,9 @@ export class CfnTaskProvider {
                         terminationProtection: binding.terminationProtection,
                     });
                 } catch (err) {
-                    ConsoleUtil.LogError(`error updating CloudFormation stack ${binding.stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
+                    if (err.code !== 'OptInRequired') {
+                        ConsoleUtil.LogError(`error updating CloudFormation stack ${binding.stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
+                    }
                     try {
                         const stackEvents = await cfn.describeStackEvents({ StackName: binding.stackName }).promise();
                         for (const event of stackEvents.StackEvents) {
@@ -180,7 +182,6 @@ export class CfnTaskProvider {
                                         ConsoleUtil.LogError('!!! You can resolve this error by commenting out both Master and Member resources and updating the stack');
                                         ConsoleUtil.LogError('!!! After updating the stacks without these resources uncomment first the Member resource them back, run update, then also the Master resource.');
                                         ConsoleUtil.LogError('!!! hopefully that will fix this. Sorry for the inconvenience!! <3 from org-formation.');
-
                                     }
                                 }
                             }

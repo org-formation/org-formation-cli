@@ -2,17 +2,17 @@
 OrganizationUpdate:
   Type: update-organization
   Template: ./organization.yml
-  SkipTask: true
+  Skip: true
 
 includeOther:
   DependsOn: UpdateStack
-  SkipTask: true
+  Skip: true
   Type: include
   Path: ./included.yml
 
 BucketTemplate:
   Type: update-stacks
-  SkipTask: true
+  Skip: true
   Template: ./doesnt-even-exist.yml
   StackName: my-stack-name
   DefaultOrganizationBindingRegion: eu-west-1
@@ -22,7 +22,7 @@ BucketTemplate:
 CdkWorkload:
   Type: update-cdk
   Path: ./workload/
-  SkipTask: true
+  Skip: true
   RunNpmInstall: true
   RunNpmBuild: true
   OrganizationBinding:
@@ -36,7 +36,7 @@ ServerlessWorkload:
   Type: update-serverless.com
   Config: serverless.yml
   Path: ./workload/
-  SkipTask: true
+  Skip: true
   RunNpmInstall: true
   OrganizationBinding:
     IncludeMasterAccount: true
@@ -47,7 +47,7 @@ ServerlessWorkload:
 
 CopyToS3:
   Type: copy-to-s3
-  SkipTask: true
+  Skip: true
   RemotePath: s3://xxxxx.txt
   LocalPath: ./files/file.txt
   OrganizationBinding:

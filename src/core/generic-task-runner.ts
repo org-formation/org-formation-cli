@@ -103,7 +103,7 @@ export class GenericTaskRunner {
         let retryWhenRateLimited = false;
         let retryAttemptRateLimited = 0;
 
-        if (task.skipTask) {
+        if (task.skip) {
             ConsoleUtil.LogInfo(`${delegate.getName(task)} ${delegate.getVerb(task)} skipped.`);
             task.done = true;
             task.failed = false;
@@ -149,7 +149,7 @@ export type IGenericTaskInternal<TTask> = IGenericTask<TTask> & IGenericTaskStat
 export interface IGenericTask<TTask> {
     isDependency(task: TTask): boolean;
     perform(): Promise<void>;
-    skipTask?: boolean;
+    skip?: boolean;
 }
 
 export interface IGenericTaskState {

@@ -1,6 +1,5 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
-import { DescribeStacksOutput, ListStacksOutput } from "aws-sdk/clients/cloudformation";
+import { IIntegrationTestContext, baseBeforeAll } from "./base-integration-test";
 import { GetObjectOutput } from "aws-sdk/clients/s3";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-skip-tasks/';
@@ -29,7 +28,10 @@ describe('when using parameters in template', () => {
     test('state is not updated', () => {
         const stateJSON = stateAfterSkipTasks.Body.toString();
         const state = JSON.parse(stateJSON);
-        expect(state).toBeUndefined();
+        expect(state).toBeDefined();
+        expect(state.stacks).toBeDefined();
+        expect(Object.keys(state.stacks)).toBe(0);
+        expect(state.targets).toBeUndefined();
     });
 
 });
