@@ -30,7 +30,7 @@ describe('when using parameters in template', () => {
         const state = JSON.parse(stateJSON);
         expect(state).toBeDefined();
         expect(state.stacks).toBeDefined();
-        expect(Object.keys(state.stacks)).toBe(0);
+        expect(Object.keys(state.stacks).length).toBe(0);
         expect(state.targets).toBeUndefined();
     });
 
