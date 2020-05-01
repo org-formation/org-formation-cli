@@ -68,7 +68,6 @@ export class CfnTaskProvider {
 
                 if (binding.stackPolicy !== undefined) {
                     stackInput.StackPolicyBody = JSON.stringify(binding.stackPolicy);
-                    //stackInput.StackPolicyDuringUpdateBody = JSON.stringify(binding.stackPolicy);
                 }
 
                 for (const dependency of dependencies) {
