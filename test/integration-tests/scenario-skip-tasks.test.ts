@@ -1,5 +1,5 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
-import { IIntegrationTestContext, baseBeforeAll } from "./base-integration-test";
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
 import { GetObjectOutput } from "aws-sdk/clients/s3";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-skip-tasks/';
@@ -34,4 +34,7 @@ describe('when using parameters in template', () => {
         expect(state.targets).toBeUndefined();
     });
 
+    afterAll(async () => {
+        await baseAfterAll(context);
+    });
 });

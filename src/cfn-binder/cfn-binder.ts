@@ -17,6 +17,7 @@ export class CloudFormationBinder {
                 private readonly state: PersistedState,
                 private readonly parameters: Record<string, string | ICfnCopyValue> = {},
                 private readonly terminationProtection = false,
+                private readonly stackPolicy: {} = undefined,
                 private readonly taskRoleName?: string,
                 private readonly customRoleName?: string,
                 private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state)) {
@@ -31,6 +32,7 @@ export class CloudFormationBinder {
             templateHash: template.hash,
             parameters,
             terminationProtection,
+            stackPolicy,
         };
 
         if (this.customRoleName) {
@@ -74,6 +76,7 @@ export class CloudFormationBinder {
                 parameters: this.parameters,
                 templateHash: this.invocationHash,
                 terminationProtection: this.terminationProtection,
+                stackPolicy: this.stackPolicy,
                 customRoleName: this.taskRoleName,
                 cloudFormationRoleName: this.customRoleName,
                 state: stored,
@@ -197,6 +200,7 @@ export interface ICfnBinding {
     terminationProtection?: boolean;
     customRoleName?: string;
     cloudFormationRoleName?: string;
+    stackPolicy?: {};
 }
 
 export interface ICfnCrossAccountDependency {

@@ -66,6 +66,11 @@ export class CfnTaskProvider {
                     Parameters: [],
                 };
 
+                if (binding.stackPolicy !== undefined) {
+                    stackInput.StackPolicyBody = JSON.stringify(binding.stackPolicy);
+                    //stackInput.StackPolicyDuringUpdateBody = JSON.stringify(binding.stackPolicy);
+                }
+
                 for (const dependency of dependencies) {
 
                     const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, binding.customRoleName);
@@ -143,14 +148,17 @@ export class CfnTaskProvider {
                     }
 
                     if (binding.state === undefined && binding.terminationProtection === true) {
+                        ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`);
                         await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
                     } else if (binding.state !== undefined) {
                         if (binding.terminationProtection) {
                             if (!binding.state.terminationProtection) {
+                                ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`);
                                 await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
                             }
                         } else {
                             if (binding.state.terminationProtection) {
+                                ConsoleUtil.LogDebug(`Disabling termination protection for stack ${binding.stackName}`);
                                 await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: false}).promise();
                             }
                         }

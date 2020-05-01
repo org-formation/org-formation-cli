@@ -117,6 +117,9 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         if (config.TerminationProtection !== undefined) {
             args.terminationProtection = config.TerminationProtection;
         }
+        if (config.StackPolicy !== undefined) {
+            args.stackPolicy = config.StackPolicy;
+        }
 
         if (config.MaxConcurrentStacks) {
             args.maxConcurrentStacks = config.MaxConcurrentStacks;
@@ -154,6 +157,7 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     DefaultOrganizationBindingRegion?: string | string[];
     OrganizationBindings?: Record<string, IOrganizationBinding>;
     TerminationProtection?: boolean;
+    StackPolicy?: {};
     MaxConcurrentStacks: number;
     FailedStackTolerance: number;
     CloudFormationRoleName?: string;

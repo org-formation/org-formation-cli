@@ -72,11 +72,12 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const taskRoleName = command.taskRoleName;
         const stackName = command.stackName;
         const templateFile = command.templateFile;
+        const stackPolicy = command.stackPolicy;
 
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseCfnParameters(command.parameters);
         const state = await this.getState(command);
-        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, terminationProtection, taskRoleName, cloudFormationRoleName);
+        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, terminationProtection, stackPolicy, taskRoleName, cloudFormationRoleName);
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
@@ -107,4 +108,5 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     failedStacksTolerance: number;
     cloudFormationRoleName?: string;
     taskRoleName?: string;
+    stackPolicy?: {};
 }
