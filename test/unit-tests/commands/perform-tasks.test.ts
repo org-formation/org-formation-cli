@@ -101,6 +101,7 @@ describe('when executing perform-tasks command', () => {
             name: 'updateOrg',
             type: 'update-organization',
             childTasks: [],
+            skip: undefined,
             perform: async () => {},
             isDependency: () => false,
         }]
@@ -153,8 +154,8 @@ describe('when executing perform-tasks command', () => {
 
         beforeEach(() => {
             const updateStacks: IBuildTask[] = [
-                { name: 'updateStacks1', type: 'update-stacks', childTasks: [], physicalIdForCleanup: 'stack-name-1', perform: async () => {}, isDependency: () => false },
-                { name: 'updateStacks2', type: 'update-stacks', childTasks: [], physicalIdForCleanup: 'stack-name-2', perform: async () => {}, isDependency: () => false }
+                { name: 'updateStacks1', type: 'update-stacks', childTasks: [], physicalIdForCleanup: 'stack-name-1', skip: undefined, perform: async () => {}, isDependency: () => false },
+                { name: 'updateStacks2', type: 'update-stacks', childTasks: [], physicalIdForCleanup: 'stack-name-2', skip: undefined, perform: async () => {}, isDependency: () => false }
             ];
 
             stateSaveMock = jest.spyOn(PersistedState.prototype, 'save').mockImplementation();
