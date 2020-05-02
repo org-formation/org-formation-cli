@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const core_1 = require("@aws-cdk/core");
+const s3 = require("@aws-cdk/aws-s3");
+const sns = require("@aws-cdk/aws-sns");
+class MyStack extends core_1.Stack {
+    constructor(scope, id, props) {
+        super(scope, id, props);
+        new sns.Topic(this, 'MyTopic');
+        new s3.Bucket(this, 'MyBucket');
+    }
+}
+const app = new core_1.App();
+new MyStack(app, 'MyStack');
+app.synth();
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbmRleC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUFBLHdDQUFrRTtBQUNsRSxzQ0FBdUM7QUFDdkMsd0NBQXlDO0FBRXpDLE1BQU0sT0FBUSxTQUFRLFlBQUs7SUFDekIsWUFBWSxLQUFnQixFQUFFLEVBQVUsRUFBRSxLQUFrQjtRQUMxRCxLQUFLLENBQUMsS0FBSyxFQUFFLEVBQUUsRUFBRSxLQUFLLENBQUMsQ0FBQztRQUV4QixJQUFJLEdBQUcsQ0FBQyxLQUFLLENBQUMsSUFBSSxFQUFFLFNBQVMsQ0FBQyxDQUFDO1FBQy9CLElBQUksRUFBRSxDQUFDLE1BQU0sQ0FBQyxJQUFJLEVBQUUsVUFBVSxDQUFDLENBQUM7SUFDbEMsQ0FBQztDQUNGO0FBRUQsTUFBTSxHQUFHLEdBQUcsSUFBSSxVQUFHLEVBQUUsQ0FBQztBQUN0QixJQUFJLE9BQU8sQ0FBQyxHQUFHLEVBQUUsU0FBUyxDQUFDLENBQUM7QUFDNUIsR0FBRyxDQUFDLEtBQUssRUFBRSxDQUFDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQXBwLCBDb25zdHJ1Y3QsIFN0YWNrUHJvcHMsIFN0YWNrIH0gZnJvbSAnQGF3cy1jZGsvY29yZSc7XG5pbXBvcnQgczMgPSByZXF1aXJlKCdAYXdzLWNkay9hd3MtczMnKTtcbmltcG9ydCBzbnMgPSByZXF1aXJlKCdAYXdzLWNkay9hd3Mtc25zJyk7XG5cbmNsYXNzIE15U3RhY2sgZXh0ZW5kcyBTdGFjayB7XG4gIGNvbnN0cnVjdG9yKHNjb3BlOiBDb25zdHJ1Y3QsIGlkOiBzdHJpbmcsIHByb3BzPzogU3RhY2tQcm9wcykge1xuICAgIHN1cGVyKHNjb3BlLCBpZCwgcHJvcHMpO1xuXG4gICAgbmV3IHNucy5Ub3BpYyh0aGlzLCAnTXlUb3BpYycpO1xuICAgIG5ldyBzMy5CdWNrZXQodGhpcywgJ015QnVja2V0Jyk7XG4gIH1cbn1cblxuY29uc3QgYXBwID0gbmV3IEFwcCgpO1xubmV3IE15U3RhY2soYXBwLCAnTXlTdGFjaycpO1xuYXBwLnN5bnRoKCk7Il19

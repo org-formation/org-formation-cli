@@ -1,0 +1,93 @@
+{
+  "version": "1.33.0",
+  "artifacts": {
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    },
+    "MyStack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://unknown-account/unknown-region",
+      "properties": {
+        "templateFile": "MyStack.template.json"
+      },
+      "metadata": {
+        "/MyStack/MyTopic/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MyTopic86869434",
+            "trace": [
+              "new Topic (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/@aws-cdk/aws-sns/lib/topic.ts:61:22)",
+              "new MyStack (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/index.ts:9:5)",
+              "Object.<anonymous> (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/index.ts:15:1)",
+              "Module._compile (module.js:653:30)",
+              "Module.m._compile (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/ts-node/src/index.ts:839:23)",
+              "Module._extensions..js (module.js:664:10)",
+              "Object.require.extensions.(anonymous function) [as .ts] (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/ts-node/src/index.ts:842:12)",
+              "Module.load (module.js:566:32)",
+              "tryModuleLoad (module.js:506:12)",
+              "Function.Module._load (module.js:498:3)",
+              "Function.Module.runMain (module.js:694:10)",
+              "main (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/ts-node/src/bin.ts:227:14)",
+              "Object.<anonymous> (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/ts-node/src/bin.ts:513:3)",
+              "Module._compile (module.js:653:30)",
+              "Object.Module._extensions..js (module.js:664:10)",
+              "Module.load (module.js:566:32)",
+              "tryModuleLoad (module.js:506:12)",
+              "Function.Module._load (module.js:498:3)",
+              "Function.Module.runMain (module.js:694:10)",
+              "findNodeScript.then.existing (/usr/local/lib/node_modules/npm/node_modules/libnpx/index.js:268:14)",
+              "<anonymous>"
+            ]
+          }
+        ],
+        "/MyStack/MyBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MyBucketF68F3FF0",
+            "trace": [
+              "new Bucket (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/@aws-cdk/aws-s3/lib/bucket.ts:1015:22)",
+              "new MyStack (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/index.ts:10:5)",
+              "Object.<anonymous> (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/index.ts:15:1)",
+              "Module._compile (module.js:653:30)",
+              "Module.m._compile (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/ts-node/src/index.ts:839:23)",
+              "Module._extensions..js (module.js:664:10)",
+              "Object.require.extensions.(anonymous function) [as .ts] (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/ts-node/src/index.ts:842:12)",
+              "Module.load (module.js:566:32)",
+              "tryModuleLoad (module.js:506:12)",
+              "Function.Module._load (module.js:498:3)",
+              "Function.Module.runMain (module.js:694:10)",
+              "main (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/ts-node/src/bin.ts:227:14)",
+              "Object.<anonymous> (/Users/olafconijn/DEV/github/AwsOrganizationFormation/test/integration-tests/resources/scenario-cdk-task/workload/node_modules/ts-node/src/bin.ts:513:3)",
+              "Module._compile (module.js:653:30)",
+              "Object.Module._extensions..js (module.js:664:10)",
+              "Module.load (module.js:566:32)",
+              "tryModuleLoad (module.js:506:12)",
+              "Function.Module._load (module.js:498:3)",
+              "Function.Module.runMain (module.js:694:10)",
+              "findNodeScript.then.existing (/usr/local/lib/node_modules/npm/node_modules/libnpx/index.js:268:14)",
+              "<anonymous>"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "libraries": {
+      "@aws-cdk/core": "1.36.1",
+      "@aws-cdk/cx-api": "1.36.1",
+      "@aws-cdk/cloud-assembly-schema": "1.36.1",
+      "@aws-cdk/aws-s3": "1.36.1",
+      "@aws-cdk/aws-events": "1.36.1",
+      "@aws-cdk/aws-iam": "1.36.1",
+      "@aws-cdk/region-info": "1.36.1",
+      "@aws-cdk/aws-kms": "1.36.1",
+      "@aws-cdk/aws-sns": "1.36.1",
+      "@aws-cdk/aws-cloudwatch": "1.36.1",
+      "jsii-runtime": "node.js/v8.16.1"
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "version": "tree-0.1",
+  "tree": {
+    "id": "App",
+    "path": "",
+    "children": {
+      "Tree": {
+        "id": "Tree",
+        "path": "Tree"
+      },
+      "MyStack": {
+        "id": "MyStack",
+        "path": "MyStack",
+        "children": {
+          "MyTopic": {
+            "id": "MyTopic",
+            "path": "MyStack/MyTopic",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "MyStack/MyTopic/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::SNS::Topic",
+                  "aws:cdk:cloudformation:props": {}
+                }
+              }
+            }
+          },
+          "MyBucket": {
+            "id": "MyBucket",
+            "path": "MyStack/MyBucket",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "MyStack/MyBucket/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::S3::Bucket",
+                  "aws:cdk:cloudformation:props": {}
+                }
+              },
+              "Notifications": {
+                "id": "Notifications",
+                "path": "MyStack/MyBucket/Notifications"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
