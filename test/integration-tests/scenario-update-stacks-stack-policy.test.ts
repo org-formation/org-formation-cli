@@ -22,7 +22,7 @@ describe('when calling org-formation perform tasks', () => {
         stackPolicy = await cfnClient.getStackPolicy({StackName: 'test-with-stack-policy'}).promise();
         try {
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-update-stacks-with-stack-policy.yml' });
-        }catch(err) {
+        } catch(err) {
             errorAfterUpdating = err;
         }
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-cleanup-stacks-with-stack-policy.yml', performCleanup: true });
