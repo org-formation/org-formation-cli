@@ -10,11 +10,21 @@ includeOther:
   Type: include
   Path: ./included.yml
 
-BucketTemplate:
+SkipTemplate:
   Type: update-stacks
   Skip: true
   Template: ./doesnt-even-exist.yml
   StackName: my-stack-name
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+
+
+DependsOnSkipTemplate:
+  Type: update-stacks
+  DependsOn: SkipTemplate
+  Template: ./doesnt-even-exist.yml
+  StackName: my-other-stack-name
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
     IncludeMasterAccount: true

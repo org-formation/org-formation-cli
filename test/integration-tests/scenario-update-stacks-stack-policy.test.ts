@@ -1,6 +1,7 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
 import { ListStacksOutput, GetStackPolicyOutput } from 'aws-sdk/clients/cloudformation';
+import { ConsoleUtil } from '~util/console-util';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-update-stacks-stack-policy/';
 
@@ -11,7 +12,7 @@ describe('when calling org-formation perform tasks', () => {
     let errorAfterUpdating: Error;
 
     beforeAll(async () => {
-
+        jest.spyOn(ConsoleUtil, 'LogError').mockImplementation();
         context = await baseBeforeAll();
         await context.prepareStateBucket(basePathForScenario + 'state.json');
         const command = context.command;

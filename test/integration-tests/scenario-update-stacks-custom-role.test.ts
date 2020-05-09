@@ -30,6 +30,7 @@ describe('when calling org-formation perform tasks', () => {
         stackAfterUpdateWithCustomRole = responseAfterUpdate.Stacks[0];
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-cleanup-stacks-custom-roles.yml', performCleanup: true });
+        await sleepForTest(200);
         listStacksResponseAfterCleanup = await cfnClient.listStacks({StackStatusFilter: ['CREATE_COMPLETE']}).promise();
 
     });

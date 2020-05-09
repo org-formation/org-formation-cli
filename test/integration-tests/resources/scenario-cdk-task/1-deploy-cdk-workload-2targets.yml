@@ -9,7 +9,7 @@ CdkWorkload:
   RunNpmInstall: true
   RunNpmBuild: true
   OrganizationBinding:
-    IncludeMasterAccount: false
+    IncludeMasterAccount: true
     Account: !Ref AccountA
     Region: eu-central-1
   MaxConcurrentTasks: 1

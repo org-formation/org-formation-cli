@@ -251,6 +251,6 @@ export interface ICfnTask {
     stackName: string;
     perform: () => Promise<void>;
     isDependency: (task: ICfnTask) => boolean;
-
+    skip?: boolean;
 }
 type CfnBuildTaskAction = 'UpdateOrCreate' | 'Delete' | 'Validate';

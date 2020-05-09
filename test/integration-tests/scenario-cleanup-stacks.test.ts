@@ -1,5 +1,5 @@
 import { PerformTasksCommand, BaseCliCommand } from "~commands/index";
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { ListStacksOutput, ListStacksInput } from "aws-sdk/clients/cloudformation";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cleanup-stacks/';
