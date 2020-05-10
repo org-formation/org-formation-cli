@@ -17,16 +17,16 @@ For Examples see: [examples folder](../examples/readme.md)
 
 # Organization Annotated CloudFormation
 
-[CloudFormation](https://aws.amazon.com/cloudformation/) is the infrastructure as code solution native to AWS. It works great when managing resources within a single organization but doesnt contain syntax to manage resources across multiple accounts.
+[CloudFormation](https://aws.amazon.com/cloudformation/) is the infrastructure as code solution native to AWS. It works great when managing resources within a single organization but doesn't contain syntax to manage resources across multiple accounts.
 
 examples:
 - In CloudFormation it is not possible to specify a !Ref to a resource in another account or region.
 - In CloudFormation it is not possible to reference organization resource attributes such as Account tags.
-- In CloudFormation it is possible to deploy stacks to multiple accounts (using [StackSets](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html)) but only a subset of Cloudformation features can be used.
+- In CloudFormation it is possible to deploy stacks to multiple accounts (using [StackSets](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html)) but only a subset of CloudFormation features can be used.
 
 The constraints above can be difficult when managing a baseline of resources across different accounts in an AWS Organization:
 - Relationships between resources in different accounts/regions are important.
-- Variability in resource configuration needs to be managed centranlly and relative to the account resource
+- Variability in resource configuration needs to be managed centrally and relative to the account resource
 
 Organization Formation allows you to define any CloudFormation resource and annotate this with additional attributes that contain information about how these should be bound to the accounts within your organization.
 
@@ -35,7 +35,7 @@ Org-Formation templates that contain resources can be updated using:
 
 More information in the [CLI reference](cli-reference.md)
 
-**example**: In this example an IAM Role will be created in accounts enumerable by `RoleBinding` (all accounts except the `*` from which `SharedUsersAccount` is exluded). Only principals from accounts enumerable by `AssumeRoleBinding` (only `SharedUsersAccount`) can assume the Role.
+**example**: In this example an IAM Role will be created in accounts enumerable by `RoleBinding` (all accounts except the `*` from which `SharedUsersAccount` is excluded). Only principals from accounts enumerable by `AssumeRoleBinding` (only `SharedUsersAccount`) can assume the Role.
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09-OC'
@@ -98,9 +98,9 @@ Resources:
 ```
 
 ### OrganizationBinding: Where to create which resource
-In Orgnization Formation, in order to create resources, these resources should have an `OrganizationBinding` attribute.
+In Organization Formation, in order to create resources, these resources should have an `OrganizationBinding` attribute.
 
-The `OrganizationBinding` can be specified as a toplevel `DefaultOrganizationBinding`, within a `OrganizationBindings` section or directly on the CloudFormation Resource.
+The `OrganizationBinding` can be specified as a top-level `DefaultOrganizationBinding`, within a `OrganizationBindings` section or directly on the CloudFormation Resource.
 
 
 ```yaml
@@ -136,9 +136,9 @@ Attributes can be combined and are **additive** (except for ```ExcludeAccount```
 
 If you have a resource that you need to refer to from within another resource (using ``!Ref`` or ``!GetAtt``) Organization Formation helps you to do this across AWS accounts.
 
-As every resource has its own ``OrganizationBinding`` and therefore will need to be added to a different set of accounts Organization Formation creates a template specific to every target account refered to from within the template.
+As every resource has its own ``OrganizationBinding`` and therefore will need to be added to a different set of accounts Organization Formation creates a template specific to every target account referred to from within the template.
 
-If, within a template, you use ``!Ref`` ir ``!GetAtt`` to refer to another resource in another account Organization Formation will create an export in the template that exposes the resource and create a parameter in the template that uses the value. It will work exactly how you would expect it to in cloudformation.
+If, within a template, you use ``!Ref`` or ``!GetAtt`` to refer to another resource in another account Organization Formation will create an export in the template that exposes the resource and create a parameter in the template that uses the value. It will work exactly how you would expect it to in CloudFormation.
 
 **example**:
 
@@ -176,7 +176,7 @@ Resources:
 
 ### DependsOnAccount and DependsOnRegion
 
-Sometimes a dependency exists on the sequence in which cloudformation templates are executed - even if there is no cross-account resource dependency.
+Sometimes a dependency exists on the sequence in which CloudFormation templates are executed - even if there is no cross-account resource dependency.
 
 A dependency to all templates within an account or region can be created manually using ``DependsOnAccount`` or ``DependsOnRegion``.
 
@@ -210,7 +210,7 @@ Resources:
 
 ### Referencing the account the resource is created in
 
-In CloudFormation it is possible to reference the accountId of the account the resource is created in using ``AWS::AccountId`` and the region using ``AWS::Region``. As Organization Formation template are regular cloudformation this remains possible.
+In CloudFormation it is possible to reference the accountId of the account the resource is created in using ``AWS::AccountId`` and the region using ``AWS::Region``. As Organization Formation template are regular CloudFormation this remains possible.
 
 Organization Formation adds a way to reference the account resource of the account for which the resource is created using  **AWSAccount**
 
@@ -308,9 +308,9 @@ Resources:
 The template above specifies that:
 - Every account, including the master account, gets a ``Detector`` resource.
 - Ever account, except for the master account, gets a ``Master`` resource.
-- The ``MasterAccount`` gets a Member resource for each account that is refered to from the ``Master`` resource in that account.
+- The ``MasterAccount`` gets a Member resource for each account that is referred to from the ``Master`` resource in that account.
 
-yes, the creation of ``Master`` resources to 'Members' and ``Member`` ressources to the Master account is confusing. This, unfortunately, is how Guardduty works in CloudFormation.
+yes, the creation of ``Master`` resources to 'Members' and ``Member`` resources to the Master account is confusing. This, unfortunately, is how Guardduty works in CloudFormation.
 
 
 ### Fn::EnumTargetAccounts/Regions
@@ -325,7 +325,7 @@ Principal:
 
  ```
 
- Will result in the following cloudformation (assuming MyBinding has 3 accounts):
+ Will result in the following CloudFormation (assuming MyBinding has 3 accounts):
 
 ``` yaml
 Principal:
@@ -337,8 +337,8 @@ Principal:
  ```
 **note**:
 
-- The Sub expression can have single qoutes
-- The Sub expression may also contain other Sub expression contructs (such as Ref to parameter)
+- The Sub expression can have single quotes
+- The Sub expression may also contain other Sub expression constructs (such as Ref to parameter)
 - For `Fn::EnumTargetAccounts` use the pre-defined variable `${account}` in the Sub expression
 - For `Fn::EnumTargetRegions` use the pre-defined variable `${region}` in the Sub expression
 - When placed inside an array the output of `Fn::EnumTargetAccounts` and `Fn::EnumTargetRegions` will be inserted into the array.
@@ -347,7 +347,7 @@ Principal:
 ### Fn::TargetCount
 `Fn::TargetCount` will return the number of targets for a binding (regions * accounts).
 
-This is particularly usefull when creating resources in which Fn::EnumTargetAccounts is used to create an array of values foreach target. If the array is empty (the `Fn::TargetCount` returns 0) this function can be used within a condition to not create the resource at all.
+This is particularly useful when creating resources in which Fn::EnumTargetAccounts is used to create an array of values foreach target. If the array is empty (the `Fn::TargetCount` returns 0) this function can be used within a condition to not create the resource at all.
 
 
 e.g:
@@ -373,7 +373,7 @@ Resources:
                   AWS: Fn::EnumTargetAccounts MyBinding arn:aws:iam::${account}:root
  ```
 
- Will result in the following cloudformation (assuming MyBinding has 0 accounts):
+ Will result in the following CloudFormation (assuming MyBinding has 0 accounts):
 
 ``` yaml
 
@@ -396,4 +396,4 @@ Resources:
                   AWS: [] # empty array is not 'legal'
  ```
 
-Syntactically the resource is not correct but as it will not be created (becuase of the condition) there wont be an error. Yay!
+Syntactically the resource is not correct but as it will not be created (because of the condition) there wont be an error. Yay!

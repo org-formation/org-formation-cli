@@ -143,7 +143,7 @@ Organization:
 
 You can make changes to the file you generated and update your organization using the ``update`` command. Alternatively, you can run ``create-change-set`` and ``update-change-set``. Read more in the [cli reference](docs/cli-reference.md)
 
-Once you got the hang of managing organization resources, use these organization resources to write smarter cloudformation that allows you to provision resources across your organization. Read more [about managing resources across accounts](docs/cloudformation-resources.md).
+Once you got the hang of managing organization resources, use these organization resources to write smarter CloudFormation that allows you to provision resources across your organization. Read more [about managing resources across accounts](docs/cloudformation-resources.md).
 
 ## Why is this important?
 
@@ -358,7 +358,7 @@ Why is XYZ not supported?
 
 No reason other than not running into this use-case so far.
 
-Really happy to implement this based on someone else's use-case.
+Really happy to implement this based on someone elses use-case.
 
 &nbsp;
 </details>
@@ -373,7 +373,7 @@ Really happy to implement this based on someone else's use-case.
 - [Managing AWS Organizations as code](docs/organization-resources.md)
 - [Organization Annotated CloudFormation](docs/cloudformation-resources.md)
 - [Automating deployments](docs/task-files.md)
-- [Custom Account Creation Worklow](examples/automation/create-account/readme.md)
+- [Custom Account Creation Workflow](examples/automation/create-account/readme.md)
 - [CLI reference](docs/cli-reference.md)
 - [Changelog](CHANGELOG.md)
 
@@ -389,3 +389,4 @@ Special thanks to the following individuals:
 - [Tjerk Stroband](https://github.com/tstroband)
 - [Yan Cui](http://theburningmonk.com)
 - [Eduardo Rodrigues](https://github.com/eduardomourar)
+- [Rene Mulder](https://github.com/rene84)

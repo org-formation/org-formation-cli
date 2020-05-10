@@ -2,6 +2,7 @@
 All notable changes to aws organization formation will be documented in this file.
 
 **not yet released**
+<<<<<<< Updated upstream
 - Added StackPolicy attribute to update-stacks tasks
 - Added Skip attribute to any task (will skip task execution but continue, also with dependent tasks)
 - Improved logging
@@ -11,6 +12,20 @@ All notable changes to aws organization formation will be documented in this fil
 - Added !CopyValue function to tasks file which can be used to reference to a stacks output.
 - Added parameter support to CDK tasks
 - Added parameter support to SLS tasks
+=======
+
+- Added `StackPolicy` attribute to update-stacks tasks
+- Added `UpdateProtection` attribute to update-stacks tasks and update stacks command.
+- Added `Skip` attribute to any task (will skip task execution but continue, also with dependent tasks)
+- Improved logging
+- Added Parameter support to tasks file:
+--  Parameters can be declared in `Parameters` section
+--  Parameters can be used in `!Ref` and `!Sub` or as part of other expressions
+- Added `!CopyValue` function to tasks file which can be used to reference to a stacks output.
+- Added parameter support to CDK tasks
+- Added parameter support to SLS tasks
+- Improved profile configuration support.
+>>>>>>> Stashed changes
 
 **version 0.9.4**
 - Added update-cdk task type to perform-tasks to support deployment of cdk workloads

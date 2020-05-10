@@ -7,7 +7,7 @@ This page is here to troubleshoot access denied issues you run into when using `
 
 Please rerun the process: as all things AWS are eventually consistent it could be that the `OrganizationAccountAccessRole` still needs to be created.
 
-Do let me know in [the issues](https://github.com/OlafConijn/AwsOrganizationFormation/issues) if this problem doesnt resolve on its own or if you run into this a lot!
+Do let me know in [the issues](https://github.com/OlafConijn/AwsOrganizationFormation/issues) if this problem doesn't resolve on its own or if you run into this a lot!
 
 #### I have an account that joined my organization
 
@@ -52,4 +52,4 @@ Resources:
             AWS: !Ref masterAccountId
 ```
 
-[dowload](./organizationAccountAccessRole.yml)
+[download](./organizationAccountAccessRole.yml)

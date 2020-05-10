@@ -28,7 +28,7 @@ Typing ``help`` after any command in the commandline will print documentation.
 
 ### ``org-formation init``
 
-Creates a local organization formation file that contains all organization resources. Runnning this command will create an S3 Bucket (hence the region) in your account that contains a state file which is used to track differences when updating your resources.
+Creates a local organization formation file that contains all organization resources. Running this command will create an S3 Bucket (hence the region) in your account that contains a state file which is used to track differences when updating your resources.
 
 ``> org-formation init --region us-east-1``
 
@@ -36,7 +36,7 @@ Creates a local organization formation file that contains all organization resou
 
 |option|default|description|
 |---|---|---|
-|<nobr>--region</nobr>| none | The ``--region`` used to create the S3 buket used to store state|
+|<nobr>--region</nobr>| none | The ``--region`` used to create the S3 bucket used to store state|
 
 ### ``org-formation init-pipeline``
 
@@ -56,7 +56,7 @@ Creates an organization as done using the init command as well as default CodeCo
 
 ### ``org-formation update``
 
-Updates organizational resources specificied in *templateFile*.
+Updates organizational resources specified in *templateFile*.
 
 ``> org-formation update organization.yml``
 
@@ -90,13 +90,15 @@ Will deploy CloudFormation resources specified in *templateFile*.
 
 |option|default|description|
 |---|---|---|
-|<nobr>--stack-name</nobr> | none | **required** <br/>The stack name used to deploy cloudformation resources|
-|<nobr>--parameters</nobr> | none | parameters that need to be passed to the cloudformation template.|
+|<nobr>--stack-name</nobr> | none | **required** <br/>The stack name used to deploy CloudFormation resources|
+|<nobr>--parameters</nobr> | none | parameters that need to be passed to the CloudFormation template.|
 |<nobr>--termination-protection</nobr> | false | If specified the stack will be created with termination protection.|
+|<nobr>--update-protection</nobr> | false | When set to `true` will create a StackPolicy for the stacks that prevents any resource from being modified through CloudFormation. |
 |<nobr>--max-concurrent-stacks</nobr> | 1 | Maximum number of stacks to be updated concurrently |
 |<nobr>--failed-stacks-tolerance</nobr> | 0 | The number of failed stacks after which execution stops|
 
-paramters can be passed in a similar fashion cloudformmation parameters are passed:
+
+parameters can be passed in a similar fashion CloudFormation parameters are passed:
 ``> org-formation update-stacks template.yml --stack-name my-stack --parameters ParameterKey=Param1,ParameterValue=Val1 ParameterKey=Param2,ParameterValue=Val2``
 
 or the somewhat more simple fashion:
@@ -105,17 +107,17 @@ or the somewhat more simple fashion:
 
 ### ``org-formation validate-stacks``
 
-validates the cloudformation templates that will be generated based on *templateFile*.
+validates the CloudFormation templates that will be generated based on *templateFile*.
 
 ``> org-formation validate-stacks template.yml --stack-name my-stack ``
 
 |option|default|description|
 |---|---|---|
-|<nobr>--stack-name</nobr> | 'validation' | The stack name used to deploy cloudformation resources (used in e.g. generated names for output)|
-|<nobr>--parameters</nobr> | none | parameters that need to be passed to the cloudformation template.|
+|<nobr>--stack-name</nobr> | 'validation' | The stack name used to deploy CloudFormation resources (used in e.g. generated names for output)|
+|<nobr>--parameters</nobr> | none | parameters that need to be passed to the CloudFormation template.|
 
 
-paramters can be passed in a similar fashion cloudformmation parameters are passed:
+parameters can be passed in a similar fashion CloudFormation parameters are passed:
 ``> org-formation validate-stacks template.yml --stack-name my-stack --parameters ParameterKey=Param1,ParameterValue=Val1 ParameterKey=Param2,ParameterValue=Val2``
 
 or the somewhat more simple fashion:
@@ -130,8 +132,8 @@ Will print out CloudFormation templates generated based on *templateFile*.
 
 |option|default|description|
 |---|---|---|
-|<nobr>--stack-name</nobr> | 'print' | The stack name used to deploy cloudformation resources (used in e.g. generated names for output)|
-|<nobr>--parameters</nobr> | none | parameters that need to be passed to the cloudformation template.|
+|<nobr>--stack-name</nobr> | 'print' | The stack name used to deploy CloudFormation resources (used in e.g. generated names for output)|
+|<nobr>--parameters</nobr> | none | parameters that need to be passed to the CloudFormation template.|
 
 
 ### ``org-formation describe-stacks``
@@ -169,18 +171,22 @@ Will delete all stacks of name *stackName* that have been deployed using org-for
 
 Will perform tasks from *tasksFile*.
 
-``> org-formation perform-tasks tasks.yml ``
+``> org-formation perform-tasks tasks.yml``
 
 |option|default|description|
 |---|---|---|
-|<nobr>--logical-name</nobr>| 'default' | logical name of the tasks file, allows multiple tasks files to be used together with --perform-cleanup action |
+|<nobr>--logical-name</nobr>| 'default' | logical name of the tasks file, allows multiple taskfiles to be used together with --perform-cleanup action |
 |<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
 |<nobr>--perform-cleanup</nobr>| false | when set will cleanup resources created by previous perform-tasks after task is removed from tasks file |
+|<nobr>--parameters</nobr> | none | parameter values that need to be used when processing the taskfile.|
 |<nobr>--max-concurrent-tasks</nobr> | 1 | Maximum number of tasks to be executed concurrently|
 |<nobr>--failed-tasks-tolerance</nobr> | 0 | The number of failed tasks after which execution stops|
 |<nobr>--max-concurrent-stacks</nobr> | 1 | Maximum number of stacks (within a task) to be executed concurrently |
 |<nobr>--failed-stacks-tolerance</nobr> | 0 | The number of failed stacks (within a task) after which execution stops|
 
+
+Parameters can be passed using the following syntax:
+``> org-formation perform-tasks taskfile.yml --parameters Param1=Val1 Param2=Val2``
 
 ### ``org-formation validate-tasks``
 
