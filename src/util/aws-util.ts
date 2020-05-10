@@ -212,15 +212,22 @@ class CustomMFACredentials extends AWS.Credentials {
             const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
             const secrets = ini.parse(awssecrets);
             const creds = secrets[profileKey.source_profile];
-            const sts = new STS({ credentials: { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key } });
+            const credentialsForSts: CredentialsOptions = { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key };
+            if (creds.aws_session_token !== undefined) {
+                credentialsForSts.sessionToken = creds.aws_session_token;
+            }
+            const sts = new STS({ credentials: credentialsForSts });
 
-            const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profileKey.mfa_serial}`);
             const assumeRoleReq: AssumeRoleRequest = {
                 RoleArn: profileKey.role_arn,
                 RoleSessionName: 'organization-build',
-                SerialNumber: profileKey.mfa_serial,
-                TokenCode: token,
             };
+
+            if (profileKey.mfa_serial !== undefined) {
+                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profileKey.mfa_serial}`);
+                assumeRoleReq.SerialNumber = profileKey.mfa_serial;
+                assumeRoleReq.TokenCode = token;
+            }
 
             try {
                 const tokens = await sts.assumeRole(assumeRoleReq).promise();
