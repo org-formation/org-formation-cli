@@ -93,7 +93,7 @@ Reusable template to do cross account IAM roles with an alarm (based on CloudTra
 
 ![cross-account-role-with-alarm](img/cross-account-role-with-alarm.png)
 
-[ctemplates/ross-account-role-with-alarm.yml](templates/cross-account-role-with-alarm.yml)
+[templates/cross-account-role-with-alarm.yml](templates/cross-account-role-with-alarm.yml)
 
 
 ## cross account secret
