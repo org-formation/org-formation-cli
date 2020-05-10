@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import md5 = require('md5');
 import * as Path from 'path';
-import { yamlParse } from 'yaml-cfn';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { OrganizationBindingsSection } from './model/organization-bindings-section';
@@ -11,6 +10,7 @@ import { OrgResourceTypes } from './model/resource-types';
 import { ResourcesSection } from './model/resources-section';
 import { Validator } from './validator';
 import { OrganizationalUnitResource } from './model/organizational-unit-resource';
+import { yamlParse } from '~yaml-cfn/index';
 
 type TemplateVersion = '2010-09-09-OC';
 
@@ -155,7 +155,7 @@ export class TemplateRoot {
     public readonly contents: ITemplate;
     public readonly dirname: string;
     public readonly organizationSection: OrganizationSection;
-    public readonly defautOrganizationBinding: IOrganizationBinding;
+    public readonly defaultOrganizationBinding: IOrganizationBinding;
     public readonly defaultOrganizationBindingRegion: string | string[];
     public readonly resourcesSection: ResourcesSection;
     public readonly bindingSection: OrganizationBindingsSection;
@@ -187,7 +187,7 @@ export class TemplateRoot {
             delete contents.OrganizationBindingRegion;
         }
         this.defaultOrganizationBindingRegion = contents.DefaultOrganizationBindingRegion;
-        this.defautOrganizationBinding = contents.DefaultOrganizationBinding;
+        this.defaultOrganizationBinding = contents.DefaultOrganizationBinding;
         this.organizationSection = new OrganizationSection(this, contents.Organization);
         this.bindingSection = new OrganizationBindingsSection(this, contents.OrganizationBindings);
         this.resourcesSection = new ResourcesSection(this, contents.Resources);
@@ -334,5 +334,4 @@ export class TemplateRoot {
         }
         return result;
     }
-
 }

@@ -25,6 +25,7 @@ describe('when executing plugin command', () => {
         validateCommandArgs: jest.fn(),
         getValuesForEquality: jest.fn(() => ({att: 'val'})),
         convertToTask:  jest.fn(() => ({name: 'my-task', type: 'my-type'})),
+        appendResolvers: jest.fn(),
     } as any;
     let enumBindingsStub: jest.SpyInstance;
 
@@ -57,7 +58,7 @@ describe('when executing plugin command', () => {
 
         commandArgs = {
             ...subCommanderCommand,
-            organizationBinding: { IncludeMasterAccount: true},
+            organizationBinding: { IncludeMasterAccount: true, Region: 'eu-central-1' },
             type: 'my-type',
             name: 'my-task',
             maxConcurrent: 1,
@@ -101,7 +102,6 @@ describe('when executing plugin command', () => {
 
     test('success is logged to info', async () => {
         await command.performCommand(commandArgs);
-        expect(consoleInfoStub).toBeCalledWith(expect.stringContaining('workload my-task successfully updated'));
-        expect(consoleInfoStub).toBeCalledWith(expect.stringContaining('123456789012'));
+        expect(consoleInfoStub).toBeCalledWith(expect.stringContaining('Workload my-task in 123456789012/eu-central-1 updated successful.'));
     });
 });

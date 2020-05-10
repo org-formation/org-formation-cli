@@ -9,7 +9,11 @@ ServerlessWorkload:
   Path: ./workload/                        # used to package / calculate hash
   RunNpmInstall: true
   OrganizationBinding:
+    IncludeMasterAccount: true
     Account: !Ref AccountA
     Region: eu-central-1
-  MaxConcurrentTasks: 10
-  FailedTaskTolerance: 10
+  Parameters:
+    param1: !Sub 'sub expression ${AWS::AccountId}'
+    param2: !GetAtt AccountA.AccountName
+  MaxConcurrentTasks: 1
+  FailedTaskTolerance: 0

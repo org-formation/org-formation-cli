@@ -24,7 +24,7 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
         const state = await this.getState(command);
         const binder = await this.getOrganizationBinder(template, state);
 
-        const stateBucketName = await this.GetStateBucketName(command);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
         const provider = new ChangeSetProvider(stateBucketName);
         const tasks = binder.enumBuildTasks();
 

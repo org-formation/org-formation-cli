@@ -1,0 +1,18 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+CdkWorkload:
+  Type: update-cdk
+  Path: ./workload/
+  RunNpmInstall: true
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Account: !Ref AccountA
+    Region: eu-central-1
+  Parameters:
+    param1: !Sub 'sub expression ${AWS::AccountId}'
+    param2: !GetAtt AccountA.AccountName
+  MaxConcurrentTasks: 1
+  FailedTaskTolerance: 0

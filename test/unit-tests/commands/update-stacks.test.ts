@@ -185,12 +185,6 @@ describe('when executing update-stacks command', () => {
         expect(saveState.callCount).toBe(1);
     });
 
-    test('done is logged to console', async () => {
-        await command.performCommand(commandArgs);
-        expect(consoleInfo.callCount).toBe(2);
-        expect(consoleInfo.lastCall.args[0]).toContain('done');
-    });
-
     test('no error is logged', async () => {
         await command.performCommand(commandArgs);
         expect(consoleError.callCount).toBe(0);
@@ -198,10 +192,10 @@ describe('when executing update-stacks command', () => {
 
     test('stack update is logged', async () => {
         await command.performCommand(commandArgs);
-        expect(consoleInfo.callCount).toBe(2);
+        expect(consoleInfo.callCount).toBe(1);
         expect(consoleInfo.getCall(0).args[0]).toContain('123456789012');
-        expect(consoleInfo.getCall(0).args[0]).toContain('stack myStackName');
-        expect(consoleInfo.getCall(0).args[0]).toContain('updated');
+        expect(consoleInfo.getCall(0).args[0]).toContain('Stack myStackName');
+        expect(consoleInfo.getCall(0).args[0]).toContain('update');
     });
 
     describe('and no tasks are returned', () => {
@@ -227,7 +221,7 @@ describe('when executing update-stacks command', () => {
             await command.performCommand(commandArgs);
             expect(consoleInfo.callCount).toBe(1);
             expect(consoleInfo.lastCall.args[0]).toContain('already up to date');
-            expect(consoleInfo.lastCall.args[0]).toContain('stack myStackName');
+            expect(consoleInfo.lastCall.args[0]).toContain('Stack myStackName');
         });
     });
     describe('and tasks throws', () => {
@@ -258,7 +252,7 @@ describe('when executing update-stacks command', () => {
             await command.performCommand(commandArgs);
             expect(consoleError.callCount).toBe(1);
             expect(consoleError.firstCall.args[0]).toContain('failed');
-            expect(consoleError.firstCall.args[0]).toContain('stack myStackName');
+            expect(consoleError.firstCall.args[0]).toContain('Stack myStackName');
             expect(consoleError.firstCall.args[0]).toContain('account 123456789012');
         });
     });

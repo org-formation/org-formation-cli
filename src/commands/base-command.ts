@@ -12,15 +12,47 @@ import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { S3StorageProvider } from '~state/storage-provider';
 import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template-writer';
+import { CfnParameters } from '~core/cfn-parameters';
 
+const DEFAULT_STATE_OBJECT = 'state.json';
 
 export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected command: Command;
     protected firstArg: any;
 
+    static CliCommandArgs: ICommandArgs;
+
+    static async CreateAdditionalArgsForInvocation(): Promise<string> {
+        let additionalArgs = '';
+        const cliArgs = BaseCliCommand.CliCommandArgs;
+        if (cliArgs) {
+            const profile = cliArgs.profile;
+            const stateBucketName = cliArgs.stateBucketName;
+            const stateObject = cliArgs.stateObject;
+
+            if (profile !== undefined) {
+                additionalArgs += `--profile ${profile} `;
+            }
+
+            const defaultStateBucketName = await BaseCliCommand.GetStateBucketName({} as ICommandArgs);
+
+            if (stateBucketName !== undefined && stateBucketName !== defaultStateBucketName) {
+                additionalArgs += `--state-bucket-name ${stateBucketName} `;
+            }
+
+            if (stateObject !== undefined && stateObject !== DEFAULT_STATE_OBJECT) {
+                additionalArgs += `--state-object ${stateObject} `;
+            }
+        }
+        return additionalArgs;
+    }
+
     constructor(command?: Command, name?: string, description?: string, firstArgName?: string) {
         if (command !== undefined && name !== undefined) {
+            if (BaseCliCommand.CliCommandArgs === undefined) {
+                BaseCliCommand.CliCommandArgs = command as any as ICommandArgs;
+            }
             this.command = command.command(name);
             if (description !== undefined) {
                 this.command.description(description);
@@ -91,9 +123,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected addOptions(command: Command): void {
         command.option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}');
-        command.option('--state-object [state-object]', 'key for object used to store state', 'state.json');
+        command.option('--state-object [state-object]', 'key for object used to store state', DEFAULT_STATE_OBJECT);
         command.option('--profile [profile]', 'aws profile to use');
-        command.option('--print-stack', 'will print stacktraces for errors');
+        command.option('--print-stack', 'will print stack traces for errors');
         command.option('--verbose', 'will enable debug logging');
         command.option('--no-color', 'will disable colorization of console logs');
     }
@@ -124,12 +156,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected async getStateBucket(command: ICommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
-        const stateBucketName = await this.GetStateBucketName(command);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
         const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 
-    protected async GetStateBucketName(command: ICommandArgs): Promise<string> {
+    protected static async GetStateBucketName(command: ICommandArgs): Promise<string> {
         const bucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
             const accountId = await AwsUtil.GetMasterAccountId();
@@ -138,35 +170,16 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return bucketName;
     }
 
-    protected parseStackParameters(commandParameters?: string | {}): Record<string, string>  {
-        if (commandParameters && typeof commandParameters === 'object') {
+    protected parseCfnParameters(commandParameters?: string | undefined | {}): Record<string, string>  {
+
+        if (typeof commandParameters === 'object') {
             return commandParameters;
         }
-        const parameters: Record<string, string> = {};
-        if (commandParameters && typeof commandParameters === 'string') {
-            const parameterParts = commandParameters.split(' ');
-            for (const parameterPart of parameterParts) {
-                const parameterAttributes = parameterPart.split(',');
-                if (parameterAttributes.length === 1) {
-                    const parts = parameterAttributes[0].split('=');
-                    if (parts.length !== 2) {
-                        throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected either key=val or ParameterKey=key,ParameterVaue=val.`);
-                    }
-                    parameters[parts[0]] = parts[1];
-                } else {
-                    const key = parameterAttributes.find(x => x.startsWith('ParameterKey='));
-                    const value = parameterAttributes.find(x => x.startsWith('ParameterValue='));
-                    if (key === undefined || value === undefined) {
-                        throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected ParameterKey=key,ParameterVaue=val`);
-                    }
-                    const paramKey = key.substr(13);
-                    const paramVal = value.substr(15);
-                    parameters[paramKey] = paramVal;
-                }
-            }
+        if (typeof commandParameters === 'string') {
+            return CfnParameters.ParseParameterValues(commandParameters);
         }
 
-        return parameters;
+        return {};
     }
 
     protected async initialize(command: ICommandArgs): Promise<void> {
@@ -184,10 +197,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         // create a copy of `command` to ensure no circular references
         ConsoleUtil.LogDebug(`initializing, arguments: \n${JSON.stringify({
-
             stateBucketName: command.stateBucketName,
             stateObject: command.stateObject,
-            state: typeof command.state,
             profile: command.profile,
             color: command.color,
             verbose: command.verbose,

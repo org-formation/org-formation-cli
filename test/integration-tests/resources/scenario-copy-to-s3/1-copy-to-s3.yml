@@ -5,7 +5,7 @@ OrganizationUpdate:
 
 CopyToS3:
   Type: copy-to-s3
-  RemotePath: s3://org-formation-integration-test/files/file.txt
+  RemotePath: !Sub s3://org-formation-integration-test/${MasterAccount}/file.txt
   LocalPath: ./files/file.txt
   OrganizationBinding:
     Account: !Ref AccountA

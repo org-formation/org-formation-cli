@@ -5,7 +5,7 @@ import { PersistedState, ITrackedTask } from '~state/persisted-state';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ConsoleUtil } from '~util/console-util';
-import { DeleteStacksCommand } from '~commands/index';
+import { DeleteStacksCommand, BaseCliCommand } from '~commands/index';
 import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/organization-task';
 
 describe('when creating perform-tasks command', () => {
@@ -64,6 +64,13 @@ describe('when creating perform-tasks command', () => {
         expect(performCleanupOpt).toBeDefined();
         expect(subCommanderCommand.performCleanup).toBeFalsy();
     });
+
+    test('perform-tasks has parameters attribute', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const parametersOpt = opts.find((x) => x.long === '--parameters');
+        expect(parametersOpt).toBeDefined();
+        expect(parametersOpt.required).toBe(false);
+    });
 });
 
 
@@ -94,6 +101,7 @@ describe('when executing perform-tasks command', () => {
             name: 'updateOrg',
             type: 'update-organization',
             childTasks: [],
+            skip: undefined,
             perform: async () => {},
             isDependency: () => false,
         }]
@@ -146,8 +154,8 @@ describe('when executing perform-tasks command', () => {
 
         beforeEach(() => {
             const updateStacks: IBuildTask[] = [
-                { name: 'updateStacks1', type: 'update-stacks', childTasks: [], physicalIdForCleanup: 'stack-name-1', perform: async () => {}, isDependency: () => false },
-                { name: 'updateStacks2', type: 'update-stacks', childTasks: [], physicalIdForCleanup: 'stack-name-2', perform: async () => {}, isDependency: () => false }
+                { name: 'updateStacks1', type: 'update-stacks', childTasks: [], physicalIdForCleanup: 'stack-name-1', skip: undefined, perform: async () => {}, isDependency: () => false },
+                { name: 'updateStacks2', type: 'update-stacks', childTasks: [], physicalIdForCleanup: 'stack-name-2', skip: undefined, perform: async () => {}, isDependency: () => false }
             ];
 
             stateSaveMock = jest.spyOn(PersistedState.prototype, 'save').mockImplementation();
@@ -189,6 +197,7 @@ describe('when executing perform-tasks command', () => {
             let buildTaskProviderCreateDeleteTaskMock: jest.SpyInstance;
 
             beforeEach(() => {
+
                 const trackedTasks: ITrackedTask[] = [
                     { logicalName: 'updateStacks1', type: 'update-stacks', physicalIdForCleanup: 'stack-name-1' },
                     { logicalName: 'updateStacks2', type: 'update-stacks', physicalIdForCleanup: 'stack-name-2' },
@@ -198,7 +207,7 @@ describe('when executing perform-tasks command', () => {
                 state.setTrackedTasks('default', trackedTasks);
                 buildTaskProviderCreateDeleteTaskMock = jest.spyOn(BuildTaskProvider, 'createDeleteTask');
                 deleteStacksCommandPerformMock = jest.spyOn(DeleteStacksCommand, 'Perform').mockImplementation();
-
+                jest.spyOn(BaseCliCommand, 'CreateAdditionalArgsForInvocation').mockReturnValue(Promise.resolve(''));
                 logWarningMock = jest.spyOn(ConsoleUtil, 'LogWarning').mockImplementation();
                 logInfoMock = jest.spyOn(ConsoleUtil, 'LogInfo').mockImplementation();
             });

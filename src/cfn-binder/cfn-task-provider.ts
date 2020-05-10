@@ -1,14 +1,17 @@
-import { CreateStackInput, DeleteStackInput, ListExportsInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
+import { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import uuid = require('uuid');
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
+import { OrgFormationError } from '../../src/org-formation-error';
 import { ICfnBinding } from './cfn-binder';
 import { PersistedState } from '~state/persisted-state';
-export class CfnTaskProvider {
-    private state: PersistedState;
+import { ICfnExpression } from '~core/cfn-expression';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
+import { TemplateRoot } from '~parser/parser';
 
-    constructor(state: PersistedState) {
-        this.state = state;
+export class CfnTaskProvider {
+    constructor(private readonly template: TemplateRoot, private readonly state: PersistedState) {
+
     }
 
     public createUpdateTemplateTask(binding: ICfnBinding): ICfnTask {
@@ -18,12 +21,12 @@ export class CfnTaskProvider {
         for (const paramName in boundParameters) {
             const param = boundParameters[paramName];
             const dependency: ICrossAccountParameterDependency = {
-                ExportAcountId: binding.accountId,
+                ExportAccountId: binding.accountId,
                 ExportRegion: binding.region,
                 ExportName: param.ExportName,
                 ParameterKey: paramName,
             };
-            if (param.ExportAccountId) { dependency.ExportAcountId = param.ExportAccountId; }
+            if (param.ExportAccountId) { dependency.ExportAccountId = param.ExportAccountId; }
             if (param.ExportRegion) { dependency.ExportRegion = param.ExportRegion; }
             dependencies.push(dependency);
 
@@ -31,6 +34,12 @@ export class CfnTaskProvider {
             delete param.ExportName;
             delete param.ExportRegion;
         }
+
+        const parameters: Record<string,ICfnExpression> = {};
+        for(const [paramName, paramValue] of Object.entries(binding.parameters)) {
+            parameters[paramName] = paramValue;
+        }
+
 
         return {
             accountId: binding.accountId,
@@ -57,30 +66,25 @@ export class CfnTaskProvider {
                     Parameters: [],
                 };
 
-                for (const dependency of dependencies) {
-                    const cfnRetrieveExport = await AwsUtil.GetCloudFormation(dependency.ExportAcountId, dependency.ExportRegion, binding.customRoleName);
-                    const listExportsRequest: ListExportsInput = {};
-                    const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
-                    let didFindExport = false;
-                    do {
-                        listExportsRequest.NextToken = listExportsResponse.NextToken;
-                        const foundExport = listExportsResponse.Exports.find(x => x.Name === dependency.ExportName);
-                        if (foundExport) {
-                            stackInput.Parameters.push( {
-                                ParameterKey: dependency.ParameterKey,
-                                ParameterValue: foundExport.Value,
-                            });
-                            didFindExport = true;
-                            break;
-                        }
-                    } while (listExportsRequest.NextToken);
+                if (binding.stackPolicy !== undefined) {
+                    stackInput.StackPolicyBody = JSON.stringify(binding.stackPolicy);
+                }
 
-                    if (!didFindExport) {
+                for (const dependency of dependencies) {
+
+                    const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, binding.customRoleName);
+
+                    if (foundExport !== undefined) {
+                        stackInput.Parameters.push( {
+                            ParameterKey: dependency.ParameterKey,
+                            ParameterValue: foundExport,
+                        });
+                    } else {
                         // this is somewhat lame, but is here to support cross account references where the dependency has a condition.
-                        // the depdendency and dependee both have conditions
+                        // the dependency and dependent both have conditions
                         // the generated export has a condition
-                        // the parameter used in the template of dependee cannot have a condition.
-                        //  so we use an empty valu instead :(
+                        // the parameter used in the template of dependent cannot have a condition.
+                        //  so we use an empty value instead :(
                         stackInput.Parameters.push( {
                             ParameterKey: dependency.ParameterKey,
                             ParameterValue: '',
@@ -88,11 +92,30 @@ export class CfnTaskProvider {
                     }
                 }
 
-                if (binding.parameters) {
-                    for (const [key, value] of Object.entries(binding.parameters)) {
+                if (parameters) {
+                    const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+
+                    for (const [key, value] of Object.entries(parameters)) {
+
+                        let paramValue = value;
+                        if (typeof paramValue === 'object') {
+                            paramValue = await expressionResolver.resolve(paramValue);
+                            paramValue = await expressionResolver.collapse(paramValue);
+                        }
+
+                        if (typeof paramValue === 'object') {
+                            if (Array.isArray(paramValue)) {
+                                paramValue = paramValue.join(', ');
+                            } else {
+                                throw new OrgFormationError(`unable to fully resolve expression ${JSON.stringify(paramValue)}`);
+                            }
+                        } else if (typeof paramValue === 'undefined') {
+                            paramValue = '';
+                        }
+
                         stackInput.Parameters.push( {
                             ParameterKey: key,
-                            ParameterValue: value,
+                            ParameterValue: '' + paramValue as string,
                         });
                     }
                 }
@@ -114,7 +137,7 @@ export class CfnTaskProvider {
                             } else if (-1 !== message.indexOf('No updates are to be performed.')) {
                                 // ignore;
                             } else if (err.code === 'ResourceNotReady') {
-                                ConsoleUtil.LogError('error when executing cloudformation');
+                                ConsoleUtil.LogError('error when executing CloudFormation');
                             } else {
                                 throw err;
                             }
@@ -124,14 +147,17 @@ export class CfnTaskProvider {
                     }
 
                     if (binding.state === undefined && binding.terminationProtection === true) {
+                        ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`);
                         await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
                     } else if (binding.state !== undefined) {
                         if (binding.terminationProtection) {
                             if (!binding.state.terminationProtection) {
+                                ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`);
                                 await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
                             }
                         } else {
                             if (binding.state.terminationProtection) {
+                                ConsoleUtil.LogDebug(`Disabling termination protection for stack ${binding.stackName}`);
                                 await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: false}).promise();
                             }
                         }
@@ -146,7 +172,9 @@ export class CfnTaskProvider {
                         terminationProtection: binding.terminationProtection,
                     });
                 } catch (err) {
-                    ConsoleUtil.LogError(`error updating cloudformation stack ${binding.stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
+                    if (err.code !== 'OptInRequired') {
+                        ConsoleUtil.LogError(`error updating CloudFormation stack ${binding.stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
+                    }
                     try {
                         const stackEvents = await cfn.describeStackEvents({ StackName: binding.stackName }).promise();
                         for (const event of stackEvents.StackEvents) {
@@ -156,12 +184,11 @@ export class CfnTaskProvider {
                                     ConsoleUtil.LogError(`Resource ${event.LogicalResourceId} failed because ${event.ResourceStatusReason}.`);
 
                                     if (/[0-9a-f]*\|[0-9]{12} already exists in stack /.test(event.ResourceStatusReason)) {
-                                        ConsoleUtil.LogError('!!! It seems like you got this error when updating guardduty resources.');
-                                        ConsoleUtil.LogError('!!! Possibly your first change to guardduty since upgrading to org-formation to 0.0.70+ or you renamed a logical account id.');
+                                        ConsoleUtil.LogError('!!! It seems like you got this error when updating GuardDuty resources.');
+                                        ConsoleUtil.LogError('!!! Possibly your first change to GuardDuty since upgrading to org-formation to 0.0.70+ or you renamed a logical account id.');
                                         ConsoleUtil.LogError('!!! You can resolve this error by commenting out both Master and Member resources and updating the stack');
                                         ConsoleUtil.LogError('!!! After updating the stacks without these resources uncomment first the Member resource them back, run update, then also the Master resource.');
-                                        ConsoleUtil.LogError('!!! hopefully that will fix this. Sorry for the inconveniance!! <3 from org-formation.');
-
+                                        ConsoleUtil.LogError('!!! hopefully that will fix this. Sorry for the inconvenience!! <3 from org-formation.');
                                     }
                                 }
                             }
@@ -211,7 +238,7 @@ export class CfnTaskProvider {
 }
 
 interface ICrossAccountParameterDependency {
-    ExportAcountId: string;
+    ExportAccountId: string;
     ExportRegion: string;
     ExportName: string;
     ParameterKey: string;
@@ -224,6 +251,6 @@ export interface ICfnTask {
     stackName: string;
     perform: () => Promise<void>;
     isDependency: (task: ICfnTask) => boolean;
-
+    skip?: boolean;
 }
 type CfnBuildTaskAction = 'UpdateOrCreate' | 'Delete' | 'Validate';

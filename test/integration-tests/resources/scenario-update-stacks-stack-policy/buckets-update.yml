@@ -1,0 +1,5 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Resources:
+  BucketX:
+    Type: AWS::S3::Bucket

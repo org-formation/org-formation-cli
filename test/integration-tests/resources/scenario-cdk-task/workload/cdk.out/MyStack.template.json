@@ -1,0 +1,18 @@
+{
+  "Resources": {
+    "MyTopic86869434": {
+      "Type": "AWS::SNS::Topic",
+      "Metadata": {
+        "aws:cdk:path": "MyStack/MyTopic/Resource"
+      }
+    },
+    "MyBucketF68F3FF0": {
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain",
+      "Metadata": {
+        "aws:cdk:path": "MyStack/MyBucket/Resource"
+      }
+    }
+  }
+}

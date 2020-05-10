@@ -12,13 +12,13 @@ describe('when iterating over registered plugins', () => {
     });
 
     test('cdk plugin is found', () => {
-        let cdkplugin = plugins.find(x=>x.typeForTask === 'update-cdk');
-        expect(cdkplugin).toBeDefined();
+        let cdkPlugin = plugins.find(x=>x.typeForTask === 'update-cdk');
+        expect(cdkPlugin).toBeDefined();
     });
 
     test('sls plugin is found', () => {
-        let slsplugin = plugins.find(x=>x.typeForTask === 'update-serverless.com');
-        expect(slsplugin).toBeDefined();
+        let slsPlugin = plugins.find(x=>x.typeForTask === 'update-serverless.com');
+        expect(slsPlugin).toBeDefined();
     });
 });
 

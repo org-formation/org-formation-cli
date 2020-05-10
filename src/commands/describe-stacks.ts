@@ -7,9 +7,9 @@ import { ICfnTarget } from '~state/persisted-state';
 const commandName = 'describe-stacks';
 const commandDescription = 'list all stacks deployed to accounts using org-formation';
 
-export class DescribeStacksCommand extends BaseCliCommand<IDescribetackCommandArgs> {
+export class DescribeStacksCommand extends BaseCliCommand<IDescribeStackCommandArgs> {
 
-    static async Perform(command: IDescribetackCommandArgs): Promise<void> {
+    static async Perform(command: IDescribeStackCommandArgs): Promise<void> {
         const x = new DescribeStacksCommand();
         await x.performCommand(command);
     }
@@ -23,7 +23,7 @@ export class DescribeStacksCommand extends BaseCliCommand<IDescribetackCommandAr
         command.option('--stack-name [stack-name]', 'output will be limited to stacks of this name');
     }
 
-    public async performCommand(command: IDescribetackCommandArgs): Promise<void> {
+    public async performCommand(command: IDescribeStackCommandArgs): Promise<void> {
         const stackName = command.stackName;
 
         const state = await this.getState(command);
@@ -42,6 +42,6 @@ export class DescribeStacksCommand extends BaseCliCommand<IDescribetackCommandAr
     }
 }
 
-export interface IDescribetackCommandArgs extends ICommandArgs {
+export interface IDescribeStackCommandArgs extends ICommandArgs {
     stackName?: string;
 }

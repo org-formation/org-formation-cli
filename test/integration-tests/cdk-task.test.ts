@@ -1,8 +1,8 @@
 import { PerformTasksCommand, ValidateTasksCommand, RemoveCommand } from '~commands/index';
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from './base-integration-test';
-import { readFileSync } from 'fs';
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
 import { ChildProcessUtility } from '~util/child-process-util';
 import { GetObjectOutput } from 'aws-sdk/clients/s3';
+import { ExecOptions } from 'child_process';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cdk-task/';
 
@@ -16,39 +16,44 @@ describe('when calling org-formation perform tasks', () => {
     let stateAfterRemoveTask: GetObjectOutput;
     let spawnProcessAfterRemoveTask: jest.MockContext<any, any>;
     let spawnProcessMock: jest.SpyInstance;
+    let spawnProcessAfterUpdateWithParameters: jest.MockContext<any, any>;
+    let stateAfterUpdateWithParameters: GetObjectOutput;
     let stateAfterCleanup: GetObjectOutput;
     let spawnProcessAfterCleanup: jest.MockContext<any, any>;
 
     beforeAll(async () => {
         spawnProcessMock = jest.spyOn(ChildProcessUtility, 'SpawnProcess');
         context = await baseBeforeAll();
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, region: 'eu-west-1', performCleanup: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0, logicalName: 'default' };
 
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
+        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        const { command, stateBucketName, s3client } = context;
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-cdk-workload-2targets.yml' })
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-cdk-workload-2targets.yml' });
         spawnProcessAfterDeploy2Targets = spawnProcessMock.mock;
-        stateAfterDeploy2Targets = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterDeploy2Targets = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-deploy-cdk-workload-1target.yml' })
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-update-cdk-workload-with-parameters.yml' })
+        spawnProcessAfterUpdateWithParameters = spawnProcessMock.mock;
+        stateAfterUpdateWithParameters = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+
+        spawnProcessMock.mockReset();
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-deploy-cdk-workload-1target.yml' })
         spawnProcessAfterDeploy1Target = spawnProcessMock.mock;
-        stateAfterDeploy1Target = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterDeploy1Target = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-remove-cdk-workload-task.yml', performCleanup: false })
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '4-remove-cdk-workload-task.yml', performCleanup: false })
         spawnProcessAfterRemoveTask = spawnProcessMock.mock;
-        stateAfterRemoveTask = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterRemoveTask = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
         await RemoveCommand.Perform({...command, type: 'cdk', name: 'CdkWorkload' });
         spawnProcessAfterCleanup = spawnProcessMock.mock;
-        stateAfterCleanup = await context.s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterCleanup = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
     });
 
     test('after deploy 2 targets npm ci was called twice', () => {
@@ -61,6 +66,25 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterDeploy2Targets.calls[1][0]).toEqual(expect.stringContaining('npx cdk deploy'));
     });
 
+    test('after deploy 2 targets CDK_DEFAULT_REGION and CDK_DEFAULT_ACCOUNT are set', () => {
+        const contexts: ExecOptions[] = [spawnProcessAfterDeploy2Targets.calls[0][1], spawnProcessAfterDeploy2Targets.calls[1][1]];
+
+        const noRegion = contexts.find(x=>x.env['CDK_DEFAULT_REGION'] === undefined);
+        const noAccount = contexts.find(x=>x.env['CDK_DEFAULT_ACCOUNT'] === undefined);
+
+        expect(noRegion).toBeUndefined();
+        expect(noAccount).toBeUndefined();
+    });
+
+
+    test('when updating with parameters, parameters are passed to CDK invocation', () => {
+        const command0 = spawnProcessAfterUpdateWithParameters.calls[0][0];
+        const command1 = spawnProcessAfterUpdateWithParameters.calls[1][0];
+        expect(command0).toEqual(expect.stringContaining('param2=Account A'));
+        expect(command0 !== command1).toBeTruthy();
+    });
+
+
     test('after deploy 2 targets state contains both deployed workload', () => {
         const stateAsString = stateAfterDeploy2Targets.Body.toString();
         const state = JSON.parse(stateAsString);
@@ -69,9 +93,9 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.targets['cdk']).toBeDefined();
         expect(state.targets['cdk']['CdkWorkload']).toBeDefined();
         expect(state.targets['cdk']['CdkWorkload']['102625093955']).toBeDefined();
-        expect(state.targets['cdk']['CdkWorkload']['102625093955']['no-region']).toBeDefined();
+        expect(state.targets['cdk']['CdkWorkload']['102625093955']['eu-central-1']).toBeDefined();
         expect(state.targets['cdk']['CdkWorkload']['340381375986']).toBeDefined();
-        expect(state.targets['cdk']['CdkWorkload']['340381375986']['no-region']).toBeDefined();
+        expect(state.targets['cdk']['CdkWorkload']['340381375986']['eu-central-1']).toBeDefined();
     });
 
     // test('after deploy workload state contains tracked task', () => {
@@ -81,7 +105,7 @@ describe('when calling org-formation perform tasks', () => {
     //     expect(state.trackedTasks).toBeDefined();
     // });
 
-    test('after deploy 1 targets sls remove was called', () => {
+    test('after deploy 1 targets cdk destroy was called', () => {
         expect(spawnProcessAfterDeploy1Target.calls.length).toBe(1);
         expect(spawnProcessAfterDeploy1Target.calls[0][0]).toEqual(expect.stringContaining('npx cdk destroy'));
     })
@@ -94,7 +118,7 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.targets['cdk']['CdkWorkload']['102625093955']).toBeUndefined();
     });
 
-    test('after removing task sls remove was not called', () => {
+    test('after removing task cdk destroy was not called', () => {
         expect(spawnProcessAfterRemoveTask.calls.length).toBe(0);
     })
 

@@ -3,7 +3,7 @@ import { PluginCliCommand } from './plugin-command';
 import { IPluginTask } from './plugin-binder';
 import { IBuildTaskConfiguration, IBuildTask } from '~build-tasks/build-configuration';
 import { IBuildTaskProvider, BuildTaskProvider } from '~build-tasks/build-task-provider';
-import { IPerformTasksCommandArgs, RemoveCommand } from '~commands/index';
+import { IPerformTasksCommandArgs, RemoveCommand, BaseCliCommand } from '~commands/index';
 import { ConsoleUtil } from '~util/console-util';
 
 export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> implements IBuildTaskProvider<TBuildTaskConfiguration> {
@@ -20,10 +20,11 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
             type: config.Type,
             name: config.LogicalName,
             physicalIdForCleanup: config.LogicalName,
+            skip: config.Skip === true,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
-                ConsoleUtil.LogInfo(`executing: ${config.Type} ${config.LogicalName}`);
+                ConsoleUtil.LogInfo(`Executing: ${config.Type} ${config.LogicalName}.`);
 
                 const commandArgs = this.plugin.convertToCommandArgs(config, command);
                 if (commandArgs.maxConcurrent === undefined) {
@@ -42,6 +43,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
         return {
             type: config.Type,
             name: config.LogicalName,
+            skip: config.Skip === true,
             childTasks: [],
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
@@ -55,16 +57,19 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
         return {
             type: 'cleanup-' + this.type,
             name: logicalId,
+            skip: false,
             childTasks: [],
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
                 if (!command.performCleanup) {
+
+                    const additionalArgs = await BaseCliCommand.CreateAdditionalArgsForInvocation();
                     ConsoleUtil.LogWarning('Hi there, it seems you have removed a task!');
                     ConsoleUtil.LogWarning(`The task was called ${logicalId} and used to deploy a ${this.plugin.type} workload.`);
-                    ConsoleUtil.LogWarning('By default these tasks dont get cleaned up. You can change this by adding the option --perfom-cleanup.');
+                    ConsoleUtil.LogWarning('By default these tasks don\'t get cleaned up. You can change this by adding the option --perform-cleanup.');
                     ConsoleUtil.LogWarning('You can remove the project manually by running the following command:');
                     ConsoleUtil.LogWarning('');
-                    ConsoleUtil.LogWarning(`    org-formation remove --type ${this.plugin.type} --name ${logicalId}`);
+                    ConsoleUtil.LogWarning(`    org-formation remove --type ${this.plugin.type} --name ${logicalId} ${additionalArgs}`);
                     ConsoleUtil.LogWarning('');
                     ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
                 } else {

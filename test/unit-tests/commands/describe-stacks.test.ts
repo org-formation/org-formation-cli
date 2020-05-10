@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 import Sinon from 'sinon';
 import { BaseCliCommand } from '~commands/base-command';
-import { DescribeStacksCommand, IDescribetackCommandArgs } from '~commands/describe-stacks';
+import { DescribeStacksCommand, IDescribeStackCommandArgs } from '~commands/describe-stacks';
 import { ConsoleUtil } from '~util/console-util';
 import { PersistedState } from '~state/persisted-state';
 
@@ -48,7 +48,7 @@ describe('when executing describe stacks command', () => {
     let commanderCommand: Command;
     let subCommanderCommand: Command;
     let getStateStub: Sinon.SinonStub;
-    let commandArgs: IDescribetackCommandArgs;
+    let commandArgs: IDescribeStackCommandArgs;
     let consoleOut: Sinon.SinonStub;
     const sandbox = Sinon.createSandbox();
 
@@ -82,7 +82,7 @@ describe('when executing describe stacks command', () => {
         commandArgs = {
             ...subCommanderCommand,
             stackName: 'stack'
-        } as unknown as IDescribetackCommandArgs;
+        } as unknown as IDescribeStackCommandArgs;
     });
 
     afterEach(() => {

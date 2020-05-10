@@ -14,12 +14,9 @@ import { Validator } from '~parser/validator';
 export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConfig, IS3CopyCommandArgs, IS3CopyTask> {
     type = 'copy-to-s3';
     typeForTask = 'copy-to-s3';
-    applyGlobally = true;
 
     convertToCommandArgs(config: IS3CopyBuildTaskConfig, command: IPerformTasksCommandArgs): IS3CopyCommandArgs {
-
-
-        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'LocalPath', 'RemotePath', 'DependsOn', 'Type',
+        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'LocalPath', 'RemotePath', 'DependsOn', 'Skip', 'Type',
             'FilePath', 'ZipBeforePut', 'OrganizationBinding', 'TaskRoleName', 'AdditionalCdkArguments', 'InstallCommand');
 
 
@@ -81,7 +78,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         };
     }
 
-    async performDelete(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
+    async performRemove(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
         const s3client = await AwsUtil.GetS3Service(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
         const request: DeleteObjectRequest = {
             ...CopyToS3TaskPlugin.getBucketAndKey(binding.task),
@@ -98,6 +95,10 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         request.Body = readFileSync(binding.task.localPath);
 
         await s3client.putObject(request).promise();
+    }
+
+    appendResolvers(): Promise<void> {
+        return Promise.resolve();
     }
 
     static getBucketAndKey(task: IS3CopyTask): IBucketAndKey {

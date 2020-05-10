@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Parameters:
+
+  bucketArn:
+    Type: String
+
+  bucketArn2:
+    Type: String
+
+  bucketArn3:
+    Type: String
+
+  bucketArn4:
+    Type: String
+
+  tagVal:
+    Type: String
+
+  masterAccountId:
+    Type: String
+
+  someSubExpression:
+    Type: String
+
+  currentAccount:
+    Type: String
+
+  numericValue:
+    Type: Number
+
+  paramArray:
+    Type: List<String>
+
+Resources:
+  BucketPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: 'AllowWriteList'
+          Effect: 'Allow'
+          Action:
+          - 's3:List*'
+          - 's3:PutObject'
+          Resource:
+          - !Ref bucketArn
+          - !Sub '${bucketArn}/*'
+
+Outputs:

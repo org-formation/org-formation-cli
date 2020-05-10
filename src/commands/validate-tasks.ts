@@ -20,13 +20,22 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
 
     public addOptions(command: Command): void {
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
+        command.option('--max-concurrent-tasks <max-concurrent-tasks>', 'maximum number of tasks to be executed concurrently', 1);
+        command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks (within a task) to be executed concurrently', 1);
+        command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed tasks after which execution stops', 0);
+        command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
+        command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
+        command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
 
         super.addOptions(command);
     }
 
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
-        const config = new BuildConfiguration(tasksFile);
+
+        command.parsedParameters = this.parseCfnParameters(command.parameters);
+        const config = new BuildConfiguration(tasksFile, command.parsedParameters);
+
         const validationTasks = config.enumValidationTasks(command);
         await BuildRunner.RunValidationTasks(validationTasks, 1, 999);
     }

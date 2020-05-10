@@ -6,51 +6,22 @@ import { CfnTemplate } from './cfn-template';
 import { IResourceTarget } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
 import { ICfnTarget, PersistedState } from '~state/persisted-state';
+import { ICfnCopyValue, ICfnExpression } from '~core/cfn-expression';
 
 export class CloudFormationBinder {
     private readonly masterAccount: string;
     private readonly invocationHash: string;
-    private readonly parameters: Record<string, string>;
 
     constructor(private readonly stackName: string,
                 private readonly template: TemplateRoot,
                 private readonly state: PersistedState,
-                parameters: Record<string, string> = {},
+                private readonly parameters: Record<string, string | ICfnCopyValue> = {},
                 private readonly terminationProtection = false,
+                private readonly stackPolicy: {} = undefined,
                 private readonly taskRoleName?: string,
                 private readonly customRoleName?: string,
-                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(state)) {
+                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state)) {
                 this.masterAccount = template.organizationSection.masterAccount.accountId;
-
-        this.parameters = {};
-        for (const [key, val] of Object.entries(parameters)) {
-            if (Array.isArray(val)) {
-                this.parameters[key] = val.join(',');
-            } else if (typeof val  === 'object') {
-                const entries = Object.entries(val);
-                if (entries.length === 1) {
-                    const [valKey, logicalId] = entries[0];
-                    if (valKey === 'Ref') {
-                        const account = template.organizationSection.findAccount(x => x.logicalId === logicalId);
-                        if (!account) {
-                            throw new OrgFormationError(`unable to resolve reference to account ${logicalId}`);
-                        }
-                        const binding = state.getBinding(account.type, account.logicalId);
-                        if (!binding) {
-                            throw new OrgFormationError(`unable to find binding for account ${logicalId}. is your organization up to date?`);
-
-                        }
-                        this.parameters[key] = binding.physicalId;
-                        continue;
-                    }
-                }
-
-                throw new OrgFormationError(`parameter ${key} has invalid value, value must not be an object`);
-
-            } else {
-                this.parameters[key] = '' + val;
-            }
-        }
 
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new OrgFormationError('state and template do not belong to the same organization');
@@ -63,12 +34,16 @@ export class CloudFormationBinder {
             terminationProtection,
         };
 
+        if (this.stackPolicy) {
+            invocation.stackPolicy = this.stackPolicy;
+        }
+
         if (this.customRoleName) {
-            invocation.cloudFormationRoleName = customRoleName;
+            invocation.cloudFormationRoleName = this.customRoleName;
         }
 
         if (this.taskRoleName) {
-            invocation.taskRoleName = taskRoleName;
+            invocation.taskRoleName = this.taskRoleName;
         }
 
         this.invocationHash = md5(JSON.stringify(invocation));
@@ -85,7 +60,7 @@ export class CloudFormationBinder {
         for (const target of targets) {
             const accountBinding = this.state.getAccountBinding(target.accountLogicalId);
             if (!accountBinding) {
-                throw new OrgFormationError(`expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
+                throw new OrgFormationError(`Expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
             }
             const accountId  = accountBinding.physicalId;
             const region = target.region;
@@ -98,11 +73,13 @@ export class CloudFormationBinder {
 
             const binding: ICfnBinding = {
                 ...key,
+                accountLogicalId: target.accountLogicalId,
                 action: 'None',
                 target,
                 parameters: this.parameters,
                 templateHash: this.invocationHash,
                 terminationProtection: this.terminationProtection,
+                stackPolicy: this.stackPolicy,
                 customRoleName: this.taskRoleName,
                 cloudFormationRoleName: this.customRoleName,
                 state: stored,
@@ -138,10 +115,15 @@ export class CloudFormationBinder {
             }
             /* end move elsewhere */
 
-            if (!stored || stored.lastCommittedHash !== this.invocationHash) {
+            if (!stored) {
                 binding.action = 'UpdateOrCreate';
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - no existing target was found in state.`);
+            } else if (stored.lastCommittedHash !== this.invocationHash) {
+                binding.action = 'UpdateOrCreate';
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash from state did not match.`);
+            } else {
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash matches stored target.`);
             }
-
             result.push(binding);
         }
 
@@ -175,7 +157,9 @@ export class CloudFormationBinder {
                     dependents: [],
                     regionDependencies: [],
                     accountDependencies: [],
-                }as ICfnBinding);
+                } as ICfnBinding);
+
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to Delete - target found in state but not in binding.`);
              }
         }
         return result;
@@ -202,6 +186,7 @@ export class CloudFormationBinder {
 }
 
 export interface ICfnBinding {
+    accountLogicalId: string;
     accountId: string;
     region: string;
     stackName: string;
@@ -214,10 +199,11 @@ export interface ICfnBinding {
     dependents: ICfnCrossAccountDependency[];
     accountDependencies: string[];
     regionDependencies: string[];
-    parameters?: Record<string, string>;
+    parameters?: Record<string, ICfnExpression>;
     terminationProtection?: boolean;
     customRoleName?: string;
     cloudFormationRoleName?: string;
+    stackPolicy?: {};
 }
 
 export interface ICfnCrossAccountDependency {
@@ -230,14 +216,8 @@ export interface ICfnCrossAccountDependency {
     outputRegion: string;
     outputStackName: string;
     outputName: string;
-    outputValueExpression: ICfnValue;
+    outputValueExpression: ICfnExpression;
     outputCondition: string;
 }
 
 type CfnBindingAction = 'UpdateOrCreate' | 'Delete' | 'None';
-
-export interface ICfnRefValue { Ref: string }
-export interface ICfnGetAttValue  { 'Fn::GetAtt': string[] }
-export interface ICfnJoinValue  { 'Fn::Join': ICfnValue[] }
-export interface ICfnSubValue  { 'Fn::Sub': any }
-export type ICfnValue = string | ICfnRefValue  | ICfnGetAttValue | ICfnJoinValue;

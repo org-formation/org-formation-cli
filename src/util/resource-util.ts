@@ -33,18 +33,13 @@ export class ResourceUtil {
         return 0 < expressions.length;
     }
 
-    public static EnumExpressions(resourceParent: any, resourceKey: string, resourceIds: string[]): IResourceExpression[] {
-        const resource = resourceParent[resourceKey];
-        return ResourceUtil.EnumExpressionsForResource(resource, resourceIds, resourceParent, resourceKey);
-    }
-
-    public static EnumExpressionsForResource(resource: any, resourceIds: string[], resourceParent?: any, resourceKey?: string): IResourceExpression[] {
+    public static EnumExpressionsForResource(resource: any, resourceIds: string[] | 'any', resourceParent?: any, resourceKey?: string): IResourceExpression[] {
         const result: IResourceExpression[] = [];
         if (resource !== null && typeof resource === 'object') {
             const entries = Object.entries(resource);
             if (entries.length === 1 && resourceParent !== undefined && resourceKey !== undefined) {
                 const [key, val]: [string, unknown] = entries[0];
-                if (key === 'Ref' && typeof val === 'string' && resourceIds.includes(val)) {
+                if (key === 'Ref' && typeof val === 'string' && (resourceIds === 'any' || resourceIds.includes(val))) {
                     result.push({
                         resolveToValue: createResolveExpression(resourceParent, resourceKey),
                         rewriteExpression: createRewriteExpression(resourceParent, resourceKey),
@@ -52,7 +47,7 @@ export class ResourceUtil {
                     });
                 } else if (key === 'Fn::GetAtt') {
                     if (Array.isArray(val) && val.length === 2) {
-                        if (resourceIds.includes(val[0])) {
+                        if (resourceIds === 'any' || resourceIds.includes(val[0])) {
                             result.push({
                                 resolveToValue: createResolveExpression(resourceParent, resourceKey),
                                 rewriteExpression: createRewriteExpression(resourceParent, resourceKey),
@@ -64,7 +59,7 @@ export class ResourceUtil {
                 } else if (key === 'Fn::Sub') {
                     const sub = new SubExpression(val as string | any[]);
                     for (const variable of sub.variables) {
-                        if (resourceIds.includes(variable.resource)) {
+                        if (resourceIds === 'any' || resourceIds.includes(variable.resource)) {
                             result.push({
                                 resolveToValue: replacement => {
                                     variable.replace(replacement);
@@ -99,6 +94,66 @@ export class ResourceUtil {
         return result;
     }
 
+    public static EnumFunctionsForResource(resource: any, resourceParent?: any, resourceKey?: string): ICopyValueExpression[] {
+        const result: ICopyValueExpression[] = [];
+        if (resource !== null && typeof resource === 'object') {
+            const entries = Object.entries(resource);
+            if (entries.length === 1 && resourceParent !== undefined && resourceKey !== undefined) {
+                const [key, val]: [string, unknown] = entries[0];
+                if (key === 'Fn::CopyValue') {
+                    if (typeof val === 'string') {
+                        result.push({
+                            resolveToValue: createResolveExpression(resourceParent, resourceKey),
+                            exportName: val,
+                        });
+                    } else if (Array.isArray(val) && val.length >= 1 && val.length <= 3) {
+                        const expression: ICopyValueExpression = {
+                            resolveToValue: createResolveExpression(resourceParent, resourceKey),
+                            exportName: val[0],
+                        };
+                        if (val.length >= 2) {
+                            expression.accountId = val[1];
+                        }
+                        if (val.length >= 3) {
+                            expression.region = val[2];
+                        }
+                        result.push(expression);
+                    }
+                }
+            }
+            for (const [key, val] of entries) {
+                if (val !== null && typeof val === 'object') {
+                   result.push(...this.EnumFunctionsForResource(val, resource, key));
+                }
+            }
+        }
+        return result;
+    }
+
+    public static EnumCfnFunctionsForResource(resource: any, resourceParent?: any, resourceKey?: string): ICfnFunctionExpression[] {
+        const result: ICfnFunctionExpression[] = [];
+        if (resource !== null && typeof resource === 'object') {
+            const entries = Object.entries(resource);
+            if (entries.length === 1 && resourceParent !== undefined && resourceKey !== undefined) {
+                const [key, val]: [string, unknown] = entries[0];
+                if (key === 'Fn::Sub' && typeof val === 'object' && Array.isArray(val) && val.length === 2) {
+                    result.push( {
+                        type: 'Sub',
+                        target: resource,
+                        resolveToValue: (x: string)=> { resourceParent[resourceKey] = x; },
+                    } as ICfnFunctionExpression);
+                }
+            }
+
+            for (const [key, val] of entries) {
+                if (val !== null && typeof val === 'object') {
+                result.push(...ResourceUtil.EnumCfnFunctionsForResource(val, resource, key));
+                }
+            }
+        }
+        return result;
+    }
+
 }
 
 const createRewriteExpression = (parent: any, key: string) => {
@@ -121,5 +176,19 @@ interface IResourceExpression {
     resource: string;
     path?: string;
     rewriteExpression(resource: string, path?: string): void;
+    resolveToValue(val: string): void;
+}
+
+interface ICfnFunctionExpression {
+    type: 'Sub';
+    target: any;
+    resolveToValue(val: string): void;
+}
+
+
+interface ICopyValueExpression {
+    exportName: string;
+    accountId?: string;
+    region?: string;
     resolveToValue(val: string): void;
 }

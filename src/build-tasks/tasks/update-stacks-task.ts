@@ -2,7 +2,7 @@
 import path from 'path';
 import { ConsoleUtil } from '../../util/console-util';
 import { IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
-import { IPerformTasksCommandArgs, DeleteStacksCommand, IUpdateStacksCommandArgs, UpdateStacksCommand, ValidateStacksCommand } from '~commands/index';
+import { IPerformTasksCommandArgs, DeleteStacksCommand, IUpdateStacksCommandArgs, UpdateStacksCommand, ValidateStacksCommand, BaseCliCommand } from '~commands/index';
 import { Validator } from '~parser/validator';
 import { IBuildTaskProvider, BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { IOrganizationBinding } from '~parser/parser';
@@ -20,11 +20,12 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             name: config.LogicalName,
             physicalIdForCleanup: config.StackName,
             StackName: config.StackName,
+            skip: config.Skip === true,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
-                ConsoleUtil.LogInfo(`executing: ${config.Type} ${updateStacksCommand.templateFile} ${updateStacksCommand.stackName}`);
+                ConsoleUtil.LogInfo(`Executing: ${config.Type} ${updateStacksCommand.templateFile} ${updateStacksCommand.stackName}.`);
                 await UpdateStacksCommand.Perform(updateStacksCommand);
             },
         };
@@ -35,6 +36,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             type: config.Type,
             name: config.LogicalName,
             childTasks: [],
+            skip: config.Skip === true,
             StackName: config.StackName,
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
@@ -49,19 +51,21 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             type: 'delete-stacks',
             name: logicalId,
             childTasks: [],
+            skip: false,
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
                 if (!command.performCleanup) {
+                    const additionalArgs = await BaseCliCommand.CreateAdditionalArgsForInvocation();
                     ConsoleUtil.LogWarning('Hi there, it seems you have removed a task!');
                     ConsoleUtil.LogWarning(`The task was called ${logicalId} and used to deploy stacks by name of ${physicalId}.`);
-                    ConsoleUtil.LogWarning('By default these stacks dont get cleaned up. You can change this by adding the option --perfom-cleanup.');
+                    ConsoleUtil.LogWarning('By default these stacks don\'t get cleaned up. You can change this by adding the option --perform-cleanup.');
                     ConsoleUtil.LogWarning('You can remove the stacks manually by running the following command:');
                     ConsoleUtil.LogWarning('');
-                    ConsoleUtil.LogWarning(`    org-formation delete-stacks --stack-name ${physicalId}`);
+                    ConsoleUtil.LogWarning(`    org-formation delete-stacks --stack-name ${physicalId} ${additionalArgs}`);
                     ConsoleUtil.LogWarning('');
                     ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
                 } else {
-                    ConsoleUtil.LogInfo(`executing: delete-stacks ${physicalId}`);
+                    ConsoleUtil.LogInfo(`Executing: delete-stacks ${physicalId}.`);
                     await DeleteStacksCommand.Perform({...command, stackName: physicalId, maxConcurrentStacks: 1, failedStacksTolerance: 0});
                 }},
         };
@@ -86,12 +90,12 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         }
 
         if (config.OrganizationBinding) {
-            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBinding wich is deprecated. use DefaultOrganizationBinding instead`);
+            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBinding which is deprecated. use DefaultOrganizationBinding instead`);
             args.defaultOrganizationBinding = config.OrganizationBinding;
         }
 
         if (config.OrganizationBindingRegion) {
-            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBindingRegion wich is deprecated. use DefaultOrganizationBindingRegion instead`);
+            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBindingRegion which is deprecated. use DefaultOrganizationBindingRegion instead`);
             args.defaultOrganizationBindingRegion = config.OrganizationBindingRegion;
         }
 
@@ -108,10 +112,18 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         }
 
         if (config.OrganizationFile) {
-            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationFile which is ingored. The Template specified in the update-organization task is always used as OrganizationFile for update-stacks tasks`);
+            ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationFile which is ignored. The Template specified in the update-organization task is always used as OrganizationFile for update-stacks tasks`);
         }
+
         if (config.TerminationProtection !== undefined) {
             args.terminationProtection = config.TerminationProtection;
+        }
+        if (config.UpdateProtection !== undefined) {
+            args.updateProtection = config.UpdateProtection;
+        }
+
+        if (config.StackPolicy !== undefined) {
+            args.stackPolicy = config.StackPolicy;
         }
 
         if (config.MaxConcurrentStacks) {
@@ -141,7 +153,7 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     Template: string;
     StackName: string;
     StackDescription?: string;
-    Parameters?: Record<string, string>;
+    Parameters?: Record<string, string | object>;
     DeletionProtection?: boolean;
     OrganizationFile?: string;
     OrganizationBinding?: IOrganizationBinding; // old: dont use
@@ -150,6 +162,8 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     DefaultOrganizationBindingRegion?: string | string[];
     OrganizationBindings?: Record<string, IOrganizationBinding>;
     TerminationProtection?: boolean;
+    UpdateProtection?: boolean;
+    StackPolicy?: {};
     MaxConcurrentStacks: number;
     FailedStackTolerance: number;
     CloudFormationRoleName?: string;

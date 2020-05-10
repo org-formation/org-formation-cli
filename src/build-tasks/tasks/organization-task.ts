@@ -7,6 +7,7 @@ import { IBuildTaskProvider } from '~build-tasks/build-task-provider';
 export abstract class BaseOrganizationTask implements IBuildTask {
     public name: string;
     public type: string;
+    public skip: boolean;
     public templatePath: string;
     public childTasks: IBuildTask[] = [];
     protected config: IUpdateOrganizationTaskConfiguration;
@@ -19,6 +20,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         const dir = path.dirname(config.FilePath);
         this.templatePath = path.join(dir, config.Template);
         this.command = command;
+        this.skip = config.Skip === true;
     }
 
     public async perform(): Promise<void> {
@@ -38,7 +40,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
 
 export class UpdateOrganizationTask extends BaseOrganizationTask {
     protected async innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
-        ConsoleUtil.LogInfo(`executing: ${this.config.Type} ${this.templatePath}`);
+        ConsoleUtil.LogInfo(`Executing: ${this.config.Type} ${this.templatePath}.`);
         await UpdateOrganizationCommand.Perform(commandArgs);
     }
 

@@ -1,10 +1,9 @@
 import { Organizations } from "aws-sdk";
 import { UpdateOrganizationCommand } from "~commands/index";
-import { readFileSync } from "fs";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { AwsUtil } from "~util/aws-util";
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from "./base-integration-test";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-move-master-acc/';
 
@@ -19,29 +18,33 @@ describe('when moving master account around', () => {
     let masterAccountId: string;
 
     beforeAll(async () => {
-
         context = await baseBeforeAll();
-        orgClient = new Organizations({ region: 'us-east-1' });
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true };
-
         masterAccountId = await AwsUtil.GetMasterAccountId();
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
+        orgClient = new Organizations({ region: 'us-east-1' });
+
+        await context.prepareStateBucket(basePathForScenario + '0-state.json');
+        const { command } = context;
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
+        await sleepForTest(500);
         organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
         await organizationAfterInit.initialize();
+        await sleepForTest(500);
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '2-move-to-ou-organization.yml'});
+        await sleepForTest(500);
         organizationAfterMove1 = new AwsOrganization(new AwsOrganizationReader(orgClient));
         await organizationAfterMove1.initialize();
+        await sleepForTest(500);
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '3-move-to-other-ou-organization.yml'});
+        await sleepForTest(500);
         organizationAfterMove2 = new AwsOrganization(new AwsOrganizationReader(orgClient));
         await organizationAfterMove2.initialize();
+        await sleepForTest(500);
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '4-back-to-org-root-organization.yml'});
+        await sleepForTest(500);
         organizationAfterMove3 = new AwsOrganization(new AwsOrganizationReader(orgClient));
         await organizationAfterMove3.initialize();
     })

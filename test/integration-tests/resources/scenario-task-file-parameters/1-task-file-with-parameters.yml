@@ -1,0 +1,33 @@
+
+Parameters:
+
+  stackPrefix:
+    Description:
+    Type: String
+    Default: my
+
+
+  includeMasterAccount:
+    Description:
+    Type: Boolean
+    Default: true
+
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+BucketTemplate:
+  Type: update-stacks
+  Template: ./bucket.yml
+  StackName: !Sub ${stackPrefix}-scenario-stack-parameters
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: !Ref includeMasterAccount
+
+includeOther:
+  DependsOn: BucketTemplate
+  Type: include
+  Path: ./included-task-file.yml
+  Parameters:
+    stackPrefix: something-else

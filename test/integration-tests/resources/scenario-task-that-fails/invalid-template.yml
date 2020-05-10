@@ -4,8 +4,4 @@ Organization: !Include ./organization.yml
 
 Resources:
   InvalidType:
-    OrganizationBinding:
-      Region: eu-west-1
-      Account: '*'
-      IncludeMasterAccount: true
     Type: XX::S3::Bucket

@@ -22,7 +22,7 @@ export class ExecuteChangeSetCommand extends BaseCliCommand<IExecuteChangeSetCom
     public async performCommand(command: IExecuteChangeSetCommandArgs): Promise<void> {
 
         const changeSetName = command.changeSetName;
-        const stateBucketName = await this.GetStateBucketName(command);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
         const provider = new ChangeSetProvider(stateBucketName);
         const changeSetObj = await provider.getChangeSet(changeSetName);
         if (!changeSetObj) {

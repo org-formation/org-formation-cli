@@ -5,6 +5,7 @@ import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
 import AWS from 'aws-sdk';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
+import { ListExportsInput } from 'aws-sdk/clients/cloudformation';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
 import { PasswordPolicyResource, Reference } from '~parser/model';
@@ -52,7 +53,7 @@ export class AwsUtil {
     }
 
     public static async GetSupportService(accountId: string): Promise<Support> {
-        return await AwsUtil.getOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' }, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
+        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' }, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
     }
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): string {
@@ -60,15 +61,15 @@ export class AwsUtil {
     }
 
     public static async GetS3Service(accountId: string, region: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): Promise<S3> {
-        return await AwsUtil.getOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region }, roleInTargetAccount);
+        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region }, roleInTargetAccount);
     }
 
     public static async GetIamService(accountId: string): Promise<IAM> {
-        return await AwsUtil.getOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, accountId, {}, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
+        return await AwsUtil.GetOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, accountId, {}, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
     }
 
     public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): Promise<CloudFormation> {
-        return await AwsUtil.getOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId,  `${accountId}/${region}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
+        return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId,  `${accountId}/${region}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string): Promise<void> {
@@ -76,7 +77,7 @@ export class AwsUtil {
         await s3client.deleteObject({Bucket: bucketName, Key: objectKey}).promise();
     }
 
-    private static async getOrCreateService<TService>(ctr: new(args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string): Promise<TService> {
+    private static async GetOrCreateService<TService>(ctr: new(args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string): Promise<TService> {
         const cachedService = cache[cacheKey];
         if (cachedService) {
             return cachedService;
@@ -85,7 +86,7 @@ export class AwsUtil {
         const config = clientConfig;
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         if (accountId !== masterAccountId) {
-            const credentialOptions: CredentialsOptions = await AwsUtil.getCredentials(accountId, roleInTargetAccount);
+            const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
             config.credentials = credentialOptions;
         }
 
@@ -95,7 +96,7 @@ export class AwsUtil {
         return service;
     }
 
-    public static async getCredentials(accountId: string, roleInTargetAccount: string): Promise<CredentialsOptions> {
+    public static async GetCredentials(accountId: string, roleInTargetAccount: string): Promise<CredentialsOptions> {
         const sts = new STS();
         const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
         const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
@@ -107,6 +108,19 @@ export class AwsUtil {
         return credentialOptions;
     }
 
+    public static async GetCloudFormationExport(exportName: string, accountId: string, region: string, customRoleName: string): Promise<string | undefined> {
+        const cfnRetrieveExport = await AwsUtil.GetCloudFormation(accountId, region, customRoleName);
+        const listExportsRequest: ListExportsInput = {};
+        const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
+        do {
+            listExportsRequest.NextToken = listExportsResponse.NextToken;
+            const foundExport = listExportsResponse.Exports.find(x => x.Name === exportName);
+            if (foundExport) {
+                return foundExport.Value;
+            }
+        } while (listExportsRequest.NextToken);
+        return undefined;
+    }
 
     private static masterAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAM> = {};
@@ -198,15 +212,22 @@ class CustomMFACredentials extends AWS.Credentials {
             const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
             const secrets = ini.parse(awssecrets);
             const creds = secrets[profileKey.source_profile];
-            const sts = new STS({ credentials: { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key } });
+            const credentialsForSts: CredentialsOptions = { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key };
+            if (creds.aws_session_token !== undefined) {
+                credentialsForSts.sessionToken = creds.aws_session_token;
+            }
+            const sts = new STS({ credentials: credentialsForSts });
 
-            const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profileKey.mfa_serial}`);
             const assumeRoleReq: AssumeRoleRequest = {
                 RoleArn: profileKey.role_arn,
                 RoleSessionName: 'organization-build',
-                SerialNumber: profileKey.mfa_serial,
-                TokenCode: token,
             };
+
+            if (profileKey.mfa_serial !== undefined) {
+                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profileKey.mfa_serial}`);
+                assumeRoleReq.SerialNumber = profileKey.mfa_serial;
+                assumeRoleReq.TokenCode = token;
+            }
 
             try {
                 const tokens = await sts.assumeRole(assumeRoleReq).promise();

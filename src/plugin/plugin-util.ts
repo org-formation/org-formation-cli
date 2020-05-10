@@ -9,6 +9,5 @@ export class PluginUtil {
         } else {
             return 'npm i && ' + command;
         }
-
     }
 }

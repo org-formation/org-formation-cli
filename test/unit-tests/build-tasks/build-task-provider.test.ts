@@ -8,7 +8,7 @@ import { IPerformTasksCommandArgs } from '~commands/index';
 
 describe('when creating UpdateStacksTask task', () => {
     let task: IBuildTask;
-    let updateStacksResoruces: sinon.SinonStub;
+    let updateStacksResources: sinon.SinonStub;
     const sandbox = Sinon.createSandbox();
     beforeEach(() => {
         const config: IUpdateStackTaskConfiguration = {
@@ -22,7 +22,7 @@ describe('when creating UpdateStacksTask task', () => {
         };
         task = BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs);
 
-        updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
+        updateStacksResources = sandbox.stub(UpdateStacksCommand, 'Perform');
         sandbox.stub(ConsoleUtil, 'LogInfo')
     });
 
@@ -33,9 +33,9 @@ describe('when creating UpdateStacksTask task', () => {
         expect(task).toBeDefined();
     });
 
-    test('template and stackname are passed to updateStackResources', async () => {
+    test('template and stack name are passed to updateStackResources', async () => {
         await task.perform();
-        const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
+        const commandArgs = updateStacksResources.lastCall.args[0] as IUpdateStacksCommandArgs;
         const fileArg = commandArgs.templateFile;
         const commandKeys = Object.keys(commandArgs);
 
@@ -48,7 +48,7 @@ describe('when creating UpdateStacksTask task', () => {
 
 describe('when creating UpdateStacksTask task with command args', () => {
     let task: IBuildTask;
-    let updateStacksResoruces: Sinon.SinonStub;
+    let updateStacksResources: Sinon.SinonStub;
     const sandbox = Sinon.createSandbox();
     beforeEach(() => {
         const config: IUpdateStackTaskConfiguration = {
@@ -61,7 +61,7 @@ describe('when creating UpdateStacksTask task with command args', () => {
             FailedStackTolerance: 1,
         };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
-        updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
+        updateStacksResources = sandbox.stub(UpdateStacksCommand, 'Perform');
         sandbox.stub(ConsoleUtil, 'LogInfo');
     });
 
@@ -74,7 +74,7 @@ describe('when creating UpdateStacksTask task with command args', () => {
     });
     test('arguments sent to perform are passed to updateStackResources', async () => {
             await task.perform();
-            const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
+            const commandArgs = updateStacksResources.lastCall.args[0] as IUpdateStacksCommandArgs;
             const fileArg = commandArgs.templateFile;
             const commandKeys = Object.keys(commandArgs);
 
@@ -90,7 +90,7 @@ describe('when creating UpdateStacksTask task with command args', () => {
 
 describe('when creating UpdateStacksTask task with old attribute names', () => {
     let task: IBuildTask;
-    let updateStacksResoruces: sinon.SinonStub;
+    let updateStacksResources: sinon.SinonStub;
     const sandbox = Sinon.createSandbox();
     let logWarningStub: Sinon.SinonStub;
 
@@ -119,7 +119,7 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
             FailedStackTolerance: 1,
         };
         task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
-        updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
+        updateStacksResources = sandbox.stub(UpdateStacksCommand, 'Perform');
         sandbox.stub(ConsoleUtil, 'LogInfo');
         await task.perform();
 
@@ -133,7 +133,7 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
     });
 
     test('all arguments are passed to updateStackResources', () => {
-        const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
+        const commandArgs = updateStacksResources.lastCall.args[0] as IUpdateStacksCommandArgs;
         const fileArg = commandArgs.templateFile;
         const commandKeys = Object.keys(commandArgs);
 

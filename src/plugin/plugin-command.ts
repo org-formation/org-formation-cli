@@ -37,7 +37,6 @@ export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, 
             } finally {
                 await state.save();
             }
-            ConsoleUtil.LogInfo('done');
         }
     }
 }

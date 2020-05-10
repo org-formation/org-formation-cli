@@ -50,7 +50,7 @@ export class CfnValidateTaskProvider {
                     if (param.DefaultValue !== undefined) {
                         continue;
                     }
-                    if (binding.parameters && binding.parameters[param.ParameterKey]) {
+                    if (binding.parameters && (binding.parameters[param.ParameterKey] !== undefined)) {
                         continue;
                     }
                     if (descriptionsOfBoundParameters.includes(param.Description)) {

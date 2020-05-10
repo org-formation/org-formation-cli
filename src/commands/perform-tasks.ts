@@ -5,6 +5,7 @@ import { ITrackedTask } from '~state/persisted-state';
 import { Validator } from '~parser/validator';
 import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
+import { ConsoleUtil } from '~util/console-util';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -27,6 +28,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed tasks after which execution stops', 0);
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
+        command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
         super.addOptions(command);
     }
 
@@ -38,9 +40,11 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
 
-        const config = new BuildConfiguration(tasksFile);
+        command.parsedParameters = this.parseCfnParameters(command.parameters);
+        const config = new BuildConfiguration(tasksFile, command.parsedParameters);
         const tasks = config.enumBuildTasks(command);
         const state = await this.getState(command);
+        ConsoleUtil.state = state;
 
         await BuildRunner.RunTasks(tasks, command.maxConcurrentTasks, command.failedTasksTolerance);
         const tracked = state.getTrackedTasks(command.logicalName);
@@ -49,7 +53,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
             await BuildRunner.RunTasks(cleanupTasks, command.maxConcurrentTasks, 0);
         }
         const tasksToTrack = BuildTaskProvider.recursivelyFilter(tasks, x=> x.physicalIdForCleanup !== undefined);
-        const trackedTasks: ITrackedTask[] = tasksToTrack.map(x=> {return {physicalIdForCleanup: x.physicalIdForCleanup, logicalName: x.name, type: x.type  }; });
+        const trackedTasks: ITrackedTask[] = tasksToTrack.map(x=> { return {physicalIdForCleanup: x.physicalIdForCleanup, logicalName: x.name, type: x.type  }; });
         state.setTrackedTasks(command.logicalName, trackedTasks);
         state.save();
     }
@@ -65,4 +69,6 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     failedStacksTolerance: number;
     organizationFile?: string;
     organizationFileHash?: string;
+    parameters?: string;
+    parsedParameters?: Record<string, string>;
 }

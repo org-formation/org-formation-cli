@@ -161,7 +161,7 @@ Account is an AWS Account within your organization.
 |PasswordPolicy|Reference|This property is optional.<br/><br/>Reference to the [PasswordPolicy](#passwordpolicy) resource that must be  enforced on the Account.|
 |Alias|IAM alias|This property is optional.<br/><br/>The [IAM Alias](https://docs.aws.amazon.com/IAM/latest/UserGuide/console_account-alias.html) associated with the account. Organization Formation supports a maximum of 1 IAM alias per account|
 |Tags|Dictionary|This property is optional.<br/><br/>Dictionary that contains the tags on the Account resource|
-|SupportLevel|'developer', 'business' or 'enterprise' |This property is optional.<br/><br/>When changed a ticket will be created to change the support level of the account.<br/><br/>Value must be same as master account support level in AWS|
+|SupportLevel| 'enterprise' (or empty) |This property is optional.<br/><br/>When changed a ticket will be created to change the support level of the account.<br/><br/>Value must be same as master account support level in AWS|
 
 **Note** When creating an account the RootEmail and AccountName are used to create the Account resource in AWS. The AccountId property can later be added as a means of ‘documentation’ but this is not required.
 

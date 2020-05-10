@@ -22,11 +22,8 @@ describe('when attaching and detaching account', () => {
 
         context = await baseBeforeAll();
         orgClient = new Organizations({ region: 'us-east-1' });
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true };
-
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
+        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        const { command } = context;
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
         consoleOutAfterInit = logOut.mock;

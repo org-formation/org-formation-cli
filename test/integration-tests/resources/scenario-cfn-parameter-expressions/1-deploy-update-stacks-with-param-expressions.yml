@@ -1,0 +1,36 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+BucketTemplate:
+  Type: update-stacks
+  Template: ./bucket.yml
+  StackName: scenario-export-bucket
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+
+PolicyTemplate:
+  DependsOn: BucketTemplate
+  Type: update-stacks
+  Template: ./bucket-policy.yml
+  StackName: scenario-export-bucket-role
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+  Parameters:
+    bucketArn: !CopyValue BucketArn
+    bucketArn2: !CopyValue [BucketArn, 102625093955]
+    bucketArn3: !CopyValue [BucketArn, 102625093955, 'eu-west-1']
+    bucketArn4: !CopyValue [BucketArn, !Ref MasterAccount, 'eu-west-1']
+    tagVal: !GetAtt MasterAccount.Tags.Tag
+    masterAccountId: !Ref MasterAccount
+    numericValue: 123
+    someSubExpression: !Sub
+    - '--${a}--${b}'
+    - {a: !GetAtt MasterAccount.AccountId, b: !Ref AWS::AccountId}
+    currentAccount: !Ref CurrentAccount
+    paramArray:
+      - val1
+      - val2

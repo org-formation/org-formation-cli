@@ -1,0 +1,65 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+  Skip: true
+
+includeOther:
+  DependsOn: UpdateStack
+  Skip: true
+  Type: include
+  Path: ./included.yml
+
+SkipTemplate:
+  Type: update-stacks
+  Skip: true
+  Template: ./doesnt-even-exist.yml
+  StackName: my-stack-name
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+
+
+DependsOnSkipTemplate:
+  Type: update-stacks
+  DependsOn: SkipTemplate
+  Template: ./doesnt-even-exist.yml
+  StackName: my-other-stack-name
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+
+CdkWorkload:
+  Type: update-cdk
+  Path: ./workload/
+  Skip: true
+  RunNpmInstall: true
+  RunNpmBuild: true
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Account: !Ref AccountA
+    Region: eu-central-1
+  MaxConcurrentTasks: 1
+  FailedTaskTolerance: 0
+
+ServerlessWorkload:
+  Type: update-serverless.com
+  Config: serverless.yml
+  Path: ./workload/
+  Skip: true
+  RunNpmInstall: true
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Account: !Ref AccountA
+    Region: eu-central-1
+  MaxConcurrentTasks: 1
+  FailedTaskTolerance: 0
+
+CopyToS3:
+  Type: copy-to-s3
+  Skip: true
+  RemotePath: s3://xxxxx.txt
+  LocalPath: ./files/file.txt
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1

@@ -1,0 +1,18 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+ServerlessWorkload:
+  Type: update-serverless.com              # type
+  Config: serverless.yml                   # serverless file, optional
+  Path: ./workload/                        # used to package / calculate hash
+  RunNpmInstall: true
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+  Parameters:
+    param1: !Sub 'sub expression ${AWS::AccountId}'
+    param2: !GetAtt AccountA.AccountName
+  MaxConcurrentTasks: 1
+  FailedTaskTolerance: 0

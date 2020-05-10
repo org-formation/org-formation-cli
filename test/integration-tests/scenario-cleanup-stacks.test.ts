@@ -1,7 +1,5 @@
-import { CloudFormation } from "aws-sdk";
-import { PerformTasksCommand } from "~commands/index";
-import { readFileSync } from "fs";
-import { IIntegrationTestContext, baseBeforeAll, profileForIntegrationTests, baseAfterAll, sleepForTest } from "./base-integration-test";
+import { PerformTasksCommand, BaseCliCommand } from "~commands/index";
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { ListStacksOutput, ListStacksInput } from "aws-sdk/clients/cloudformation";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cleanup-stacks/';
@@ -9,21 +7,17 @@ const basePathForScenario = './test/integration-tests/resources/scenario-cleanup
 
 describe('when cleaning up stacks', () => {
     let context: IIntegrationTestContext;
-    let cfnClient: CloudFormation;
     let stacksBeforeAll: ListStacksOutput;
     let stacksAfterAddBucket: ListStacksOutput;
-    let stacksAfterRenoveBucketNoCleanup: ListStacksOutput;
+    let stacksAfterRemoveBucketNoCleanup: ListStacksOutput;
+    let warnAfterRemoveBucketNoCleanup: string;
     let stacksAfterAddBucket2: ListStacksOutput;
     let stacksAfterRemoveBucketWithCleanup: ListStacksOutput;
 
     beforeAll(async () => {
         context = await baseBeforeAll();
-        cfnClient = new CloudFormation({ region: 'eu-west-1' });
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, logicalName: 'cleanup-stacks', maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 };
-
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + 'state.json') }).promise();
+        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        const { command, cfnClient} = context;
 
         const listStackInput: ListStacksInput = { StackStatusFilter: [ 'CREATE_COMPLETE', 'UPDATE_COMPLETE' ]  };
         stacksBeforeAll = await cfnClient.listStacks(listStackInput).promise();
@@ -31,8 +25,11 @@ describe('when cleaning up stacks', () => {
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'organization-tasks-buckets.yml', performCleanup: false});
         stacksAfterAddBucket = await cfnClient.listStacks(listStackInput).promise();
 
+        context.logWarningMock.mockReset();
+        BaseCliCommand.CliCommandArgs = command;
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'organization-tasks-empty.yml', performCleanup: false});
-        stacksAfterRenoveBucketNoCleanup = await cfnClient.listStacks(listStackInput).promise();
+        stacksAfterRemoveBucketNoCleanup = await cfnClient.listStacks(listStackInput).promise();
+        warnAfterRemoveBucketNoCleanup = context.logWarningMock.mock.calls.join('\n');
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'organization-tasks-buckets.yml', performCleanup: false});
         stacksAfterAddBucket2 = await cfnClient.listStacks(listStackInput).promise();
@@ -52,8 +49,16 @@ describe('when cleaning up stacks', () => {
     })
 
     test('after remove bucket without cleanup scenario-cleanup-buckets is found', () => {
-        const foundStack = stacksAfterRenoveBucketNoCleanup.StackSummaries.find(x=>x.StackName === 'scenario-cleanup-buckets');
+        const foundStack = stacksAfterRemoveBucketNoCleanup.StackSummaries.find(x=>x.StackName === 'scenario-cleanup-buckets');
         expect(foundStack).toBeDefined();
+    })
+
+    test('after remove bucket without cleanup informative message was printed', () => {
+        expect(warnAfterRemoveBucketNoCleanup).toBeDefined();
+        expect(warnAfterRemoveBucketNoCleanup).toEqual(expect.stringContaining('it seems you have removed a task'));
+        expect(warnAfterRemoveBucketNoCleanup).toEqual(expect.stringContaining(context.stateBucketName));
+        expect(warnAfterRemoveBucketNoCleanup).toEqual(expect.stringContaining('org-formation-test-v2'));
+        expect(warnAfterRemoveBucketNoCleanup.indexOf('--state-object')).toBe(-1);
     })
 
     test('after add bucket 2 scenario-cleanup-buckets is found', () => {

@@ -4,7 +4,6 @@ import { IStorageProvider } from './storage-provider';
 import { OrgResourceTypes } from '~parser/model';
 
 export class PersistedState {
-
     public static async Load(provider: IStorageProvider, masterAccountId: string): Promise<PersistedState> {
 
         try {
@@ -293,6 +292,24 @@ export class PersistedState {
         }
         return result;
     }
+
+    getLogicalIdForPhysicalId(physicalId: string): string | undefined {
+        if (this.masterAccount === physicalId) {
+            const binding = this.enumBindings(OrgResourceTypes.MasterAccount);
+            if (binding && binding.length > 0) {
+                return binding[0].logicalId;
+            }
+            return 'master account';
+        }
+        const bindings = this.enumBindings(OrgResourceTypes.Account);
+        for(const binding of bindings) {
+            if (binding.physicalId === physicalId) {
+                return binding.logicalId;
+            }
+        }
+        return undefined;
+    }
+
 
     public enumGenericTargets<ITaskDefinition>(type: string, name: string): IGenericTarget<ITaskDefinition>[] {
 

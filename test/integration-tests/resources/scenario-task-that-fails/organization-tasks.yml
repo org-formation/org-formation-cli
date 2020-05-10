@@ -7,3 +7,9 @@ CfnTemplate:
   Type: update-stacks
   Template: ./invalid-template.yml
   StackName: invalid-template
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    Account: '*'
+    IncludeMasterAccount: true
+  MaxConcurrentStacks: 2
+  FailedStackTolerance: 0

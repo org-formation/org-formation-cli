@@ -1,6 +1,13 @@
-import { CdkBuildTaskPlugin } from "~plugin/impl/cdk-build-task-plugin";
+import { CdkBuildTaskPlugin, ICdkTask } from "~plugin/impl/cdk-build-task-plugin";
+import { ChildProcessUtility } from "~util/child-process-util";
+import { IPluginBinding, PluginBinder } from "~plugin/plugin-binder";
+import { ICfnSubExpression, ICfnGetAttExpression, ICfnRefExpression, ICfnCopyValue } from "~core/cfn-expression";
+import { TemplateRoot } from "~parser/parser";
+import { PersistedState } from "~state/persisted-state";
+import { TestTemplates } from "../../../../test/unit-tests/test-templates";
+import { AwsUtil } from "~util/aws-util";
 
-describe('when createing cdk plugin', () => {
+describe('when creating cdk plugin', () => {
     let plugin: CdkBuildTaskPlugin;
 
     beforeEach(() => {
@@ -11,18 +18,13 @@ describe('when createing cdk plugin', () => {
         expect(plugin.type).toBe('cdk');
     });
 
-
     test('plugin has the right type for tasks',() => {
         expect(plugin.typeForTask).toBe('update-cdk');
     });
 
-    test('plugin is applied globally',() => {
-        expect(plugin.applyGlobally).toBe(true);
-    });
-
     test('plugin can translate config to command args',() => {
         const commandArgs = plugin.convertToCommandArgs( {
-            FilePath: './tasks.ytml',
+            FilePath: './tasks.yaml',
             Type: 'cdk',
             MaxConcurrentTasks: 6,
             FailedTaskTolerance: 4,
@@ -42,5 +44,260 @@ describe('when createing cdk plugin', () => {
         expect(commandArgs.runNpmBuild).toBe(false);
         expect(commandArgs.runNpmInstall).toBe(false);
         expect(commandArgs.customDeployCommand).toBeUndefined();
+    });
+
+});
+
+describe('when resolving attribute expressions on update', () => {
+    let spawnProcessForAccountSpy: jest.SpyInstance;
+    let binding: IPluginBinding<ICdkTask>;
+    let task: ICdkTask;
+    let plugin: CdkBuildTaskPlugin;
+    let template: TemplateRoot;
+    let state: PersistedState;
+    let binder: PluginBinder<ICdkTask>;
+
+    beforeEach(() => {
+        template = TestTemplates.createBasicTemplate();
+        state = TestTemplates.createState(template);
+        plugin = new CdkBuildTaskPlugin();
+        spawnProcessForAccountSpy = jest.spyOn(ChildProcessUtility, 'SpawnProcessForAccount').mockImplementation();
+
+        task = {
+            name: 'taskName',
+            type: 'cdk',
+            path: './',
+            runNpmBuild: false,
+            runNpmInstall: false,
+            hash: '123123123',
+        };
+
+        binding = {
+            action: 'UpdateOrCreate',
+            target: {
+                targetType: 'cdk',
+                logicalAccountId: 'Account',
+                accountId: '1232342341235',
+                region: 'eu-central-1',
+                lastCommittedHash: '123123123',
+                logicalName: 'taskName',
+                definition: task,
+            },
+            task,
+        };
+        binder = new PluginBinder<ICdkTask>(task, state, template, undefined, plugin);
+    });
+
+    test('spawn process is called when nothing needs to be substituted', async () => {
+        await binder.createPerformForUpdateOrCreate(binding)();
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+    });
+
+    test('custom deploy command can use CurrentTask.Parameters to get parameters', async () => {
+        task.parameters = {
+            param: 'val',
+        }
+        task.customDeployCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters} something else' } as ICfnSubExpression;
+
+        await binder.createPerformForUpdateOrCreate(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything());
+    });
+
+
+    test('custom deploy command can use multiple substitutions', async () => {
+        task.parameters = {
+            param: 'val',
+        }
+        task.customDeployCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters} ${CurrentAccount} something else' } as ICfnSubExpression;
+
+        await binder.createPerformForUpdateOrCreate(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything());
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything());
+    });
+
+    test('parameters can use GetAtt on account', async () => {
+        task.parameters = {
+            key: { 'Fn::GetAtt': ['Account2', 'Tags.key'] } as ICfnGetAttExpression //resolved to: Value 567
+        };
+        await binder.createPerformForUpdateOrCreate(binding)();
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything());
+    });
+
+    test('resolved parameters can will be used in custom deploy command', async () => {
+        task.parameters = {
+            key: { 'Fn::GetAtt': ['Account2', 'Tags.key'] } as ICfnGetAttExpression //resolved to: Value 567
+        };
+        task.customDeployCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters}' } as ICfnSubExpression;
+
+        await binder.createPerformForUpdateOrCreate(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything());
+    });
+
+    test('can resolve AWS::AccountId', async () => {
+        task.parameters = {
+            key: { Ref: 'AWS::AccountId' } as ICfnRefExpression
+        };
+        await binder.createPerformForUpdateOrCreate(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, expect.anything());
+    });
+
+    test('can resolve AWS::Region', async () => {
+        task.parameters = {
+            key: { Ref: 'AWS::Region' } as ICfnRefExpression
+        };
+        await binder.createPerformForUpdateOrCreate(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, expect.anything());
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+});
+
+
+describe('when resolving attribute expressions on remove', () => {
+    let spawnProcessForAccountSpy: jest.SpyInstance;
+    let binding: IPluginBinding<ICdkTask>;
+    let task: ICdkTask;
+    let plugin: CdkBuildTaskPlugin;
+    let template: TemplateRoot;
+    let state: PersistedState;
+    let binder: PluginBinder<ICdkTask>;
+
+    beforeEach(() => {
+        template = TestTemplates.createBasicTemplate();
+        state = TestTemplates.createState(template);
+        plugin = new CdkBuildTaskPlugin();
+        spawnProcessForAccountSpy = jest.spyOn(ChildProcessUtility, 'SpawnProcessForAccount').mockImplementation();
+
+        task = {
+            name: 'taskName',
+            type: 'cdk',
+            path: './',
+            runNpmBuild: false,
+            runNpmInstall: false,
+            hash: '123123123',
+        };
+
+        binding = {
+            action: 'UpdateOrCreate',
+            target: {
+                targetType: 'cdk',
+                logicalAccountId: 'Account',
+                accountId: '1232342341235',
+                region: 'eu-central-1',
+                lastCommittedHash: '123123123',
+                logicalName: 'taskName',
+                definition: task,
+            },
+            task,
+        };
+
+        binder = new PluginBinder<ICdkTask>(task, state, template, undefined, plugin);
+    });
+
+    test('spawn process is called when nothing needs to be substituted', async () => {
+        await binder.createPerformForRemove(binding)();
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+    });
+
+    test('custom deploy command can use CurrentTask.Parameters to get parameters', async () => {
+        task.parameters = {
+            param: 'val',
+        }
+        task.customRemoveCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters} something else' } as ICfnSubExpression;
+
+        await binder.createPerformForRemove(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything());
+    });
+
+
+    test('custom remove command can use multiple substitutions', async () => {
+        task.parameters = {
+            param: 'val',
+        }
+        task.customRemoveCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters} ${CurrentAccount} something else' } as ICfnSubExpression;
+
+        await binder.createPerformForRemove(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything());
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything());
+    });
+
+    test('parameters can use GetAtt on account', async () => {
+        task.parameters = {
+            key: { 'Fn::GetAtt': ['Account2', 'Tags.key'] } as ICfnGetAttExpression //resolved to: Value 567
+        };
+
+        await binder.createPerformForRemove(binding)()
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything());
+    });
+
+    test('resolved parameters can will be used in custom deploy command', async () => {
+        task.parameters = {
+            key: { 'Fn::GetAtt': ['Account2', 'Tags.key'] } as ICfnGetAttExpression //resolved to: Value 567
+        };
+        task.customRemoveCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters}' } as ICfnSubExpression;
+
+        await binder.createPerformForRemove(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything());
+    });
+
+    test('can resolve AWS::AccountId', async () => {
+        task.parameters = {
+            key: { Ref: 'AWS::AccountId' } as ICfnRefExpression
+        };
+
+        await binder.createPerformForRemove(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, expect.anything());
+    });
+
+    test('can resolve AWS::Region', async () => {
+        task.parameters = {
+            key: { Ref: 'AWS::Region' } as ICfnRefExpression
+        };
+
+        await binder.createPerformForRemove(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, expect.anything());
+    });
+
+    test('can CopyValue', async () => {
+        const getExportMock = jest.spyOn(AwsUtil, 'GetCloudFormationExport').mockReturnValue(Promise.resolve('XYZ'));
+
+        task.parameters = {
+            key: { 'Fn::CopyValue': ['CfnExport'] } as ICfnCopyValue
+        };
+
+        await binder.createPerformForRemove(binding)();
+
+        expect(getExportMock).toHaveBeenCalled();
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('XYZ'), expect.anything(), undefined, expect.anything());
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 });
