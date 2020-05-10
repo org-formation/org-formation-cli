@@ -1,10 +1,6 @@
 {
   "name": "aws-organization-formation",
-<<<<<<< Updated upstream
-  "version": "0.9.5-beta.16",
-=======
   "version": "0.9.5",
->>>>>>> Stashed changes
   "description": "Infrastructure as code solution for AWS Organizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
