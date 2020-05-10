@@ -114,9 +114,14 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         if (config.OrganizationFile) {
             ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationFile which is ignored. The Template specified in the update-organization task is always used as OrganizationFile for update-stacks tasks`);
         }
+
         if (config.TerminationProtection !== undefined) {
             args.terminationProtection = config.TerminationProtection;
         }
+        if (config.UpdateProtection !== undefined) {
+            args.updateProtection = config.UpdateProtection;
+        }
+
         if (config.StackPolicy !== undefined) {
             args.stackPolicy = config.StackPolicy;
         }
@@ -157,6 +162,7 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     DefaultOrganizationBindingRegion?: string | string[];
     OrganizationBindings?: Record<string, IOrganizationBinding>;
     TerminationProtection?: boolean;
+    UpdateProtection?: boolean;
     StackPolicy?: {};
     MaxConcurrentStacks: number;
     FailedStackTolerance: number;

@@ -54,6 +54,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         command.option('--stack-description [description]', 'description of the stack that will be displayed CloudFormation');
         command.option('--parameters [parameters]', 'parameter values passed to CloudFormation when executing stacks');
         command.option('--termination-protection', 'value that indicates whether stack must have deletion protection');
+        command.option('--update-protection', 'value that indicates whether stack must have a stack policy that prevents updates');
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks after which execution stops', 0);
         super.addOptions(command);
@@ -66,14 +67,52 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validateBoolean(command.terminationProtection, 'terminationProtection');
+        Validator.validateBoolean(command.updateProtection, 'updateProtection');
 
         const terminationProtection = command.terminationProtection === true;
+        const updateProtection = command.updateProtection;
         const cloudFormationRoleName = command.cloudFormationRoleName;
         const taskRoleName = command.taskRoleName;
         const stackName = command.stackName;
         const templateFile = command.templateFile;
-        const stackPolicy = command.stackPolicy;
-
+        let stackPolicy = command.stackPolicy;
+        if (updateProtection !== undefined) {
+            if (stackPolicy !== undefined) {
+                throw new OrgFormationError('Cannot specify value for both stackPolicy as well as updateProtection.');
+            }
+            if (updateProtection === true) {
+                stackPolicy = {
+                    Statement:
+                     {
+                        Effect: 'Deny',
+                        Action: 'Update:*',
+                        Principal: '*',
+                        Resource: '*',
+                     },
+                };
+            } else if (updateProtection === false) {
+                stackPolicy = {
+                    Statement:
+                     {
+                        Effect: 'Allow',
+                        Action: 'Update:*',
+                        Principal: '*',
+                        Resource: '*',
+                     },
+                };
+            }
+        }
+        if (stackPolicy === undefined) {
+            stackPolicy = {
+                Statement:
+                 {
+                    Effect: 'Allow',
+                    Action: 'Update:*',
+                    Principal: '*',
+                    Resource: '*',
+                 },
+            };
+        }
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseCfnParameters(command.parameters);
         const state = await this.getState(command);
@@ -104,6 +143,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     stackDescription?: string;
     parameters?: string | {};
     terminationProtection?: boolean;
+    updateProtection?: boolean;
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
     cloudFormationRoleName?: string;

@@ -1,0 +1,14 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+TestCustomRole:
+  DependsOn: MyRoles
+  Type: update-stacks
+  StackName: test-with-stack-policy
+  Template: ./buckets.yml
+  UpdateProtection: true
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+      IncludeMasterAccount: true

@@ -32,15 +32,18 @@ export class CloudFormationBinder {
             templateHash: template.hash,
             parameters,
             terminationProtection,
-            stackPolicy,
         };
 
+        if (this.stackPolicy) {
+            invocation.stackPolicy = this.stackPolicy;
+        }
+
         if (this.customRoleName) {
-            invocation.cloudFormationRoleName = customRoleName;
+            invocation.cloudFormationRoleName = this.customRoleName;
         }
 
         if (this.taskRoleName) {
-            invocation.taskRoleName = taskRoleName;
+            invocation.taskRoleName = this.taskRoleName;
         }
 
         this.invocationHash = md5(JSON.stringify(invocation));
