@@ -2,7 +2,7 @@ import { Organizations } from "aws-sdk";
 import { UpdateOrganizationCommand } from "~commands/index";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { AwsUtil } from "~util/aws-util";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-move-master-acc/';
@@ -26,18 +26,25 @@ describe('when moving master account around', () => {
         const { command } = context;
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
+        await sleepForTest(500);
         organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
         await organizationAfterInit.initialize();
+        await sleepForTest(500);
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '2-move-to-ou-organization.yml'});
+        await sleepForTest(500);
         organizationAfterMove1 = new AwsOrganization(new AwsOrganizationReader(orgClient));
         await organizationAfterMove1.initialize();
+        await sleepForTest(500);
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '3-move-to-other-ou-organization.yml'});
+        await sleepForTest(500);
         organizationAfterMove2 = new AwsOrganization(new AwsOrganizationReader(orgClient));
         await organizationAfterMove2.initialize();
+        await sleepForTest(500);
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '4-back-to-org-root-organization.yml'});
+        await sleepForTest(500);
         organizationAfterMove3 = new AwsOrganization(new AwsOrganizationReader(orgClient));
         await organizationAfterMove3.initialize();
     })
