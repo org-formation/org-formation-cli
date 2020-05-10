@@ -41,21 +41,22 @@ describe('when calling org-formation perform tasks', () => {
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-serverless-workload-2targets.yml' });
         spawnProcessAfterRerunFileWithoutChanges = spawnProcessMock.mock;
 
-
-
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-update-serverless-workload-with-parameters.yml' })
         spawnProcessAfterUpdateWithParams = spawnProcessMock.mock;
+        await sleepForTest(200);
         stateAfterUpdateWithParams = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-deploy-serverless-workload-1target.yml' })
         spawnProcessAfterDeploy1Target = spawnProcessMock.mock;
+        await sleepForTest(200);
         stateAfterDeploy1Target = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '4-remove-serverless-workload-task.yml', performCleanup: false })
         spawnProcessAfterRemoveTask = spawnProcessMock.mock;
+        await sleepForTest(200);
         stateAfterRemoveTask = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
 
         spawnProcessMock.mockReset();
