@@ -88,9 +88,9 @@ Organization:
 ```
 
 In the example above you will see the following resources:
-- **MasterAccount**. This resource is of type `OC::ORG::MasterAccount` and refers to the AWS Account that contains the AWS Organization resources. A MasterAccount resource must be part of your template and it must have an `AccountId` attribute. The value of this attribute will be compared with the AccountId stored in the state file and the AWS Account deploying changes to in order to prevent mistakes updating the wrong AWS Account. Apart from these requirement the MasterAccount can have all the attributes any other Account resource has. 
+- **MasterAccount**. This resource is of type `OC::ORG::MasterAccount` and refers to the AWS Account that contains the AWS Organization resources. A MasterAccount resource must be part of your template and it must have an `AccountId` attribute. The value of this attribute will be compared with the AccountId stored in the state file and the AWS Account deploying changes to in order to prevent mistakes updating the wrong AWS Account. Apart from these requirement the MasterAccount can have all the attributes any other Account resource has.
 - **OrganizationRoot**. This resource, of type `OC::ORG::OrganizationRoot`, is the root object for the hierarchical structure that contains accounts and organizational units. This resource can be used to attach Service Control Policies to all of the accounts within the organization.
-- **ProductionOU** and **DevelopmentOU**: These resources, of type `OC::ORG::OrganizationRoot`, are 2 Organizational Units directly underneath the OrganizationRoot. These Organizational Units can be used to contains AWS Accounts and other Organizational Units and/or apply Service Control policies to accounts within the Organizational Unit. 
+- **ProductionOU** and **DevelopmentOU**: These resources, of type `OC::ORG::OrganizationRoot`, are 2 Organizational Units directly underneath the OrganizationRoot. These Organizational Units can be used to contains AWS Accounts and other Organizational Units and/or apply Service Control policies to accounts within the Organizational Unit.
 - **ProductionAccount** and **DevelopmentAccount**: These resources, of type `OC::ORG::Account`, are 2 AWS accounts contained in respectively the ProductionOU and DevelopmentOU Organizational Units. The relationship is created by adding a `!Ref` to the `Accounts` attribute of the Organizational Unit.
 
 Unlike the **OrganizationRoot** and **MasterAccount** the number of **Organizational Units** and **Accounts** in your organization.yml will depend on the number of Organizational Units and Accounts that exist in your organization when generating the file. You might also have **Service Control Policy** resources in your organization.yml file if you had these configured in AWS.
@@ -146,7 +146,7 @@ Note that:
 1. AWS Accounts that do not belong to an Organizational Unit are added to the Organization Root. You can add an account to an Organizational Unit by adding the account to the Accounts attribute (using `!Ref LogicalName`). The `Accounts` attribute can be either an array or singel !Ref.
 2. The root user for this newly created account will not have a password. In order to log in as root you need to reset your root password using the email address configured as RootEmail. This email therefore also needs to be unique. AWS accepts email addresses that contain a '+' symbol. Most mail providers allow a '+' to create another email address for the same mailbox. This can be useful if you want password recovery emails (and other emails that relate to your accounts) all to be send to the same mailbox.
 
-If you have additional steps that need to be performed after creating an account, like notifying another department by email or adding the newly created account to list of accounts on your wiki, you can use AWS EventBridge (or CloudWatch Events) to subscribe to AWS Accounts being created by org-formation. The eventSource for these events is `oc.org-formation` the event you would be looking for `AccountCreated`. 
+If you have additional steps that need to be performed after creating an account, like notifying another department by email or adding the newly created account to list of accounts on your wiki, you can use AWS EventBridge (or CloudWatch Events) to subscribe to AWS Accounts being created by org-formation. The eventSource for these events is `oc.org-formation` the event you would be looking for `AccountCreated`.
 
 An example on how to integrate a simple step function can be found here: https://github.com/OlafConijn/AwsOrganizationFormation/tree/master/examples/automation/create-account
 
@@ -280,7 +280,7 @@ CdkWorkload:
 
 All tasks have the following attributes in yaml:
 - **DependsOn** used to have a task run only after the task(s) specified here have executed successfully.
-- **Skip** used to to skip the execution of a task (when set to `true`). The task will be considered to have been completed successfully.
+- **Skip** used to to skip the execution of a task (when set to `true`). Tasks that depend on this task (using `DependsOn` will also be skipped)
 - **TaskRoleName** used to specify the name of the AWS IAM Role that will be assumed in the target account when performing the task.
 
 Note that the `perform-tasks` command has options to run multiple tasks concurrently. It also has options to specify a tolerance for failures on both tasks and stacks. If you are into speeding up your deployment try using adding the option `--max-concurrent-stacks 10`. If you want the `perform-tasks` to continue even after a number of tasks have failed you can add the option `--failed-tasks-tolerance 5`. Tasks that depend on tasks that have failed will not be executed but considered failed as well.
@@ -329,7 +329,7 @@ All accounts part of the development OU, except for the SandboxAccount
 OrganizationBinding:
   Region: eu-west-1
   OrganizationalUnit: development
-  ExcludeAccount: !Ref SanboxAccount
+  ExcludeAccount: !Ref SandboxAccount
 ```
 
 All accounts that declare a subdomain tag
@@ -349,7 +349,7 @@ SomeTemplate:
   Template: ./cloudtrail.yml
   StackName: variables-example
   StackDescription: !Sub
-  - 'CoudTrail implementation ${account} with events persisted to ${persistanceAccount}'
+  - 'CloudTrail implementation ${account} with events persisted to ${persistanceAccount}'
   - { account: !Ref CurrentAccount, persistanceAccount: Ref ComplianceAccount}
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
@@ -359,7 +359,7 @@ SomeTemplate:
     enable: !GetAtt CurrentAccount.Tags.enableCloudTrail
 ```
 
-Parameters can also be declared in a toplevel Parameters attribute in the task file. These parameters can have default values and be overwritten by adding a `--parameters` option to the `perform-tasks` command.
+Parameters can also be declared in a top-level `Parameters` attribute in the task file. These parameters can have default values and be overwritten by adding a `--parameters` option to the `perform-tasks` command.
 
 Declaring and specifying parameter values when running the `perform-tasks` command:
 
@@ -370,7 +370,7 @@ Declaring and specifying parameter values when running the `perform-tasks` comma
 ``` yaml
 Parameters:
   stackPrefix:
-    Description: will be used a prefix for stacknames.
+    Description: will be used a prefix for stack names.
     Type: String
     Default: my
 
@@ -448,29 +448,24 @@ TODO
 ## Protecting Critical resources.
 
 There are several ways you can protect critical resources deployed by org formation.
-The update-stacks tasks allows you to set the `TerminationProtection` to `true` to prevent a template from being deleted as well as specify a `StackPolicy` to prevent a stack (or part of a stack) from being modified.
+The update-stacks tasks allows you to set the `TerminationProtection` to `true` to prevent a template from being deleted and setting `UpdateProtection` to `true` will prevent any of the resources within the template to be updated using CloudFormation.
 
-below an example of using `TermationProtection` and a `StackPolicy`:
+below an example of using `TerminationProtection` and `UpdateProtection`:
 ``` yaml
 CriticalResourcesTemplate:
   Type: update-stacks
   Template: ./bucket.yml
   StackName: critical-stack
   TerminationProtection: true
-  StackPolicy:
-    Statement:
-    - Effect: Deny
-      Action: 'Update:*'
-      Principal: '*'
-      Resource: '*'
+  UpdateProtection: true
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
     Account: !Ref Production1
 ```
 
-`TerminationProtection` will cause any call to delete the stack to fail (throught the CloudFormation console or org-formation). The `StackPolicy` will prevent updates using CloudFormation to any of the resources deployed by this stack to fail.
+`TerminationProtection` will cause any call to delete the stack to fail (through the CloudFormation console or org-formation). The `UpdateProtection` will cause updates of any resource using CloudFormation to fail. This feature uses a StackPolicy which can also be explicitly be set using the `StackPolicy` attribute.
 
-Both the `TerminationProtection` and `StackPolicy` only apply to changes made using CloudFormation. The resources can still be modified directly in the console or using an api. If you want to ensure absolutely no changes can be made to resources within your accounts you can specify this as a Service Control Policy in the organization.yml file.
+`TerminationProtection`, `UpdateProtection` and `StackPolicy` only apply to changes made using CloudFormation. The resources can still be modified directly in the console or using an api. If you want to ensure absolutely no changes can be made to resources within your accounts you can specify this as a Service Control Policy in the organization.yml file.
 
 Service Control Policy that prevents modifying an IAM Role called ProtectedRole:
 ``` yaml
