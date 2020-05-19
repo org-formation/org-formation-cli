@@ -18,9 +18,15 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
+        const parameters: Record<string, any> = { ...command.parsedParameters, ...(config.Parameters ?? {}) };
         const buildConfig = new BuildConfiguration(taskFilePath, parameters);
         const childTasks = buildConfig.enumBuildTasks(command as IPerformTasksCommandArgs);
+
+        if (config.SubtaskPrefix !== undefined) {
+            childTasks.forEach(child => {
+                child.name = config.SubtaskPrefix.concat(child.name);
+            });
+        }
 
         return {
             type: config.Type,
@@ -43,9 +49,15 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
+        const parameters: Record<string, any> = { ...command.parsedParameters, ...(config.Parameters ?? {}) };
         const buildConfig = new BuildConfiguration(taskFilePath, parameters);
         const childTasks = buildConfig.enumValidationTasks(command as IPerformTasksCommandArgs);
+
+        if (config.SubtaskPrefix !== undefined) {
+            childTasks.forEach(child => {
+                child.name = config.SubtaskPrefix.concat(child.name);
+            });
+        }
 
         return {
             type: config.Type,
@@ -67,4 +79,5 @@ export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {
     Parameters: Record<string, any>;
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
+    SubtaskPrefix?: string;
 }

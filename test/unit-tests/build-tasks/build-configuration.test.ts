@@ -5,8 +5,7 @@ import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-
 import { ConsoleUtil } from '~util/console-util';
 import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
-
-
+import { IIncludeTaskConfiguration } from '~build-tasks/tasks/include-task'
 
 describe('when resolving tasks from configuration', () => {
     let buildFile: any | IBuildFile;
@@ -184,5 +183,39 @@ describe('when creating build configuration with duplicate stack name', () => {
         expect(commandKeys.length).toBe(4);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
+    });
+});
+
+describe('when creating build configuration with include task', () => {
+    let task: IBuildTask;
+    let updateStacksResources: sinon.SinonStub;
+    const sandbox = Sinon.createSandbox();
+    beforeEach(() => {
+        const config: IIncludeTaskConfiguration = {
+            Type: 'include',
+            Path: './test/resources/tasks/build-tasks.yml',
+            FilePath: './.',
+            LogicalName: 'task',
+            MaxConcurrentTasks: 1,
+            SubtaskPrefix: 'prefix-',
+            FailedTaskTolerance: 10,
+            Parameters: { Key: 'Val' },
+        };
+        task = BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs);
+
+        updateStacksResources = sandbox.stub(UpdateStacksCommand, 'Perform');
+        sandbox.stub(ConsoleUtil, 'LogInfo')
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+    test('creates task', () => {
+        expect(task).toBeDefined();
+    });
+    test('child task name is prefixed', () => {
+        task.childTasks.forEach(childTask => {
+            expect(childTask.name.startsWith('prefix-'))
+        });
     });
 });
