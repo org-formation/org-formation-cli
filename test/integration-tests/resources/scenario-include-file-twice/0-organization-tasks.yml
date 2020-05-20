@@ -1,0 +1,20 @@
+Parameters:
+
+  bucketName:
+    Type: String
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+Include1:
+  Type: include
+  Path: ./included-task-file.yml
+  Parameters:
+    resourcePrefix: include1
+
+Include2:
+  Type: include
+  Path: ./included-task-file.yml
+  Parameters:
+    resourcePrefix: include2

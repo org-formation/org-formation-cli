@@ -28,7 +28,7 @@ export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
 
     const stateBucketName = `${v4()}`;
     const stackName = `a${Math.floor(Math.random() * 10000)}`;
-    const command = {stateBucketName: stateBucketName, stateObject: 'state.json', stackName: stackName, profile: profileForIntegrationTests, verbose: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 } as any;
+    const command = {stateBucketName: stateBucketName, stateObject: 'state.json', logicalName: 'default', stackName: stackName, profile: profileForIntegrationTests, verbose: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 } as any;
     const s3client = new S3({credentialProvider: AWS.config.credentialProvider});
 
     return {

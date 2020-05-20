@@ -21,7 +21,9 @@ export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
 
     public addOptions(command: Command): void {
         super.addOptions(command);
+        command.option('--logical-name <tasks-logical-name>', 'logical name of the tasks file, allows multiple tasks files to be used together with --perform-cleanup action', 'default');
         command.option('--type <type>', 'type of resource that needs to be removed');
+        command.option('--namespace <namespace>', 'namespace of resource that needs to be removed (if any)');
         command.option('--name <name>', 'logical name of resource that needs to be removed');
         command.option('--max-concurrent-tasks <max-concurrent-tasks>', 'maximum number of stacks to be executed concurrently', 10);
         command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed stacks after which execution stops', 10);
@@ -35,7 +37,7 @@ export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
 
         const plugin = PluginProvider.GetPlugin(command.type);
 
-        const binder = new PluginBinder<any>(task, state, emptyTemplate, undefined, plugin);
+        const binder = new PluginBinder<any>(task, command.logicalName, command.namespace, state, emptyTemplate, undefined, plugin);
         const tasks = binder.enumTasks();
 
         try {
@@ -49,8 +51,10 @@ export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
 
 
 export interface IRemoveCommandArgs extends ICommandArgs {
+    logicalName: string;
     type: string;
     name: string;
     maxConcurrentTasks: number;
     failedTasksTolerance: number;
+    namespace?: string;
 }

@@ -1,8 +1,10 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**version 0.9.5**
+**unreleased**
+- Fixed issue where `perform-task` parameters are passed to `update-stacks` task when no parameters where specified on task.
 
+**version 0.9.5**
 - Added `StackPolicy` attribute to update-stacks tasks
 - Added `UpdateProtection` attribute to update-stacks tasks and update stacks command.
 - Added `Skip` attribute to any task (will skip task execution but continue, also with dependent tasks)

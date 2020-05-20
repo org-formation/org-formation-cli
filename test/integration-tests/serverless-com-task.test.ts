@@ -86,11 +86,11 @@ describe('when calling org-formation perform tasks', () => {
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
         expect(state.targets['serverless.com']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['102625093955']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['102625093955']['eu-central-1']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['340381375986']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['340381375986']['eu-central-1']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['102625093955']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['102625093955']['eu-central-1']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['340381375986']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['340381375986']['eu-central-1']).toBeDefined();
     });
 
     // test('after deploy workload state contains tracked task', () => {
@@ -127,7 +127,7 @@ describe('when calling org-formation perform tasks', () => {
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['102625093955']).toBeUndefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['102625093955']).toBeUndefined();
     });
 
     test('after removing task sls remove was not called', () => {

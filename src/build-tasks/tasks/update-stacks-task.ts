@@ -64,6 +64,10 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
                     ConsoleUtil.LogWarning(`    org-formation delete-stacks --stack-name ${physicalId} ${additionalArgs}`);
                     ConsoleUtil.LogWarning('');
                     ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
+                    for(const target of command.state.enumTargets(physicalId)) {
+                        target.lastCommittedHash = 'deleted';
+                        command.state.setTarget(target);
+                    }
                 } else {
                     ConsoleUtil.LogInfo(`Executing: delete-stacks ${physicalId}.`);
                     await DeleteStacksCommand.Perform({...command, stackName: physicalId, maxConcurrentStacks: 1, failedStacksTolerance: 0});
@@ -87,6 +91,8 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
 
         if (config.Parameters) {
             args.parameters = config.Parameters;
+        } else {
+            args.parameters = undefined;
         }
 
         if (config.OrganizationBinding) {
@@ -137,9 +143,11 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         if (config.CloudFormationRoleName) {
             args.cloudFormationRoleName = config.CloudFormationRoleName;
         }
+
         if (config.TaskRoleName) {
             args.taskRoleName = config.TaskRoleName;
         }
+
         return args;
     }
 

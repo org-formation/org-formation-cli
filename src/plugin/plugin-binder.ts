@@ -9,6 +9,8 @@ import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
     constructor(private readonly task: TTaskDefinition,
+                private readonly organizationLogicalName: string | undefined,
+                private readonly logicalNamePrefix: string | undefined,
                 protected readonly state: PersistedState,
                 private readonly template: TemplateRoot,
                 private readonly organizationBinding: IOrganizationBinding,
@@ -36,12 +38,14 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                         accountId: accountBinding.physicalId,
                         definition: this.task,
                         logicalName: this.task.name,
+                        logicalNamePrefix: this.logicalNamePrefix,
+                        organizationLogicalName: this.organizationLogicalName,
                         lastCommittedHash: this.task.hash,
                     },
                     task: this.task,
                 };
 
-                const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.task.name, accountBinding.physicalId, region);
+                const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.organizationLogicalName, this.logicalNamePrefix, this.task.name, accountBinding.physicalId, region);
 
                 if (!existingTargetBinding) {
                     ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - no existing target was found in state.`);
@@ -56,19 +60,21 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
             }
         }
 
-        const targetsInState = this.state.enumGenericTargets<TTaskDefinition>(this.task.type, this.task.name);
+        const targetsInState = this.state.enumGenericTargets<TTaskDefinition>(this.task.type, this.organizationLogicalName, this.logicalNamePrefix, this.task.name);
         for(const targetToBeDeleted of targetsInState.filter(x=>!result.find(y=>y.target.accountId === x.accountId && y.target.region === x.region))) {
             result.push({
                 action: 'Delete',
-                task: this.task,
+                task: targetToBeDeleted.definition,
                 target: {
                     targetType: this.task.type,
                     logicalAccountId: targetToBeDeleted.logicalAccountId,
                     region: targetToBeDeleted.region,
                     accountId: targetToBeDeleted.accountId,
-                    definition: this.task,
-                    logicalName: this.task.name,
-                    lastCommittedHash: this.task.hash,
+                    logicalNamePrefix: this.logicalNamePrefix,
+                    organizationLogicalName: this.organizationLogicalName,
+                    definition: targetToBeDeleted.definition,
+                    logicalName: targetToBeDeleted.definition.name,
+                    lastCommittedHash: targetToBeDeleted.definition.hash,
                 },
             });
 
@@ -122,7 +128,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
             if (binding.target.region !== undefined && binding.target.region !== 'no-region') {
                 await that.plugin.performRemove({ ...binding, task: myTask}, expressionResolver);
             }
-            that.state.removeGenericTarget(task.type, task.name, target.accountId, target.region);
+            that.state.removeGenericTarget(task.type, this.organizationLogicalName, this.logicalNamePrefix, task.name, target.accountId, target.region);
         };
     }
     public createPerformForUpdateOrCreate(binding: IPluginBinding<TTaskDefinition>): () => Promise<void> {
@@ -130,7 +136,6 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
         const that = this;
 
         return async (): Promise<void> => {
-
             const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, this.template, this.state);
             await this.plugin.appendResolvers(expressionResolver, binding);
             let myTask = await expressionResolver.resolve(binding.task);

@@ -76,6 +76,7 @@ describe('when executing cleanup command', () => {
         const state = PersistedState.CreateEmpty('123456789012');
         state.setGenericTarget( {
             targetType: 'my-type',
+            organizationLogicalName: 'default',
             logicalAccountId: 'Account1',
             region: 'eu-central-1',
             accountId: '111111111111',
@@ -83,6 +84,7 @@ describe('when executing cleanup command', () => {
             lastCommittedHash: 'aa',
             definition: {
                 hello: 'world',
+                name: 'my-task',
             },
         });
 

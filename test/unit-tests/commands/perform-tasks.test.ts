@@ -239,6 +239,7 @@ describe('when executing perform-tasks command', () => {
             });
 
             test('delete task with log warnings', async () => {
+                commandArgs.state = {enumTargets: jest.fn().mockReturnValue([])} as any;
                 await command.performCommand(commandArgs);
 
                 expect(logWarningMock).toHaveBeenCalledTimes(0);
@@ -248,6 +249,7 @@ describe('when executing perform-tasks command', () => {
             });
 
             test('delete stacks command is not called', async () => {
+                commandArgs.state = {enumTargets: jest.fn().mockReturnValue([])} as any;
                 await command.performCommand(commandArgs);
                 await buildTaskProviderCreateDeleteTaskMock.mock.results[0].value.perform();
 

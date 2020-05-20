@@ -42,8 +42,8 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
-        const tasks = config.enumBuildTasks(command);
         const state = await this.getState(command);
+        const tasks = config.enumBuildTasks(command);
         ConsoleUtil.state = state;
 
         await BuildRunner.RunTasks(tasks, command.maxConcurrentTasks, command.failedTasksTolerance);
@@ -71,4 +71,6 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     organizationFileHash?: string;
     parameters?: string;
     parsedParameters?: Record<string, string>;
+    logicalNamePrefix?: string;
+    forceDeploy?: boolean;
 }

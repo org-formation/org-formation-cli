@@ -32,6 +32,8 @@ export interface IBuildTaskPluginCommandArgs extends ICommandArgs {
     maxConcurrent: number;
     failedTolerance: number;
     taskRoleName?: string;
+    logicalNamePrefix?: string;
+    logicalName: string;
 }
 
 export class PluginProvider {

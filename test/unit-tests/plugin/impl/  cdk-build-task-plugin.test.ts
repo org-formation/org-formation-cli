@@ -76,6 +76,7 @@ describe('when resolving attribute expressions on update', () => {
             action: 'UpdateOrCreate',
             target: {
                 targetType: 'cdk',
+                organizationLogicalName: 'default',
                 logicalAccountId: 'Account',
                 accountId: '1232342341235',
                 region: 'eu-central-1',
@@ -85,7 +86,7 @@ describe('when resolving attribute expressions on update', () => {
             },
             task,
         };
-        binder = new PluginBinder<ICdkTask>(task, state, template, undefined, plugin);
+        binder = new PluginBinder<ICdkTask>(task, 'default', undefined, state, template, undefined, plugin);
     });
 
     test('spawn process is called when nothing needs to be substituted', async () => {
@@ -194,6 +195,7 @@ describe('when resolving attribute expressions on remove', () => {
             action: 'UpdateOrCreate',
             target: {
                 targetType: 'cdk',
+                organizationLogicalName: 'default',
                 logicalAccountId: 'Account',
                 accountId: '1232342341235',
                 region: 'eu-central-1',
@@ -204,7 +206,7 @@ describe('when resolving attribute expressions on remove', () => {
             task,
         };
 
-        binder = new PluginBinder<ICdkTask>(task, state, template, undefined, plugin);
+        binder = new PluginBinder<ICdkTask>(task, 'default', undefined, state, template, undefined, plugin);
     });
 
     test('spawn process is called when nothing needs to be substituted', async () => {

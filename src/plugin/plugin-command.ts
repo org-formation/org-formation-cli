@@ -25,7 +25,7 @@ export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, 
         const task = this.plugin.convertToTask(command, hash);
         const state = await this.getState(command);
         const template = TemplateRoot.create(command.organizationFile, {}, command.organizationFileHash);
-        const binder = new PluginBinder<TTask>(task, state, template, command.organizationBinding, this.plugin);
+        const binder = new PluginBinder<TTask>(task, command.logicalName, command.logicalNamePrefix, state, template, command.organizationBinding, this.plugin);
         const tasks = binder.enumTasks();
 
 
