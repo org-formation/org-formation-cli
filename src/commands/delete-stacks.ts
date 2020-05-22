@@ -40,7 +40,7 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
         delete orgTemplate.Resources;
         const emptyTemplate = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
 
-        const cfnBinder = new CloudFormationBinder(stackName, emptyTemplate, state);
+        const cfnBinder = new CloudFormationBinder(stackName, emptyTemplate, state, {}, false, command.verbose === true);
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {

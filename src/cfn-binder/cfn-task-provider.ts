@@ -10,7 +10,7 @@ import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { TemplateRoot } from '~parser/parser';
 
 export class CfnTaskProvider {
-    constructor(private readonly template: TemplateRoot, private readonly state: PersistedState) {
+    constructor(private readonly template: TemplateRoot, private readonly state: PersistedState, private readonly logVerbose: boolean) {
 
     }
 
@@ -64,6 +64,7 @@ export class CfnTaskProvider {
                     ClientRequestToken: clientToken,
                     RoleARN: roleArn,
                     Parameters: [],
+
                 };
 
                 if (binding.stackPolicy !== undefined) {
@@ -147,17 +148,17 @@ export class CfnTaskProvider {
                     }
 
                     if (binding.state === undefined && binding.terminationProtection === true) {
-                        ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`);
+                        ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`, this.logVerbose);
                         await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
                     } else if (binding.state !== undefined) {
                         if (binding.terminationProtection) {
                             if (!binding.state.terminationProtection) {
-                                ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`);
+                                ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`, this.logVerbose);
                                 await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
                             }
                         } else {
                             if (binding.state.terminationProtection) {
-                                ConsoleUtil.LogDebug(`Disabling termination protection for stack ${binding.stackName}`);
+                                ConsoleUtil.LogDebug(`Disabling termination protection for stack ${binding.stackName}`, this.logVerbose);
                                 await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: false}).promise();
                             }
                         }

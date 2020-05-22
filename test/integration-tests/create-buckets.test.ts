@@ -18,7 +18,6 @@ describe('when creating an S3 bucket in all accounts', () => {
         await context.prepareStateBucket(basePathForScenario + '0-state.json')
         const { command } = context;
 
-
         await UpdateStacksCommand.Perform({...command, templateFile: basePathForScenario + 'buckets.yml'});
         await DescribeStacksCommand.Perform(command);
         describeStacksAfterUpdate = consoleOutMock.mock.calls[0][0] as string;

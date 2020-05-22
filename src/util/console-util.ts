@@ -9,8 +9,8 @@ export class ConsoleUtil {
     public static colorizeLogs = true;
     public static state: PersistedState = undefined;
 
-    public static LogDebug(message: string): void {
-        if (!ConsoleUtil.verbose) { return; }
+    public static LogDebug(message: string, verbose: boolean = ConsoleUtil.verbose): void {
+        if (!verbose) { return; }
         console.debug(`DEBG: ${matchAndAppendLogicalAccountNames(message)}`);
     }
 

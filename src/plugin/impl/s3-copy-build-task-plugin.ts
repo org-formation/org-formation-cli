@@ -75,6 +75,8 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             zipBeforePut: command.zipBeforePut,
             hash: hashOfTask,
             taskRoleName: command.taskRoleName,
+            forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
+            logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
         };
     }
 

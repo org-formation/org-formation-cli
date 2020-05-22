@@ -15,8 +15,8 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
     }
 
     public addOptions(command: Command): void {
-        command.option('--parameters [parameters]', 'parameter values passed to cloudformation when executing stacks');
-        command.option('--stack-name <stack-name>', 'name of the stack that will be used in cloudformation', 'print');
+        command.option('--parameters [parameters]', 'parameter values passed to CloudFormation when executing stacks');
+        command.option('--stack-name <stack-name>', 'name of the stack that will be used in CloudFormation', 'print');
         super.addOptions(command);
     }
 

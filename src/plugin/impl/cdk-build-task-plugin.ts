@@ -99,6 +99,8 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             customDeployCommand: command.customDeployCommand,
             customRemoveCommand: command.customRemoveCommand,
             parameters: command.parameters,
+            forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
+            logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
         };
     }
 
@@ -124,7 +126,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const env = CdkBuildTaskPlugin.GetEnvironmentVariables(target);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env, task.logVerbose);
     }
 
     async performRemove(binding: IPluginBinding<ICdkTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -150,7 +152,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const env = CdkBuildTaskPlugin.GetEnvironmentVariables(target);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env, task.logVerbose);
     }
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ICdkTask>): Promise<void> {

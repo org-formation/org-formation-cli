@@ -116,7 +116,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseCfnParameters(command.parameters);
         const state = await this.getState(command);
-        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, terminationProtection, stackPolicy, taskRoleName, cloudFormationRoleName);
+        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, cloudFormationRoleName);
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
@@ -144,6 +144,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     parameters?: string | {};
     terminationProtection?: boolean;
     updateProtection?: boolean;
+    forceDeploy?: boolean;
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
     cloudFormationRoleName?: string;

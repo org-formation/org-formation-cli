@@ -46,14 +46,15 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                 };
 
                 const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.organizationLogicalName, this.logicalNamePrefix, this.task.name, accountBinding.physicalId, region);
-
-                if (!existingTargetBinding) {
-                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - no existing target was found in state.`);
+                if (this.task.forceDeploy) {
+                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - update was forced.`, this.task.logVerbose);
+                } else  if (!existingTargetBinding) {
+                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - no existing target was found in state.`, this.task.logVerbose);
                 } else if (existingTargetBinding.lastCommittedHash !== binding.target.lastCommittedHash) {
-                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - hash from state did not match.`);
+                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - hash from state did not match.`, this.task.logVerbose);
                 } else {
                     binding.action = 'None';
-                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - hash matches stored target.`);
+                    ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - hash matches stored target.`, this.task.logVerbose);
                 }
 
                 result.push(binding);
@@ -78,7 +79,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                 },
             });
 
-            ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${targetToBeDeleted.accountId} to Delete`);
+            ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${targetToBeDeleted.accountId} to Delete`, this.task.logVerbose);
 
         }
         return result;
@@ -170,6 +171,8 @@ export interface IPluginTask {
     hash: string;
     taskRoleName?: string;
     parameters?: Record<string, ICfnExpression>;
+    logVerbose: boolean;
+    forceDeploy: boolean;
 }
 
 type GenericAction = 'UpdateOrCreate' | 'Delete' | 'None';

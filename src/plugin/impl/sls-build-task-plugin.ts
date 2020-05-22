@@ -108,6 +108,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             customDeployCommand: command.customDeployCommand,
             customRemoveCommand: command.customRemoveCommand,
             parameters: command.parameters,
+            forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
+            logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
         };
     }
     async performRemove(binding: IPluginBinding<ISlsTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -139,7 +141,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
 
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, {}, task.logVerbose);
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<ISlsTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -171,7 +173,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
 
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, {}, task.logVerbose);
     }
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ISlsTask>): Promise<void> {

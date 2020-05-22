@@ -34,6 +34,7 @@ export interface IBuildTaskPluginCommandArgs extends ICommandArgs {
     taskRoleName?: string;
     logicalNamePrefix?: string;
     logicalName: string;
+    forceDeploy?: boolean;
 }
 
 export class PluginProvider {
