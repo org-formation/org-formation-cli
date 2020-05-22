@@ -30,9 +30,9 @@ export class GenericTaskRunner {
                         continue;
                     }
 
-                    const skippedDependency = tasksSkipped.filter(x => task.isDependency(x));
+                    const skippedDependency = tasksSkipped.filter(x => task.isDependency(x) && (x as any).type !== 'update-organization');
                     if (skippedDependency.length > 0) {
-                        if (task.skip !== true) {
+                        if (typeof task.skip !== 'boolean') {
                             const skippedDependencyNames = skippedDependency.map(() =>delegate.getName(task)).join(', ');
                             ConsoleUtil.LogInfo(`Overriding skipping configuration for task ${delegate.getName(task)} because of dependency with that was skipped. dependencies: ${skippedDependencyNames}.`);
                             task.skip = true;

@@ -186,7 +186,6 @@ describe('when running cfn tasks', () => {
         const task2: ICfnTask = {
             action: 'UpdateOrCreate',
             region: 'eu-central-1',
-            skip: false,
             accountId: '123123123123',
             stackName: 'task2',
             perform: async () => { task2order = order; order = order + 1; },
@@ -259,7 +258,6 @@ describe('when running cfn tasks', () => {
         expect(consoleErr.getCall(0).args[0]).toContain('failed');
     });
 
-
     test('dependency on failed and explicitly skipped task does not increases error count', async () => {
         type MyTask = ICfnTask & { callCount: number };
         const task1: MyTask = {
@@ -295,6 +293,64 @@ describe('when running cfn tasks', () => {
         expect(consoleErr.getCall(0).args[0]).toContain('task1');
         expect(consoleErr.getCall(0).args[0]).toContain('123123123123');
         expect(consoleErr.getCall(0).args[0]).toContain('failed');
+    });
+
+    test('will not skip dependent if task is update-organization', async () => {
+        let order = 1;
+        let task1order: number = 0;
+        let task2order: number = 0;
+        const task1: ICfnTask = {
+            action: 'UpdateOrCreate',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            skip: true,
+            stackName: 'task1',
+            perform: async () => { task1order = order; order = order + 1; },
+            isDependency: () => false,
+        };
+        (task1 as any).type = 'update-organization';
+
+        const task2: ICfnTask = {
+            action: 'UpdateOrCreate',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task2',
+            perform: async () => { task2order = order; order = order + 1; },
+            isDependency:  (t) => t.stackName === 'task1',
+        };
+        await CfnTaskRunner.RunTasks([task2, task1], 'stack', 1, 0);
+        expect(task1order).toBe(0);
+        expect(task2order).toBe(1);
+        expect(consoleErr.callCount).toBe(0);
+    });
+
+    test('will not skip dependent if skip is overwritten', async () => {
+        let order = 1;
+        let task1order: number = 0;
+        let task2order: number = 0;
+        const task1: ICfnTask = {
+            action: 'UpdateOrCreate',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            skip: true,
+            stackName: 'task1',
+            perform: async () => { task1order = order; order = order + 1; },
+            isDependency: () => false,
+        };
+
+        const task2: ICfnTask = {
+            action: 'UpdateOrCreate',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task2',
+            skip: false,
+            perform: async () => { task2order = order; order = order + 1; },
+            isDependency:  (t) => t.stackName === 'task1',
+        };
+        await CfnTaskRunner.RunTasks([task2, task1], 'stack', 1, 0);
+        expect(task1order).toBe(0);
+        expect(task2order).toBe(1);
+        expect(consoleErr.callCount).toBe(0);
     });
 });
 
