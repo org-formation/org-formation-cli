@@ -9,6 +9,8 @@ import { IPerformTasksCommandArgs } from '~commands/index';
 import { IOrganizationBinding } from '~parser/parser';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
+export const CommonTaskAttributeNames = ['LogicalName', 'DependsOn', 'Type', 'Skip', 'LogVerbose', 'ForceDeploy', 'TaskRoleName', 'OrganizationBinding'];
+
 export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> {
     type: string;
     typeForTask: string;

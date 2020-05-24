@@ -174,6 +174,8 @@ export interface IBuildTaskConfiguration {
     FilePath?: string;
     Skip?: boolean;
     TaskRoleName?: string;
+    ForceDeploy?: boolean;
+    LogVerbose?: boolean;
 }
 
 

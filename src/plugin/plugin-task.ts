@@ -33,6 +33,12 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
                 if (commandArgs.failedTolerance === undefined) {
                     commandArgs.failedTolerance = 0;
                 }
+                if (typeof config.LogVerbose === 'boolean') {
+                    commandArgs.verbose = config.LogVerbose;
+                }
+                if (typeof config.ForceDeploy === 'boolean') {
+                    commandArgs.forceDeploy = config.ForceDeploy;
+                }
                 const pluginCommand = new PluginCliCommand<TCommandArgs, TTask>(this.plugin);
                 await pluginCommand.performCommand(commandArgs);
             },
