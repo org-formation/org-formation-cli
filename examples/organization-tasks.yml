@@ -79,3 +79,12 @@ CrossAccountLambda:
   MaxConcurrentStacks: 10
   FailedStackTolerance: 10
 
+AccountCreationWorkflow:
+  Type: update-serverless.com
+  Path: ./automation/create-account
+  RunNpmInstall: true
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: us-east-1
+  MaxConcurrentTasks: 1
+  FailedTaskTolerance: 0
