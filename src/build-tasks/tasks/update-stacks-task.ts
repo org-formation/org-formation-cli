@@ -95,6 +95,14 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             args.parameters = undefined;
         }
 
+        if (typeof config.ForceDeploy === 'boolean') {
+            args.forceDeploy = config.ForceDeploy;
+        }
+
+        if (typeof config.LogVerbose === 'boolean') {
+            args.verbose = config.LogVerbose;
+        }
+
         if (config.OrganizationBinding) {
             ConsoleUtil.LogWarning(`task ${this.name} specifies an attribute OrganizationBinding which is deprecated. use DefaultOrganizationBinding instead`);
             args.defaultOrganizationBinding = config.OrganizationBinding;
@@ -176,4 +184,6 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     FailedStackTolerance: number;
     CloudFormationRoleName?: string;
     TaskRoleName?: string;
+    LogVerbose?: boolean;
+    ForceDeploy?: boolean;
 }
