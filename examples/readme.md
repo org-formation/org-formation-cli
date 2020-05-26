@@ -16,7 +16,7 @@
 - [cross account role with alarm](#cross-account-role-with-alarm)
 - [cross account secret](#cross-account-secret)
 - [cross account lambda](#cross-account-lambda)
-- [wildcard carts (2 regions)](#wildcard-carts-2-regions)
+- [wildcard certs (2 regions)](#wildcard-certs-2-regions)
 - [custom account creation worflow](#custom-account-creation-worflow)
 
 <!-- /code_chunk_output -->
@@ -113,7 +113,7 @@ Reusable template to do cross account lambdas. Assumes the lambda is deployed by
 
 [templates/cross-account-lambda.yml](templates/cross-account-lambda.yml)
 
-## wildcard carts (2 regions)
+## wildcard certs (2 regions)
 
 Template that demonstrates provisioning wildcard certificates in both us-east-1 and another region while having the ARNs to these certicates stored locally in SSM.
 
