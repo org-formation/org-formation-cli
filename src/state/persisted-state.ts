@@ -472,7 +472,7 @@ export class PersistedState {
     }
 
 
-    performUpdateToVersion2IfNeeded() {
+    performUpdateToVersion2IfNeeded(): void {
         const storedVersion = this.getValue('state-version');
         if (storedVersion === undefined) {
             this.state.trackedTasks = {};
@@ -492,9 +492,7 @@ export class PersistedState {
                     }
                 }
             }
-
-
-            this.putValue('state-version', '2')
+            this.putValue('state-version', '2');
         }
     }
 
