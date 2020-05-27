@@ -205,6 +205,7 @@ describe('when executing perform-tasks command', () => {
                 ]
 
                 state.setTrackedTasks('default', trackedTasks);
+                state.putValue('state-version', '2');
                 buildTaskProviderCreateDeleteTaskMock = jest.spyOn(BuildTaskProvider, 'createDeleteTask');
                 deleteStacksCommandPerformMock = jest.spyOn(DeleteStacksCommand, 'Perform').mockImplementation();
                 jest.spyOn(BaseCliCommand, 'CreateAdditionalArgsForInvocation').mockReturnValue(Promise.resolve(''));

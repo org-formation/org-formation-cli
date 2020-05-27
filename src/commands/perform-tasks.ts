@@ -46,6 +46,10 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         const tasks = config.enumBuildTasks(command);
         ConsoleUtil.state = state;
 
+
+
+        state.performUpdateToVersion2IfNeeded();
+
         await BuildRunner.RunTasks(tasks, command.maxConcurrentTasks, command.failedTasksTolerance);
         const tracked = state.getTrackedTasks(command.logicalName);
         const cleanupTasks = BuildTaskProvider.enumTasksForCleanup(tracked, tasks, command);

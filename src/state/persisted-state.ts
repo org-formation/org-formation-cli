@@ -5,7 +5,6 @@ import { OrgResourceTypes } from '~parser/model';
 
 export class PersistedState {
     public static async Load(provider: IStorageProvider, masterAccountId: string): Promise<PersistedState> {
-
         try {
             const contents = await provider.get();
             let object = {} as IState;
@@ -50,7 +49,6 @@ export class PersistedState {
     private provider?: IStorageProvider;
     private state: IState;
     private dirty = false;
-    private version = 2;
 
     constructor(state: IState, provider?: IStorageProvider) {
         this.provider = provider;
@@ -471,6 +469,33 @@ export class PersistedState {
         await storageProvider.put(json);
 
         this.dirty = false;
+    }
+
+
+    performUpdateToVersion2IfNeeded() {
+        const storedVersion = this.getValue('state-version');
+        if (storedVersion === undefined) {
+            this.state.trackedTasks = {};
+            if (this.state.targets) {
+                for(const root of Object.entries(this.state.targets)) {
+                    for(const logicalName of Object.entries(root[1])) {
+                        for(const account of Object.entries(logicalName[1])) {
+                            for(const region of Object.entries(account[1])) {
+                                if ((region[1] as any).lastCommittedHash) {
+                                    delete root[1][logicalName[0]];
+                                    break;
+                                }
+                                break;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+
+            this.putValue('state-version', '2')
+        }
     }
 
     public toJson(): string {
