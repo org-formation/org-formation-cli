@@ -346,10 +346,10 @@ export class AwsOrganizationWriter {
                     const createCaseRequest: CreateCaseRequest = {
                         subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
                         communicationBody: `Hi AWS,
-                        Please enable ${resource.supportLevel} on account ${accountId}.
-                        This case was created automatically - please resolve when done.
+Please enable ${resource.supportLevel} on account ${accountId}.
+This case was created automatically - please resolve when done.
 
-                        Thank you!
+Thank you!
                         `,
                         serviceCode: 'customer-account',
                         categoryCode: 'other-account-issues',

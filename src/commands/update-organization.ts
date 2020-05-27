@@ -31,7 +31,9 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         const templateHash = template.hash;
 
         const lastHash = state.getTemplateHash();
-        if (lastHash === templateHash) {
+        if (command.forceDeploy === true) {
+            ConsoleUtil.LogInfo('organization update forced.');
+        } else if (lastHash === templateHash) {
             ConsoleUtil.LogInfo('organization up to date, no work to be done.');
             return;
         }
@@ -61,4 +63,5 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
 
 export interface IUpdateOrganizationCommandArgs extends ICommandArgs {
     templateFile: string;
+    forceDeploy?: boolean;
 }
