@@ -38,6 +38,6 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
 
         const validationTaskProvider = new CfnValidateTaskProvider();
         const tasks = validationTaskProvider.enumTasks(bindings);
-        await CfnTaskRunner.ValidateTemplates(tasks);
+        await CfnTaskRunner.ValidateTemplates(tasks, command.verbose === true);
     }
 }

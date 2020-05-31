@@ -48,11 +48,11 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
         state.performUpdateToVersion2IfNeeded();
 
-        await BuildRunner.RunTasks(tasks, command.maxConcurrentTasks, command.failedTasksTolerance);
+        await BuildRunner.RunTasks(tasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
         const tracked = state.getTrackedTasks(command.logicalName);
         const cleanupTasks = BuildTaskProvider.enumTasksForCleanup(tracked, tasks, command);
         if (cleanupTasks.length > 0) {
-            await BuildRunner.RunTasks(cleanupTasks, command.maxConcurrentTasks, 0);
+            await BuildRunner.RunTasks(cleanupTasks, command.verbose === true, 1, 0);
         }
         const tasksToTrack = BuildTaskProvider.recursivelyFilter(tasks, x=> x.physicalIdForCleanup !== undefined);
         const trackedTasks: ITrackedTask[] = tasksToTrack.map(x=> { return {physicalIdForCleanup: x.physicalIdForCleanup, logicalName: x.name, type: x.type  }; });

@@ -46,7 +46,7 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
         if (cfnTasks.length === 0) {
             ConsoleUtil.LogInfo('no templates found.');
         } else {
-            await CfnTaskRunner.RunTasks(cfnTasks, stackName, command.maxConcurrentStacks, command.failedStacksTolerance);
+            await CfnTaskRunner.RunTasks(cfnTasks, stackName, command.verbose === true, command.maxConcurrentStacks, command.failedStacksTolerance);
             ConsoleUtil.LogInfo('done');
         }
 

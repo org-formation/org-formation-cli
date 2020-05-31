@@ -21,7 +21,8 @@
   },
   "stacks": {},
   "values": {
-    "organization.template.hash": "1f7c06baf83ee72e843890bce9790d2f"
+    "organization.template.hash": "1f7c06baf83ee72e843890bce9790d2f",
+    "state-version": "2"
   },
   "previousTemplate": "{\"AWSTemplateFormatVersion\":\"2010-09-09-OC\",\"Description\":\"default template generated for organization with master account 102625093955\",\"Organization\":{\"MasterAccount\":{\"Type\":\"OC::ORG::MasterAccount\",\"Properties\":{\"AccountName\":\"Olaf Conijn\",\"AccountId\":\"102625093955\"}},\"OrganizationRoot\":{\"Type\":\"OC::ORG::OrganizationRoot\",\"Properties\":null}}}"
 }

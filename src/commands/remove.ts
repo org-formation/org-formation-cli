@@ -41,7 +41,7 @@ export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
         const tasks = binder.enumTasks();
 
         try {
-            await DefaultTaskRunner.RunTasks(tasks, command.name, command.maxConcurrentTasks, command.failedTasksTolerance);
+            await DefaultTaskRunner.RunTasks(tasks, command.name, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
         } finally {
             await state.save();
         }

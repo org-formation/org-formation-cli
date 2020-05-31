@@ -1,6 +1,6 @@
 import { PerformTasksCommand, ValidateTasksCommand, RemoveCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from './base-integration-test';
-import { readFileSync } from 'fs';
+
 import { ChildProcessUtility } from '~util/child-process-util';
 import { GetObjectOutput } from 'aws-sdk/clients/s3';
 

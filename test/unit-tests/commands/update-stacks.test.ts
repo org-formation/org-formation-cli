@@ -176,8 +176,9 @@ describe('when executing update-stacks command', () => {
         expect(runTasks.callCount).toBe(1);
         expect(Array.isArray(runTasks.getCall(0).args[0])).toBeTruthy();
         expect(runTasks.getCall(0).args[1]).toBe(commandArgs.stackName);
-        expect(runTasks.getCall(0).args[2]).toBe(commandArgs.maxConcurrentStacks);
-        expect(runTasks.getCall(0).args[3]).toBe(commandArgs.failedStacksTolerance)
+        expect(runTasks.getCall(0).args[2]).toBe(false);
+        expect(runTasks.getCall(0).args[3]).toBe(commandArgs.maxConcurrentStacks);
+        expect(runTasks.getCall(0).args[4]).toBe(commandArgs.failedStacksTolerance)
     });
 
     test('state is saved', async () => {

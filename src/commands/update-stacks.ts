@@ -123,7 +123,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
             ConsoleUtil.LogInfo(`Stack ${stackName} already up to date.`);
         } else {
             try {
-                await CfnTaskRunner.RunTasks(cfnTasks, stackName, command.maxConcurrentStacks, command.failedStacksTolerance);
+                await CfnTaskRunner.RunTasks(cfnTasks, stackName, command.verbose === true, command.maxConcurrentStacks, command.failedStacksTolerance);
             } finally {
                 await state.save();
             }

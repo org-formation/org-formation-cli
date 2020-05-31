@@ -34,11 +34,11 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
             type: config.Type,
             name: config.LogicalName,
             childTasks,
-            skip: config.Skip === true,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 ConsoleUtil.LogInfo(`Executing: ${config.Type} ${taskFilePath}.`);
-                await BuildRunner.RunTasks(childTasks, config.MaxConcurrentTasks, config.FailedTaskTolerance);
+                await BuildRunner.RunTasks(childTasks, commandForInclude.verbose === true, config.MaxConcurrentTasks, config.FailedTaskTolerance);
             },
         };
     }
@@ -65,10 +65,10 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
         return {
             type: config.Type,
             name: config.LogicalName,
-            skip: config.Skip === true,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks,
             isDependency: (): boolean => false,
-            perform: async (): Promise<void> => await BuildRunner.RunValidationTasks(childTasks, 1, 999),
+            perform: async (): Promise<void> => await BuildRunner.RunValidationTasks(childTasks, commandForInclude.verbose === true, 1, 999),
         };
     }
 

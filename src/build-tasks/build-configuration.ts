@@ -182,7 +182,7 @@ export interface IBuildTaskConfiguration {
 export interface IBuildTask {
     name: string;
     type: string;
-    skip: boolean;
+    skip?: boolean;
     isDependency(task: IBuildTask): boolean;
     childTasks: IBuildTask[];
     perform(): Promise<void>;

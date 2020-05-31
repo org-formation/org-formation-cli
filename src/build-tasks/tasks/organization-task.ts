@@ -23,6 +23,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         this.templatePath = path.join(dir, config.Template);
         this.command = command;
         this.skip = config.Skip === true;
+
     }
 
     public async perform(): Promise<void> {

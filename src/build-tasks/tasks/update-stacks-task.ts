@@ -15,12 +15,12 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
 
         Validator.ValidateUpdateStacksTask(config, config.LogicalName);
 
-        return {
+        const task: IUpdateStacksBuildTask = {
             type: config.Type,
             name: config.LogicalName,
             physicalIdForCleanup: config.StackName,
             StackName: config.StackName,
-            skip: config.Skip === true,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
@@ -29,6 +29,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
                 await UpdateStacksCommand.Perform(updateStacksCommand);
             },
         };
+        return task;
     }
 
     createTaskForValidation(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs): IUpdateStacksBuildTask {
@@ -36,7 +37,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             type: config.Type,
             name: config.LogicalName,
             childTasks: [],
-            skip: config.Skip === true,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             StackName: config.StackName,
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {

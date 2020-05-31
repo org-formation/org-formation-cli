@@ -16,11 +16,12 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
 
     createTask(config: TBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
 
-        return {
+        const forceDeploy = command.forceDeploy;
+        const task: IBuildTask = {
             type: config.Type,
             name: config.LogicalName,
             physicalIdForCleanup: command.logicalNamePrefix + '/' + config.LogicalName,
-            skip: config.Skip === true,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
@@ -36,6 +37,9 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
                 if (typeof config.LogVerbose === 'boolean') {
                     commandArgs.verbose = config.LogVerbose;
                 }
+                if (typeof forceDeploy === 'boolean') {
+                    commandArgs.forceDeploy = forceDeploy;
+                }
                 if (typeof config.ForceDeploy === 'boolean') {
                     commandArgs.forceDeploy = config.ForceDeploy;
                 }
@@ -43,13 +47,15 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
                 await pluginCommand.performCommand(commandArgs);
             },
         };
+
+        return task;
     }
 
     createTaskForValidation(config: TBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
         return {
             type: config.Type,
             name: config.LogicalName,
-            skip: config.Skip === true,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {

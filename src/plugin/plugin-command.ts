@@ -33,7 +33,7 @@ export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, 
             ConsoleUtil.LogInfo(`${this.plugin.type} workload ${command.name} already up to date.`);
         } else {
             try {
-                await DefaultTaskRunner.RunTasks(tasks, command.name, command.maxConcurrent, command.failedTolerance);
+                await DefaultTaskRunner.RunTasks(tasks, command.name, command.verbose === true, command.maxConcurrent, command.failedTolerance);
             } finally {
                 await state.save();
             }
