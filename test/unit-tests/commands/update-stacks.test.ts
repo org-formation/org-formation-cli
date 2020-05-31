@@ -9,6 +9,7 @@ import { AwsUtil } from '~util/aws-util';
 import { PersistedState } from '~state/persisted-state';
 import { ICfnTask } from '~cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
+import { GlobalState } from '~util/global-state';
 
 describe('when creating update stacks command', () => {
     let command: UpdateStacksCommand;
@@ -152,6 +153,12 @@ describe('when executing update-stacks command', () => {
 
     afterEach(() => {
         sandbox.restore();
+    });
+
+    test('global state is set', async () => {
+        await command.performCommand(commandArgs);
+        expect(GlobalState.State).toBeDefined();
+        expect(GlobalState.OrganizationTemplate).toBeDefined();
     });
 
     test('s3 storage provider is used to get state', async () => {

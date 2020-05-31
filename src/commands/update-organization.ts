@@ -5,6 +5,7 @@ import { TaskRunner } from '~org-binder/org-task-runner';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { IBuildTask } from '~org-binder/org-tasks-provider';
+import { GlobalState } from '~util/global-state';
 
 
 const commandName = 'update <templateFile>';
@@ -28,6 +29,9 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
     public async performCommand(command: IUpdateOrganizationCommandArgs): Promise<void> {
         const template = TemplateRoot.create(command.templateFile);
         const state = await this.getState(command);
+
+        GlobalState.Init(state, template);
+
         const templateHash = template.hash;
 
         const lastHash = state.getTemplateHash();

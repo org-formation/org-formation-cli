@@ -2,6 +2,7 @@ import { IAM, Organizations } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
+import { GlobalState } from '~util/global-state';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
@@ -267,7 +268,7 @@ export class AwsOrganizationReader {
 
     private static async getIamAliasForAccount(that: AwsOrganizationReader, accountId: string): Promise<string> {
         await that.organization.getValue();
-        const iamService = await AwsUtil.GetIamService(accountId);
+        const iamService = await AwsUtil.GetIamService(accountId, GlobalState.GetCrossAccountRoleName(accountId));
         const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
         if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
             return response.AccountAliases[0];
@@ -278,7 +279,7 @@ export class AwsOrganizationReader {
 
     private static async getIamPasswordPolicyForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAM.PasswordPolicy> {
         await that.organization.getValue();
-        const iamService = await AwsUtil.GetIamService(accountId);
+        const iamService = await AwsUtil.GetIamService(accountId, GlobalState.GetCrossAccountRoleName(accountId));
         try {
             const response = await iamService.getAccountPasswordPolicy().promise();
             return response.PasswordPolicy;

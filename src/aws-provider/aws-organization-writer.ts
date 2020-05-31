@@ -1,7 +1,7 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
-import { AwsUtil, passwordPolicEquals } from '../util/aws-util';
+import { AwsUtil, passwordPolicyEquals, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsEvents } from './aws-events';
@@ -158,7 +158,7 @@ export class AwsOrganizationWriter {
 
         await this.organizationService.moveAccount(moveAccountRequest).promise();
 
-        // account will be undefined if account is supended.
+        // account will be undefined if account is suspended.
         // still needs to be moved when e.g. OU gets re-attached.
         if (account !== undefined) {
             account.ParentId = parentPhysicalId;
@@ -313,8 +313,12 @@ export class AwsOrganizationWriter {
             ConsoleUtil.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. \nInstead: login with root on the specified account to change its name`);
         }
 
+        if (previousResource && previousResource.organizationAccessRoleName !== resource.organizationAccessRoleName) {
+            ConsoleUtil.LogWarning(`When changing the organization access role for ${accountId} (logicalId: ${resource.logicalId}) the tool will not automatically rename roles in the target account. \nInstead: make sure that the name of the role in the organization model corresponds to a role in the AWS account.`);
+        }
+
         if (account.Alias !== resource.alias) {
-            const iam = await AwsUtil.GetIamService(accountId);
+            const iam = await AwsUtil.GetIamService(accountId, resource.organizationAccessRoleName);
             if (account.Alias) {
                 try {
                     await iam.deleteAccountAlias({ AccountAlias: account.Alias }).promise();
@@ -362,8 +366,8 @@ Thank you!
             }
         }
 
-        if (!passwordPolicEquals(account.PasswordPolicy, resource.passwordPolicy)) {
-            const iam = await AwsUtil.GetIamService(accountId);
+        if (!passwordPolicyEquals(account.PasswordPolicy, resource.passwordPolicy)) {
+            const iam = await AwsUtil.GetIamService(accountId, resource.organizationAccessRoleName);
             if (account.PasswordPolicy) {
                 try {
                     await iam.deleteAccountPasswordPolicy().promise();
@@ -442,6 +446,10 @@ Thank you!
             Email: resource.rootEmail,
             AccountName: resource.accountName,
         };
+
+        if (typeof resource.organizationAccessRoleName === 'string') {
+            createAccountReq.RoleName = resource.organizationAccessRoleName;
+        }
 
         const createAccountResponse = await this.organizationService.createAccount(createAccountReq).promise();
         let accountCreationStatus = createAccountResponse.CreateAccountStatus;

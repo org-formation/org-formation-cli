@@ -46,7 +46,7 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
         ConsoleUtil.LogInfo(`You can keep the ${command.file} file on disk or even better, under source control.`);
         ConsoleUtil.LogInfo('If you work with code pipeline you might find init-pipeline an interesting command too.');
         ConsoleUtil.LogInfo('');
-        ConsoleUtil.LogInfo(`Dont worry about losing the ${command.file} file, at any point you can recreate it.`);
+        ConsoleUtil.LogInfo(`Don't worry about losing the ${command.file} file, at any point you can recreate it.`);
         ConsoleUtil.LogInfo('Have fun! ');
         ConsoleUtil.LogInfo('');
         ConsoleUtil.LogInfo('--OC');

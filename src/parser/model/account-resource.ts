@@ -4,6 +4,7 @@ import { IResource, IResourceRef, TemplateRoot } from '../parser';
 import { PasswordPolicyResource } from './password-policy-resource';
 import { Reference, Resource } from './resource';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
+import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
 
 export interface IAccountProperties {
     RootEmail?: string;
@@ -14,6 +15,7 @@ export interface IAccountProperties {
     Alias?: string;
     Tags?: Record<string, string>;
     SupportLevel?: string;
+    OrganizationAccessRoleName?: string;
 }
 
 export class AccountResource extends Resource {
@@ -26,6 +28,7 @@ export class AccountResource extends Resource {
     public passwordPolicy?: Reference<PasswordPolicyResource>;
     public organizationalUnitName?: string;
     public supportLevel?: string;
+    public organizationAccessRoleName?: string;
     private props?: IAccountProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
@@ -47,6 +50,7 @@ export class AccountResource extends Resource {
         this.accountName = this.props.AccountName;
         this.accountId = this.props.AccountId;
         this.supportLevel = this.props.SupportLevel;
+        this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
 
         if (this.supportLevel !== undefined) {
             if (!['basic', 'developer', 'business', 'enterprise'].includes(this.supportLevel)) {
@@ -62,9 +66,10 @@ export class AccountResource extends Resource {
         }
         this.tags = this.props.Tags;
         this.alias = this.props.Alias;
+        this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel');
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName');
     }
 
     public calculateHash(): string {
@@ -83,6 +88,13 @@ export class AccountResource extends Resource {
             const passwordPolicies = super.resolve(this.props.PasswordPolicy, this.root.organizationSection.passwordPolicies);
             if (passwordPolicies.length !== 0) {
                 this.passwordPolicy = passwordPolicies[0];
+            }
+        }
+
+        if (this.organizationAccessRoleName === undefined) {
+            this.organizationAccessRoleName = this.root.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName;
+            if (this.organizationAccessRoleName === undefined) {
+                this.organizationAccessRoleName = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS;
             }
         }
     }

@@ -8,6 +8,7 @@ import { IState, PersistedState } from '~state/persisted-state';
 import { S3StorageProvider } from '~state/storage-provider';
 import { DefaultTemplate } from '~writer/default-template-writer';
 import { ConsoleUtil } from '~util/console-util';
+import { GlobalState } from '~util/global-state';
 
 describe('when creating init organization command', () => {
     let command: InitOrganizationCommand;

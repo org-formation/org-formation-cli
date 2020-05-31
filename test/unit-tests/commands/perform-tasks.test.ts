@@ -7,6 +7,7 @@ import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ConsoleUtil } from '~util/console-util';
 import { DeleteStacksCommand, BaseCliCommand } from '~commands/index';
 import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/organization-task';
+import { GlobalState } from '~util/global-state';
 
 describe('when creating perform-tasks command', () => {
     let command: PerformTasksCommand;
@@ -124,6 +125,7 @@ describe('when executing perform-tasks command', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     })
+
     test('BuildConfiguration called to enum config', async () => {
         await command.performCommand(commandArgs);
         expect(buildConfigurationEnumConfigMock).toHaveBeenCalledTimes(1);

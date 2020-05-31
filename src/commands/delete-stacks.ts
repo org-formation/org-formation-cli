@@ -5,6 +5,7 @@ import { BaseCliCommand, ICommandArgs } from './base-command';
 import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { ITemplate, TemplateRoot } from '~parser/parser';
+import { GlobalState } from '~util/global-state';
 
 const commandName = 'delete-stacks';
 const commandDescription = 'removes all stacks deployed to accounts using org-formation';
@@ -39,6 +40,8 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
         const orgTemplate = JSON.parse(state.getPreviousTemplate()) as ITemplate;
         delete orgTemplate.Resources;
         const emptyTemplate = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
+
+        GlobalState.Init(state, emptyTemplate);
 
         const cfnBinder = new CloudFormationBinder(stackName, emptyTemplate, state, {}, false, command.verbose === true);
 

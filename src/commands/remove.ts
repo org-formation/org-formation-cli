@@ -4,6 +4,7 @@ import { TemplateRoot } from '~parser/parser';
 import { DefaultTaskRunner } from '~core/default-task-runner';
 import { PluginProvider } from '~plugin/plugin';
 import { PluginBinder } from '~plugin/plugin-binder';
+import { GlobalState } from '~util/global-state';
 
 const commandName = 'remove';
 const commandDescription = 'removes resources deployed using org-formation from target accounts';
@@ -33,6 +34,11 @@ export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
 
         const state = await this.getState(command);
         const task = {name: command.name, type: command.type, hash: '', stage: '', path: ''};
+
+        const template = state.getPreviousTemplate();
+        const templateRoot = template ? TemplateRoot.createFromContents(template) : TemplateRoot.createEmpty();
+        GlobalState.Init(state, templateRoot);
+
         const emptyTemplate = TemplateRoot.createEmpty();
 
         const plugin = PluginProvider.GetPlugin(command.type);

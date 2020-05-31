@@ -11,6 +11,7 @@ import { PersistedState } from '~state/persisted-state';
 import { S3StorageProvider } from '~state/storage-provider';
 import { OrganizationBinder } from '~org-binder/org-binder';
 import { IBuildTask } from '~org-binder/org-tasks-provider';
+import { GlobalState } from '~util/global-state';
 
 describe('when creating create change set command', () => {
     let command: CreateChangeSetCommand;
@@ -109,6 +110,14 @@ describe('when executing execute change set command', () => {
     afterEach(() => {
         sandbox.restore();
     });
+
+
+    test('global state is set', async () => {
+        await command.performCommand(commandArgs);
+        expect(GlobalState.State).toBeDefined();
+        expect(GlobalState.OrganizationTemplate).toBeDefined();
+    });
+
 
     test('s3 storage provider is used to get state', async () => {
         await command.performCommand(commandArgs);

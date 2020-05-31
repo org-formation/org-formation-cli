@@ -4,6 +4,7 @@ import { BaseCliCommand } from '~commands/base-command';
 import { DescribeStacksCommand, IDescribeStackCommandArgs } from '~commands/describe-stacks';
 import { ConsoleUtil } from '~util/console-util';
 import { PersistedState } from '~state/persisted-state';
+import { GlobalState } from '~util/global-state';
 
 describe('when creating describe stacks command', () => {
     let command: DescribeStacksCommand;
@@ -88,6 +89,7 @@ describe('when executing describe stacks command', () => {
     afterEach(() => {
         sandbox.restore();
     });
+
 
     test('calls getState to get stacks', async () => {
         await command.performCommand(commandArgs);
