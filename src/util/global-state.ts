@@ -1,6 +1,6 @@
-import { PersistedState } from "~state/persisted-state";
-import { TemplateRoot } from "~parser/parser";
-import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from "./aws-util";
+import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from './aws-util';
+import { PersistedState } from '~state/persisted-state';
+import { TemplateRoot } from '~parser/parser';
 
 export class GlobalState {
     public static State: PersistedState;

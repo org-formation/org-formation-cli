@@ -8,8 +8,8 @@ import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
 import { ListExportsInput } from 'aws-sdk/clients/cloudformation';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
-import { PasswordPolicyResource, Reference } from '~parser/model';
 import { GlobalState } from './global-state';
+import { PasswordPolicyResource, Reference } from '~parser/model';
 
 
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = 'OrganizationAccountAccessRole';
