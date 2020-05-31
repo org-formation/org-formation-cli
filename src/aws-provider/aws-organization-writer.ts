@@ -1,7 +1,7 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
-import { AwsUtil, passwordPolicyEquals } from '../util/aws-util';
+import { AwsUtil, passwordPolicyEquals, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsEvents } from './aws-events';
@@ -329,7 +329,13 @@ export class AwsOrganizationWriter {
                 }
             }
             if (resource.alias) {
-                await iam.createAccountAlias({ AccountAlias: resource.alias }).promise();
+                try {
+                    await iam.createAccountAlias({ AccountAlias: resource.alias }).promise();
+                } catch(err) {
+                    if (err && err.code === 'EntityAlreadyExists') {
+                        throw new OrgFormationError(`The account alias ${resource.alias} already exists. Most likely someone else already registered this alias to some other account.`);
+                    }
+                }
             }
         }
 
@@ -346,7 +352,7 @@ export class AwsOrganizationWriter {
                 if (masterAccountSupportLevel !== resource.supportLevel) {
                     throw new OrgFormationError(`account ${resource.logicalId} specifies support level ${resource.supportLevel}, expected is support level ${masterAccountSupportLevel}, based on the support subscription for the organization master account.`);
                 } else {
-                    const support = await AwsUtil.GetSupportService(this.organization.masterAccount.Id);
+                    const support = await AwsUtil.GetSupportService(this.organization.masterAccount.Id, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
                     const createCaseRequest: CreateCaseRequest = {
                         subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
                         communicationBody: `Hi AWS,

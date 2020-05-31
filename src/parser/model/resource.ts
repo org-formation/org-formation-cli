@@ -12,7 +12,7 @@ export interface Reference<TResource extends Resource> {
 export abstract class Resource {
     public readonly logicalId: string;
     public readonly type: OrgResourceTypes | string;
-    protected readonly root: TemplateRoot;
+    public readonly root: TemplateRoot;
     protected readonly resource: IResource;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {

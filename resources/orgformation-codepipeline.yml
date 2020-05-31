@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Organization Formation setup for CodeCommit, CodeBuild and CodePipeine'
+Description: 'Organization Formation setup for CodeCommit, CodeBuild and CodePipeline'
 
 Parameters:
 

@@ -247,7 +247,7 @@ export class AwsOrganizationReader {
     private static async getSupportLevelForAccount(that: AwsOrganizationReader, accountId: string): Promise<SupportLevel> {
         await that.organization.getValue();
         try {
-            const supportService = await AwsUtil.GetSupportService(accountId);
+            const supportService = await AwsUtil.GetSupportService(accountId, GlobalState.GetCrossAccountRoleName(accountId));
             const severityLevels = await supportService.describeSeverityLevels().promise();
             const critical = severityLevels.severityLevels.find(x => x.code === 'critical');
             if (critical !== undefined) {

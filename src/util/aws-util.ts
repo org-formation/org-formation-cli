@@ -53,8 +53,8 @@ export class AwsUtil {
         return AwsUtil.masterAccountId;
     }
 
-    public static async GetSupportService(accountId: string): Promise<Support> {
-        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' }, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
+    public static async GetSupportService(accountId: string, roleInTargetAccount: string): Promise<Support> {
+        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' }, roleInTargetAccount);
     }
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {

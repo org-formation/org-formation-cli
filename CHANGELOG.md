@@ -8,6 +8,8 @@ All notable changes to aws organization formation will be documented in this fil
 - Allow `Skip` task to be overwritten in dependent tasks
 - Force deployment of tasks by setting `ForceDeploy` attribute to true on command line, include task or task
 - Override verbose logging of tasks by setting `LogVerbose` attribute to true on include task or task
+- Have CodePipeline created by init-pipeline command 'poll for updates'
+- Allow for custom OrganizationAccountAccessRole name per `Account` or per `OrganizationRoot`
 
 
 **version 0.9.5**
