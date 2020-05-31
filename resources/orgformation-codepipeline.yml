@@ -235,7 +235,7 @@ Resources:
             OutputArtifacts:
             - Name: SourceArtifact
             Configuration:
-              PollForSourceChanges: 'false'
+              PollForSourceChanges: 'true'
               BranchName: master
               RepositoryName: !GetAtt OrgRepo.Name
             RunOrder: 1
