@@ -162,6 +162,7 @@ Account is an AWS Account within your organization.
 |Alias|IAM alias|This property is optional.<br/><br/>The [IAM Alias](https://docs.aws.amazon.com/IAM/latest/UserGuide/console_account-alias.html) associated with the account. Organization Formation supports a maximum of 1 IAM alias per account|
 |Tags|Dictionary|This property is optional.<br/><br/>Dictionary that contains the tags on the Account resource|
 |SupportLevel| 'enterprise' (or empty) |This property is optional.<br/><br/>When changed a ticket will be created to change the support level of the account.<br/><br/>Value must be same as master account support level in AWS|
+|OrganizationAccessRoleName| String | Name of the role that needs to be used when accessing this account. <br/><br/>If account gets created with a non-default value for this attribute the role will be created in the account. <br/><br/>Otherwise, when changing this value you are expected to set up the role yourself|
 
 **Note** When creating an account the RootEmail and AccountName are used to create the Account resource in AWS. The AccountId property can later be added as a means of ‘documentation’ but this is not required.
 
@@ -206,6 +207,7 @@ OrganizationRoot is the AWS Root Resource that functions like a top-level Organi
 |Property |Value|Remarks|
 |:---|:---|:---|
 |ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on all accounts (including master account) within the AWS Organization.|
+|DefaultOrganizationAccessRoleName| String | Default value for the OrganizationAccessRoleName attributes of accounts within the organization.<br/><br/>For more information see the [Account](#account) resources|
 
 **Note** Any account (or master account) within an AWS organization that is not part of an Organizational Unit will be a member of the Organizational Root.
 
