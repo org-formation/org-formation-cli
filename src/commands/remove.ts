@@ -24,9 +24,9 @@ export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
     public addOptions(command: Command): void {
         super.addOptions(command);
         command.option('--logical-name <tasks-logical-name>', 'logical name of the tasks file, allows multiple tasks files to be used together with --perform-cleanup action', 'default');
-        command.option('--type [type]', 'type of resource that needs to be removed');
+        command.option('--type <type>', 'type of resource that needs to be removed');
         command.option('--namespace <namespace>', 'namespace of resource that needs to be removed (if any)');
-        command.option('--name [name]', 'logical name of resource that needs to be removed');
+        command.option('--name <name>', 'logical name of resource that needs to be removed');
         command.option('--max-concurrent-tasks <max-concurrent-tasks>', 'maximum number of stacks to be executed concurrently', 1);
         command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed stacks after which execution stops', 0);
 
@@ -44,9 +44,15 @@ export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
         const state = await this.getState(command);
         const task = {name: command.name, type: command.type, hash: '', stage: '', path: ''};
 
-        const orgTemplate = JSON.parse(state.getPreviousTemplate()) as ITemplate;
-        delete orgTemplate.Resources;
-        const templateRoot = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
+        let templateRoot: TemplateRoot;
+        const prevTemplate = state.getPreviousTemplate();
+        if (prevTemplate) {
+            const orgTemplate = JSON.parse(prevTemplate ? prevTemplate : '{}') as ITemplate;
+            delete orgTemplate.Resources;
+            templateRoot = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
+        } else {
+            templateRoot = TemplateRoot.createEmpty();
+        }
 
         GlobalState.Init(state, templateRoot);
 
