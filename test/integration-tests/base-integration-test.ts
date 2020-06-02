@@ -17,7 +17,7 @@ export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
         expect(`${error}`).toBeUndefined();
       });
 
-    const logDebugMock = jest.spyOn(ConsoleUtil, 'LogDebug').mockImplementation();
+    //const logDebugMock = jest.spyOn(ConsoleUtil, 'LogDebug').mockImplementation();
     const logInfoMock = jest.spyOn(ConsoleUtil, 'LogInfo').mockImplementation();
     const logWarningMock = jest.spyOn(ConsoleUtil, 'LogWarning').mockImplementation();
 
@@ -32,7 +32,7 @@ export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
     const s3client = new S3({credentialProvider: AWS.config.credentialProvider});
 
     return {
-        logDebugMock,
+        logDebugMock: {} as any,
         logInfoMock,
         logWarningMock,
         stateBucketName,
