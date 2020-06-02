@@ -560,7 +560,9 @@ const performAndRetryIfNeeded = async <T extends unknown>(fn: () => Promise<T>):
             if (err && (err.code === 'ConcurrentModificationException' || err.code === 'TooManyRequestsException') && retryCount < 3) {
                 retryCount = retryCount + 1;
                 shouldRetry = true;
-                await sleep(retryCount * 1200);
+                const wait = Math.pow(retryCount, 2) + Math.random();
+                ConsoleUtil.LogDebug(`received retryable error ${err.code}. wait ${wait} and retry-count ${retryCount}`);
+                await sleep(wait * 1000);
                 continue;
             }
             throw err;
