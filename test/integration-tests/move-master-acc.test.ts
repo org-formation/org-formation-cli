@@ -18,35 +18,41 @@ describe('when moving master account around', () => {
     let masterAccountId: string;
 
     beforeAll(async () => {
-        context = await baseBeforeAll();
-        masterAccountId = await AwsUtil.GetMasterAccountId();
-        orgClient = new Organizations({ region: 'us-east-1' });
+        try{
+            context = await baseBeforeAll();
+            masterAccountId = await AwsUtil.GetMasterAccountId();
+            orgClient = new Organizations({ region: 'us-east-1' });
 
-        await context.prepareStateBucket(basePathForScenario + '0-state.json');
-        const { command } = context;
+            await context.prepareStateBucket(basePathForScenario + '0-state.json');
+            const { command } = context;
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
-        await sleepForTest(500);
-        organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterInit.initialize();
-        await sleepForTest(500);
+            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
+            await sleepForTest(500);
+            organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
+            await organizationAfterInit.initialize();
+            await sleepForTest(500);
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '2-move-to-ou-organization.yml'});
-        await sleepForTest(500);
-        organizationAfterMove1 = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterMove1.initialize();
-        await sleepForTest(500);
+            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '2-move-to-ou-organization.yml'});
+            await sleepForTest(500);
+            organizationAfterMove1 = new AwsOrganization(new AwsOrganizationReader(orgClient));
+            await organizationAfterMove1.initialize();
+            await sleepForTest(500);
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '3-move-to-other-ou-organization.yml'});
-        await sleepForTest(500);
-        organizationAfterMove2 = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterMove2.initialize();
-        await sleepForTest(500);
+            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '3-move-to-other-ou-organization.yml'});
+            await sleepForTest(500);
+            organizationAfterMove2 = new AwsOrganization(new AwsOrganizationReader(orgClient));
+            await organizationAfterMove2.initialize();
+            await sleepForTest(500);
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '4-back-to-org-root-organization.yml'});
-        await sleepForTest(500);
-        organizationAfterMove3 = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterMove3.initialize();
+            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '4-back-to-org-root-organization.yml'});
+            await sleepForTest(500);
+            organizationAfterMove3 = new AwsOrganization(new AwsOrganizationReader(orgClient));
+            await organizationAfterMove3.initialize();
+        } catch(err) {
+            console.log(`caught exception`);
+            console.log(err);
+            expect(err.message).toBe('no error');
+        }
     })
 
     test('after init the master account is not within an OU', async () => {
