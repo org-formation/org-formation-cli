@@ -20,6 +20,6 @@ describe('when org-formation perform-tasks fails', () => {
         // const error = response.stderr.toString();
         // expect(error).toContain('Template format error');
         // expect(error).toContain('XX::S3::Bucket');
-        // expect(error).toContain('failed executing stack invalid-template in account');
+        // expect(error).toContain('Stack invalid-template in account');
     });
 });

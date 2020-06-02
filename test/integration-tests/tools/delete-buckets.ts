@@ -1,9 +1,10 @@
-import { S3, SharedIniFileCredentials } from "aws-sdk";
+import { S3, SharedIniFileCredentials, Organizations } from "aws-sdk";
 
 const bucketsToDelete = /(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}/;
 const credentials = new SharedIniFileCredentials({profile: 'oc'});
 
-deleteBuckets().then(x=>console.log('done'));
+//deleteBuckets().then(x=>console.log('done'));
+stressOrganization().then(x=>console.log('done'));
 
 async function deleteBuckets(): Promise<void> {
     const s3 = new S3({credentials});
@@ -19,3 +20,15 @@ async function deleteBuckets(): Promise<void> {
         }
     }
 }
+
+async function stressOrganization(): Promise<void> {
+    const org = new Organizations({credentials, region: 'us-east-1'});
+    let i =0
+    while (i < 5) {
+        org.updateOrganizationalUnit( { OrganizationalUnitId: 'ou-kvte-6olfshzg', Name: 'test' + i }).promise().catch(err => {
+            console.log(err);
+        })
+        i++;
+    }
+}
+
