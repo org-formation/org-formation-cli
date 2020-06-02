@@ -1,6 +1,6 @@
 import { PerformTasksCommand, ValidateTasksCommand, RemoveCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from './base-integration-test';
-import { readFileSync } from 'fs';
+
 import { ChildProcessUtility } from '~util/child-process-util';
 import { GetObjectOutput } from 'aws-sdk/clients/s3';
 
@@ -14,6 +14,7 @@ describe('when calling org-formation perform tasks', () => {
     let spawnProcessAfterDeploy1Target: jest.MockContext<any, any>;
     let stateAfterDeploy1Target: GetObjectOutput;
     let spawnProcessAfterRerunFileWithoutChanges: jest.MockContext<any, any>;
+    let spawnProcessAfterRerunFileWithForceDeploy: jest.MockContext<any, any>;
     let spawnProcessAfterUpdateWithParams: jest.MockContext<any, any>;
     let stateAfterUpdateWithParams: GetObjectOutput;
     let stateAfterRemoveTask: GetObjectOutput;
@@ -36,10 +37,13 @@ describe('when calling org-formation perform tasks', () => {
         stateAfterDeploy2Targets = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
         spawnProcessMock = jest.spyOn(ChildProcessUtility, 'SpawnProcess');
 
-
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-serverless-workload-2targets.yml' });
         spawnProcessAfterRerunFileWithoutChanges = spawnProcessMock.mock;
+
+        spawnProcessMock.mockReset();
+        await PerformTasksCommand.Perform({...command, forceDeploy: true, tasksFile: basePathForScenario + '1-deploy-serverless-workload-2targets.yml' });
+        spawnProcessAfterRerunFileWithForceDeploy = spawnProcessMock.mock;
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-update-serverless-workload-with-parameters.yml' })
@@ -86,11 +90,11 @@ describe('when calling org-formation perform tasks', () => {
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
         expect(state.targets['serverless.com']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['102625093955']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['102625093955']['eu-central-1']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['340381375986']).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['340381375986']['eu-central-1']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['102625093955']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['102625093955']['eu-central-1']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['340381375986']).toBeDefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['340381375986']['eu-central-1']).toBeDefined();
     });
 
     // test('after deploy workload state contains tracked task', () => {
@@ -112,6 +116,12 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterRerunFileWithoutChanges.calls.length).toEqual(0);
     });
 
+    test('after rerunning same serverless com task without changing and force deploy, both targets get deployed', () => {
+        expect(spawnProcessAfterRerunFileWithForceDeploy.calls.length).toEqual(2);
+        expect(spawnProcessAfterDeploy2Targets.calls[0][0]).toEqual(expect.stringContaining('--region eu-central-1'));
+        expect(spawnProcessAfterDeploy2Targets.calls[1][0]).toEqual(expect.stringContaining('--region eu-central-1'));
+    });
+
     test('after deploy 1 targets sls remove was called', () => {
         expect(spawnProcessAfterDeploy1Target.calls.length).toBe(1);
         expect(spawnProcessAfterDeploy1Target.calls[0][0]).toEqual(expect.stringContaining('npx sls remove'));
@@ -127,7 +137,7 @@ describe('when calling org-formation perform tasks', () => {
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
-        expect(state.targets['serverless.com']['ServerlessWorkload']['102625093955']).toBeUndefined();
+        expect(state.targets['serverless.com']['default']['default']['ServerlessWorkload']['102625093955']).toBeUndefined();
     });
 
     test('after removing task sls remove was not called', () => {

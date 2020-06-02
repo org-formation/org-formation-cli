@@ -7,6 +7,7 @@ import { GenericTaskRunner } from '~core/generic-task-runner';
 import { TemplateRoot } from '~parser/parser';
 import { TestTemplates } from '../test-templates';
 import { ConsoleUtil } from '~util/console-util';
+import { GlobalState } from '~util/global-state';
 
 describe('when creating validate stacks command', () => {
     let command: ValidateStacksCommand;
@@ -93,6 +94,12 @@ describe('when validate stacks command', () => {
 
     afterEach(() => {
         sandbox.restore();
+    });
+
+    test('global state is set', async () => {
+        await command.performCommand(commandArgs);
+        expect(GlobalState.State).toBeDefined();
+        expect(GlobalState.OrganizationTemplate).toBeDefined();
     });
 
     test('calls getState and createTemplate', async () => {

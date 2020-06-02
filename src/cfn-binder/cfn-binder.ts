@@ -16,12 +16,15 @@ export class CloudFormationBinder {
                 private readonly template: TemplateRoot,
                 private readonly state: PersistedState,
                 private readonly parameters: Record<string, string | ICfnCopyValue> = {},
+                private readonly forceDeploy: boolean = false,
+                private readonly logVerbose: boolean = false,
+                private readonly taskRoleName: string = undefined,
                 private readonly terminationProtection = false,
                 private readonly stackPolicy: {} = undefined,
-                private readonly taskRoleName?: string,
                 private readonly customRoleName?: string,
-                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state)) {
-                this.masterAccount = template.organizationSection.masterAccount.accountId;
+                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state, logVerbose)) {
+
+        this.masterAccount = template.organizationSection.masterAccount.accountId;
 
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new OrgFormationError('state and template do not belong to the same organization');
@@ -115,14 +118,17 @@ export class CloudFormationBinder {
             }
             /* end move elsewhere */
 
-            if (!stored) {
+            if (this.forceDeploy === true) {
                 binding.action = 'UpdateOrCreate';
-                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - no existing target was found in state.`);
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - update was forced.`, this.logVerbose);
+            } else if (!stored) {
+                binding.action = 'UpdateOrCreate';
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - no existing target was found in state.`, this.logVerbose);
             } else if (stored.lastCommittedHash !== this.invocationHash) {
                 binding.action = 'UpdateOrCreate';
-                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash from state did not match.`);
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash from state did not match.`, this.logVerbose);
             } else {
-                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash matches stored target.`);
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash matches stored target.`, this.logVerbose);
             }
             result.push(binding);
         }
@@ -159,7 +165,7 @@ export class CloudFormationBinder {
                     accountDependencies: [],
                 } as ICfnBinding);
 
-                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to Delete - target found in state but not in binding.`);
+                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to Delete - target found in state but not in binding.`, this.logVerbose);
              }
         }
         return result;

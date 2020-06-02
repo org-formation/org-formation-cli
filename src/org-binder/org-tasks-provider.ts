@@ -247,7 +247,7 @@ export class TaskProvider {
             tasks.push(attachSCPTask);
         }
 
-        const previousAccounts = this.resolveIDs(previousResource.accounts);
+        const previousAccounts = this.resolveIDs(previousResource === undefined ? [] : previousResource.accounts);
         const currentAccounts = this.resolveIDs(resource.accounts);
         for (const detachedAccount of previousAccounts.physicalIds.filter(x => !currentAccounts.physicalIds.includes(x))) {
             const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, fnGetPhysicalId);
@@ -262,7 +262,7 @@ export class TaskProvider {
             tasks.push(attachAccountTask);
         }
 
-        const previousChildOUs = this.resolveIDs(previousResource.organizationalUnits);
+        const previousChildOUs = this.resolveIDs(previousResource === undefined ? [] : previousResource.organizationalUnits);
         const currentChildOUs = this.resolveIDs(resource.organizationalUnits);
         for (const detachedChildOu of previousChildOUs.physicalIds.filter(x => !currentChildOUs.physicalIds.includes(x))) {
             const detachChildOuTask: IBuildTask = this.createDeatchChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);

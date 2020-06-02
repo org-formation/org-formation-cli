@@ -174,13 +174,15 @@ export interface IBuildTaskConfiguration {
     FilePath?: string;
     Skip?: boolean;
     TaskRoleName?: string;
+    ForceDeploy?: boolean;
+    LogVerbose?: boolean;
 }
 
 
 export interface IBuildTask {
     name: string;
     type: string;
-    skip: boolean;
+    skip?: boolean;
     isDependency(task: IBuildTask): boolean;
     childTasks: IBuildTask[];
     perform(): Promise<void>;

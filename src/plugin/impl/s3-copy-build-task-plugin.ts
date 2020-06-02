@@ -2,7 +2,7 @@ import path from 'path';
 import { existsSync, readFileSync, statSync } from 'fs';
 import { PutObjectRequest, DeleteObjectRequest } from 'aws-sdk/clients/s3';
 import { IPluginTask, IPluginBinding } from '../plugin-binder';
-import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin } from '../plugin';
+import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin, CommonTaskAttributeNames } from '../plugin';
 import { OrgFormationError } from '../../../src/org-formation-error';
 import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IPerformTasksCommandArgs } from '~commands/index';
@@ -16,8 +16,8 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
     typeForTask = 'copy-to-s3';
 
     convertToCommandArgs(config: IS3CopyBuildTaskConfig, command: IPerformTasksCommandArgs): IS3CopyCommandArgs {
-        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'LocalPath', 'RemotePath', 'DependsOn', 'Skip', 'Type',
-            'FilePath', 'ZipBeforePut', 'OrganizationBinding', 'TaskRoleName', 'AdditionalCdkArguments', 'InstallCommand');
+        Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'LocalPath', 'RemotePath',
+            'FilePath', 'ZipBeforePut');
 
 
         if (!config.LocalPath) {
@@ -75,6 +75,8 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             zipBeforePut: command.zipBeforePut,
             hash: hashOfTask,
             taskRoleName: command.taskRoleName,
+            forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
+            logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
         };
     }
 

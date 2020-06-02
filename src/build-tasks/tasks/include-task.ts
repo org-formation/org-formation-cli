@@ -20,17 +20,25 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
         const taskFilePath = path.join(dir, config.Path);
         const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
         const buildConfig = new BuildConfiguration(taskFilePath, parameters);
-        const childTasks = buildConfig.enumBuildTasks(command as IPerformTasksCommandArgs);
+
+        const commandForInclude: IPerformTasksCommandArgs = {
+            ...command,
+            logicalNamePrefix: this.createLogicalNamePrefix(command.logicalNamePrefix, config.LogicalName),
+            forceDeploy: typeof config.ForceDeploy === 'boolean' ? config.ForceDeploy : command.forceDeploy,
+            verbose: typeof config.LogVerbose === 'boolean' ? config.LogVerbose : command.verbose,
+        };
+
+        const childTasks = buildConfig.enumBuildTasks(commandForInclude);
 
         return {
             type: config.Type,
             name: config.LogicalName,
             childTasks,
-            skip: config.Skip === true,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 ConsoleUtil.LogInfo(`Executing: ${config.Type} ${taskFilePath}.`);
-                await BuildRunner.RunTasks(childTasks, config.MaxConcurrentTasks, config.FailedTaskTolerance);
+                await BuildRunner.RunTasks(childTasks, commandForInclude.verbose === true, config.MaxConcurrentTasks, config.FailedTaskTolerance);
             },
         };
     }
@@ -45,20 +53,32 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
         const taskFilePath = path.join(dir, config.Path);
         const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
         const buildConfig = new BuildConfiguration(taskFilePath, parameters);
-        const childTasks = buildConfig.enumValidationTasks(command as IPerformTasksCommandArgs);
+
+        const commandForInclude: IPerformTasksCommandArgs = {
+            ...command,
+            logicalNamePrefix: this.createLogicalNamePrefix(command.logicalNamePrefix, config.LogicalName),
+            verbose: typeof config.LogVerbose === 'boolean' ? config.LogVerbose : command.verbose,
+        };
+
+        const childTasks = buildConfig.enumValidationTasks(commandForInclude);
 
         return {
             type: config.Type,
             name: config.LogicalName,
-            skip: config.Skip === true,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks,
             isDependency: (): boolean => false,
-            perform: async (): Promise<void> => await BuildRunner.RunValidationTasks(childTasks, 1, 999),
+            perform: async (): Promise<void> => await BuildRunner.RunValidationTasks(childTasks, commandForInclude.verbose === true, 1, 999),
         };
     }
 
     createTaskForCleanup(): IBuildTask | undefined {
         return undefined;
+    }
+
+
+    createLogicalNamePrefix(logicalNamePrefixOfParent: string | undefined, logicalNameOfParent: string): string {
+        return `${logicalNamePrefixOfParent === undefined ? '' : logicalNamePrefixOfParent + '-'}${logicalNameOfParent}`;
     }
 
 }
@@ -67,4 +87,6 @@ export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {
     Parameters: Record<string, any>;
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
+    ForceDeploy?: boolean;
+    LogVerbose?: boolean;
 }

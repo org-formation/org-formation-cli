@@ -4,6 +4,9 @@ import { OrgFormationError } from '~org-formation-error';
 export class GenericTaskRunner {
 
     public static async RunTasks<TTask>(tasks: IGenericTaskInternal<TTask>[], delegate: ITaskRunnerDelegates<TTask>): Promise<void> {
+        if (delegate.maxConcurrentTasks === 0) {
+            throw new OrgFormationError('Cannot run tasks with 0 concurrent tasks.');
+        }
         let remainingTasks: IGenericTaskInternal<TTask>[] = tasks;
         let tasksWithDependencies: IGenericTaskInternal<TTask>[] = [];
         let runningTasks: IGenericTaskInternal<TTask>[] = [];
@@ -30,9 +33,9 @@ export class GenericTaskRunner {
                         continue;
                     }
 
-                    const skippedDependency = tasksSkipped.filter(x => task.isDependency(x));
+                    const skippedDependency = tasksSkipped.filter(x => task.isDependency(x) && (x as any).type !== 'update-organization');
                     if (skippedDependency.length > 0) {
-                        if (task.skip !== true) {
+                        if (typeof task.skip !== 'boolean') {
                             const skippedDependencyNames = skippedDependency.map(() =>delegate.getName(task)).join(', ');
                             ConsoleUtil.LogInfo(`Overriding skipping configuration for task ${delegate.getName(task)} because of dependency with that was skipped. dependencies: ${skippedDependencyNames}.`);
                             task.skip = true;
@@ -88,7 +91,7 @@ export class GenericTaskRunner {
                 ConsoleUtil.LogWarning('========================');
                 ConsoleUtil.LogWarning('');
             } else {
-                ConsoleUtil.LogDebug('Done performing task(s).');
+                ConsoleUtil.LogDebug('Done performing task(s).', delegate.logVerbose);
             }
 
         } catch (err) {
@@ -144,7 +147,7 @@ export class GenericTaskRunner {
         task.skipped = false;
         do {
             try {
-                ConsoleUtil.LogDebug(`${delegate.getName(task)} ${delegate.getVerb(task)} starting...`);
+                ConsoleUtil.LogDebug(`${delegate.getName(task)} ${delegate.getVerb(task)} starting...`, delegate.logVerbose);
                 retryWhenRateLimited = false;
                 task.running = true;
                 task.promise = task.perform();
@@ -170,6 +173,7 @@ export class GenericTaskRunner {
 }
 
 export interface ITaskRunnerDelegates<TTask> {
+    logVerbose: boolean;
     maxConcurrentTasks: number;
     failedTasksTolerance: number;
     getName(task: IGenericTaskInternal<TTask>): string;

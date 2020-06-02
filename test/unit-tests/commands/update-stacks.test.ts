@@ -9,6 +9,7 @@ import { AwsUtil } from '~util/aws-util';
 import { PersistedState } from '~state/persisted-state';
 import { ICfnTask } from '~cfn-binder/cfn-task-provider';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
+import { GlobalState } from '~util/global-state';
 
 describe('when creating update stacks command', () => {
     let command: UpdateStacksCommand;
@@ -154,6 +155,12 @@ describe('when executing update-stacks command', () => {
         sandbox.restore();
     });
 
+    test('global state is set', async () => {
+        await command.performCommand(commandArgs);
+        expect(GlobalState.State).toBeDefined();
+        expect(GlobalState.OrganizationTemplate).toBeDefined();
+    });
+
     test('s3 storage provider is used to get state', async () => {
         await command.performCommand(commandArgs);
         expect(storageProviderGet.callCount).toBe(1);
@@ -176,8 +183,9 @@ describe('when executing update-stacks command', () => {
         expect(runTasks.callCount).toBe(1);
         expect(Array.isArray(runTasks.getCall(0).args[0])).toBeTruthy();
         expect(runTasks.getCall(0).args[1]).toBe(commandArgs.stackName);
-        expect(runTasks.getCall(0).args[2]).toBe(commandArgs.maxConcurrentStacks);
-        expect(runTasks.getCall(0).args[3]).toBe(commandArgs.failedStacksTolerance)
+        expect(runTasks.getCall(0).args[2]).toBe(false);
+        expect(runTasks.getCall(0).args[3]).toBe(commandArgs.maxConcurrentStacks);
+        expect(runTasks.getCall(0).args[4]).toBe(commandArgs.failedStacksTolerance)
     });
 
     test('state is saved', async () => {

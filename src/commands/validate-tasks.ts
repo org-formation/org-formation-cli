@@ -37,6 +37,6 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
 
         const validationTasks = config.enumValidationTasks(command);
-        await BuildRunner.RunValidationTasks(validationTasks, 1, 999);
+        await BuildRunner.RunValidationTasks(validationTasks, command.verbose === true ,1 , 999);
     }
 }

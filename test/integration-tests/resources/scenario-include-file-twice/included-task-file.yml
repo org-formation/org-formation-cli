@@ -1,0 +1,23 @@
+Parameters:
+  resourcePrefix:
+    Type: String
+    Default: my
+
+  bucketName:
+    Type: String
+
+Template:
+  Type: update-stacks
+  Template: resources/bucket.yml
+  StackName: !Sub ${resourcePrefix}-my-stack-name
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+
+CopyS3File:
+  Type: copy-to-s3
+  RemotePath: !Sub s3://${bucketName}/${resourcePrefix}-file.txt
+  LocalPath: ./resources/file.txt
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: eu-central-1

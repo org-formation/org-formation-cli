@@ -1,6 +1,6 @@
 import path from 'path';
 import { existsSync } from 'fs';
-import { IBuildTaskPlugin, IBuildTaskPluginCommandArgs } from '../plugin';
+import { IBuildTaskPlugin, IBuildTaskPluginCommandArgs, CommonTaskAttributeNames } from '../plugin';
 import { OrgFormationError } from '../../../src/org-formation-error';
 import { ConsoleUtil } from '../../util/console-util';
 import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
@@ -21,9 +21,9 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
     convertToCommandArgs(config: ICdkBuildTaskConfig, command: IPerformTasksCommandArgs): ICdkCommandArgs {
 
-        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'Path', 'DependsOn', 'Skip', 'Type',
-            'FilePath', 'RunNpmInstall', 'RunNpmBuild', 'FailedTaskTolerance', 'MaxConcurrentTasks', 'OrganizationBinding',
-            'TaskRoleName', 'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters');
+        Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'Path',
+            'FilePath', 'RunNpmInstall', 'RunNpmBuild', 'FailedTaskTolerance', 'MaxConcurrentTasks',
+            'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -99,6 +99,8 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             customDeployCommand: command.customDeployCommand,
             customRemoveCommand: command.customRemoveCommand,
             parameters: command.parameters,
+            forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
+            logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
         };
     }
 
@@ -124,7 +126,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const env = CdkBuildTaskPlugin.GetEnvironmentVariables(target);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env, task.logVerbose);
     }
 
     async performRemove(binding: IPluginBinding<ICdkTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -150,7 +152,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const env = CdkBuildTaskPlugin.GetEnvironmentVariables(target);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env, task.logVerbose);
     }
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ICdkTask>): Promise<void> {

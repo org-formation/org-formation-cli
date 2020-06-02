@@ -4,6 +4,7 @@ import { BaseCliCommand, ICommandArgs } from './base-command';
 import { UpdateOrganizationCommand } from './update-organization';
 import { TemplateRoot } from '~parser/parser';
 import { ChangeSetProvider } from '~change-set/change-set-provider';
+import { GlobalState } from '~util/global-state';
 
 const commandName = 'execute-change-set <change-set-name>';
 const commandDescription = 'execute previously created change set';
@@ -31,6 +32,9 @@ export class ExecuteChangeSetCommand extends BaseCliCommand<IExecuteChangeSetCom
         }
         const template = new TemplateRoot(changeSetObj.template, './');
         const state = await this.getState(command);
+
+        GlobalState.Init(state, template);
+
         const binder = await this.getOrganizationBinder(template, state);
         const tasks = binder.enumBuildTasks();
         const changeSet = ChangeSetProvider.CreateChangeSet(tasks, changeSetName);

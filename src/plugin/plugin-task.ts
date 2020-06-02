@@ -16,11 +16,12 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
 
     createTask(config: TBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
 
-        return {
+        const forceDeploy = command.forceDeploy;
+        const task: IBuildTask = {
             type: config.Type,
             name: config.LogicalName,
-            physicalIdForCleanup: config.LogicalName,
-            skip: config.Skip === true,
+            physicalIdForCleanup: command.logicalNamePrefix + '/' + config.LogicalName,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
@@ -33,17 +34,28 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
                 if (commandArgs.failedTolerance === undefined) {
                     commandArgs.failedTolerance = 0;
                 }
+                if (typeof config.LogVerbose === 'boolean') {
+                    commandArgs.verbose = config.LogVerbose;
+                }
+                if (typeof forceDeploy === 'boolean') {
+                    commandArgs.forceDeploy = forceDeploy;
+                }
+                if (typeof config.ForceDeploy === 'boolean') {
+                    commandArgs.forceDeploy = config.ForceDeploy;
+                }
                 const pluginCommand = new PluginCliCommand<TCommandArgs, TTask>(this.plugin);
                 await pluginCommand.performCommand(commandArgs);
             },
         };
+
+        return task;
     }
 
     createTaskForValidation(config: TBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
         return {
             type: config.Type,
             name: config.LogicalName,
-            skip: config.Skip === true,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
@@ -62,16 +74,28 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
                 if (!command.performCleanup) {
+                    let additionalArgs = await BaseCliCommand.CreateAdditionalArgsForInvocation();
+                    let namespace: string;
+                    let name = physicalId;
+                    if (physicalId.indexOf('/') > 0) {
+                        namespace = physicalId.substring(0, physicalId.indexOf('/'));
+                        name = physicalId.substring(1 + physicalId.indexOf('/'));
 
-                    const additionalArgs = await BaseCliCommand.CreateAdditionalArgsForInvocation();
+                        additionalArgs = '--namespace ' + name + ' ' + additionalArgs;
+                    }
                     ConsoleUtil.LogWarning('Hi there, it seems you have removed a task!');
                     ConsoleUtil.LogWarning(`The task was called ${logicalId} and used to deploy a ${this.plugin.type} workload.`);
                     ConsoleUtil.LogWarning('By default these tasks don\'t get cleaned up. You can change this by adding the option --perform-cleanup.');
                     ConsoleUtil.LogWarning('You can remove the project manually by running the following command:');
                     ConsoleUtil.LogWarning('');
-                    ConsoleUtil.LogWarning(`    org-formation remove --type ${this.plugin.type} --name ${logicalId} ${additionalArgs}`);
+                    ConsoleUtil.LogWarning(`    org-formation remove --type ${this.plugin.type} --name ${name} ${additionalArgs}`);
                     ConsoleUtil.LogWarning('');
                     ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
+
+                    for(const target of command.state.enumGenericTargets(this.plugin.type, command.logicalName, namespace, logicalId)) {
+                        target.lastCommittedHash = 'deleted';
+                        command.state.setGenericTarget(target);
+                    }
                 } else {
                     ConsoleUtil.LogInfo(`executing: ${this.type} ${logicalId}`);
                     await RemoveCommand.Perform({ ...command,  name: logicalId, type: this.plugin.type, maxConcurrentTasks: 10, failedTasksTolerance: 10 });

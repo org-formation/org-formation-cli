@@ -3,6 +3,7 @@ import { ConsoleUtil } from '../util/console-util';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { ChangeSetProvider } from '~change-set/change-set-provider';
 import { TemplateRoot } from '~parser/parser';
+import { GlobalState } from '~util/global-state';
 
 const commandName = 'create-change-set <templateFile>';
 const commandDescription = 'create change set that can be reviewed and executed later';
@@ -20,8 +21,10 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
 
     public async performCommand(command: ICreateChangeSetCommandArgs): Promise<void> {
         const template = TemplateRoot.create(command.templateFile);
-
         const state = await this.getState(command);
+
+        GlobalState.Init(state, template);
+
         const binder = await this.getOrganizationBinder(template, state);
 
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command);

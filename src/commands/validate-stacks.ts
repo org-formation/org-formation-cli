@@ -5,6 +5,7 @@ import { IUpdateStacksCommandArgs, UpdateStacksCommand } from './update-stacks';
 import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { CfnValidateTaskProvider } from '~cfn-binder/cfn-validate-task-provider';
+import { GlobalState } from '~util/global-state';
 
 const commandName = 'validate-stacks <templateFile>';
 const commandDescription = 'validates the CloudFormation templates that will be generated';
@@ -29,15 +30,16 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         const templateFile = command.templateFile;
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);
+        GlobalState.Init(state, template);
         ConsoleUtil.state = state;
         const parameters = this.parseCfnParameters(command.parameters);
         const stackPolicy = command.stackPolicy;
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, false, stackPolicy);
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, false, command.verbose === true, command.taskRoleName, false, stackPolicy);
 
         const bindings = cfnBinder.enumBindings();
 
         const validationTaskProvider = new CfnValidateTaskProvider();
         const tasks = validationTaskProvider.enumTasks(bindings);
-        await CfnTaskRunner.ValidateTemplates(tasks);
+        await CfnTaskRunner.ValidateTemplates(tasks, command.verbose === true);
     }
 }

@@ -6,6 +6,7 @@ import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/parser';
 import { Validator } from '~parser/validator';
+import { GlobalState } from '~util/global-state';
 
 const commandName = 'update-stacks <templateFile>';
 const commandDescription = 'update CloudFormation resources in accounts';
@@ -116,14 +117,16 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseCfnParameters(command.parameters);
         const state = await this.getState(command);
-        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, terminationProtection, stackPolicy, taskRoleName, cloudFormationRoleName);
+        GlobalState.Init(state, template);
+
+        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, cloudFormationRoleName);
 
         const cfnTasks = cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
             ConsoleUtil.LogInfo(`Stack ${stackName} already up to date.`);
         } else {
             try {
-                await CfnTaskRunner.RunTasks(cfnTasks, stackName, command.maxConcurrentStacks, command.failedStacksTolerance);
+                await CfnTaskRunner.RunTasks(cfnTasks, stackName, command.verbose === true, command.maxConcurrentStacks, command.failedStacksTolerance);
             } finally {
                 await state.save();
             }
@@ -144,6 +147,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     parameters?: string | {};
     terminationProtection?: boolean;
     updateProtection?: boolean;
+    forceDeploy?: boolean;
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
     cloudFormationRoleName?: string;

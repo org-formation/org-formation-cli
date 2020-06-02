@@ -5,7 +5,6 @@ import { OrgResourceTypes } from '~parser/model';
 
 export class PersistedState {
     public static async Load(provider: IStorageProvider, masterAccountId: string): Promise<PersistedState> {
-
         try {
             const contents = await provider.get();
             let object = {} as IState;
@@ -98,15 +97,27 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public getGenericTarget<ITaskDefinition>(type: string, logicalName: string, accountId: string, region?: string): IGenericTarget<ITaskDefinition> | undefined {
+    public getGenericTarget<ITaskDefinition>(type: string, organizationLogicalName: string, logicalNamespace: string | undefined, logicalName: string, accountId: string, region?: string): IGenericTarget<ITaskDefinition> | undefined {
         if (!region) {
             region = 'no-region';
+        }
+
+        if (logicalNamespace === undefined) {
+            logicalNamespace = 'default';
         }
 
         const targetsOfType = this.state.targets?.[type];
         if (!targetsOfType) { return undefined; }
 
-        const targetsWithName = targetsOfType[logicalName];
+        const targetsWithOrganization = targetsOfType[organizationLogicalName];
+        if (!targetsWithOrganization) { return undefined; }
+
+
+        const targetsWithNamespace = targetsWithOrganization[logicalNamespace];
+        if (!targetsWithNamespace) { return undefined; }
+
+
+        const targetsWithName = targetsWithNamespace[logicalName];
         if (!targetsWithName) { return undefined; }
 
         const targetsForAccount = targetsWithName[accountId];
@@ -116,6 +127,9 @@ export class PersistedState {
     }
 
     public setGenericTarget<ITaskDefinition>(target: IGenericTarget<ITaskDefinition>): void {
+
+        const namespace = target.logicalNamePrefix ?? 'default';
+
         if (this.state.targets === undefined) {
             this.state.targets = {};
         }
@@ -125,9 +139,20 @@ export class PersistedState {
             targetsOfType = this.state.targets[target.targetType] = {};
         }
 
-        let targetsWithName = targetsOfType[target.logicalName];
+
+        let targetsOfOrganization = targetsOfType[target.organizationLogicalName];
+        if (!targetsOfOrganization) {
+            targetsOfOrganization = targetsOfType[target.organizationLogicalName] = {};
+        }
+
+        let targetsWithNameSpace = targetsOfOrganization[namespace];
+        if (!targetsWithNameSpace) {
+            targetsWithNameSpace = targetsOfOrganization[namespace] = {};
+        }
+
+        let targetsWithName = targetsWithNameSpace[target.logicalName];
         if (!targetsWithName) {
-            targetsWithName = targetsOfType[target.logicalName] = {};
+            targetsWithName = targetsWithNameSpace[target.logicalName] = {};
         }
 
         let targetsForAccount = targetsWithName[target.accountId];
@@ -143,7 +168,7 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public removeGenericTarget(type: string, logicalName: string, accountId: string, region?: string): void {
+    public removeGenericTarget(type: string, organizationLogicalName: string, namespace = 'default', logicalName: string, accountId: string, region?: string): void {
 
         if (!region) {
             region = 'no-region';
@@ -153,7 +178,17 @@ export class PersistedState {
         if (!root) {
             return;
         }
-        const names = root[type];
+        const organizations = root[type];
+        if (!organizations) {
+            return;
+        }
+
+        const namespaces = organizations[organizationLogicalName];
+        if (!namespaces) {
+            return;
+        }
+
+        const names = namespaces[namespace];
         if (!names) {
             return;
         }
@@ -177,7 +212,15 @@ export class PersistedState {
                 delete names[logicalName];
 
                 if (Object.keys(names).length === 0) {
-                    delete root[type];
+                    delete namespaces[namespace];
+
+                    if (Object.keys(namespaces).length === 0) {
+                        delete organizations[organizationLogicalName];
+
+                        if (Object.keys(organizations).length === 0) {
+                            delete root[type];
+                        }
+                    }
                 }
             }
         }
@@ -311,13 +354,23 @@ export class PersistedState {
     }
 
 
-    public enumGenericTargets<ITaskDefinition>(type: string, name: string): IGenericTarget<ITaskDefinition>[] {
+    public enumGenericTargets<ITaskDefinition>(type: string, organizationName: string, namespace = 'default', name: string): IGenericTarget<ITaskDefinition>[] {
 
         if (this.state.targets === undefined) {
             return [];
         }
-        const nameDict = this.state.targets[type];
-        if (!nameDict) { return []; }
+        const organizationDict = this.state.targets[type];
+        if (!organizationDict) { return []; }
+
+        const namespaceDict = organizationDict[organizationName];
+        if (namespaceDict === undefined) {
+            return [];
+        }
+
+        const nameDict = namespaceDict[namespace];
+        if (nameDict === undefined) {
+            return [];
+        }
 
         const accountDict = nameDict[name];
         if (accountDict === undefined) {
@@ -418,13 +471,38 @@ export class PersistedState {
         this.dirty = false;
     }
 
+
+    performUpdateToVersion2IfNeeded(): void {
+        const storedVersion = this.getValue('state-version');
+        if (storedVersion === undefined) {
+            this.state.trackedTasks = {};
+            if (this.state.targets) {
+                for(const root of Object.entries(this.state.targets)) {
+                    for(const logicalName of Object.entries(root[1])) {
+                        for(const account of Object.entries(logicalName[1])) {
+                            for(const region of Object.entries(account[1])) {
+                                if ((region[1] as any).lastCommittedHash) {
+                                    delete root[1][logicalName[0]];
+                                    break;
+                                }
+                                break;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            this.putValue('state-version', '2');
+        }
+    }
+
     public toJson(): string {
         return JSON.stringify(this.state, null, 2);
     }
 }
 
 export interface IState {
-    targets?: Record<string, Record<string, Record<string, Record<string, IGenericTarget<unknown>>>>>;
+    targets?: Record<string, Record<string, Record<string, Record<string, Record<string, Record<string, IGenericTarget<unknown>>>>>>>;
     masterAccountId: string;
     bindings: Record<string, Record<string, IBinding>>;
     stacks: Record<string, Record<string, Record<string, ICfnTarget>>>;
@@ -457,6 +535,8 @@ export interface IGenericTarget<TTaskDefinition> {
     region: string;
     accountId: string;
     logicalName: string;
+    organizationLogicalName: string;
+    logicalNamePrefix?: string;
     lastCommittedHash: string;
     definition: TTaskDefinition;
 }

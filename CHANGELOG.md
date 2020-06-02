@@ -1,8 +1,18 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**version 0.9.5**
+**unreleased**
+- Fixed issue where `perform-task` parameters are passed to `update-stacks` task when no parameters where specified on task.
+- Fixed issue managing state for plugins (`copy-to-s3`, `update-cdk`, `update-serverless`) that would be included with the same logical name.
+- Allow `update-organization` task to be skipped without skipping all other tasks in file
+- Allow `Skip` task to be overwritten in dependent tasks
+- Force deployment of tasks by setting `ForceDeploy` attribute to true on command line, include task or task
+- Override verbose logging of tasks by setting `LogVerbose` attribute to true on include task or task
+- Have CodePipeline created by `init-pipeline` command 'poll for updates'
+- Allow for custom OrganizationAccountAccessRole name per `Account` or per `OrganizationRoot`
 
+
+**version 0.9.5**
 - Added `StackPolicy` attribute to update-stacks tasks
 - Added `UpdateProtection` attribute to update-stacks tasks and update stacks command.
 - Added `Skip` attribute to any task (will skip task execution but continue, also with dependent tasks)

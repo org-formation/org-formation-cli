@@ -8,6 +8,7 @@ import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
 import { ListExportsInput } from 'aws-sdk/clients/cloudformation';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
+import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 
 
@@ -52,23 +53,23 @@ export class AwsUtil {
         return AwsUtil.masterAccountId;
     }
 
-    public static async GetSupportService(accountId: string): Promise<Support> {
-        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' }, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
+    public static async GetSupportService(accountId: string, roleInTargetAccount: string): Promise<Support> {
+        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' }, roleInTargetAccount);
     }
 
-    public static GetRoleArn(accountId: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): string {
+    public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
         return 'arn:aws:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
-    public static async GetS3Service(accountId: string, region: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): Promise<S3> {
+    public static async GetS3Service(accountId: string, region: string, roleInTargetAccount?: string): Promise<S3> {
         return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region }, roleInTargetAccount);
     }
 
-    public static async GetIamService(accountId: string): Promise<IAM> {
-        return await AwsUtil.GetOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, accountId, {}, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
+    public static async GetIamService(accountId: string, roleInTargetAccount?: string): Promise<IAM> {
+        return await AwsUtil.GetOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, accountId, {}, roleInTargetAccount);
     }
 
-    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS): Promise<CloudFormation> {
+    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string): Promise<CloudFormation> {
         return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId,  `${accountId}/${region}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
     }
 
@@ -86,6 +87,9 @@ export class AwsUtil {
         const config = clientConfig;
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         if (accountId !== masterAccountId) {
+            if (typeof roleInTargetAccount !== 'string') {
+                roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
+            }
             const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
             config.credentials = credentialOptions;
         }
@@ -129,7 +133,7 @@ export class AwsUtil {
     private static S3ServiceCache: Record<string, S3> = {};
 }
 
-export const passwordPolicEquals = (passwordPolicy: IAM.PasswordPolicy, pwdPolicyResource: Reference<PasswordPolicyResource>): boolean => {
+export const passwordPolicyEquals = (passwordPolicy: IAM.PasswordPolicy, pwdPolicyResource: Reference<PasswordPolicyResource>): boolean => {
 
     if (!passwordPolicy && (!pwdPolicyResource || !pwdPolicyResource.TemplateResource)) {
         return true; // equal

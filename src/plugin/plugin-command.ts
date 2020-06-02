@@ -25,7 +25,7 @@ export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, 
         const task = this.plugin.convertToTask(command, hash);
         const state = await this.getState(command);
         const template = TemplateRoot.create(command.organizationFile, {}, command.organizationFileHash);
-        const binder = new PluginBinder<TTask>(task, state, template, command.organizationBinding, this.plugin);
+        const binder = new PluginBinder<TTask>(task, command.logicalName, command.logicalNamePrefix, state, template, command.organizationBinding, this.plugin);
         const tasks = binder.enumTasks();
 
 
@@ -33,7 +33,7 @@ export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, 
             ConsoleUtil.LogInfo(`${this.plugin.type} workload ${command.name} already up to date.`);
         } else {
             try {
-                await DefaultTaskRunner.RunTasks(tasks, command.name, command.maxConcurrent, command.failedTolerance);
+                await DefaultTaskRunner.RunTasks(tasks, command.name, command.verbose === true, command.maxConcurrent, command.failedTolerance);
             } finally {
                 await state.save();
             }

@@ -13,6 +13,7 @@ describe('when calling org-formation perform tasks', () => {
      let mockAfterInitialUpload: jest.MockContext<any, any>;
      let mockAfterAfterUpdateWithoutChanging: jest.MockContext<any, any>;
      let mockAfterAfterUpdateWithChanging: jest.MockContext<any, any>;
+     let mockAfterAfterUpdateWithForceDeploy: jest.MockContext<any, any>;
 
     beforeAll(async () => {
         context = await baseBeforeAll();
@@ -34,6 +35,9 @@ describe('when calling org-formation perform tasks', () => {
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
         mockAfterAfterUpdateWithChanging = performCreateOrUpdateMock.mock;
 
+        performCreateOrUpdateMock.mockReset();
+        await PerformTasksCommand.Perform({...command, forceDeploy: true, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
+        mockAfterAfterUpdateWithForceDeploy = performCreateOrUpdateMock.mock;
     });
 
     test('perform create or update is called after initial upload', () => {
@@ -55,6 +59,10 @@ describe('when calling org-formation perform tasks', () => {
 
     test('perform create or update is called after file did change', () => {
         expect(mockAfterAfterUpdateWithChanging.calls.length).toBe(1);
+    });
+
+    test('perform create or update is called when deploy is forced', () => {
+        expect(mockAfterAfterUpdateWithForceDeploy.calls.length).toBe(1);
     });
 
     afterAll(async () => {

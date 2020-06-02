@@ -4,12 +4,12 @@ import { GenericTaskRunner, ITaskRunnerDelegates } from '~core/generic-task-runn
 
 export class CfnTaskRunner {
 
-    public static async RunTasks(tasks: ICfnTask[], stackName: string, maxConcurrentTasks: number, failedTasksTolerance: number): Promise<void> {
+    public static async RunTasks(tasks: ICfnTask[], stackName: string, logVerbose: boolean, maxConcurrentTasks: number, failedTasksTolerance: number): Promise<void> {
         if (maxConcurrentTasks === undefined) {
             throw new OrgFormationError('maxConcurrentTasks must not be undefined');
         }
         if (failedTasksTolerance === undefined) {
-            throw new OrgFormationError('maxConcurrentTasks must not be undefined');
+            throw new OrgFormationError('failedTasksTolerance must not be undefined');
         }
 
         const delegate: ITaskRunnerDelegates<ICfnTask> = {
@@ -17,17 +17,19 @@ export class CfnTaskRunner {
             getVerb: task => `${task.action === 'Delete' ? 'delete' : 'update'}`,
             maxConcurrentTasks,
             failedTasksTolerance,
+            logVerbose,
         };
         await GenericTaskRunner.RunTasks<ICfnTask>(tasks, delegate);
     }
 
-    public static async ValidateTemplates(tasks: ICfnTask[]): Promise<void> {
+    public static async ValidateTemplates(tasks: ICfnTask[], logVerbose: boolean): Promise<void> {
 
         const delegate: ITaskRunnerDelegates<ICfnTask> = {
             getName: task => `Stack ${task.stackName} in account ${task.accountId} (${task.region})`,
             getVerb: () => 'validate',
             maxConcurrentTasks: 99,
             failedTasksTolerance: 99,
+            logVerbose,
         };
         await GenericTaskRunner.RunTasks<ICfnTask>(tasks, delegate);
     }

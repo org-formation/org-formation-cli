@@ -9,6 +9,7 @@ import { PersistedState } from "~state/persisted-state";
 import { S3StorageProvider } from "~state/storage-provider";
 import { CloudFormationBinder, ICfnBinding } from "~cfn-binder/cfn-binder";
 import { CfnTemplate } from "~cfn-binder/cfn-template";
+import { GlobalState } from "~util/global-state";
 
 describe('when creating print stacks command', () => {
     let command: PrintStacksCommand;
@@ -32,7 +33,7 @@ describe('when creating print stacks command', () => {
        expect(subCommanderCommand.description()).toBeDefined();
     });
 
-    test('command has required stackname parameter without', () => {
+    test('command has required stack name parameter without', () => {
         const opts: Option[] = subCommanderCommand.options;
         const stackNameOpt = opts.find((x) => x.long === '--stack-name');
         expect(stackNameOpt).toBeDefined();
@@ -110,6 +111,12 @@ describe('when executing print-stacks command', () => {
 
     afterEach(() => {
         sandbox.restore();
+    });
+
+    test('global state is set', async () => {
+        await command.performCommand(commandArgs);
+        expect(GlobalState.State).toBeDefined();
+        expect(GlobalState.OrganizationTemplate).toBeDefined();
     });
 
     test('s3 storage provider is used to get state', async () => {

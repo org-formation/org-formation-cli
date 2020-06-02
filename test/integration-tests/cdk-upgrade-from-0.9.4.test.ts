@@ -46,10 +46,10 @@ describe('when calling org-formation perform tasks', () => {
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
         expect(state.targets['cdk']).toBeDefined();
-        expect(state.targets['cdk']['CdkWorkload']).toBeDefined();
-        expect(state.targets['cdk']['CdkWorkload']['340381375986']).toBeDefined();
-        expect(Object.keys(state.targets['cdk']['CdkWorkload']['340381375986']).length).toBe(1);
-        expect(state.targets['cdk']['CdkWorkload']['340381375986']['eu-central-1']).toBeDefined();
+        expect(state.targets['cdk']['default']['default']['CdkWorkload']).toBeDefined();
+        expect(state.targets['cdk']['default']['default']['CdkWorkload']['340381375986']).toBeDefined();
+        expect(Object.keys(state.targets['cdk']['default']['default']['CdkWorkload']['340381375986']).length).toBe(1);
+        expect(state.targets['cdk']['default']['default']['CdkWorkload']['340381375986']['eu-central-1']).toBeDefined();
     });
 
     afterAll(async () => {

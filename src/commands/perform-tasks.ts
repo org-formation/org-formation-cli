@@ -42,15 +42,17 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
-        const tasks = config.enumBuildTasks(command);
         const state = await this.getState(command);
+        const tasks = config.enumBuildTasks(command);
         ConsoleUtil.state = state;
 
-        await BuildRunner.RunTasks(tasks, command.maxConcurrentTasks, command.failedTasksTolerance);
+        state.performUpdateToVersion2IfNeeded();
+
+        await BuildRunner.RunTasks(tasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
         const tracked = state.getTrackedTasks(command.logicalName);
         const cleanupTasks = BuildTaskProvider.enumTasksForCleanup(tracked, tasks, command);
         if (cleanupTasks.length > 0) {
-            await BuildRunner.RunTasks(cleanupTasks, command.maxConcurrentTasks, 0);
+            await BuildRunner.RunTasks(cleanupTasks, command.verbose === true, 1, 0);
         }
         const tasksToTrack = BuildTaskProvider.recursivelyFilter(tasks, x=> x.physicalIdForCleanup !== undefined);
         const trackedTasks: ITrackedTask[] = tasksToTrack.map(x=> { return {physicalIdForCleanup: x.physicalIdForCleanup, logicalName: x.name, type: x.type  }; });
@@ -71,4 +73,6 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     organizationFileHash?: string;
     parameters?: string;
     parsedParameters?: Record<string, string>;
+    logicalNamePrefix?: string;
+    forceDeploy?: boolean;
 }

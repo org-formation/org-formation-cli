@@ -16,6 +16,7 @@ import { OrgResourceTypes } from '~parser/model/resource-types';
 import { IBuildTask } from '~org-binder/org-tasks-provider';
 import { TaskRunner } from '~org-binder/org-task-runner';
 import { AwsOrganization } from '~aws-provider/aws-organization';
+import { GlobalState } from '~util/global-state';
 
 describe('when creating execute change set command', () => {
     let command: ExecuteChangeSetCommand;
@@ -123,6 +124,12 @@ describe('when executing execute change set command', () => {
 
     afterEach(() => {
         sandbox.restore();
+    });
+
+    test('global state is set', async () => {
+        await command.performCommand(commandArgs);
+        expect(GlobalState.State).toBeDefined();
+        expect(GlobalState.OrganizationTemplate).toBeDefined();
     });
 
     test('s3 storage provider is used to get state', async () => {

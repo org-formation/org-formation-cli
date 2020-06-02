@@ -181,7 +181,7 @@ describe('when creating build configuration with duplicate stack name', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).toBe(true);
-        expect(commandKeys.length).toBe(4);
+        expect(commandKeys.length).toBe(5);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
     });

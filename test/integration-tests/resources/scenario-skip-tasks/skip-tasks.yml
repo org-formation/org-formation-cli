@@ -19,7 +19,6 @@ SkipTemplate:
   DefaultOrganizationBinding:
     IncludeMasterAccount: true
 
-
 DependsOnSkipTemplate:
   Type: update-stacks
   DependsOn: SkipTemplate

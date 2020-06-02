@@ -124,7 +124,6 @@ export class TemplateRoot {
         const paramValues = overrides.ParameterValues;
         delete overrides.ParameterValues;
 
-
         const mergedWithOverrides = { ...obj, ...overrides };
         return new TemplateRoot(mergedWithOverrides, dirname, filename, paramValues);
 
@@ -177,12 +176,12 @@ export class TemplateRoot {
             this.paramValues = {};
         }
         if (contents.OrganizationBinding !== undefined) {
-            ConsoleUtil.LogWarning(`template ${filename} specifies toplevel OrganizationBinding which is deprecated. Use DefaultOrganizationBinding instead.`);
+            ConsoleUtil.LogWarning(`template ${filename} specifies top level OrganizationBinding which is deprecated. Use DefaultOrganizationBinding instead.`);
             contents.DefaultOrganizationBinding = contents.OrganizationBinding;
             delete contents.OrganizationBinding;
         }
         if (contents.OrganizationBindingRegion !== undefined) {
-            ConsoleUtil.LogWarning(`template ${filename} specifies toplevel OrganizationBindingRegion which is deprecated. Use DefaultOrganizationBinding instead.`);
+            ConsoleUtil.LogWarning(`template ${filename} specifies top level OrganizationBindingRegion which is deprecated. Use DefaultOrganizationBinding instead.`);
             contents.DefaultOrganizationBindingRegion = contents.OrganizationBindingRegion;
             delete contents.OrganizationBindingRegion;
         }

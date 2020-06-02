@@ -7,6 +7,7 @@ import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ConsoleUtil } from '~util/console-util';
 import { DeleteStacksCommand, BaseCliCommand } from '~commands/index';
 import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/organization-task';
+import { GlobalState } from '~util/global-state';
 
 describe('when creating perform-tasks command', () => {
     let command: PerformTasksCommand;
@@ -124,6 +125,7 @@ describe('when executing perform-tasks command', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     })
+
     test('BuildConfiguration called to enum config', async () => {
         await command.performCommand(commandArgs);
         expect(buildConfigurationEnumConfigMock).toHaveBeenCalledTimes(1);
@@ -145,7 +147,7 @@ describe('when executing perform-tasks command', () => {
     test('perform tasks is called once', async () => {
         await command.performCommand(commandArgs);
         expect(buildRunnerRunTasksMock).toHaveBeenCalledTimes(1);
-        expect(buildRunnerRunTasksMock).toHaveBeenCalledWith(tasks, 1, 0);
+        expect(buildRunnerRunTasksMock).toHaveBeenCalledWith(tasks, false, 1, 0);
     });
 
     describe('with update stacks tasks', () => {
@@ -173,7 +175,7 @@ describe('when executing perform-tasks command', () => {
         test('perform tasks is called once', async () => {
             await command.performCommand(commandArgs);
             expect(buildRunnerRunTasksMock).toHaveBeenCalledTimes(1);
-            expect(buildRunnerRunTasksMock).toHaveBeenCalledWith(tasks, 1, 0);
+            expect(buildRunnerRunTasksMock).toHaveBeenCalledWith(tasks, false, 1, 0);
         });
 
         test('stacks are stored as tracked tasks', async () => {
@@ -205,6 +207,7 @@ describe('when executing perform-tasks command', () => {
                 ]
 
                 state.setTrackedTasks('default', trackedTasks);
+                state.putValue('state-version', '2');
                 buildTaskProviderCreateDeleteTaskMock = jest.spyOn(BuildTaskProvider, 'createDeleteTask');
                 deleteStacksCommandPerformMock = jest.spyOn(DeleteStacksCommand, 'Perform').mockImplementation();
                 jest.spyOn(BaseCliCommand, 'CreateAdditionalArgsForInvocation').mockReturnValue(Promise.resolve(''));
@@ -215,7 +218,7 @@ describe('when executing perform-tasks command', () => {
             test('perform tasks is called twice', async () => {
                 await command.performCommand(commandArgs);
                 expect(buildRunnerRunTasksMock).toHaveBeenCalledTimes(2);
-                expect(buildRunnerRunTasksMock).toHaveBeenCalledWith(tasks, 1, 0);
+                expect(buildRunnerRunTasksMock).toHaveBeenCalledWith(tasks, false, 1, 0);
             });
 
             test('stacks are stored as tracked tasks', async () => {
@@ -239,6 +242,7 @@ describe('when executing perform-tasks command', () => {
             });
 
             test('delete task with log warnings', async () => {
+                commandArgs.state = {enumTargets: jest.fn().mockReturnValue([])} as any;
                 await command.performCommand(commandArgs);
 
                 expect(logWarningMock).toHaveBeenCalledTimes(0);
@@ -248,6 +252,7 @@ describe('when executing perform-tasks command', () => {
             });
 
             test('delete stacks command is not called', async () => {
+                commandArgs.state = {enumTargets: jest.fn().mockReturnValue([])} as any;
                 await command.performCommand(commandArgs);
                 await buildTaskProviderCreateDeleteTaskMock.mock.results[0].value.perform();
 

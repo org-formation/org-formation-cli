@@ -1,6 +1,6 @@
 import path from 'path';
 import { existsSync } from 'fs';
-import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin } from '../plugin';
+import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin, CommonTaskAttributeNames } from '../plugin';
 import { OrgFormationError } from '../../../src/org-formation-error';
 import { ConsoleUtil } from '../../util/console-util';
 import { IOrganizationBinding } from '~parser/parser';
@@ -20,9 +20,9 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
     convertToCommandArgs(config: IServerlessComTaskConfig, command: IPerformTasksCommandArgs): ISlsCommandArgs {
 
-        Validator.ThrowForUnknownAttribute(config, config.LogicalName, 'LogicalName', 'Path', 'Type', 'DependsOn', 'Skip',
-            'FilePath', 'Stage', 'Config', 'RunNpmInstall', 'FailedTaskTolerance', 'MaxConcurrentTasks', 'OrganizationBinding',
-            'TaskRoleName', 'AdditionalSlsArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters');
+        Validator.ThrowForUnknownAttribute(config, config.LogicalName,...CommonTaskAttributeNames, 'Path',
+            'FilePath', 'Stage', 'Config', 'RunNpmInstall', 'FailedTaskTolerance', 'MaxConcurrentTasks',
+            'AdditionalSlsArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -108,6 +108,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             customDeployCommand: command.customDeployCommand,
             customRemoveCommand: command.customRemoveCommand,
             parameters: command.parameters,
+            forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
+            logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
         };
     }
     async performRemove(binding: IPluginBinding<ISlsTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -139,7 +141,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
 
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, {}, task.logVerbose);
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<ISlsTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -171,7 +173,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
 
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, {}, task.logVerbose);
     }
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ISlsTask>): Promise<void> {
