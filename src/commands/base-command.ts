@@ -50,9 +50,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     constructor(command?: Command, name?: string, description?: string, firstArgName?: string) {
         if (command !== undefined && name !== undefined) {
-            if (BaseCliCommand.CliCommandArgs === undefined) {
-                BaseCliCommand.CliCommandArgs = command as any as ICommandArgs;
-            }
             this.command = command.command(name);
             if (description !== undefined) {
                 this.command.description(description);
@@ -65,6 +62,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 }
                 this.invoke();
             });
+        }
+    }
+
+    public storeCommand(command: ICommandArgs): void {
+        if (BaseCliCommand.CliCommandArgs === undefined) {
+            BaseCliCommand.CliCommandArgs = command;
         }
     }
 

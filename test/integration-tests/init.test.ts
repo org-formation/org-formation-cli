@@ -10,7 +10,7 @@ describe('when calling org-formation init', () => {
 
     beforeAll(async () => {
         context = await baseBeforeAll();
-        const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, region: 'eu-west-1' };
+        const command = {stateBucketName: context.stateBucketName, crossAccountRoleName: 'MyCrossAccountRole', stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true, region: 'eu-west-1' };
 
         await InitOrganizationCommand.Perform({...command, file: templatePath})
     });

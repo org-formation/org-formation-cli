@@ -368,22 +368,27 @@ export class AwsOrganizationWriter {
                 if (masterAccountSupportLevel !== resource.supportLevel) {
                     throw new OrgFormationError(`account ${resource.logicalId} specifies support level ${resource.supportLevel}, expected is support level ${masterAccountSupportLevel}, based on the support subscription for the organization master account.`);
                 } else {
-                    const support = await AwsUtil.GetSupportService(this.organization.masterAccount.Id, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
-                    const createCaseRequest: CreateCaseRequest = {
-                        subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
-                        communicationBody: `Hi AWS,
-Please enable ${resource.supportLevel} on account ${accountId}.
-This case was created automatically - please resolve when done.
+                    try{
+                        const support = await AwsUtil.GetSupportService(this.organization.masterAccount.Id, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
+                        const createCaseRequest: CreateCaseRequest = {
+                            subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
+                            communicationBody: `Hi AWS,
+    Please enable ${resource.supportLevel} on account ${accountId}.
+    This case was created automatically - please resolve when done.
 
-Thank you!
-                        `,
-                        serviceCode: 'customer-account',
-                        categoryCode: 'other-account-issues',
-                        severityCode: 'low',
-                        issueType: 'customer-service',
-                        ccEmailAddresses: [resource.rootEmail],
-                    };
-                    await support.createCase(createCaseRequest).promise();
+    Thank you!
+                            `,
+                            serviceCode: 'customer-account',
+                            categoryCode: 'other-account-issues',
+                            severityCode: 'low',
+                            issueType: 'customer-service',
+                            ccEmailAddresses: [resource.rootEmail],
+                        };
+                        const response = await support.createCase(createCaseRequest).promise();
+                        ConsoleUtil.LogDebug(`created support ticket, case id: ${response.caseId}`);
+                    }catch(err) {
+                        ConsoleUtil.LogDebug(`error creating support ticket. code: ${err?.code}, message: ${err?.message}`);
+                    }
                 }
             }
         }
@@ -500,7 +505,7 @@ Thank you!
                 Email: resource.rootEmail,
                 Type: 'Account',
                 Tags: {},
-                SupportLevel: resource.supportLevel,
+                SupportLevel: 'basic',
             });
 
             return accountCreationStatus.AccountId;

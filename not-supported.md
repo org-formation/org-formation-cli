@@ -1,5 +1,5 @@
 
-**Constrains or things that are otherwise not supprted (yet)**
+**Constrains or things that are otherwise not supported (yet)**
 
 If you feel it is important to support these scenarios, please post an enhancement or make a pull request!
 

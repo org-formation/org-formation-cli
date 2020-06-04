@@ -39,6 +39,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
+        this.storeCommand(command);
 
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);

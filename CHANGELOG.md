@@ -10,7 +10,9 @@ All notable changes to aws organization formation will be documented in this fil
 - Override verbose logging of tasks by setting `LogVerbose` attribute to true on include task or task
 - Have CodePipeline created by `init-pipeline` command 'poll for updates'
 - Allow for custom OrganizationAccountAccessRole name per `Account` or per `OrganizationRoot`
-
+- Added `--cross-account-role-name` flag to `init` and `init-pipeline` commands to initialize organizations that use a different name for the cross account access role.
+- Fixed a bug that caused support level (e.g. enterprise) to not be updated when account got create with a support level attribute
+- Improved suggestions on how to clean up resources removed from task file (added options like --profile)
 
 **version 0.9.5**
 - Added `StackPolicy` attribute to update-stacks tasks
