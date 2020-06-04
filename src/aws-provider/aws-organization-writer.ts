@@ -326,11 +326,11 @@ export class AwsOrganizationWriter {
         const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === accountId);
 
         if (account.Name !== resource.accountName) {
-            ConsoleUtil.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. \nInstead: login with root on the specified account to change its name`);
+            ConsoleUtil.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. Instead: login with root on the specified account to change its name`);
         }
 
         if (previousResource && previousResource.organizationAccessRoleName !== resource.organizationAccessRoleName) {
-            ConsoleUtil.LogWarning(`When changing the organization access role for ${accountId} (logicalId: ${resource.logicalId}) the tool will not automatically rename roles in the target account. \nInstead: make sure that the name of the role in the organization model corresponds to a role in the AWS account.`);
+            ConsoleUtil.LogWarning(`when changing the organization access role for ${accountId} (logicalId: ${resource.logicalId}) the tool will not automatically rename roles in the target account. Instead: make sure that the name of the role in the organization model corresponds to a role in the AWS account.`);
         }
 
         if (account.Alias !== resource.alias) {

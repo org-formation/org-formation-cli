@@ -394,7 +394,7 @@ export class TaskProvider {
                 logicalId: resource.logicalId,
                 action:  'Update',
                 perform: async (task): Promise<void> => {
-                    task.result = await that.writer.updateAccount(resource, physicalId);
+                    task.result = await that.writer.updateAccount(resource, physicalId, previousResource);
                 },
             };
 

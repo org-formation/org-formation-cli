@@ -225,6 +225,64 @@ describe('when running cfn tasks', () => {
         expect(consoleErr.getCall(0).args[0]).toContain('failed');
     });
 
+    test('will not run any dependent after dependency failed', async () => {
+        type MyTask = ICfnTask & { callCount: number };
+        const task1: MyTask = {
+            action: 'UpdateOrCreate',
+            isDependency: (t) => false,
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task1',
+            callCount: 0,
+            perform: async () => { task1.callCount += 1; throw new Error('failed'); },
+        };
+        const task2: MyTask = {
+            action: 'UpdateOrCreate',
+            isDependency: (t) => t.stackName === 'task1',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task2',
+            callCount: 0,
+            perform: async () => { task2.callCount += 1; },
+        };
+        const task3: MyTask = {
+            action: 'UpdateOrCreate',
+            isDependency: (t) => t.stackName === 'task2',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task3',
+            callCount: 0,
+            perform: async () => { task3.callCount += 1; },
+        };
+        const task4: MyTask = {
+            action: 'UpdateOrCreate',
+            isDependency: (t) => t.stackName === 'task3',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task4',
+            callCount: 0,
+            perform: async () => { task4.callCount += 1; },
+        };
+        const task5: MyTask = {
+            action: 'UpdateOrCreate',
+            isDependency: (t) => t.stackName === 'task3',
+            region: 'eu-central-1',
+            accountId: '123123123123',
+            stackName: 'task5',
+            callCount: 0,
+            perform: async () => { task5.callCount += 1; },
+        };
+        await CfnTaskRunner.RunTasks([task1, task2, task3, task4, task5], 'stack', false, 10, 10);
+        expect(task5.callCount).toEqual(0);
+        expect(task4.callCount).toEqual(0);
+        expect(task3.callCount).toEqual(0);
+        expect(task2.callCount).toEqual(0);
+        expect(consoleErr.callCount).toBe(1);
+        expect(consoleErr.getCall(0).args[0]).toContain('task1');
+        expect(consoleErr.getCall(0).args[0]).toContain('123123123123');
+        expect(consoleErr.getCall(0).args[0]).toContain('failed');
+    });
+
     test('dependency on failed task increases error count (and raises exception above threshold)', async () => {
         type MyTask = ICfnTask & { callCount: number };
         const task1: MyTask = {

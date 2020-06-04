@@ -62,9 +62,21 @@ export class GenericTaskRunner {
                 }
 
                 if (runningTasks.length === 0 && tasksWithDependencies.length > 0) {
-                    tasksFailed.push(...tasksWithDependencies);
-                    const names = tasksWithDependencies.map(x => delegate.getName(x));
-                    throw new OrgFormationError(`Circular dependency detected with tasks:\n - ${names.join('\n - ')}`);
+                    const circularDependencyTasks = [];
+                    for(const task of tasksWithDependencies)
+                    {
+                        if (tasksFailed.filter(x=>task.isDependency(x)).length === 0) {
+                            circularDependencyTasks.push(task);
+                        } else {
+                            tasksFailed.push(task);
+                        }
+                    }
+                    if (circularDependencyTasks.length > 1) {
+                        tasksFailed.push(...circularDependencyTasks);
+                        const names = tasksWithDependencies.map(x => delegate.getName(x));
+                        throw new OrgFormationError(`Circular dependency detected with tasks:\n - ${names.join('\n - ')}`);
+                    }
+                    tasksWithDependencies = [];
                 }
                 await Promise.all(runningTaskPromises);
                 const failedTasks = runningTasks.filter(x => x.failed === true);

@@ -13,6 +13,7 @@ All notable changes to aws organization formation will be documented in this fil
 - Added `--cross-account-role-name` flag to `init` and `init-pipeline` commands to initialize organizations that use a different name for the cross account access role.
 - Fixed a bug that caused support level (e.g. enterprise) to not be updated when account got create with a support level attribute
 - Improved suggestions on how to clean up resources removed from task file (added options like --profile)
+- Fixed an issue where perform tasks threw an circular dependency error but instead the graph for failed tasks was too long.
 
 **version 0.9.5**
 - Added `StackPolicy` attribute to update-stacks tasks
