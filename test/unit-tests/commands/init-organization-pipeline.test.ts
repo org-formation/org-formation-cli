@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 import * as fs from 'fs';
 import Sinon from 'sinon';
-import { AwsUtil } from '~util/aws-util';
+import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
 import { BaseCliCommand } from '~commands/base-command';
 import { IInitPipelineCommandArgs, InitPipelineCommand } from '~commands/init-organization-pipeline';
 import { IState, PersistedState } from '~state/persisted-state';
@@ -86,6 +86,13 @@ describe('when creating init organization pipeline command', () => {
         expect(subCommanderCommand.repositoryName).toBe('organization-formation');
     });
 
+    test('command has cross account role name parameter', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const regionOpt = opts.find((x) => x.long === '--cross-account-role-name');
+        expect(regionOpt).toBeDefined();
+        expect(regionOpt.required).toBe(true);
+        expect(subCommanderCommand.crossAccountRoleName).toBe('OrganizationAccountAccessRole');
+    });
 });
 
 describe('when executing init pipeline command', () => {
@@ -129,7 +136,7 @@ describe('when executing init pipeline command', () => {
 
         deleteObjectStub = sandbox.stub(AwsUtil, 'DeleteObject');
 
-        commandArgs = {...subCommanderCommand, region: 'eu-central-1', file: 'out.yml'} as unknown as IInitPipelineCommandArgs;
+        commandArgs = {...subCommanderCommand, region: 'eu-central-1', file: 'out.yml' } as unknown as IInitPipelineCommandArgs;
 
     });
 
@@ -141,6 +148,17 @@ describe('when executing init pipeline command', () => {
         await command.performCommand(commandArgs);
         expect(getMasterAccountIdStub.callCount).toBe(1);
     });
+
+
+    test('has default cross account role name', async () => {
+        await command.performCommand(commandArgs);
+        expect(DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName).toBe('OrganizationAccountAccessRole');
+    });
+
+    test('changed default role name when passing cross account role name', async ()=> {
+        await command.performCommand({...commandArgs, crossAccountRoleName: 'CustomRoleName'});
+        expect(DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName).toBe('CustomRoleName');
+    })
 
     test('creates initial commit', async () => {
         await command.performCommand(commandArgs);

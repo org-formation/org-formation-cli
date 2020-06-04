@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 const fs = require('fs');
 import Sinon from 'sinon';
-import { AwsUtil } from '~util/aws-util';
+import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
 import { BaseCliCommand } from '~commands/base-command';
 import { IInitCommandArgs, InitOrganizationCommand } from '~commands/init-organization';
 import { IState, PersistedState } from '~state/persisted-state';
@@ -59,6 +59,14 @@ describe('when creating init organization command', () => {
         expect(regionOpt).toBeDefined();
         expect(regionOpt.required).toBe(true);
     });
+
+    test('command has cross account role name parameter', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const regionOpt = opts.find((x) => x.long === '--cross-account-role-name');
+        expect(regionOpt).toBeDefined();
+        expect(regionOpt.required).toBe(true);
+        expect(subCommanderCommand.crossAccountRoleName).toBe('OrganizationAccountAccessRole');
+    });
 });
 
 describe('when executing init organization command', () => {
@@ -107,9 +115,17 @@ describe('when executing init organization command', () => {
         expect(getMasterAccountIdStub.callCount).toBe(1);
     });
 
-    test(
-        'creates bucket using masterAccountId and state bucket name',
-        async () => {
+    test('has default cross account role name', async () => {
+        await command.performCommand(commandArgs);
+        expect(DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName).toBe('OrganizationAccountAccessRole');
+    });
+
+    test('changed default role name when passing cross account role name', async ()=> {
+        await command.performCommand({...commandArgs, crossAccountRoleName: 'CustomRoleName'});
+        expect(DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName).toBe('CustomRoleName');
+    })
+
+    test('creates bucket using masterAccountId and state bucket name', async () => {
             await command.performCommand(commandArgs);
 
             expect(storageProviderCreateStub.callCount).toBe(1);

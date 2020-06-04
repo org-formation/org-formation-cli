@@ -4,6 +4,7 @@ import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { Validator } from '~parser/validator';
+import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
 
 const commandName = 'init <file>';
 const commandDescription = 'generate template & initialize organization';
@@ -21,12 +22,16 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
 
     public addOptions(command: Command): void {
         command.option('--region <region>', 'region used to created state-bucket in');
+        command.option('--cross-account-role-name <cross-account-role-name>', 'name of the role used to perform cross account access', 'OrganizationAccountAccessRole');
         super.addOptions(command);
     }
 
     public async performCommand(command: IInitCommandArgs): Promise<void> {
         if (!command.region) {
             throw new OrgFormationError('argument --region is missing');
+        }
+        if (command.crossAccountRoleName) {
+            DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;
         }
 
         Validator.validateRegion(command.region);
@@ -57,4 +62,5 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
 export interface IInitCommandArgs extends ICommandArgs {
     file: string;
     region: string;
+    crossAccountRoleName: string;
 }

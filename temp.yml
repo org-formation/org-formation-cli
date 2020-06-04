@@ -1,0 +1,201 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: default template generated for organization with master account 507468909204
+
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: Organization Formation Test Account
+      AccountId: '507468909204'
+      Alias: org-formation-master
+
+  OrganizationRoot:
+    Type: OC::ORG::OrganizationRoot
+    Properties:
+      DefaultOrganizationAccessRoleName: OrganizationAccountAccessRole
+      ServiceControlPolicies:
+        - !Ref DenyChangeOfOrgRoleSCP
+        - !Ref RestrictUnusedRegionsSCP
+
+  ProductionOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: production
+      Accounts: !Ref Production1Account
+
+  DevelopmentOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: development
+      Accounts:
+        - !Ref DevelopmentAccount
+        - !Ref DevelopmentAccount2Account
+        - !Ref DevelopmentAccount3Account
+        - !Ref DevelopmentAccount4Account
+
+  SharedOU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: shared
+      Accounts:
+        - !Ref SharedUsersAccount
+        - !Ref SharedComplianceAccount
+        - !Ref SharedServicesAccount
+
+  Production3Account:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Production 3 Account
+      AccountId: '801583661730'
+      RootEmail: production3@olafconijn.awsapps.com
+      Alias: my-production3
+      Tags:
+        budget-alarm-threshold: '222'
+        account-owner-email: olaf@email.com
+
+  SharedUsersAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Users Account
+      AccountId: '998174572440'
+      RootEmail: users-2@olafconijn.awsapps.com
+      Alias: org-formation-users
+      Tags:
+        budget-alarm-threshold: '100'
+        account-owner-email: olaf@email.com
+
+  SharedComplianceAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Compliance Account
+      AccountId: '295223382687'
+      RootEmail: shared-compliance-2@olafconijn.awsapps.com
+      Alias: org-formation-compliance
+      Tags:
+        budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  SharedServicesAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Shared Services Account
+      AccountId: '516455415878'
+      RootEmail: shared-services-2@olafconijn.awsapps.com
+      Alias: org-formation-services
+      Tags:
+        budget-alarm-threshold: '22'
+        account-owner-email: olaf@email.com
+
+  DevelopmentAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Development Account
+      AccountId: '626490820851'
+      RootEmail: dev-account-1@olafconijn.awsapps.com
+      Alias: org-formation-dev
+      Tags:
+        subdomain: development1
+        budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  DevelopmentAccount2Account:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Development Account 2
+      AccountId: '297630625067'
+      RootEmail: dev-account-2@olafconijn.awsapps.com
+      Alias: org-formation-dev2
+      Tags:
+        budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  DevelopmentAccount3Account:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Development Account 3
+      AccountId: '123463113253'
+      RootEmail: dev-account-3@olafconijn.awsapps.com
+      Alias: org-formation-dev3
+      Tags:
+        budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  DevelopmentAccount4Account:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Development Account 4
+      AccountId: '112538171869'
+      RootEmail: dev-account-4@olafconijn.awsapps.com
+      Alias: org-formation-dev4
+      Tags:
+        budget-alarm-threshold: '200'
+        account-owner-email: olaf@email.com
+
+  Production2Account:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Production 2 Account
+      AccountId: '969547552040'
+      RootEmail: production2@olafconijn.awsapps.com
+      Alias: my-production2
+      Tags:
+        budget-alarm-threshold: '222'
+        account-owner-email: olaf@email.com
+
+  Production1Account:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Production 1 Account
+      AccountId: '353550728234'
+      RootEmail: production1@olafconijn.awsapps.com
+      Alias: my-production1
+      Tags:
+        subdomain: production1
+        budget-alarm-threshold: '100'
+        account-owner-email: olaf@email.com
+
+  DenyChangeOfOrgRoleSCP:
+    Type: OC::ORG::ServiceControlPolicy
+    Properties:
+      PolicyName: DenyChangeOfOrgRole
+      Description: Deny changing the IAM role used for organization access
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyChangeOfOrgRole
+            Effect: Deny
+            Action:
+              - 'iam:Attach*'
+              - 'iam:Create*'
+              - 'iam:Delete*'
+              - 'iam:Detach*'
+              - 'iam:PutRole*'
+              - 'iam:Update*'
+            Resource:
+              - 'arn:aws:iam::*:role/OrganizationAccountAccessRole'
+
+  RestrictUnusedRegionsSCP:
+    Type: OC::ORG::ServiceControlPolicy
+    Properties:
+      PolicyName: RestrictUnusedRegions
+      Description: Restrict Unused regions
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyUnsupportedRegions
+            Effect: Deny
+            NotAction:
+              - 'cloudfront:*'
+              - 'iam:*'
+              - 'route53:*'
+              - 'support:*'
+              - 'budgets:*'
+            Resource: '*'
+            Condition:
+              StringNotEquals:
+                'aws:RequestedRegion':
+                  - eu-west-1
+                  - us-east-1
+                  - eu-central-1
+
+

@@ -2,6 +2,7 @@ import { AwsOrganization } from "~aws-provider/aws-organization";
 import { DefaultTemplateWriter, DefaultTemplate } from "~writer/default-template-writer";
 import { ConsoleUtil } from "~util/console-util";
 import { TemplateRoot } from "~parser/parser";
+import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from "~util/aws-util";
 
 describe('when writing template for organization', () => {
     let organization: AwsOrganization;
@@ -59,6 +60,20 @@ describe('when writing template for organization', () => {
             const defaultTemplate = await templateWriter.generateDefaultTemplate();
             const root = TemplateRoot.createFromContents(defaultTemplate.template);
             expect(root.organizationSection.accounts?.length).toBe(1);
+        });
+
+        test('generated template contains CrossAccountRoleName', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName).toBe('OrganizationAccountAccessRole');
+        });
+
+        test('generated template contains overridden CrossAccountRoleName', async () => {
+            DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = 'xyz';
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName).toBe('xyz');
+            DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = 'OrganizationAccountAccessRole';
         });
 
         test('generated template contains organizational unit', async () => {

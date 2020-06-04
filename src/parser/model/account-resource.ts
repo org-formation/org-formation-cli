@@ -94,7 +94,7 @@ export class AccountResource extends Resource {
         if (this.organizationAccessRoleName === undefined) {
             this.organizationAccessRoleName = this.root.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName;
             if (this.organizationAccessRoleName === undefined) {
-                this.organizationAccessRoleName = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS;
+                this.organizationAccessRoleName = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName;
             }
         }
     }

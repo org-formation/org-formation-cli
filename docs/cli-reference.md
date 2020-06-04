@@ -30,13 +30,14 @@ Typing ``help`` after any command in the commandline will print documentation.
 
 Creates a local organization formation file that contains all organization resources. Running this command will create an S3 Bucket (hence the region) in your account that contains a state file which is used to track differences when updating your resources.
 
-``> org-formation init --region us-east-1``
+``> org-formation init organization.yml --region us-east-1``
 
 **note**: at any time you should be able to delete the state bucket and start over using the init command above.
 
 |option|default|description|
 |---|---|---|
 |<nobr>--region</nobr>| none | The ``--region`` used to create the S3 bucket used to store state|
+|<nobr>--cross-account-role-name</nobr> |``OrganizationAccountAccessRole``| Name of the cross account IAM Role that should be used for cross account access.
 
 ### ``org-formation init-pipeline``
 
@@ -52,6 +53,7 @@ Creates an organization as done using the init command as well as default CodeCo
 |<nobr>--stack-name</nobr> | ``organization-formation-build``| The name of the stack used to create the CodeCommit, CodeBuild and CodePipeline resources.|
 |<nobr>--resource-prefix</nobr> |``orgformation-``| A prefix used for the CodeBuild and CodePipeline resources.|
 |<nobr>--repository-name</nobr> |``organization-formation``| Name of the CodeCommit resource that will host the org-formation files.|
+|<nobr>--cross-account-role-name</nobr> |``OrganizationAccountAccessRole``| Name of the cross account IAM Role that should be used for cross account access.
 
 
 ### ``org-formation update``

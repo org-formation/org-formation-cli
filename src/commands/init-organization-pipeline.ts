@@ -5,7 +5,7 @@ import { CreateStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformati
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { Command } from 'commander';
 import { WritableStream } from 'memory-streams';
-import { AwsUtil } from '../util/aws-util';
+import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
@@ -26,6 +26,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         command.option('--stack-name <stack-name>', 'stack name used to create pipeline artifacts', 'organization-formation-build');
         command.option('--resource-prefix <resource-prefix>', 'name prefix used when creating AWS resources', 'orgformation');
         command.option('--repository-name <repository-name>', 'name of the code commit repository created', 'organization-formation');
+        command.option('--cross-account-role-name <cross-account-role-name>', 'name of the role used to perform cross account access', 'OrganizationAccountAccessRole');
 
         super.addOptions(command);
     }
@@ -35,6 +36,10 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             throw new OrgFormationError('argument --region is missing');
         }
         Validator.validateRegion(command.region);
+
+        if (command.crossAccountRoleName) {
+            DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;
+        }
 
         const region = command.region;
 
@@ -175,4 +180,5 @@ export interface IInitPipelineCommandArgs extends ICommandArgs {
     stackName: string;
     resourcePrefix: string;
     repositoryName: string;
+    crossAccountRoleName: string;
 }

@@ -12,7 +12,7 @@ import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 
 
-export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = 'OrganizationAccountAccessRole';
+export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 
 
 export class AwsUtil {

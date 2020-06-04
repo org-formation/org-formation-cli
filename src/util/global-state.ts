@@ -13,17 +13,20 @@ export class GlobalState {
 
     public static GetCrossAccountRoleName(accountId: string): string {
         if (this.State === undefined || this.OrganizationTemplate === undefined) {
-            return DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS;
+            return DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName;
         }
 
         const logicalId = this.State.getLogicalIdForPhysicalId(accountId);
-        const account = this.OrganizationTemplate.organizationSection.findAccount(x=>x.logicalId === logicalId);
+        let account = this.OrganizationTemplate.organizationSection.findAccount(x=>x.logicalId === logicalId);
         if (account === undefined) {
-            const organizationRootDefaultRole = this.OrganizationTemplate.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName;
-            if (!organizationRootDefaultRole) {
-                return DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS;
+            account = this.OrganizationTemplate.organizationSection.findAccount(x=>x.accountId === accountId);
+            if (account === undefined) {
+                const organizationRootDefaultRole = this.OrganizationTemplate.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName;
+                if (!organizationRootDefaultRole) {
+                    return DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName;
+                }
+                return organizationRootDefaultRole;
             }
-            return organizationRootDefaultRole;
         }
         return account.organizationAccessRoleName;
     }

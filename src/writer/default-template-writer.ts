@@ -7,6 +7,7 @@ import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AW
 import { OrgResourceTypes, Resource } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
 import { IBinding, PersistedState } from '~state/persisted-state';
+import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
 
 
 export class DefaultTemplateWriter {
@@ -197,6 +198,7 @@ export class DefaultTemplateWriter {
         lines.push(new Line(logicalName, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.OrganizationRoot, 4));
         lines.push(new Line('Properties', '', 4));
+        lines.push(new Line('DefaultOrganizationAccessRoleName', DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName, 6));
         lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
         lines.push(new EmptyLine());
 

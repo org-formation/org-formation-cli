@@ -368,7 +368,7 @@ export class AwsOrganizationWriter {
                 if (masterAccountSupportLevel !== resource.supportLevel) {
                     throw new OrgFormationError(`account ${resource.logicalId} specifies support level ${resource.supportLevel}, expected is support level ${masterAccountSupportLevel}, based on the support subscription for the organization master account.`);
                 } else {
-                    const support = await AwsUtil.GetSupportService(this.organization.masterAccount.Id, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS);
+                    const support = await AwsUtil.GetSupportService(this.organization.masterAccount.Id, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
                     const createCaseRequest: CreateCaseRequest = {
                         subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
                         communicationBody: `Hi AWS,

@@ -15,7 +15,7 @@ const state: IState = {
               "lastCommittedHash": "abcdef"
             }
           },
-        "OC::ORG::Account": {
+            "OC::ORG::Account": {
             "Account1": {
               "type": "OC::ORG::Account",
               "logicalId": "Account1",
@@ -67,10 +67,19 @@ const template : ITemplate = {
                 AccountName: 'Account2'
             } as IAccountProperties,
         },
+        NewAccountCustomRole: {
+            Type: OrgResourceTypes.Account,
+            Properties: {
+                RootEmail: 'email4@email.com',
+                AccountName: 'Account3',
+                AccountId: '444444444444',
+                OrganizationAccessRoleName: 'SomethingDifferent',
+            } as IAccountProperties,
+        },
     }
 }
 
-describe('when determining iam task role name', () => {
+describe('when determining iam cross account role name', () => {
     beforeEach(() => {
         const templateRoot = TemplateRoot.createFromContents(JSON.stringify(template))
         const persistedState = new PersistedState(state);
@@ -78,16 +87,20 @@ describe('when determining iam task role name', () => {
         GlobalState.Init(persistedState, templateRoot);
     });
 
-    test('can resolve cross account task name from organization root', () => {
+    test('can resolve cross account role name from organization root', () => {
         const roleName = GlobalState.GetCrossAccountRoleName('333333333333');
         expect(roleName).toBe('Default');
     })
 
-    test('can resolve cross account task name from value overridden by account', () => {
+    test('can resolve cross account role name from value overridden by account', () => {
         const roleName = GlobalState.GetCrossAccountRoleName('222222222222');
         expect(roleName).toBe('Override');
     })
 
+    test('can resolve cross account role role name without state', () => {
+        const roleName = GlobalState.GetCrossAccountRoleName('444444444444');
+        expect(roleName).toBe('SomethingDifferent');
+    })
 
     afterEach(() => {
         GlobalState.Init(undefined, undefined);
