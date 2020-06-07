@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+
+  targetRoleName:
+    Type: String
+
+  identityProviderArn:
+    Type: String
+
+  managedPolicyArns:
+    Type: List<String>
+    Default: ''
+
+  snsNotifyAssumeRoleArn:
+    Type: String
+    Default: '-'
+
+  cloudTrailLogGroupArn:
+    Type: String
+    Default: '-'
+
+  maxSessionDuration:
+    Type: Number
+    Default: 3600
+    MinValue: 3600
+    MaxValue: 43200
+
+OrganizationBindings:
+
+  # Binding for: TargetRole, AssumeRoleAlarm, AssumeRoleMetricsFilter
+  TargetAccountBinding: # empty by default
+
+  # Binding for: SsoRole
+  UsersAccountBinding:  # empty by default
+
+Conditions:
+  notifyAssumeOnAssumeRole: !Not [ !Equals [ !Ref snsNotifyAssumeRoleArn, '-' ] ]
+  hasTargetAccount: !Not [ !Equals [ Fn::TargetCount TargetAccountBinding, 0 ] ]
+
+Resources:
+
+  TargetRole:
+    Type: AWS::IAM::Role
+    OrganizationBinding: !Ref TargetAccountBinding
+    Condition: hasTargetAccount
+    Properties:
+      RoleName: !Ref targetRoleName
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '998174572440'
+            Action: sts:AssumeRole
+      Path: /
+      MaxSessionDuration: !Ref maxSessionDuration
+      ManagedPolicyArns: !Ref managedPolicyArns
+
+  SsoRole:
+    Type: AWS::IAM::Role
+    OrganizationBinding: !Ref UsersAccountBinding
+    Properties:
+      RoleName: !Sub 'Sso${targetRoleName}'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref identityProviderArn
+            Action: sts:AssumeRoleWithSAML
+            Condition:
+              StringEquals:
+                'SAML:aud': https://signin.aws.amazon.com/saml
+      Path: /
+      MaxSessionDuration: !Ref maxSessionDuration
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowAssumeRolesTargetAccount
+                Effect: Allow
+                Action: sts:AssumeRole
+                Resource: Fn::EnumTargetAccounts TargetAccountBinding arn:aws:iam::${account}:role/${targetRoleName}
+
+  AssumeRoleMetricsFilter:
+    Type: AWS::Logs::MetricFilter
+    Condition: notifyAssumeOnAssumeRole
+    OrganizationBinding: !Ref TargetAccountBinding
+    Properties:
+      LogGroupName: !Ref cloudTrailLogGroupArn
+      FilterPattern: !Sub '{ ($.eventName = "AssumeRole") && ($.requestParameters.roleArn = "${TargetRole.Arn}") }'
+      MetricTransformations:
+        - MetricValue: '1'
+          MetricNamespace: CloudTrailMetrics
+          MetricName: !Sub '${resourcePrefix}-sso-${targetRoleName}-events'
+
+  AssumeRoleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: notifyAssumeOnAssumeRole
+    OrganizationBinding: !Ref TargetAccountBinding
+    Properties:
+      AlarmName: !Sub 'SSO ${AWSAccount.AccountName} ${targetRoleName} activity'
+      AlarmDescription: !Sub 'Alarm if ''${targetRoleName}'' is used the account'
+      MetricName: !Sub '${resourcePrefix}-sso-${targetRoleName}-events'
+      Namespace: CloudTrailMetrics
+      Statistic: Sum
+      Period: 10
+      EvaluationPeriods: 1
+      Threshold: 1
+      TreatMissingData: notBreaching
+      AlarmActions:
+      - !Ref snsNotifyAssumeRoleArn
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+

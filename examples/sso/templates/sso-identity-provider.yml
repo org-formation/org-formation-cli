@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+
+  metadataDocument:
+    Type: String
+    Description: The XML metadata document to use when trusting the Identity Provider
+
+  idpName:
+    Type: String
+
+Resources:
+
+  IdentityProvider:
+    Type: Custom::IdentityProvider
+    Properties:
+      ServiceToken: !GetAtt IdentityProviderHandler.Arn
+      Region: !Ref 'AWS::Region'
+      Metadata: !Ref metadataDocument
+      Name: !Ref idpName
+
+  IdentityProviderHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${resourcePrefix}-org-identity-provider-handler'
+      Runtime: python3.6
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Role: !GetAtt IdentityProviderHandlerRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: !Sub |
+
+          import boto3
+          from botocore.exceptions import ClientError
+          import json
+          import cfnresponse
+          iam = boto3.client("iam")
+
+          def create_provider(name, doc):
+            try:
+              resp = iam.create_saml_provider(SAMLMetadataDocument=doc,Name=name)
+              return(True, resp['SAMLProviderArn'])
+            except Exception as e:
+              return (False, "Cannot create SAML provider: " + str(e))
+
+          def delete_provider(arn):
+            try:
+              resp = iam.delete_saml_provider(SAMLProviderArn=arn)
+              return (True, "SAML provider with ARN " + arn + " deleted")
+            except ClientError as e:
+              if e.response['Error']['Code'] == "NoSuchEntity":
+                # no need to delete a thing that doesn't exist
+                return (True, "SAML provider with ARN " + arn + " does not exist, deletion succeeded")
+              else:
+                return (False, "Cannot delete SAML provider with ARN " + arn + ": " + str(e))
+            except Exception as e:
+              return (False, "Cannot delete SAML provider with ARN " + arn + ": " + str(e))
+
+          def update_provider(arn, doc):
+            # Need to create the ARN from the name
+            arn = "arn:aws:iam::${AWS::AccountId}:saml-provider/" + name
+            try:
+              resp = iam.update_saml_provider(SAMLMetadataDocument=doc, SAMLProviderArn=arn)
+              return (True, "SAML provider " + arn + " updated")
+            except Exception as e:
+              return (False, "Cannot update SAML provider " + arn + ": " + str(e))
+
+          def lambda_handler(event, context):
+            provider_xml = event['ResourceProperties']['Metadata']
+            provider_name = event['ResourceProperties']['Name']
+
+            # create a default ARN from the name; will be overwritten if we are creating
+            provider_arn = "arn:aws:iam::${AWS::AccountId}:saml-provider/" + provider_name
+
+            if event['RequestType'] == 'Create':
+              res, provider_arn = create_provider(provider_name, provider_xml)
+              reason = "Creation succeeded"
+            elif event['RequestType'] == 'Update':
+              res, reason = update_provider(provider_arn, provider_xml)
+            elif event['RequestType'] == 'Delete':
+              res, reason = delete_provider(provider_arn)
+            else:
+              res = False
+              resp = "Unknown operation: " + event['RequestType']
+            responseData = {}
+            responseData['Reason'] = reason
+
+            if res:
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, provider_arn)
+            else:
+              cfnresponse.send(event, context, cfnresponse.FAILED, responseData, provider_arn)
+
+  IdentityProviderHandlerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${resourcePrefix}-org-identity-provider-handler-role'
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:*SamlProvider
+                Resource: '*'
+
+
+Outputs:
+
+  IdentityProviderArn:
+    Description: The arn of the identity provider
+    Value: !Ref IdentityProvider
+    Export:
+      Name: !Sub '${AWS::StackName}-arn'

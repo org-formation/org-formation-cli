@@ -1,7 +1,8 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**unreleased**
+
+**version 0.9.6**
 - Fixed issue where `perform-task` parameters are passed to `update-stacks` task when no parameters where specified on task.
 - Fixed issue managing state for plugins (`copy-to-s3`, `update-cdk`, `update-serverless`) that would be included with the same logical name.
 - Allow `update-organization` task to be skipped without skipping all other tasks in file

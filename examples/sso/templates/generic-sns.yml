@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+
+  topicName:
+    Type: String
+
+  topicDisplayName:
+    Type: String
+
+  subscriptionProtocol:
+    Type: String
+
+  subscriptionEndpoint:
+    Type: String
+
+Resources:
+
+  Topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Ref topicDisplayName
+      TopicName: !Sub '${resourcePrefix}-${topicName}'
+      Subscription:
+        - Endpoint: !Ref subscriptionEndpoint
+          Protocol: !Ref subscriptionProtocol
+
+Outputs:
+
+  TopicArn:
+    Description: The ARN of the Topic
+    Value: !Ref Topic
+    Export:
+      Name: !Sub '${AWS::StackName}-arn'

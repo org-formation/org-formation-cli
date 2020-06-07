@@ -1,0 +1,100 @@
+Parameters:
+
+  resourcePrefix:
+    Type: String
+    Default: 'my'
+
+# as this an example that should run standalone added the update-organization task.
+# as i don't want the organization to be actually updated as part of this example Skip: true
+OrganizationUpdate:
+  Skip: true
+  Type: update-organization
+  Template: ./organization.yml
+
+SsoIdentityProvider:
+  Type: update-stacks
+  Template: ./templates/sso-identity-provider.yml
+  StackName: !Sub '${resourcePrefix}-sso-identity-provider'
+  StackDescription: SSO - Identity provider and lambda custom resource
+  DefaultOrganizationBindingRegion: eu-central-1
+  DefaultOrganizationBinding:
+    Account: !Ref SharedUsersAccount
+  Parameters:
+    resourcePrefix: !Ref resourcePrefix
+    idpName: JumpCloud
+    metadataDocument: '<?xml version="1.0" encoding="UTF-8"?><md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="JumpCloud"><md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol"><md:KeyDescriptor use="signing"><ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>MIIFfjCCA2agAwIBAgIUVS/Zr+kWBt29eFhuvEKmVL0ZDCwwDQYJKoZIhvcNAQELBQAwdzELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNPMRAwDgYDVQQHEwdCb3VsZGVyMRIwEAYDVQQKEwlKdW1wQ2xvdWQxGTAXBgNVBAsTEEp1bXBDbG91ZFNBTUxJZFAxGjAYBgNVBAMTEUp1bXBDbG91ZFNBTUxVc2VyMB4XDTIwMDYwNzEzMDg0MloXDTI1MDYwNzEzMDg0MlowdzELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNPMRAwDgYDVQQHEwdCb3VsZGVyMRIwEAYDVQQKEwlKdW1wQ2xvdWQxGTAXBgNVBAsTEEp1bXBDbG91ZFNBTUxJZFAxGjAYBgNVBAMTEUp1bXBDbG91ZFNBTUxVc2VyMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAvFX0kfsaU+/1YyH8HImc8GE19wN7Qx0ei0n2t5acLtZJQWm/UW+VreVRiQ3SRJsYmnUMlkvRcEdZwUpRXdmvbSVUz5+NZtnXX8isX8rB/K3axcoGVUXFRRPh6iO7HUw4/4vIMqnxQU7h1YDQf2JJ6H8XIgrxeIYCdS8yd2fqbtnH2YzPHoHIk9aFbYDSC6zeSfoJx13RJEEt2HSoF40cPi53DK/wBsoOuBmuY0sOqs/+RGDQiOpZirPB9A5aUU1kXupAE6f4p2gaPPcoUph++/NI9C/K18VAKyXXZ7QC0FmyKXT1xUYc9dXrnDnFeb/kx91vaw0VjLr+rP5+CWQMkYcEo9XmXMVRvHYKUE4lHeHkUQIFO+QRbMCnrTOTp6w9fRqV6ejMXGAE5YOxkJrRv5ZmRiGhTU6K5amiYlNhbYJ2hFJDVuByE745CJGL8btj5kSZwC8bNurslTMvPJKQPODaTWPRnnI6hGB8jqWkint4t+3fElPiqQ4HUQNh6V0pZdwEPln8CdnKteCk9MCmNmnbJmL75/JnSNiqB5fqalq3qxO5nbq8XnVm0Nq1Xi0bR7uPDsVBImfO9RMfsYe9gkLlXdEJXNZ8r+DUqtGuikWe5syWYptYdABXhW/jzlX3LfeIcfyMqwC/sfH8u/yoDTGzX15Y96++WGsJtg2W/VcCAwEAAaMCMAAwDQYJKoZIhvcNAQELBQADggIBAKI4g/mV+BBUK9yFXN3RtLcfJItrMAHJL4xhr87NRFx+fUl5yBmspxY7Q1mSrtXVHx6i3Yi9/tqRkhPH4t00+A5iPljw8R6HAn5+Vy59peCZj38AxUzt8HSY8UcPzYIVD6UNr0ltJOdr8+N3q90N7OhYeEirv6Y2B1XzONCcwEv/8a28T1x4HMy+87muFmrepfYZ3NNfQNJ4OZRFKZO96h4wBkJYG2Y0AiqZVJabcmPkTTKH8UcYoisI5S+Ijq1fICK8zaruO1X6LRQF5SmZxG2TqaB4y0ai8/HBMPZiem7s/9vYcKLzRUjXIlxarIvf+4LCOKdDXDvVcxbMZix8ReCZhUE0vlgrSMpngpYeVxg80OTFzaDusDiUejOn4QUWuCgvGCgNNFvIB4wSZwDsB7IIDbBggWk6M+kFLO2QXpP4/NBE8ZZRwipereqIqRNCyaZZqfWIJfOXDQwnuxvpUcd+HMPP+0OpJJsQUFa+TQGpJsb7utfDmdb8fNVvbA5O4HQzvsZlGc1ny+9vQrYArgz5UlDu7UgHDck30Afmy/1lnh4svSY0CgKIOXycZShhNCTDZ2jIedidQhlAXJVb63fS3+oOTkwa84wNjcPOc3rZMq72PC8NppTUJHojWOWh5QGNtMdYFYYrMqDZIIsjLj1162HVC/AvLfNt/4NMd39Q</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat><md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://sso.jumpcloud.com/saml2/aws"/><md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://sso.jumpcloud.com/saml2/aws"/></md:IDPSSODescriptor></md:EntityDescriptor>'
+
+SsoCustomPolicies:
+  Type: update-stacks
+  Template: ./templates/sso-custom-policies.yml
+  StackName: !Sub '${resourcePrefix}-sso-custom-policies'
+  StackDescription: SSO - Custom IAM Policies
+  DefaultOrganizationBindingRegion: eu-central-1
+  DefaultOrganizationBinding:
+    Account: '*'
+  Parameters:
+    resourcePrefix: !Ref resourcePrefix
+
+SsoNotificationTopic:
+  Type: update-stacks
+  Template: ./templates/generic-sns.yml
+  StackName: !Sub '${resourcePrefix}-sso-notification-topic'
+  StackDescription: SSO - SNS Topic that will notify assume role usage
+  DefaultOrganizationBindingRegion: eu-central-1
+  DefaultOrganizationBinding:
+    Account: '*'
+  Parameters:
+    resourcePrefix: !Ref resourcePrefix
+    topicName: sso-notification-topic
+    topicDisplayName: 'SSO Assume role notifications'
+    subscriptionProtocol: email
+    subscriptionEndpoint: !GetAtt CurrentAccount.RootEmail
+
+SsoAuditorRole:
+  Type: update-stacks
+  DependsOn:
+  - SsoIdentityProvider
+  - SsoNotificationTopic
+  - SsoCustomPolicies
+  Template: ./templates/sso-generic-role.yml
+  StackName: !Sub '${resourcePrefix}-sso-auditor-role'
+  StackDescription: SSO - Auditor role
+  DefaultOrganizationBindingRegion: eu-central-1
+  OrganizationBindings:
+    TargetAccountBinding:
+      Account: '*'
+      ExcludeAccount: !Ref SharedUsersAccount
+    UsersAccountBinding:
+      Account: !Ref SharedUsersAccount
+  TerminationProtection: false
+  Parameters:
+    resourcePrefix: !Ref resourcePrefix
+    targetRoleName: 'Auditor'
+    snsNotifyAssumeRoleArn: '-' # dash means no notifications
+    identityProviderArn: !CopyValue [ !Sub '${resourcePrefix}-sso-identity-provider-arn', !Ref SharedUsersAccount]
+    managedPolicyArns:
+    - arn:aws:iam::aws:policy/ReadOnlyAccess
+    - !CopyValue [!Sub '${resourcePrefix}-sso-custom-policies-example-arn']
+
+SsoAdministratorRole:
+  Type: update-stacks
+  DependsOn: SsoIdentityProvider
+  Template: ./templates/sso-generic-role.yml
+  StackName: !Sub '${resourcePrefix}-sso-administrator-role'
+  StackDescription: SSO - Auditor role
+  DefaultOrganizationBindingRegion: eu-central-1
+  OrganizationBindings:
+    TargetAccountBinding:
+      Account: '*'
+    UsersAccountBinding:
+      Account: !Ref SharedUsersAccount
+  TerminationProtection: false
+  Parameters:
+    resourcePrefix: !Ref resourcePrefix
+    targetRoleName: 'Administrator'
+    identityProviderArn: !CopyValue [ !Sub '${resourcePrefix}-sso-identity-provider-arn', !Ref SharedUsersAccount]
+    snsNotifyAssumeRoleArn: !CopyValue [ !Sub '${resourcePrefix}-sso-notification-topic-arn' ]
+    cloudTrailLogGroupArn: 'CloudTrail/audit-log'
+    managedPolicyArns:
+    - arn:aws:iam::aws:policy/AdministratorAccess
+    - !CopyValue [!Sub '${resourcePrefix}-sso-custom-policies-example-arn']

@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+
+Resources:
+
+  ExamplePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub '${resourcePrefix}-example-policy'
+      Path: /
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: DenyExample
+            Effect: Deny
+            Action: s3:put*
+            Resource: 'arn:aws:s3:::just-an-example/*'
+
+Outputs:
+
+  ExamplePolicyArn:
+    Description: The ARN of the example policy
+    Value: !Ref ExamplePolicy
+    Export:
+      Name: !Sub '${AWS::StackName}-example-arn'
