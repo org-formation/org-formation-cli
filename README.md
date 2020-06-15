@@ -49,6 +49,9 @@ You can now execute the command line program `org-formation`. try:
 
 🎧 Hear about org-formation in [Real-World Serverless podcast #5](https://open.spotify.com/episode/0VPwObFeQ68oImfqW3lIge?si=VNluO9ZaTc-p3cpps6IBQg)
 
+📺 See org-formation in [Mastering AWS Organizations with Infrastructure-As-Code](https://www.youtube.com/watch?v=mLAGHzidHJ0)
+
+
 To get started you first need an ``org-formation`` template that describes all your Organization resources such as [Accounts](./docs/organization-resources.md#account), [OUs](./docs/organization-resources.md#organizationalunit) and [SCPs](docs/organization-resources.md#servicecontrolpolicy).
 
 After [Installation](#installation) you can generate this file using the following command:
