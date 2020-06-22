@@ -32,6 +32,21 @@ export abstract class Resource {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     public resolveRefs(): void { }
 
+    protected throwForNonRef(val: string[] | IResourceRef | IResourceRef[], attribName: string): void {
+        if (val === undefined) {return;}
+        if (val === '*') {return;}
+
+        if (typeof val !== 'object') {
+            throw new Error(`Found value ${val} for attribute ${attribName}, when expected to find a !Ref. Did you mean !Ref ${val}?`);
+        }
+
+        if (Array.isArray(val)) {
+            for(const elm of val) {
+                this.throwForNonRef(elm, attribName);
+            }
+        }
+    }
+
     protected throwForUnknownAttributes(obj: any, id: string, ...knownAttributes: string[]): void {
         Validator.ThrowForUnknownAttribute(obj, `resource ${id}`, ...knownAttributes);
     }

@@ -192,7 +192,7 @@ export class TaskProvider {
         }
 
         for (const attachedOu of resource.organizationalUnits) {
-            const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, () => createOrganizationalUnitTask.result);
+            const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, () => this.state.getBinding(OrgResourceTypes.OrganizationalUnit, createOrganizationalUnitTask.logicalId).physicalId);
             attachOuTask.dependentTasks = [createOrganizationalUnitTask];
             tasks.push(attachOuTask);
         }

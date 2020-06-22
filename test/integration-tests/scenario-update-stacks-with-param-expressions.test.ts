@@ -1,5 +1,4 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
-import { readFileSync } from "fs";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
 import { DescribeStacksOutput } from "aws-sdk/clients/cloudformation";
 

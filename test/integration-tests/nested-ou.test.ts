@@ -16,6 +16,7 @@ describe('when nesting ou\'s', () => {
     let organizationAfterCreateParentChild: AwsOrganization;
     let organizationAfterSwapChildParent: AwsOrganization;
     let organizationAfterDeleteParentOfChild: AwsOrganization;
+    let organizationAfterThreeLevelsDeep: AwsOrganization;
     let organizationAfterCleanup: AwsOrganization;
 
     beforeAll(async () => {
@@ -51,7 +52,13 @@ describe('when nesting ou\'s', () => {
         await organizationAfterDeleteParentOfChild.initialize();
         await sleepForTest(500);
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '5-cleanup-organization.yml'});
+        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '5-three-levels-deep.yml'});
+        await sleepForTest(500);
+        organizationAfterThreeLevelsDeep = new AwsOrganization(new AwsOrganizationReader(orgClient));
+        await organizationAfterThreeLevelsDeep.initialize();
+        await sleepForTest(500);
+
+        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '6-cleanup-organization.yml'});
         await sleepForTest(500);
         organizationAfterCleanup = new AwsOrganization(new AwsOrganizationReader(orgClient));
         await organizationAfterCleanup.initialize();
@@ -89,6 +96,20 @@ describe('when nesting ou\'s', () => {
         expect(parent).toBeDefined();
     });
 
+    test('after three levels deep', async () => {
+        const parent = organizationAfterSwapChildParent.organizationalUnits.find(x=>x.Name === 'parent');
+        expect(parent).toBeDefined();
+        expect(parent.OrganizationalUnits.length).toBe(1);
+        expect(parent.OrganizationalUnits[0].Name).toBe('middle')
+
+        const middle = organizationAfterSwapChildParent.organizationalUnits.find(x=>x.Name === 'middle');
+        expect(middle).toBeDefined();
+        expect(middle.OrganizationalUnits.length).toBe(2);
+
+        const childNames = middle.OrganizationalUnits.map(x=>x.Name);
+        expect(childNames.includes('child1')).toBeTruthy();
+        expect(childNames.includes('child2')).toBeTruthy();
+    });
     test('after cleanup both are gone', async () => {
         // OU named child is deleted, which is was parent of OU named parent.
         const parentOrChild = organizationAfterCleanup.organizationalUnits.filter(x=>x.Name === 'child' || x.Name === 'parent');
