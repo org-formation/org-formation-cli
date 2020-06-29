@@ -244,15 +244,17 @@ export class AwsOrganizationWriter {
         return roots[0].Id;
     }
 
-    public async createOrganizationalUnit(resource: OrganizationalUnitResource): Promise<string> {
+    public async createOrganizationalUnit(resource: OrganizationalUnitResource, parentId?: string): Promise<string> {
         return await performAndRetryIfNeeded(async () => {
-            const organizationalUnit = this.organization.organizationalUnits.find(x => x.Name === resource.organizationalUnitName);
+            if (parentId === undefined) {
+                parentId = this.organization.roots[0].Id;
+            }
+            const organizationalUnit = this.organization.organizationalUnits.find(x => x.ParentId === parentId && x.Name === resource.organizationalUnitName);
             if (organizationalUnit) {
                 ConsoleUtil.LogDebug(`ou with name ${resource.organizationalUnitName} already exists (Id: ${organizationalUnit.Id}).`);
                 return organizationalUnit.Id;
             }
-            const roots = this.organization.roots;
-            const organizationalUnitId = await this._createOrganizationalUnit(resource, roots[0].Id);
+            const organizationalUnitId = await this._createOrganizationalUnit(resource, parentId);
             ConsoleUtil.LogDebug(`organizational unit ${resource.organizationalUnitName} created (Id: ${organizationalUnitId}).`);
 
             return organizationalUnitId;
@@ -458,7 +460,7 @@ export class AwsOrganizationWriter {
             this.organization.organizationalUnits.push({
                 Arn: `arn:aws:organizations::${this.organization.masterAccount.Id}:ou/${this.organization.organization.Id}/${response.OrganizationalUnit.Id}`,
                 Id: response.OrganizationalUnit.Id,
-                ParentId: this.organization.roots[0].Id,
+                ParentId: parentId,
                 Policies: [],
                 Name: resource.organizationalUnitName,
                 Type: 'OrganizationalUnit',

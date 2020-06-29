@@ -12,22 +12,29 @@ Organization:
     Type: OC::ORG::OrganizationalUnit
     Properties:
       OrganizationalUnitName: parent
-      OrganizationalUnits: !Ref IntermediateOU
+      OrganizationalUnits:
+        - !Ref Child1OU
 
   IntermediateOU:
     Type: OC::ORG::OrganizationalUnit
     Properties:
       OrganizationalUnitName: middle
       OrganizationalUnits:
-        - !Ref Child1OU
         - !Ref Child2OU
+
+  Child0OU:
+    Type: OC::ORG::OrganizationalUnit
+    Properties:
+      OrganizationalUnitName: child
 
   Child1OU:
     Type: OC::ORG::OrganizationalUnit
     Properties:
-      OrganizationalUnitName: child1
+      OrganizationalUnitName: child
 
   Child2OU:
     Type: OC::ORG::OrganizationalUnit
     Properties:
-      OrganizationalUnitName: child1
+      OrganizationalUnitName: child
+      OrganizationalUnits:
+        - !Ref Child0OU
