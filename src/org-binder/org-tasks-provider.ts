@@ -172,7 +172,7 @@ export class TaskProvider {
             action:  'Create',
             dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
             perform: async (task): Promise<void> => {
-                let parentId: string = undefined
+                let parentId: string;
                 if (resource.parentOULogicalName) {
                     const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.parentOULogicalName);
                     if (binding) {
