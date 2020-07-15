@@ -111,6 +111,17 @@ describe('when importing value from another stack', () => {
     })
 
 
+    test('CopyValue within Join gets resolved properly ', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'joinedCopyValue');
+        const output = describedBucketStack.Stacks[0].Outputs[0];
+        expect(output.ExportName).toBe('BucketArn');
+        expect(parameter.ParameterValue).toBe(output.OutputValue + '-postfix');
+    })
+
+
+
     afterAll(()=> {
         baseAfterAll(context);
     })

@@ -1,6 +1,7 @@
 
 OrganizationUpdate:
   Type: update-organization
+  Skip: true
   Template: ./organization.yml
 
 BucketTemplate:
@@ -34,3 +35,4 @@ PolicyTemplate:
     paramArray:
       - val1
       - val2
+    joinedCopyValue: !Join ['', [!CopyValue [BucketArn, 102625093955], '-postfix']]
