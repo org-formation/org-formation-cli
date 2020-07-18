@@ -1,9 +1,11 @@
 import { Organizations } from "aws-sdk";
+import * as AWS from "aws-sdk";
 import { UpdateOrganizationCommand } from "~commands/index";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { AwsUtil } from "~util/aws-util";
+import { createWriteStream } from "fs";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-move-master-acc/';
 
@@ -18,12 +20,13 @@ describe('when moving master account around', () => {
     let masterAccountId: string;
 
     beforeAll(async () => {
+        AWS.config.logger = createWriteStream('output');
         try{
             context = await baseBeforeAll();
             masterAccountId = await AwsUtil.GetMasterAccountId();
             orgClient = new Organizations({ region: 'us-east-1' });
 
-            await context.prepareStateBucket(basePathForScenario + '0-state.json');
+            await context.prepareStateBucket(basePathForScenario + 'state.json');
             const { command } = context;
 
             await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});

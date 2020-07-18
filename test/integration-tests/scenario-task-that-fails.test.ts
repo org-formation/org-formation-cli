@@ -17,7 +17,7 @@ describe('when task fails', () => {
     beforeAll(async () => {
         consoleErrorSpy = jest.spyOn(ConsoleUtil, 'LogError');
         context = await baseBeforeAll();
-        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        await context.prepareStateBucket(basePathForScenario + '../state.json');
         const command = context.command;
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + 'organization.yml'});

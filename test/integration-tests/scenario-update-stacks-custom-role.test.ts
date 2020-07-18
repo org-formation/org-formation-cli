@@ -18,7 +18,7 @@ describe('when calling org-formation perform tasks', () => {
 
         context = await baseBeforeAll();
         cfnClient = await AwsUtil.GetCloudFormation('340381375986', 'eu-west-1');
-        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        await context.prepareStateBucket(basePathForScenario + '../state.json');
         const command = context.command;
 
         await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + 'organization.yml'});

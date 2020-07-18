@@ -25,7 +25,7 @@ describe('when calling org-formation perform tasks', () => {
         spawnProcessMock = jest.spyOn(ChildProcessUtility, 'SpawnProcess');
         context = await baseBeforeAll();
 
-        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        await context.prepareStateBucket(basePathForScenario + '../state.json');
         const { command, stateBucketName, s3client } = context;
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-cdk-workload-2targets.yml' })

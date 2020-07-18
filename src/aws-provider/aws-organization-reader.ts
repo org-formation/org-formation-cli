@@ -322,6 +322,7 @@ export class AwsOrganizationReader {
 
 class Lazy<T> {
     private cachedValue: T | undefined;
+    private promise: Promise<T>;
     private valueTimestamp: Date | undefined;
     private obtainValueFn: (that: AwsOrganizationReader) => Promise<T>;
     private that: AwsOrganizationReader;
@@ -337,7 +338,10 @@ class Lazy<T> {
                 return this.cachedValue;
             }
         }
-        this.cachedValue = await this.obtainValueFn(this.that);
+        if (!this.promise) {
+            this.promise = this.obtainValueFn(this.that);
+        }
+        this.cachedValue = await this.promise;
         this.valueTimestamp = new Date();
         return this.cachedValue;
     }

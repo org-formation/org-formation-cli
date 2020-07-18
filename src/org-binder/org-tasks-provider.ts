@@ -408,7 +408,8 @@ export class TaskProvider {
             tasks.push(updateAccountTask);
         }
 
-        const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
+        const previousPolicies = previousResource === undefined ? [] : previousResource.serviceControlPolicies;
+        const previousSCPs = this.resolveIDs(previousPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
         for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
             const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, () => physicalId);

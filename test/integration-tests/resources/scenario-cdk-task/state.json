@@ -9,6 +9,14 @@
         "lastCommittedHash": "281db6b2c685159c8f11b2c8289abd7b"
       }
     },
+    "OC::ORG::Account": {
+      "AccountA": {
+        "type": "OC::ORG::Account",
+        "logicalId": "AccountA",
+        "physicalId": "340381375986",
+        "lastCommittedHash": "281db6b2c685159c8f11b2c8289abd7b"
+      }
+    },
     "OC::ORG::OrganizationRoot": {
       "OrganizationRoot": {
         "type": "OC::ORG::OrganizationRoot",
