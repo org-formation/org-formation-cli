@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**unreleased**
+- Increased buffer size for tasks ran on the console (update-sls and update-cdk)
+- Fixed bug with OU structures that go three levels deep and/or multiple times the same ou name
+- Added Support for `!Join` expressions in task files
+- Added support for `--organization-file` option on `print-stacks` command
 
 **version 0.9.6**
 - Fixed issue where `perform-task` parameters are passed to `update-stacks` task when no parameters where specified on task.

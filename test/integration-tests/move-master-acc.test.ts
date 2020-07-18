@@ -20,7 +20,6 @@ describe('when moving master account around', () => {
     let masterAccountId: string;
 
     beforeAll(async () => {
-        AWS.config.logger = createWriteStream('output');
         try{
             context = await baseBeforeAll();
             masterAccountId = await AwsUtil.GetMasterAccountId();

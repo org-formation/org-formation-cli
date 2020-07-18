@@ -53,6 +53,12 @@ describe('when creating print stacks command', () => {
         expect(stateObjectOpt).toBeDefined();
         expect(subCommanderCommand.stateObject).toBe('state.json');
     });
+
+    test('command has organization file parameter which is optional', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const stateObjectOpt = opts.find((x) => x.long === '--organization-file');
+        expect(stateObjectOpt).toBeDefined();
+    });
 });
 
 
