@@ -119,12 +119,12 @@ In the example above the resource Bucket will be created for Account1 and Accoun
 There is a lot of other ways to specify an account binding though:
 
 
-|Attribue |Value|Remarks|
+|Attribute |Value|Remarks|
 |:---|:---|:---|
 |Region|String or list of String|Resource will be created in all the specified resources.|
 |Account|literal '*'|Resource will be created in all accounts **except** for the master account.|
 ||!Ref or list of !Ref|Resource will be created in [Accounts](#account) that are referred to.|
-|OrganizationalUnit|!Ref or list of !Ref|Resource will be created in all accounts that below to the [OrganizationalUnits](#organizationalunit) that are refered to. This includes accounts created within nested OU's|
+|OrganizationalUnit|!Ref or list of !Ref|Resource will be created in all accounts that below to the [OrganizationalUnits](#organizationalunit) that are referred to. This includes accounts created within nested OU's|
 |ExcludeAccount|!Ref or list of !Ref|Resource will **not** be created in [Accounts](#account) that are referred to.|
 |IncludeMasterAccount|``true`` or ``false``| If ``true``, resource will be created in the organizational master account.|
 |AccountsWithTag|tag-name|Resource will be created in all accounts that have a tag specified with tag-name.|

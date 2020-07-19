@@ -76,6 +76,16 @@ describe('when calling org-formation perform tasks', () => {
         expect(noAccount).toBeUndefined();
     });
 
+    test('after deploy 2 targets CDK_DEPLOY_REGION and CDK_DEPLOY_ACCOUNT are set', () => {
+        const contexts: ExecOptions[] = [spawnProcessAfterDeploy2Targets.calls[0][1], spawnProcessAfterDeploy2Targets.calls[1][1]];
+
+        const noRegion = contexts.find(x => x.env['CDK_DEPLOY_REGION'] === undefined);
+        const noAccount = contexts.find(x => x.env['CDK_DEPLOY_ACCOUNT'] === undefined);
+
+        expect(noRegion).toBeUndefined();
+        expect(noAccount).toBeUndefined();
+    });
+
 
     test('when updating with parameters, parameters are passed to CDK invocation', () => {
         const command0 = spawnProcessAfterUpdateWithParameters.calls[0][0];
