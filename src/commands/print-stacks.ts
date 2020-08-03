@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
-import { TemplateRoot } from '~parser/parser';
+import { UpdateStacksCommand, IUpdateStacksCommandArgs } from './update-stacks';
 import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
 import { GlobalState } from '~util/global-state';
 
@@ -18,6 +18,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
     public addOptions(command: Command): void {
         command.option('--parameters [parameters]', 'parameter values passed to CloudFormation when executing stacks');
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in CloudFormation', 'print');
+        command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         super.addOptions(command);
     }
 
@@ -25,8 +26,8 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         if (!command.stackName) {
             throw new OrgFormationError('argument --stack-name is missing');
         }
-        const templateFile = command.templateFile;
-        const template = TemplateRoot.create(templateFile);
+
+        const template = UpdateStacksCommand.createTemplateUsingOverrides(command as IUpdateStacksCommandArgs, command.templateFile);
         const state = await this.getState(command);
         GlobalState.Init(state, template);
 
@@ -48,4 +49,5 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
 export interface IPrintStacksCommandArgs extends ICommandArgs {
     templateFile: string;
     stackName: string;
+    organizationFile: string;
 }

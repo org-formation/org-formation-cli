@@ -42,7 +42,7 @@ export class PasswordPolicyResource extends Resource {
          }
         this.minimumPasswordLength = this.props.MinimumPasswordLength;
         if (this.minimumPasswordLength !== undefined) {
-            Validator.validatePositiveInteger(this.maxPasswordAge, 'MinimumPasswordLength');
+            Validator.validatePositiveInteger(this.minimumPasswordLength, 'MinimumPasswordLength');
             if (this.minimumPasswordLength < 6) {
                 throw new OrgFormationError(`MinimumPasswordLength for resource ${id} must have value greater than or equal to 6`);
             }

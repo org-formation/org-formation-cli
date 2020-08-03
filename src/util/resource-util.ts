@@ -1,4 +1,3 @@
-import { bool } from 'aws-sdk/clients/signer';
 import { SubExpression } from '../cfn-binder/cfn-sub-expression';
 
 const zeroPad = (num: number, places: number): string => String(num).padStart(places, '0');
@@ -27,7 +26,7 @@ export class ResourceUtil {
         return `${year}-${month}-${day}`;
     }
 
-    public static HasExpressions(resourceParent: any, resourceKey: string, resourceIds: string[]): bool {
+    public static HasExpressions(resourceParent: any, resourceKey: string, resourceIds: string[]): boolean {
         const resource = resourceParent[resourceKey];
         const expressions =  ResourceUtil.EnumExpressionsForResource(resource, resourceIds, resourceParent, resourceKey);
         return 0 < expressions.length;
@@ -142,6 +141,13 @@ export class ResourceUtil {
                         target: resource,
                         resolveToValue: (x: string)=> { resourceParent[resourceKey] = x; },
                     } as ICfnFunctionExpression);
+                } else if (key === 'Fn::Join' && typeof val === 'object' && Array.isArray(val) && val.length === 2) {
+                    result.push( {
+                        type: 'Join',
+                        target: resource,
+                        resolveToValue: (x: string)=> { resourceParent[resourceKey] = x; },
+                    } as ICfnFunctionExpression);
+
                 }
             }
 
@@ -180,7 +186,7 @@ interface IResourceExpression {
 }
 
 interface ICfnFunctionExpression {
-    type: 'Sub';
+    type: 'Sub' | 'Join';
     target: any;
     resolveToValue(val: string): void;
 }

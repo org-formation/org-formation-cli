@@ -33,7 +33,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         if (command.organizationFile) {
             templateOverrides.OrganizationFile = command.organizationFile;
         }
-        if (command.organizationFile) {
+        if (command.organizationBindings) {
             templateOverrides.OrganizationBindings = command.organizationBindings;
         }
         if (command.parameters) {

@@ -15,7 +15,7 @@ describe('when creating an S3 bucket in all accounts', () => {
         context = await baseBeforeAll();
         const consoleOutMock = jest.spyOn(ConsoleUtil, 'Out').mockImplementation();
 
-        await context.prepareStateBucket(basePathForScenario + '0-state.json')
+        await context.prepareStateBucket(basePathForScenario + '../state.json')
         const { command } = context;
 
         await UpdateStacksCommand.Perform({...command, templateFile: basePathForScenario + 'buckets.yml'});

@@ -42,3 +42,61 @@ describe('when creating organizational unit resource', () => {
         expect(instance.calculateHash()).toBe('26f3bfb7ba4278ff73d8f937db5a07ab');
     });
 });
+
+describe('when creating organizational unit resource with child ou as name', () => {
+    let template: TemplateRoot;
+    let resource: IResource;
+    let properties: IOrganizationalUnitProperties;
+
+    beforeEach(() => {
+        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+
+        properties = {
+            OrganizationalUnitName: 'ou1',
+            OrganizationalUnits: 'just-name',
+        };
+        resource = {
+            Type : OrgResourceTypes.OrganizationalUnit,
+            Properties: properties,
+        };
+    });
+
+    test('throws error with descriptive message', () => {
+        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/!Ref just-name/);
+    });
+
+    test('throws error with descriptive message for array', () => {
+        properties.OrganizationalUnits = [properties.OrganizationalUnits as string]
+        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/!Ref just-name/);
+    });
+
+});
+
+describe('when creating organizational unit resource with account as accountId', () => {
+    let template: TemplateRoot;
+    let resource: IResource;
+    let properties: IOrganizationalUnitProperties;
+
+    beforeEach(() => {
+        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+
+        properties = {
+            OrganizationalUnitName: 'ou1',
+            Accounts: 'accountName',
+        };
+        resource = {
+            Type : OrgResourceTypes.OrganizationalUnit,
+            Properties: properties,
+        };
+    });
+
+    test('throws error with descriptive message', () => {
+        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/!Ref accountName/);
+    });
+
+    test('throws error with descriptive message for array', () => {
+        properties.Accounts = [properties.Accounts as string]
+        expect(() => { new OrganizationalUnitResource(template, 'logical-id', resource); }).toThrowError(/!Ref accountName/);
+    });
+
+});

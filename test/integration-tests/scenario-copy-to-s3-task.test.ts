@@ -1,7 +1,6 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from './base-integration-test';
-import { readFileSync, writeFileSync } from 'fs';
-import { S3 } from 'aws-sdk';
+import { writeFileSync } from 'fs';
 import { CopyToS3TaskPlugin } from '~plugin/impl/s3-copy-build-task-plugin';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-copy-to-s3/';
@@ -17,7 +16,7 @@ describe('when calling org-formation perform tasks', () => {
 
     beforeAll(async () => {
         context = await baseBeforeAll();
-        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        await context.prepareStateBucket(basePathForScenario + '../state.json');
         const { command } = context;
 
         performCreateOrUpdateMock = jest.spyOn(CopyToS3TaskPlugin.prototype, 'performCreateOrUpdate');

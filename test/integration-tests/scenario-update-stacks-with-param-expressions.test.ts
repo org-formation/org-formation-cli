@@ -1,7 +1,6 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
-import { readFileSync } from "fs";
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
-import { DescribeStacksOutput } from "aws-sdk/clients/cloudformation";
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
+import { DescribeStacksOutput, ListStacksOutput } from "aws-sdk/clients/cloudformation";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cfn-parameter-expressions/';
 
@@ -9,12 +8,13 @@ describe('when importing value from another stack', () => {
     let context: IIntegrationTestContext;
     let describedBucketStack: DescribeStacksOutput;
     let describeBucketRoleStack: DescribeStacksOutput;
+    let stacksAfterCleanup: ListStacksOutput;
 
     beforeAll(async () => {
         try{
             context = await baseBeforeAll();
 
-            await context.prepareStateBucket(basePathForScenario + '0-state.json');
+            await context.prepareStateBucket(basePathForScenario + '../state.json');
             const { command, cfnClient } = context;
 
             await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' })
@@ -24,9 +24,8 @@ describe('when importing value from another stack', () => {
             describeBucketRoleStack = await cfnClient.describeStacks({StackName: 'scenario-export-bucket-role'}).promise();
 
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-cleanup-update-stacks-with-param-expressions.yml', performCleanup: true });
-            const stacksAfterCleanup = await cfnClient.listStacks({StackStatusFilter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE']}).promise();
-            expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'scenario-export-bucket')).toBeUndefined();
-            expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'scenario-export-bucket-role')).toBeUndefined();
+
+            stacksAfterCleanup = await cfnClient.listStacks({StackStatusFilter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE']}).promise();
         }catch(err) {
             expect(err.message).toBeUndefined();
         }
@@ -111,6 +110,20 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe('102625093955');
     })
 
+
+    test('CopyValue within Join gets resolved properly ', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'joinedCopyValue');
+        const output = describedBucketStack.Stacks[0].Outputs[0];
+        expect(output.ExportName).toBe('BucketArn');
+        expect(parameter.ParameterValue).toBe(output.OutputValue + '-postfix');
+    })
+
+    test('cleanup removes deployed stacks', () => {
+        expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'scenario-export-bucket')).toBeUndefined();
+        expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'scenario-export-bucket-role')).toBeUndefined();
+    });
 
     afterAll(()=> {
         baseAfterAll(context);
