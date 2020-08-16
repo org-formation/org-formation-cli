@@ -95,7 +95,7 @@ Resources:
       - CloudTrailLogGroupRole
     Properties:
       S3BucketName: !Ref CloudTrailS3Bucket
-      IsLogging: false
+      IsLogging: true
       IncludeGlobalServiceEvents: true
       IsMultiRegionTrail: true
       CloudWatchLogsLogGroupArn: !GetAtt 'CloudTrailLogGroup.Arn'
