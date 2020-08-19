@@ -30,4 +30,4 @@ Organization:
   Child2OU:
     Type: OC::ORG::OrganizationalUnit
     Properties:
-      OrganizationalUnitName: child1
+      OrganizationalUnitName: child2
