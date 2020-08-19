@@ -115,8 +115,8 @@ export class AwsUtil {
     public static async GetCloudFormationExport(exportName: string, accountId: string, region: string, customRoleName: string): Promise<string | undefined> {
         const cfnRetrieveExport = await AwsUtil.GetCloudFormation(accountId, region, customRoleName);
         const listExportsRequest: ListExportsInput = {};
-        const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
         do {
+            const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
             listExportsRequest.NextToken = listExportsResponse.NextToken;
             const foundExport = listExportsResponse.Exports.find(x => x.Name === exportName);
             if (foundExport) {
