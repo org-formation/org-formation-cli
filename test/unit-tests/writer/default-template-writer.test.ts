@@ -13,18 +13,16 @@ describe('when writing template for organization', () => {
         jest.spyOn(organization, 'initialize').mockImplementation();
         organization.organization = {MasterAccountId: '111111111111'};
         organization.roots = [{ Id: 'o-root', Policies: [], OrganizationalUnits: [] }];
-        organization.masterAccount = {Id: '111111111111', Name: 'Organization Master Account', ParentId: 'o-root', Policies: [], Type: 'Account'};
+        organization.masterAccount = {Id: '111111111111',  Name: 'Organization Master Account', ParentId: 'o-root', Email: 'email@someplace.com', Policies: [], Type: 'Account'};
         organization.organizationalUnits = [];
         organization.accounts = [];
         organization.policies = [];
         templateWriter = new DefaultTemplateWriter(organization);
     })
 
-
     afterEach(()=> {
         jest.restoreAllMocks();
     })
-
 
     test('template and state are generated successfully', async () => {
         const defaultTemplate = await templateWriter.generateDefaultTemplate();
@@ -60,6 +58,19 @@ describe('when writing template for organization', () => {
             const defaultTemplate = await templateWriter.generateDefaultTemplate();
             const root = TemplateRoot.createFromContents(defaultTemplate.template);
             expect(root.organizationSection.accounts?.length).toBe(1);
+        });
+
+        test('generated template contains master account', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.masterAccount).toBeDefined();
+        });
+
+        test('generated template contains master account email', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.masterAccount).toBeDefined();
+            expect(root.organizationSection.masterAccount.rootEmail).toBeDefined();
         });
 
         test('generated template contains CrossAccountRoleName', async () => {

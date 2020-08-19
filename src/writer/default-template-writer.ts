@@ -238,6 +238,9 @@ export class DefaultTemplateWriter {
         lines.push(new Line('Properties', '', 4));
         lines.push(new Line('AccountName', masterAccount.Name, 6));
         lines.push(new Line('AccountId', masterAccount.Id, 6));
+        if (masterAccount.Email) {
+            lines.push(new Line('RootEmail', masterAccount.Email, 6));
+        }
         if (masterAccount.Alias) {
             lines.push(new Line('Alias', masterAccount.Alias, 6));
         }
