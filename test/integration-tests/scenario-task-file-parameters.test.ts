@@ -44,7 +44,7 @@ describe('when using parameters in template', () => {
         expect(summary).toBeUndefined();
     })
 
-    afterAll(()=> {
-        baseAfterAll(context);
+    afterAll(async ()=> {
+        await baseAfterAll(context);
     });
 });
