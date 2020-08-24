@@ -272,7 +272,7 @@ export class TaskProvider {
         const previousChildOUs = this.resolveIDs(previousResource === undefined ? [] : previousResource.organizationalUnits);
         const currentChildOUs = this.resolveIDs(resource.organizationalUnits);
         for (const detachedChildOu of previousChildOUs.physicalIds.filter(x => !currentChildOUs.physicalIds.includes(x))) {
-            const detachChildOuTask: IBuildTask = this.createDeatchChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
+            const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
             tasks.push(detachChildOuTask);
         }
         for (const attachedOU of currentChildOUs.physicalIds.filter(x => !previousChildOUs.physicalIds.includes(x))) {
@@ -296,7 +296,7 @@ export class TaskProvider {
 
         return [...tasks, createOrganizationalUnitCommitHashTask];
     }
-    public createDeatchChildOUTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string): IBuildTask {
+    public createDetachChildOUTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string): IBuildTask {
         let resourceIdentifier = childOu.PhysicalId;
         if (childOu.TemplateResource) {
             resourceIdentifier = childOu.TemplateResource.logicalId;
@@ -328,7 +328,12 @@ export class TaskProvider {
         };
         if (childOu.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childLogicalId)) {
             detachChildOuTask.dependentTaskFilter = (task): boolean => task.logicalId === childLogicalId &&
-                task.action === 'Create' &&
+                (task.action === 'Create') &&
+                task.type === OrgResourceTypes.OrganizationalUnit;
+        }
+        else  {
+            detachChildOuTask.dependentTaskFilter = (task): boolean => task.logicalId === childLogicalId &&
+                (task.action === 'Delete') &&
                 task.type === OrgResourceTypes.OrganizationalUnit;
         }
         return detachChildOuTask;
@@ -358,7 +363,7 @@ export class TaskProvider {
 
         const previousChildOUs = this.resolveIDs(previous.organizationalUnits);
         for (const detachedChildOu of previousChildOUs.physicalIds) {
-            const detachChildOuTask: IBuildTask = this.createDeatchChildOUTask(previous, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
+            const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(previous, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
             tasks.push(detachChildOuTask);
         }
 

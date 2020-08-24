@@ -34,43 +34,26 @@ describe('when nesting ou\'s', () => {
             await sleepForTest(500);
             organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
             await organizationAfterInit.initialize();
-            await sleepForTest(500);
 
             await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '2-create-parent-child-ou.yml'});
             await sleepForTest(500);
             organizationAfterCreateParentChild = new AwsOrganization(new AwsOrganizationReader(orgClient));
             await organizationAfterCreateParentChild.initialize();
-            await sleepForTest(500);
 
             await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '3-swap-child-parent-ou.yml'});
             await sleepForTest(500);
             organizationAfterSwapChildParent = new AwsOrganization(new AwsOrganizationReader(orgClient));
             await organizationAfterSwapChildParent.initialize();
-            await sleepForTest(500);
 
             await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '4-delete-parent-keep-child.yml'});
             await sleepForTest(500);
             organizationAfterDeleteParentOfChild = new AwsOrganization(new AwsOrganizationReader(orgClient));
             await organizationAfterDeleteParentOfChild.initialize();
-            await sleepForTest(500);
-
-            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '5-three-levels-deep.yml'});
-            await sleepForTest(500);
-            organizationAfterThreeLevelsDeep = new AwsOrganization(new AwsOrganizationReader(orgClient));
-            await organizationAfterThreeLevelsDeep.initialize();
-            await sleepForTest(500);
-
-            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '6-duplicate-names.yml'});
-            await sleepForTest(500);
-            organizationAfterDuplicateNames = new AwsOrganization(new AwsOrganizationReader(orgClient));
-            await organizationAfterDuplicateNames.initialize();
-            await sleepForTest(500);
 
             await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '7-cleanup-organization.yml'});
             await sleepForTest(500);
             organizationAfterCleanup = new AwsOrganization(new AwsOrganizationReader(orgClient));
             await organizationAfterCleanup.initialize();
-            await sleepForTest(500);
         } catch(err) {
            // expect(err.message).toBe('');
         }
@@ -105,29 +88,6 @@ describe('when nesting ou\'s', () => {
         expect(child).toBeUndefined();
         const parent = organizationAfterDeleteParentOfChild.organizationalUnits.find(x=>x.Name === 'parent');
         expect(parent).toBeDefined();
-    });
-
-
-    test('after three levels deep', async () => {
-        const parent = organizationAfterSwapChildParent.organizationalUnits.find(x=>x.Name === 'parent');
-        expect(parent).toBeDefined();
-        expect(parent.OrganizationalUnits.length).toBe(1);
-        expect(parent.OrganizationalUnits[0].Name).toBe('middle')
-
-        const middle = organizationAfterSwapChildParent.organizationalUnits.find(x=>x.Name === 'middle');
-        expect(middle).toBeDefined();
-        expect(middle.OrganizationalUnits.length).toBe(2);
-
-        const childNames = middle.OrganizationalUnits.map(x=>x.Name);
-        expect(childNames.includes('child1')).toBeTruthy();
-        expect(childNames.includes('child2')).toBeTruthy();
-    });
-
-    test('after duplicate names, there are three ou\'s called child', async () => {
-        // OU named child is deleted, which is was parent of OU named parent.
-        const child = organizationAfterDeleteParentOfChild.organizationalUnits.filter(x=>x.Name === 'child');
-        expect(child).toBeUndefined();
-        expect(child.length).toBe(3);
     });
 
     test('after cleanup both are gone', async () => {
