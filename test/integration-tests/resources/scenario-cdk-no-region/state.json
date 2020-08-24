@@ -17,7 +17,14 @@
         "lastCommittedHash": "6be66ccf6b2a5417439fec93c294f165"
       }
     },
-    "OC::ORG::OrganizationalUnit": {}
+    "OC::ORG::Account": {
+      "AccountA": {
+        "type": "OC::ORG::Account",
+        "logicalId": "AccountA",
+        "physicalId": "340381375986",
+        "lastCommittedHash": "e3b287d6197a305eb08597761544fc5d"
+      }
+    }
   },
   "stacks": {},
   "values": {

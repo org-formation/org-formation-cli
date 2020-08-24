@@ -171,9 +171,38 @@ describe('when collapsing expressions', () => {
                             { var1: 'val1', var2: 'val2'}]
                         }}]
                 },
+            join: {
+                'Fn::Join': ['-', ['b', 'c']]
+            },
+            complexJoin: {
+                'Fn::Join': ['|',
+                    [
+                        {   'Fn::Join': [
+                                '-',
+                                ['b', 'c']]},
+                        {
+                            'Fn::Sub': [
+                                '${var1}, ${var2}',
+                                { var1: 'val1', var2: 'val2'}]
+                            }
+                        ]
+                    ]
+            },
+
         }
     });
 
+    test('Join collapses properly', async () => {
+        const resolved = await resolver.collapse(target);
+        expect(typeof resolved.join).toBe('string');
+        expect(resolved.join).toBe('b-c');
+    });
+
+    test('complex join collapses properly', async () => {
+        const resolved = await resolver.collapse(target);
+        expect(typeof resolved.complexJoin).toBe('string');
+        expect(resolved.complexJoin).toBe('b-c|val1, val2');
+    });
     test('complex sub collapses properly', async () => {
         const resolved = await resolver.collapse(target);
         expect(typeof resolved.complexSub).toBe('string');

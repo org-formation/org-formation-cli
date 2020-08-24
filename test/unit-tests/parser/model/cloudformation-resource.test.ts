@@ -44,7 +44,7 @@ describe('when creating cloudformation resource with * accounts', () => {
         expect(containsMaster).toBe(false);
     });
 
-    test('resource for tempalte does not contain organizational bindings', () => {
+    test('resource for template does not contain organizational bindings', () => {
         expect(account.resourceForTemplate.OrganizationBinding).toBeUndefined();
         expect(account.resourceForTemplate.Type).toBeDefined();
         expect(account.resourceForTemplate.Properties).toBeDefined();

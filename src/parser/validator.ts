@@ -3,8 +3,23 @@ import { OrgFormationError } from '../org-formation-error';
 import { ResourceUtil } from '../util/resource-util';
 import { IOrganizationBinding, IResourceRef, ITemplate } from './parser';
 import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
+import { IRCObject } from '~commands/base-command';
 
 export class Validator {
+
+    static validateRC(rc: IRCObject): void {
+        if (rc === undefined) { return; };
+
+        const clone = { ...rc };
+
+        delete clone.configs;
+        delete clone.config;
+
+        Validator.ThrowForUnknownAttribute(clone, `runtime configuration file (${rc.configs.join(', ')})`,
+            'organizationFile', 'stateBucketName', 'stateObject', 'profile');
+
+    }
+
     public static ValidateUpdateStacksTask(config: IUpdateStackTaskConfiguration, taskName: string): void {
         if (config === undefined) { return; }
 

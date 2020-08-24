@@ -16,6 +16,8 @@ describe('when nesting ou\'s', () => {
     let organizationAfterCreateParentChild: AwsOrganization;
     let organizationAfterSwapChildParent: AwsOrganization;
     let organizationAfterDeleteParentOfChild: AwsOrganization;
+    let organizationAfterThreeLevelsDeep: AwsOrganization;
+    let organizationAfterDuplicateNames: AwsOrganization;
     let organizationAfterCleanup: AwsOrganization;
 
     beforeAll(async () => {
@@ -23,39 +25,38 @@ describe('when nesting ou\'s', () => {
         orgClient = new Organizations({ region: 'us-east-1' });
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true };
 
-        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-        await sleepForTest(200);
-        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
+        try {
+            await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
+            await sleepForTest(200);
+            await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
-        await sleepForTest(500);
-        organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterInit.initialize();
-        await sleepForTest(500);
+            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
+            await sleepForTest(500);
+            organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
+            await organizationAfterInit.initialize();
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '2-create-parent-child-ou.yml'});
-        await sleepForTest(500);
-        organizationAfterCreateParentChild = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterCreateParentChild.initialize();
-        await sleepForTest(500);
+            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '2-create-parent-child-ou.yml'});
+            await sleepForTest(500);
+            organizationAfterCreateParentChild = new AwsOrganization(new AwsOrganizationReader(orgClient));
+            await organizationAfterCreateParentChild.initialize();
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '3-swap-child-parent-ou.yml'});
-        await sleepForTest(500);
-        organizationAfterSwapChildParent = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterSwapChildParent.initialize();
-        await sleepForTest(500);
+            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '3-swap-child-parent-ou.yml'});
+            await sleepForTest(500);
+            organizationAfterSwapChildParent = new AwsOrganization(new AwsOrganizationReader(orgClient));
+            await organizationAfterSwapChildParent.initialize();
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '4-delete-parent-keep-child.yml'});
-        await sleepForTest(500);
-        organizationAfterDeleteParentOfChild = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterDeleteParentOfChild.initialize();
-        await sleepForTest(500);
+            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '4-delete-parent-keep-child.yml'});
+            await sleepForTest(500);
+            organizationAfterDeleteParentOfChild = new AwsOrganization(new AwsOrganizationReader(orgClient));
+            await organizationAfterDeleteParentOfChild.initialize();
 
-        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '5-cleanup-organization.yml'});
-        await sleepForTest(500);
-        organizationAfterCleanup = new AwsOrganization(new AwsOrganizationReader(orgClient));
-        await organizationAfterCleanup.initialize();
-        await sleepForTest(500);
+            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '7-cleanup-organization.yml'});
+            await sleepForTest(500);
+            organizationAfterCleanup = new AwsOrganization(new AwsOrganizationReader(orgClient));
+            await organizationAfterCleanup.initialize();
+        } catch(err) {
+           // expect(err.message).toBe('');
+        }
     })
 
     test('after init there is not parent, no child', async () => {

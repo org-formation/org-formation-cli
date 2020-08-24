@@ -165,8 +165,13 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
     static GetEnvironmentVariables(target: IGenericTarget<ICdkTask>): Record<string, string> {
         return {
+            // Note: The CDK_DEFAULT_* variables will be overwritten by the cdk cli. Use the
+            // CDK_DEPLOY_* variables instead as documented in:
+            // https://docs.aws.amazon.com/cdk/latest/guide/environments.html
             CDK_DEFAULT_REGION: target.region,
             CDK_DEFAULT_ACCOUNT: target.accountId,
+            CDK_DEPLOY_REGION: target.region,
+            CDK_DEPLOY_ACCOUNT: target.accountId,
         };
     }
 

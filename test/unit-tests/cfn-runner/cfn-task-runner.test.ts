@@ -7,10 +7,12 @@ describe('when running cfn tasks', () => {
     let sandbox = Sinon.createSandbox();
     let consoleErr : Sinon.SinonStub;
     let consoleInfo : Sinon.SinonStub;
+    let consoleWarn : Sinon.SinonStub;
 
     beforeEach(() => {
         consoleErr = sandbox.stub(ConsoleUtil, 'LogError');
         consoleInfo = sandbox.stub(ConsoleUtil, 'LogInfo');
+        consoleWarn = sandbox.stub(ConsoleUtil, 'LogWarning');
     });
 
     afterEach(() => {

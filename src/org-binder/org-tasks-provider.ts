@@ -172,7 +172,14 @@ export class TaskProvider {
             action:  'Create',
             dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
             perform: async (task): Promise<void> => {
-                task.result = await that.writer.createOrganizationalUnit(resource);
+                let parentId: string;
+                if (resource.parentOULogicalName) {
+                    const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.parentOULogicalName);
+                    if (binding) {
+                        parentId = binding.physicalId;
+                    }
+                }
+                task.result = await that.writer.createOrganizationalUnit(resource, parentId);
                 that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result);
             },
         };
@@ -192,7 +199,7 @@ export class TaskProvider {
         }
 
         for (const attachedOu of resource.organizationalUnits) {
-            const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, () => createOrganizationalUnitTask.result);
+            const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, () => this.state.getBinding(OrgResourceTypes.OrganizationalUnit, createOrganizationalUnitTask.logicalId).physicalId);
             attachOuTask.dependentTasks = [createOrganizationalUnitTask];
             tasks.push(attachOuTask);
         }
@@ -265,7 +272,7 @@ export class TaskProvider {
         const previousChildOUs = this.resolveIDs(previousResource === undefined ? [] : previousResource.organizationalUnits);
         const currentChildOUs = this.resolveIDs(resource.organizationalUnits);
         for (const detachedChildOu of previousChildOUs.physicalIds.filter(x => !currentChildOUs.physicalIds.includes(x))) {
-            const detachChildOuTask: IBuildTask = this.createDeatchChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
+            const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
             tasks.push(detachChildOuTask);
         }
         for (const attachedOU of currentChildOUs.physicalIds.filter(x => !previousChildOUs.physicalIds.includes(x))) {
@@ -289,7 +296,7 @@ export class TaskProvider {
 
         return [...tasks, createOrganizationalUnitCommitHashTask];
     }
-    public createDeatchChildOUTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string): IBuildTask {
+    public createDetachChildOUTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string): IBuildTask {
         let resourceIdentifier = childOu.PhysicalId;
         if (childOu.TemplateResource) {
             resourceIdentifier = childOu.TemplateResource.logicalId;
@@ -321,7 +328,12 @@ export class TaskProvider {
         };
         if (childOu.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childLogicalId)) {
             detachChildOuTask.dependentTaskFilter = (task): boolean => task.logicalId === childLogicalId &&
-                task.action === 'Create' &&
+                (task.action === 'Create') &&
+                task.type === OrgResourceTypes.OrganizationalUnit;
+        }
+        else  {
+            detachChildOuTask.dependentTaskFilter = (task): boolean => task.logicalId === childLogicalId &&
+                (task.action === 'Delete') &&
                 task.type === OrgResourceTypes.OrganizationalUnit;
         }
         return detachChildOuTask;
@@ -351,7 +363,7 @@ export class TaskProvider {
 
         const previousChildOUs = this.resolveIDs(previous.organizationalUnits);
         for (const detachedChildOu of previousChildOUs.physicalIds) {
-            const detachChildOuTask: IBuildTask = this.createDeatchChildOUTask(previous, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
+            const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(previous, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId);
             tasks.push(detachChildOuTask);
         }
 
@@ -401,7 +413,8 @@ export class TaskProvider {
             tasks.push(updateAccountTask);
         }
 
-        const previousSCPs = this.resolveIDs(previousResource.serviceControlPolicies);
+        const previousPolicies = previousResource === undefined ? [] : previousResource.serviceControlPolicies;
+        const previousSCPs = this.resolveIDs(previousPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
         for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
             const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, () => physicalId);

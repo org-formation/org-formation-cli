@@ -108,6 +108,7 @@ describe('when executing update-stacks command', () => {
     beforeEach(() => {
         consoleInfo = sandbox.stub(ConsoleUtil, 'LogInfo');
         consoleError = sandbox.stub(ConsoleUtil, 'LogError');
+        sandbox.stub(ConsoleUtil, 'LogWarning');
 
         commanderCommand = new Command('root');
         command = new UpdateStacksCommand(commanderCommand);

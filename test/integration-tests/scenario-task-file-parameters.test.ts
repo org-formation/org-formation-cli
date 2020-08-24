@@ -15,7 +15,7 @@ describe('when using parameters in template', () => {
         try{
             context = await baseBeforeAll();
 
-            await context.prepareStateBucket(basePathForScenario + 'state.json');
+            await context.prepareStateBucket(basePathForScenario + '../state.json');
             const { command, cfnClient } = context;
 
             await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-task-file-with-parameters.yml' })
@@ -44,7 +44,7 @@ describe('when using parameters in template', () => {
         expect(summary).toBeUndefined();
     })
 
-    afterAll(()=> {
-        baseAfterAll(context);
+    afterAll(async ()=> {
+        await baseAfterAll(context);
     });
 });

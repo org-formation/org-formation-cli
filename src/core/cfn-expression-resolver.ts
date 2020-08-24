@@ -1,5 +1,5 @@
 import { OrgFormationError } from '../org-formation-error';
-import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
+import { ICfnExpression, ICfnSubExpression, ICfnJoinExpression } from '~core/cfn-expression';
 import { ResourceUtil } from '~util/resource-util';
 import { AccountResource, Resource } from '~parser/model';
 import { PersistedState } from '~state/persisted-state';
@@ -131,6 +131,26 @@ export class CfnExpressionResolver {
 
                     const value = await resolver.resolveSingleExpression({'Fn::Sub': arr[0]} as ICfnSubExpression);
                     expression.resolveToValue(value);
+                }
+            } else if (expression.type === 'Join') {
+                const subExpression = expression.target as ICfnJoinExpression;
+                if (Array.isArray(subExpression['Fn::Join'])) {
+                    const arr = subExpression['Fn::Join'];
+                    if (arr.length !== 2) {
+                        throw new OrgFormationError('Fn::Join expression expected to have 2 array elements (separator and list of elements)');
+                    }
+
+                    if (typeof arr[0] !== 'string') {
+                        throw new OrgFormationError(`Fn::Join expression first argument expected to be string. found ${arr[0]} of type ${typeof arr[0]}.`);
+                    }
+
+                    if (!Array.isArray(arr[1])) {
+                        throw new OrgFormationError(`Fn::Join expression second argument expected to be array. found ${arr[1]} of type ${typeof arr[1]}.`);
+                    }
+
+                    const joinElements = arr[1];
+                    const joined = joinElements.join(arr[0]);
+                    expression.resolveToValue(joined);
                 }
             }
         }

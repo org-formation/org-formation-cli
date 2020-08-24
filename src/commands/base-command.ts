@@ -1,8 +1,11 @@
+import path from 'path';
 import { Organizations } from 'aws-sdk';
 import { Command } from 'commander';
+import RC from 'rc';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
+import { IPerformTasksCommandArgs } from './perform-tasks';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AwsOrganizationReader } from '~aws-provider/aws-organization-reader';
 import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
@@ -13,6 +16,7 @@ import { PersistedState } from '~state/persisted-state';
 import { S3StorageProvider } from '~state/storage-provider';
 import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template-writer';
 import { CfnParameters } from '~core/cfn-parameters';
+import { Validator } from '~parser/validator';
 
 const DEFAULT_STATE_OBJECT = 'state.json';
 
@@ -48,7 +52,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return additionalArgs;
     }
 
-    constructor(command?: Command, name?: string, description?: string, firstArgName?: string) {
+    constructor(command?: Command, name?: string, description?: string, firstArgName?: string, private rc?: Record<string, any>) {
         if (command !== undefined && name !== undefined) {
             this.command = command.command(name);
             if (description !== undefined) {
@@ -188,16 +192,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected async initialize(command: ICommandArgs): Promise<void> {
         if (command.initialized) { return; }
 
-        if (command.printStack === true) {
-            ConsoleUtil.printStacktraces = true;
-        }
-        if (command.verbose === true) {
-            ConsoleUtil.verbose = true;
-        }
-        if (command.color === false) {
-            ConsoleUtil.colorizeLogs = false;
-        }
-
         // create a copy of `command` to ensure no circular references
         ConsoleUtil.LogDebug(`initializing, arguments: \n${JSON.stringify({
             stateBucketName: command.stateBucketName,
@@ -208,9 +202,56 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             printStack: command.printStack,
         }, undefined, 2)}`);
 
+        this.loadRuntimeConfiguration(command);
+
+        if (command.printStack === true) {
+            ConsoleUtil.printStacktraces = true;
+        }
+        if (command.verbose === true) {
+            ConsoleUtil.verbose = true;
+        }
+        if (command.color === false) {
+            ConsoleUtil.colorizeLogs = false;
+        }
+
         await AwsUtil.InitializeWithProfile(command.profile);
 
         command.initialized = true;
+    }
+
+    private loadRuntimeConfiguration(command: ICommandArgs): void {
+        const rc = RC('org-formation', {}, {}) as IRCObject;
+        if (rc.configs !== undefined){
+
+            if (rc.organizationFile && rc.config) {
+                const dir = path.dirname(rc.config);
+                const absolutePath = path.join(dir, rc.organizationFile);
+                if (absolutePath !== rc.organizationFile) {
+                    ConsoleUtil.LogDebug(`organization file from runtime configuration resolved to absolute file path: ${absolutePath} (${rc.config} + ${rc.organizationFile})`);
+                    rc.organizationFile = absolutePath;
+                }
+            }
+
+            ConsoleUtil.LogDebug(`runtime configuration: \n${JSON.stringify(rc)}`);
+            Validator.validateRC(rc);
+
+            if (process.argv.indexOf('--state-bucket-name') === -1 && rc.stateBucketName !== undefined) {
+                command.stateBucketName = rc.stateBucketName;
+            }
+
+            if (process.argv.indexOf('--state-object') === -1 && rc.stateObject !== undefined) {
+                command.stateObject = rc.stateObject;
+            }
+
+            if (process.argv.indexOf('--profile') === -1 && rc.profile !== undefined) {
+                command.profile = rc.profile;
+            }
+
+            if (process.argv.indexOf('--organization-file') === -1 && rc.organizationFile !== undefined) {
+                (command as IPerformTasksCommandArgs).organizationFile = rc.organizationFile;
+            }
+        }
+
     }
 }
 
@@ -223,4 +264,13 @@ export interface ICommandArgs {
     printStack?: boolean;
     verbose?: boolean;
     color?: boolean;
+}
+
+export interface IRCObject {
+    organizationFile?: string;
+    stateBucketName?: string;
+    stateObject?: string;
+    profile?: string;
+    configs: string[];
+    config: string;
 }

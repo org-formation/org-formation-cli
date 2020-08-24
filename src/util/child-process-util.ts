@@ -19,6 +19,7 @@ export class ChildProcessUtility {
         const options: ExecOptions = {
             cwd,
             env: {...process.env, ...env},
+            maxBuffer: 1024 * 500,
         };
 
         if (credentials) {

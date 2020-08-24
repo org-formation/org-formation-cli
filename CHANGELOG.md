@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**unreleased**
+- Increased buffer size for tasks ran on the console (update-sls and update-cdk)
+- Fixed bug with OU structures that go three levels deep and/or multiple times the same ou name
+- Added Support for `!Join` expressions in task files
+- Fixed bug in Password Policy validation (Thanks Ralf vd Z)
+- Added support for `--organization-file` option on `print-stacks` command
+- Init command adds RootEmail to MasterAccount in generated template (Thanks @craighurley)
+- Fixed bug where `!CopyValue` causes process to hang
+- CDK will have CDK_DEPLOY_ACCOUNT and CDK_DEPLOY_REGION env variables set (Thanks @rehos)
 
 **version 0.9.6**
 - Fixed issue where `perform-task` parameters are passed to `update-stacks` task when no parameters where specified on task.

@@ -1,10 +1,11 @@
 import { S3, SharedIniFileCredentials, Organizations } from "aws-sdk";
+import * as AWS from "aws-sdk";
 
 const bucketsToDelete = /(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}/;
 const credentials = new SharedIniFileCredentials({profile: 'oc'});
-
-//deleteBuckets().then(x=>console.log('done'));
-stressOrganization().then(x=>console.log('done'));
+AWS.config.logger = console;
+deleteBuckets().then(x=>console.log('done'));
+//stressOrganization().then(x=>console.log('done'));
 
 async function deleteBuckets(): Promise<void> {
     const s3 = new S3({credentials});

@@ -17,7 +17,7 @@ describe('when cleaning up stacks', () => {
     beforeAll(async () => {
         try{
             context = await baseBeforeAll();
-            await context.prepareStateBucket(basePathForScenario + 'state.json');
+            await context.prepareStateBucket(basePathForScenario + '../state.json');
             const { command, stateBucketName, s3client} = context;
 
             await PerformTasksCommand.Perform({...command, parameters: 'bucketName=' + stateBucketName,  tasksFile: basePathForScenario + '0-organization-tasks.yml', performCleanup: false});

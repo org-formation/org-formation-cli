@@ -59,7 +59,7 @@ For more info see the [cli reference](cli-reference.md)
 
 ## Parameters
 
-Parameters can be declared in a top-level Parameters attribute and referred to throughout the taskfile using `!Ref` or from within a `!Sub` construct.
+Parameters can be declared in a top-level Parameters attribute and referred to throughout the taskfile using `!Ref` or from within a `!Sub` or `!Join` construct.
 
 example:
 ``` yaml

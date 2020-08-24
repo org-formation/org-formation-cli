@@ -3,6 +3,9 @@ import { unlinkSync } from 'fs';
 import { v4 } from 'uuid';
 import { InitOrganizationCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
+import { TemplateRoot } from '~parser/parser';
+import { dirname } from 'path';
+import { readFileSync } from 'fs';
 
 describe('when calling org-formation init', () => {
     let context: IIntegrationTestContext;
@@ -34,11 +37,18 @@ describe('when calling org-formation init', () => {
         expect(response.PublicAccessBlockConfiguration.RestrictPublicBuckets).toBe(true);
     });
 
-    test('creates state file within bucket ', async () => {
+    test('creates state file within bucket', async () => {
         const response = await context.s3client.getObject({Bucket: context.stateBucketName, Key: 'state.json'}).promise();
         expect(response.Body).toBeDefined();
         const state = JSON.parse(response.Body.toString());
         expect(state.masterAccountId).toBeDefined();
+    });
+
+    test('creates template file ', async () => {
+        const templateRoot = TemplateRoot.create(templatePath);
+        expect(templateRoot.organizationSection.masterAccount).toBeDefined();
+        expect(templateRoot.organizationSection.masterAccount.accountId).toBeDefined();
+        expect(templateRoot.organizationSection.masterAccount.rootEmail).toBeDefined();
     });
 
     afterAll(async () => {

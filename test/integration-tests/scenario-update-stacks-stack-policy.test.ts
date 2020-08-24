@@ -18,7 +18,7 @@ describe('when calling org-formation perform tasks', () => {
     beforeAll(async () => {
         jest.spyOn(ConsoleUtil, 'LogError').mockImplementation();
         context = await baseBeforeAll();
-        await context.prepareStateBucket(basePathForScenario + 'state.json');
+        await context.prepareStateBucket(basePathForScenario + '../state.json');
         const command = context.command;
         const { cfnClient } = context;
 

@@ -12,7 +12,7 @@ describe('when using parameters in template', () => {
         try{
             context = await baseBeforeAll();
 
-            await context.prepareStateBucket(basePathForScenario + 'state.json');
+            await context.prepareStateBucket(basePathForScenario + '../state.json');
             const { command, stateBucketName, s3client } = context;
 
             await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'skip-tasks.yml' })
