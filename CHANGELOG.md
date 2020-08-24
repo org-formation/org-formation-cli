@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
-**unreleased**
+**version 0.9.7**
 - Increased buffer size for tasks ran on the console (update-sls and update-cdk)
 - Fixed bug with OU structures that go three levels deep and/or multiple times the same ou name
 - Added Support for `!Join` expressions in task files
