@@ -79,6 +79,10 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
                 ConsoleUtil.LogWarning(`task ${commandArgs.name} specifies 'RunNpmInstall' but cannot find npm package file ${packageLockFilePath}. Will perform 'npm i' as opposed to 'npm ci'.`);
             }
         }
+
+        Validator.ValidateCustomCommand(commandArgs.customDeployCommand, commandArgs.name, 'CustomDeployCommand');
+        Validator.ValidateCustomCommand(commandArgs.customRemoveCommand, commandArgs.name, 'CustomRemoveCommand');
+
         Validator.ValidateOrganizationBinding(commandArgs.organizationBinding, commandArgs.name);
     }
 
@@ -133,8 +137,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
             if (binding.task.customRemoveCommand) {
                 command = binding.task.customRemoveCommand.replace('${region}', target.region);
-                command = command.replace('${stage}', task.stage);
-                command = command.replace('${config}', task.configFile);
+                command = command.replace('${stage}', task.stage ?? '');
+                command = command.replace('${config}', task.configFile ?? '');
             }
         }
 
@@ -163,16 +167,15 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             command = appendArgumentIfTruthy(command, '--config', task.configFile);
             command = command + ' --conceal';
 
-            if (task.customRemoveCommand) {
-                command = binding.task.customRemoveCommand.replace('${region}', target.region);
-                command = command.replace('${stage}', task.stage);
-                command = command.replace('${config}', task.configFile);
+            if (task.customDeployCommand) {
+                command = binding.task.customDeployCommand.replace('${region}', target.region);
+                command = command.replace('${stage}', task.stage ?? '');
+                command = command.replace('${config}', task.configFile ?? '');
             }
         }
 
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
-
         await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, {}, task.logVerbose);
     }
 

@@ -1,6 +1,7 @@
-import { SlsBuildTaskPlugin } from "~plugin/impl/sls-build-task-plugin";
+import { SlsBuildTaskPlugin, ISlsCommandArgs } from "~plugin/impl/sls-build-task-plugin";
+import { ICfnSubExpression } from "~core/cfn-expression";
 
-describe('when createing sls plugin', () => {
+describe('when creating sls plugin', () => {
     let plugin: SlsBuildTaskPlugin;
 
     beforeEach(() => {
@@ -18,7 +19,7 @@ describe('when createing sls plugin', () => {
 
     test('plugin can translate config to command args',() => {
         const commandArgs = plugin.convertToCommandArgs( {
-            FilePath: './tasks.ytml',
+            FilePath: './tasks.yaml',
             Type: 'cdk',
             MaxConcurrentTasks: 6,
             FailedTaskTolerance: 4,
@@ -41,5 +42,38 @@ describe('when createing sls plugin', () => {
         expect(commandArgs.organizationBinding.IncludeMasterAccount).toBe(true);
         expect(commandArgs.runNpmInstall).toBe(false);
         expect(commandArgs.customDeployCommand).toBeUndefined();
+    });
+});
+
+
+describe('when validating task', () => {
+    let plugin: SlsBuildTaskPlugin;
+    let commandArgs: ISlsCommandArgs;
+
+    beforeEach(() => {
+        plugin = new SlsBuildTaskPlugin();
+        commandArgs = plugin.convertToCommandArgs( {
+            FilePath: './tasks.yaml',
+            Type: 'update-serverless.com',
+            MaxConcurrentTasks: 1,
+            FailedTaskTolerance: 4,
+            LogicalName: 'test-task',
+            Path: './',
+            Config: './README.md',
+            TaskRoleName: 'TaskRole',
+            OrganizationBinding: { IncludeMasterAccount: true}},
+            { organizationFile: './organization.yml'} as any);
+    });
+
+    test('CustomDeployCommand with Sub Expression throws', () => {
+        (commandArgs as any).customDeployCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
+        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
+        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomDeployCommand/);
+    });
+
+    test('CustomRemoveCommand with Sub Expression throws', () => {
+        (commandArgs as any).customRemoveCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
+        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
+        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomRemoveCommand/);
     });
 });

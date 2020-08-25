@@ -73,6 +73,10 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
                 ConsoleUtil.LogWarning(`task ${commandArgs.name} specifies 'RunNpmInstall' but cannot find npm package file ${packageLockFilePath}. Will perform 'npm i' as opposed to 'npm ci'.`);
             }
         }
+
+        Validator.ValidateCustomCommand(commandArgs.customDeployCommand, commandArgs.name, 'CustomDeployCommand');
+        Validator.ValidateCustomCommand(commandArgs.customRemoveCommand, commandArgs.name, 'CustomRemoveCommand');
+
         Validator.ValidateOrganizationBinding(commandArgs.organizationBinding, commandArgs.name);
     }
 
@@ -190,8 +194,8 @@ interface ICdkBuildTaskConfig extends IBuildTaskConfiguration {
     FailedTaskTolerance?: number;
     RunNpmInstall?: boolean;
     RunNpmBuild?: boolean;
-    CustomDeployCommand?: ICfnExpression;
-    CustomRemoveCommand?: ICfnExpression;
+    CustomDeployCommand?: string;
+    CustomRemoveCommand?: string;
     Parameters?: Record<string, ICfnExpression>;
 }
 
@@ -199,8 +203,8 @@ export interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
     path: string;
     runNpmInstall: boolean;
     runNpmBuild: boolean;
-    customDeployCommand?: ICfnExpression;
-    customRemoveCommand?: ICfnExpression;
+    customDeployCommand?: string;
+    customRemoveCommand?: string;
     parameters?: Record<string, ICfnExpression>;
 }
 
