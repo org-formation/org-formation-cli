@@ -4,9 +4,8 @@ import { IPluginBinding, PluginBinder } from "~plugin/plugin-binder";
 import { ICfnSubExpression, ICfnGetAttExpression, ICfnRefExpression, ICfnCopyValue } from "~core/cfn-expression";
 import { TemplateRoot } from "~parser/parser";
 import { PersistedState } from "~state/persisted-state";
-import { TestTemplates } from "../../../../test/unit-tests/test-templates";
+import { TestTemplates } from "../../test-templates";
 import { AwsUtil } from "~util/aws-util";
-import { IPerformTasksCommandArgs } from "~commands/index";
 
 describe('when creating cdk plugin', () => {
     let plugin: CdkBuildTaskPlugin;

@@ -86,7 +86,7 @@ export class Validator {
     public static ValidateCustomCommand(command: string | ICfnSubExpression | undefined, taskName: string, attributeName: string): void {
         if (typeof command === 'object') {
             const val = command['Fn::Sub'];
-            throw new Error(`task ${taskName} specifies ${attributeName} that might hot have been fully resolved. What has been resolved: '${val}'`);
+            throw new OrgFormationError(`task ${taskName} specifies ${attributeName} that might hot have been fully resolved. What has been resolved: '${val}'`);
         } else if (typeof command === 'string') {
             if (command.includes('${')) {
                 ConsoleUtil.LogWarning(`task ${taskName} seems to contain an expression. Did you forget to add !Sub?`);

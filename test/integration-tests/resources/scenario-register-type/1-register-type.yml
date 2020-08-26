@@ -1,0 +1,13 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+RegisterType:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-servicequotas-s3.zip
+  ResourceType: 'Community::ServiceQuotas::S3'
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: us-east-1
