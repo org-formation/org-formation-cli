@@ -35,7 +35,6 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     validateCommandArgs(command: IRpCommandArgs): void {
-
         if (typeof command.resourceType !== 'string') {
             throw new OrgFormationError(`task ${command.name} does not have required attribute ResourceType`);
         }
