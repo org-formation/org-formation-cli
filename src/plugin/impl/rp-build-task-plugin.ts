@@ -93,7 +93,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
             throw new OrgFormationError(`Registration of Resource Type ${binding.task.resourceType} failed. ${registrationStatus.Description}`);
         }
 
-        await cfn.setTypeDefaultVersion({Arn: registrationStatus.TypeVersionArn});
+        await cfn.setTypeDefaultVersion({Arn: registrationStatus.TypeVersionArn}).promise();
     }
 
     appendResolvers(): Promise<void> {
