@@ -12,6 +12,7 @@
   - [update-serverless.com](#update-serverlesscom)
   - [copy-to-s3](#copy-to-s3)
   - [update-cdk](#update-cdk)
+  - [register-type](#register-type)
   - [include](#include)
 
 <!-- /code_chunk_output -->
@@ -276,6 +277,39 @@ CdkWorkload:
   MaxConcurrentStacks: 1
   FailedStackTolerance: 5
 ```
+
+### register-type
+
+The ``register-type`` task will deploy a CloudFormation Resource Provider and register a CloudFormation type.
+
+For more information see: https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-types.html
+
+
+|Attribute |Value|Remarks|
+|:---|:---|:---|
+|ResourceType|Name of type|The typename that can be used in CloudFormation (e.g. Community::MyService::MyResource).|
+|SchemaHandlerPackage|S3 path to implementation|The S3 Path to the implementation (e.g. s3://my-bucket/type-1.0.0.zip).|
+|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts/regions the Resource Provider needs to be registered.|
+|DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
+|Skip| `true` or `false` |When `true` task (and dependent tasks) will not be executed.|
+|TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+
+
+**example**
+```yaml
+CdkWorkload:
+DelayRP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-cloudformation-delay-0.1.0.zip
+  ResourceType: 'Community::CloudFormation::Delay'
+  MaxConcurrentTasks: 10
+  OrganizationBinding:
+    Region: us-east-1
+    Account: '*'
+```
+
+Looking for community resource providers? check out the [org-formation/aws-resource-providers](https://github.com/org-formation/aws-resource-providers) repository!
+
 
 ### include
 
