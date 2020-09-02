@@ -5,6 +5,7 @@ All notable changes to aws organization formation will be documented in this fil
 **unreleased**
 - Fixed bug with variables in CustomDeployCommand for SLS tasks.
 - Improved validation and error messages for CustomDeployCommand and CustomRemoveCommand.
+- Implemented register-type task that allows for resource provider types to be deployed using org-formation
 
 **version 0.9.7**
 - Increased buffer size for tasks ran on the console (update-sls and update-cdk)
