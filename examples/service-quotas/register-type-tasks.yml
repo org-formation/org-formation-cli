@@ -1,0 +1,31 @@
+# note: register-type task is only supported in AWS Organization Formation v. 0.9.8 (or higher)
+
+Parameters:
+  # template uses region in various tasks.
+  # declaring region here so there is a single point of definition
+  region:
+    Type: String
+    Default: us-east-1
+
+
+# registration of Community::ServiceQuotas::CloudFormation
+ServiceQuotasCloudFormationRP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-servicequotas-cloudformation-0.1.0.zip
+  ResourceType: 'Community::ServiceQuotas::CloudFormation'
+  MaxConcurrentTasks: 10
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Account: '*'
+    Region: !Ref region
+
+# registration of Community::ServiceQuotas::S3
+ServiceQuotasS3RP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-servicequotas-s3-0.1.0.zip
+  ResourceType: 'Community::ServiceQuotas::S3'
+  MaxConcurrentTasks: 10
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Account: '*'
+    Region: !Ref region

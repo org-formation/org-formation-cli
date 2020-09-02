@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  CloudFormationQuotas:
+    Type: 'Community::ServiceQuotas::CloudFormation'
+    Properties:
+      Stacks: 200
+
+  S3Quotas:
+    Type: 'Community::ServiceQuotas::S3'
+    Properties:
+      Buckets: 100

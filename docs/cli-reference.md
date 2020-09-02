@@ -22,6 +22,7 @@ Typing ``help`` after any command in the commandline will print documentation.
     - [org-formation perform-tasks](#org-formation-perform-tasks)
     - [org-formation validate-tasks](#org-formation-validate-tasks)
   - [Global options](#global-options)
+  - [Runtime configuration (.org-formationrc)](#runtime-configuration-org-formationrc)
 
 
 ## Operations on organization resources
@@ -211,3 +212,22 @@ Will validate the *tasks-file*, including configured tasks.
 |<nobr>--no-color</nobr> |  | the `--no-color` option will toggle off colorization of log files.|
 |<nobr>--print-stack</nobr> |   | the `--print-stack` option will log stack traces for errors that occur.|
 |<nobr>--verbose</nobr> |   | the `--verbose` option will log debug level information.|
+
+## Runtime configuration (.org-formationrc)
+
+The following options can be configured using a `.org-formationrc` file.
+Values are ignored if passed as command line argument directly.
+
+|option|description|
+|---|---|---|
+|<nobr>profile</nobr> | Will be used as default for ``--profile`` option |
+|<nobr>organizationFile</nobr> | Will be used as default for ``--organization-file`` option |
+|<nobr>stateBucketName</nobr> | Will be used as default for ``--state-bucket-name`` option |
+|<nobr>stateObject</nobr> | Will be used as default for ``--state-object`` option |
+
+example:
+```
+organizationFile = ./templates/organization.yml
+stateBucketName = my-orgformation-production-bucket
+profile = org-master
+```

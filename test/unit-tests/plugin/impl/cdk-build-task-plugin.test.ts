@@ -1,10 +1,10 @@
-import { CdkBuildTaskPlugin, ICdkTask } from "~plugin/impl/cdk-build-task-plugin";
+import { CdkBuildTaskPlugin, ICdkTask, ICdkCommandArgs } from "~plugin/impl/cdk-build-task-plugin";
 import { ChildProcessUtility } from "~util/child-process-util";
 import { IPluginBinding, PluginBinder } from "~plugin/plugin-binder";
 import { ICfnSubExpression, ICfnGetAttExpression, ICfnRefExpression, ICfnCopyValue } from "~core/cfn-expression";
 import { TemplateRoot } from "~parser/parser";
 import { PersistedState } from "~state/persisted-state";
-import { TestTemplates } from "../../../../test/unit-tests/test-templates";
+import { TestTemplates } from "../../test-templates";
 import { AwsUtil } from "~util/aws-util";
 
 describe('when creating cdk plugin', () => {
@@ -46,6 +46,37 @@ describe('when creating cdk plugin', () => {
         expect(commandArgs.customDeployCommand).toBeUndefined();
     });
 
+});
+
+describe('when validating task', () => {
+    let plugin: CdkBuildTaskPlugin;
+    let commandArgs: ICdkCommandArgs;
+
+    beforeEach(() => {
+        plugin = new CdkBuildTaskPlugin();
+        commandArgs = plugin.convertToCommandArgs( {
+            FilePath: './tasks.yaml',
+            Type: 'cdk',
+            MaxConcurrentTasks: 1,
+            FailedTaskTolerance: 4,
+            LogicalName: 'test-task',
+            Path: './',
+            TaskRoleName: 'TaskRole',
+            OrganizationBinding: { IncludeMasterAccount: true}},
+            { organizationFile: './organization.yml'} as any);
+    });
+
+    test('CustomDeployCommand with Sub Expression throws', () => {
+        (commandArgs as any).customDeployCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
+        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
+        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomDeployCommand/);
+    });
+
+    test('CustomRemoveCommand with Sub Expression throws', () => {
+        (commandArgs as any).customRemoveCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
+        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
+        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomRemoveCommand/);
+    });
 });
 
 describe('when resolving attribute expressions on update', () => {
