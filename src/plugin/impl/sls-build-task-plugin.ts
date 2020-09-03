@@ -80,8 +80,8 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             }
         }
 
-        Validator.ValidateCustomCommand(commandArgs.customDeployCommand, commandArgs.name, 'CustomDeployCommand');
-        Validator.ValidateCustomCommand(commandArgs.customRemoveCommand, commandArgs.name, 'CustomRemoveCommand');
+        // Validator.ValidateCustomCommand(commandArgs.customDeployCommand, commandArgs.name, 'CustomDeployCommand');
+        // Validator.ValidateCustomCommand(commandArgs.customRemoveCommand, commandArgs.name, 'CustomRemoveCommand');
 
         Validator.ValidateOrganizationBinding(commandArgs.organizationBinding, commandArgs.name);
     }

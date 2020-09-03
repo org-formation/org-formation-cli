@@ -65,15 +65,15 @@ describe('when validating task', () => {
             { organizationFile: './organization.yml'} as any);
     });
 
-    test('CustomDeployCommand with Sub Expression throws', () => {
-        (commandArgs as any).customDeployCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
-        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
-        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomDeployCommand/);
-    });
+    // test('CustomDeployCommand with Sub Expression throws', () => {
+    //     (commandArgs as any).customDeployCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
+    //     expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
+    //     expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomDeployCommand/);
+    // });
 
-    test('CustomRemoveCommand with Sub Expression throws', () => {
-        (commandArgs as any).customRemoveCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
-        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
-        expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomRemoveCommand/);
-    });
+    // test('CustomRemoveCommand with Sub Expression throws', () => {
+    //     (commandArgs as any).customRemoveCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
+    //     expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
+    //     expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomRemoveCommand/);
+    // });
 });

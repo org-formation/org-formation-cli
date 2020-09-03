@@ -17,6 +17,9 @@ Parameters:
   tagVal:
     Type: String
 
+  tagVal2:
+    Type: String
+
   masterAccountId:
     Type: String
 

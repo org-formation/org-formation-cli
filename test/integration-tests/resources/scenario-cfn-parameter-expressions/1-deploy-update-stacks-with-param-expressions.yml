@@ -26,6 +26,7 @@ PolicyTemplate:
     bucketArn3: !CopyValue [BucketArn, 102625093955, 'eu-west-1']
     bucketArn4: !CopyValue [BucketArn, !Ref MasterAccount, 'eu-west-1']
     tagVal: !GetAtt MasterAccount.Tags.Tag
+    tagVal2: !GetAtt CurrentAccount.Tags.Tag
     masterAccountId: !Ref MasterAccount
     numericValue: 123
     someSubExpression: !Sub

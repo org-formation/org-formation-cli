@@ -27,7 +27,7 @@ describe('when importing value from another stack', () => {
 
             stacksAfterCleanup = await cfnClient.listStacks({StackStatusFilter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE']}).promise();
         }catch(err) {
-            //expect(err.message).toBeUndefined();
+            expect(err.message).toBeUndefined();
         }
     });
 
@@ -95,6 +95,14 @@ describe('when importing value from another stack', () => {
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'tagVal');
         expect(parameter.ParameterValue).toBe('tag-value');
     })
+
+    test('Stack parameter with !GetAtt and CurrentAccount gets resolved ', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'tagVal2');
+        expect(parameter.ParameterValue).toBe('tag-value');
+    })
+
 
     test('Stack parameter with !Sub gets resolved ', () =>{
         expect(describeBucketRoleStack).toBeDefined();
