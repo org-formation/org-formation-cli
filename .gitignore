@@ -12,3 +12,4 @@ coverage/
 examples/automation/create-account/variables.yml
 oc
 test/.ts
+tmp/
