@@ -219,7 +219,7 @@ The following options can be configured using a `.org-formationrc` file.
 Values are ignored if passed as command line argument directly.
 
 |option|description|
-|---|---|---|
+|---|---|
 |<nobr>profile</nobr> | Will be used as default for ``--profile`` option |
 |<nobr>organizationFile</nobr> | Will be used as default for ``--organization-file`` option |
 |<nobr>stateBucketName</nobr> | Will be used as default for ``--state-bucket-name`` option |
