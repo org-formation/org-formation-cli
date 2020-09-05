@@ -1,4 +1,4 @@
-import { DescribeTypeRegistrationOutput, ListTypeVersionsOutput } from 'aws-sdk/clients/cloudformation';
+import CloudFormation, { DescribeTypeRegistrationOutput, ListTypeVersionsOutput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import { IOrganizationBinding } from '~parser/parser';
 import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin, CommonTaskAttributeNames } from '~plugin/plugin';
@@ -6,8 +6,10 @@ import { IPluginTask, IPluginBinding } from '~plugin/plugin-binder';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { Validator } from '~parser/validator';
 import { OrgFormationError } from '~org-formation-error';
-import { AwsUtil } from '~util/aws-util';
+import { AwsUtil, CfnUtil } from '~util/aws-util';
 
+const communityResourceProviderCatalog = 'community-resource-provider-catalog';
+const communityResourceProviderCatalogS3Path = 's3://' + communityResourceProviderCatalog + '/';
 
 export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, IRpCommandArgs, IRpTask> {
     type = 'register-type';
@@ -16,7 +18,8 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     convertToCommandArgs(config: IRpBuildTaskConfig, command: IPerformTasksCommandArgs): IRpCommandArgs {
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'Path',
-           'FailedTaskTolerance', 'MaxConcurrentTasks', 'RoleArn', 'ResourceType', 'SchemaHandlerPackage');
+           'FailedTaskTolerance', 'MaxConcurrentTasks', 'RoleArn', 'ResourceType', 'SchemaHandlerPackage',
+           'ExecutionRole');
 
         if (typeof config.SchemaHandlerPackage !== 'string') {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute SchemaHandlerPackage`);
@@ -31,6 +34,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
             maxConcurrent: config.MaxConcurrentTasks ?? 1,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
+            executionRole: config.ExecutionRole,
         };
     }
 
@@ -45,6 +49,8 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         return  {
             resourceType: command.resourceType,
             schemaHandlerPackage: command.schemaHandlerPackage,
+            executionRole: command.executionRole,
+            v: '2',
         };
     }
 
@@ -52,6 +58,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         return {
             schemaHandlerPackage: command.schemaHandlerPackage,
             resourceType: command.resourceType,
+            executionRole: command.executionRole,
             name: command.name,
             hash: hashOfTask,
             type: this.type,
@@ -77,10 +84,18 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     async performCreateOrUpdate(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver */): Promise<void> {
         const cfn = await AwsUtil.GetCloudFormation(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
 
+        let roleArn = binding.task.executionRole;
+        const schemaHandlerPackage = binding.task.schemaHandlerPackage;
+
+        if (roleArn === undefined) {
+            roleArn = await this.ensureExecutionRole(cfn, schemaHandlerPackage);
+        }
+
         const response = await cfn.registerType({
             TypeName: binding.task.resourceType,
             Type: 'RESOURCE',
             SchemaHandlerPackage: binding.task.schemaHandlerPackage,
+            ExecutionRoleArn: roleArn,
         }).promise();
 
         let registrationStatus: DescribeTypeRegistrationOutput = {};
@@ -96,6 +111,34 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         await cfn.setTypeDefaultVersion({Arn: registrationStatus.TypeVersionArn}).promise();
     }
 
+    private async ensureExecutionRole(cfn: CloudFormation, handlerPackageUrl: string): Promise<string> {
+
+        if (handlerPackageUrl === undefined || !handlerPackageUrl.startsWith(communityResourceProviderCatalogS3Path)) {
+            throw new OrgFormationError('Can only automatically install ExecutionRole for resource providers hosted on community-resource-provider-catalog');
+        }
+
+        const { name, version } = this.getResourceRoleName(handlerPackageUrl);
+        const updateStackInput: UpdateStackInput = {
+            StackName: name,
+            TemplateURL: `https://${communityResourceProviderCatalog}.s3.amazonaws.com/${name}-${version}.yml`,
+            Capabilities: ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
+        };
+        const stacks = await CfnUtil.UpdateOrCreateStack(cfn, updateStackInput);
+        const stack = stacks.Stacks[0];
+        const output = stack.Outputs.find(x => x.OutputKey === 'ExecutionRoleArn');
+
+        return output.OutputValue;
+    }
+
+    private getResourceRoleName(handlerPackageUrl: string): { name: string; version: string }  {
+        const packageNameWithVersion = handlerPackageUrl.replace(communityResourceProviderCatalogS3Path, '').replace('.zip', '');
+        const packageNameWithVersionParts = packageNameWithVersion.split('-');
+        const version = packageNameWithVersionParts[packageNameWithVersionParts.length - 1];
+        const nameParts = packageNameWithVersionParts.slice(0, -1);
+        const name = nameParts.join('-') + '-resource-role';
+        return { name, version };
+    }
+
     appendResolvers(): Promise<void> {
         return Promise.resolve();
     }
@@ -108,17 +151,20 @@ interface IRpBuildTaskConfig extends IBuildTaskConfiguration {
     OrganizationBinding: IOrganizationBinding;
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
+    ExecutionRole: string;
 }
 
 export interface IRpCommandArgs extends IBuildTaskPluginCommandArgs {
     schemaHandlerPackage: string;
     resourceType: string;
+    executionRole: string;
 }
 
 
 export interface IRpTask extends IPluginTask {
     schemaHandlerPackage: string;
     resourceType: string;
+    executionRole: string;
 }
 
 const sleep = (time: number): Promise<void> => {

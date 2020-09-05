@@ -1,6 +1,6 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest  } from './base-integration-test';
-import { ListTypeRegistrationsOutput, ListTypeVersionsOutput } from 'aws-sdk/clients/cloudformation';
+import { ListTypeVersionsOutput, DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
 import { GetObjectOutput } from 'aws-sdk/clients/s3';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-register-type/';
@@ -11,15 +11,24 @@ describe('when calling org-formation perform tasks', () => {
     let typesAfterCleanup : ListTypeVersionsOutput;
     let stateAfterRegister: GetObjectOutput;
     let stateAfterCleanup: GetObjectOutput;
+    let describeStacksOutput: DescribeStacksOutput;
 
     beforeAll(async () => {
         context = await baseBeforeAll();
+
+        try{
+            await context.cfnClient.deleteStack({StackName: 'community-servicequotas-s3-resource-role'}).promise();
+        }catch{
+
+        }
+
         await context.prepareStateBucket(basePathForScenario + '../state.json');
         const { command, stateBucketName, s3client, cfnClient } = context;
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-register-type.yml' });
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-register-type.yml' });
         typesAfterRegister = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
+        describeStacksOutput = await cfnClient.describeStacks({StackName: 'community-servicequotas-s3-resource-role'}).promise();
 
         await sleepForTest(5000);
         stateAfterRegister = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
@@ -47,8 +56,17 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.targets['register-type']['default']['default']['RegisterType']['340381375986']['eu-west-1']).toBeDefined();
     })
 
-
     test('state after register contains tracked task', () => {
+        expect(describeStacksOutput).toBeDefined();
+        expect(describeStacksOutput.Stacks).toBeDefined();
+        expect(describeStacksOutput.Stacks[0]).toBeDefined();
+        expect(describeStacksOutput.Stacks[0].StackStatus).toBe('CREATE_COMPLETE');
+        expect(describeStacksOutput.Stacks[0].Outputs).toBeDefined();
+        const executionRole = describeStacksOutput.Stacks[0].Outputs.find(x=>x.OutputKey === 'ExecutionRoleArn');
+        expect(executionRole).toBeDefined();
+    })
+
+    test('resource role is deployed when deploying resource provider', () => {
         const stateAsString = stateAfterRegister.Body.toString();
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
@@ -74,5 +92,6 @@ describe('when calling org-formation perform tasks', () => {
 
     afterAll(async () => {
         await baseAfterAll(context);
+        await context.cfnClient.deleteStack({StackName: 'community-servicequotas-s3-resource-role'}).promise();
     });
 });
