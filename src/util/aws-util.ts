@@ -5,7 +5,7 @@ import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
 import AWS from 'aws-sdk';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
-import { ListExportsInput } from 'aws-sdk/clients/cloudformation';
+import { ListExportsInput, UpdateStackInput, DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
@@ -181,6 +181,38 @@ export const passwordPolicyEquals = (passwordPolicy: IAM.PasswordPolicy, pwdPoli
     return true;
 };
 
+export class CfnUtil {
+    public static async UpdateOrCreateStack(cfn: CloudFormation, updateStackInput: UpdateStackInput): Promise<DescribeStacksOutput> {
+        let describeStack: DescribeStacksOutput;
+        try {
+            await cfn.updateStack(updateStackInput).promise();
+            describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+        } catch (err) {
+            if (err && err.code === 'ValidationError' && err.message) {
+                const message = err.message as string;
+                if (-1 !== message.indexOf('ROLLBACK_COMPLETE')) {
+                    await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
+                    await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1 } }).promise();
+                    await cfn.createStack(updateStackInput).promise();
+                    describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                } else if (-1 !== message.indexOf('does not exist')) {
+                    await cfn.createStack(updateStackInput).promise();
+                    describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                } else if (-1 !== message.indexOf('No updates are to be performed.')) {
+                    describeStack = await cfn.describeStacks({StackName: updateStackInput.StackName}).promise();
+                    // ignore;
+                } else if (err.code === 'ResourceNotReady') {
+                    ConsoleUtil.LogError('error when executing CloudFormation');
+                } else {
+                    throw err;
+                }
+            } else {
+                throw err;
+            }
+        }
+        return describeStack;
+    }
+}
 
 class CustomMFACredentials extends AWS.Credentials {
     profile: string;
