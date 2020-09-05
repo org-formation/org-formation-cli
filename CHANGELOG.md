@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.9.10**
+- Fixed bug where `register-type` tasks did not properly register execution role.
 
 **version 0.9.8**
 - Fixed bug with variables in `CustomDeployCommand` for SLS tasks.
