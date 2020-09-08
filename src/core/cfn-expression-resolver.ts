@@ -223,7 +223,11 @@ export class CfnExpressionResolver {
         const resolver = new CfnExpressionResolver();
         resolver.addParameter('AWS::AccountId', accountId);
         resolver.addParameter('AWS::Region', region);
-        resolver.addResourceWithResolverFn('CurrentAccount', (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(logicalAccountName, resourcePath, template, state));
+
+        const currentAccountResolverFn = (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(logicalAccountName, resourcePath, template, state);
+
+        resolver.addResourceWithResolverFn('CurrentAccount', currentAccountResolverFn);
+        resolver.addResourceWithResolverFn('AWSAccount', currentAccountResolverFn);
         resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(resource, resourcePath, template, state));
         resolver.addTreeResolver((that: CfnExpressionResolver, obj) => CfnExpressionResolver.ResolveCopyValueFunctions(that, accountId, region, taskRoleName, obj));
 

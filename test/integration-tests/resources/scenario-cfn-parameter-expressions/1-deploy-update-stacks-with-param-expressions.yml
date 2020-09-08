@@ -27,6 +27,8 @@ PolicyTemplate:
     bucketArn4: !CopyValue [BucketArn, !Ref MasterAccount, 'eu-west-1']
     tagVal: !GetAtt MasterAccount.Tags.Tag
     tagVal2: !GetAtt CurrentAccount.Tags.Tag
+    tagVal3: !GetAtt AWSAccount.Tags.Tag
+    tagVal4: !Ref AWSAccount
     masterAccountId: !Ref MasterAccount
     numericValue: 123
     someSubExpression: !Sub
@@ -36,4 +38,4 @@ PolicyTemplate:
     paramArray:
       - val1
       - val2
-    joinedCopyValue: !Join ['', [!Ref MasterAccount, !Ref CurrentAccount]]
+    joinedCopyValue: !Join ['', [!CopyValue [BucketArn, 102625093955], '-postfix']]

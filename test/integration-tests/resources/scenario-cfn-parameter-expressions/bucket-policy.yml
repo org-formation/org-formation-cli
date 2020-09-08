@@ -20,6 +20,12 @@ Parameters:
   tagVal2:
     Type: String
 
+  tagVal3:
+    Type: String
+
+  tagVal4:
+    Type: String
+
   masterAccountId:
     Type: String
 

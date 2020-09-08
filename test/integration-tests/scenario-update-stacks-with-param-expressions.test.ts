@@ -103,6 +103,19 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe('tag-value');
     })
 
+    test('Stack parameter with !GetAtt and AWSAccount gets resolved ', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'tagVal3');
+        expect(parameter.ParameterValue).toBe('tag-value');
+    })
+
+    test('Stack parameter with !Ref and AWSAccount gets resolved ', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'tagVal4');
+        expect(parameter.ParameterValue).toBe('102625093955');
+    })
 
     test('Stack parameter with !Sub gets resolved ', () =>{
         expect(describeBucketRoleStack).toBeDefined();
@@ -118,8 +131,7 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe('102625093955');
     })
 
-
-    test('CopyValue within Join gets resolved properly ', () =>{
+    test('CopyValue within Join gets resolved properly', () =>{
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'joinedCopyValue');
