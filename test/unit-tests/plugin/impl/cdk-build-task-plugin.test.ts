@@ -1,7 +1,7 @@
 import { CdkBuildTaskPlugin, ICdkTask, ICdkCommandArgs } from "~plugin/impl/cdk-build-task-plugin";
 import { ChildProcessUtility } from "~util/child-process-util";
 import { IPluginBinding, PluginBinder } from "~plugin/plugin-binder";
-import { ICfnSubExpression, ICfnGetAttExpression, ICfnRefExpression, ICfnCopyValue } from "~core/cfn-expression";
+import { ICfnSubExpression, ICfnGetAttExpression, ICfnRefExpression, ICfnCopyValue, ICfnJoinExpression } from "~core/cfn-expression";
 import { TemplateRoot } from "~parser/parser";
 import { PersistedState } from "~state/persisted-state";
 import { TestTemplates } from "../../test-templates";
@@ -162,7 +162,7 @@ describe('when resolving attribute expressions on update', () => {
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
     });
 
-    test('resolved parameters can will be used in custom deploy command', async () => {
+    test('resolved parameters will be used in custom deploy command', async () => {
         task.parameters = {
             key: { 'Fn::GetAtt': ['Account2', 'Tags.key'] } as ICfnGetAttExpression //resolved to: Value 567
         };
@@ -173,6 +173,22 @@ describe('when resolving attribute expressions on update', () => {
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
     });
+
+    test('resolving Join or Ref to accounts can be used in custom deploy command', async () => {
+        task.parameters = {
+            myAccountList: { 'Fn::Join': ['|', [
+                {'Ref': 'MasterAccount'} as ICfnRefExpression,
+                {'Ref': 'CurrentAccount'} as ICfnRefExpression,
+            ]] } as ICfnJoinExpression
+        };
+        task.customDeployCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters}' } as ICfnSubExpression;
+
+        await binder.createPerformForUpdateOrCreate(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('myAccountList=1232342341234|1232342341235'), expect.anything(), undefined, expect.anything(), true);
+    });
+
 
     test('can resolve AWS::AccountId', async () => {
         task.parameters = {
@@ -198,7 +214,6 @@ describe('when resolving attribute expressions on update', () => {
         jest.restoreAllMocks();
     });
 });
-
 
 describe('when resolving attribute expressions on remove', () => {
     let spawnProcessForAccountSpy: jest.SpyInstance;
@@ -227,7 +242,7 @@ describe('when resolving attribute expressions on remove', () => {
         };
 
         binding = {
-            action: 'UpdateOrCreate',
+            action: 'Delete',
             target: {
                 targetType: 'cdk',
                 organizationLogicalName: 'default',
@@ -286,7 +301,7 @@ describe('when resolving attribute expressions on remove', () => {
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
     });
 
-    test('resolved parameters can will be used in custom deploy command', async () => {
+    test('resolved parameters can be used in custom deploy command', async () => {
         task.parameters = {
             key: { 'Fn::GetAtt': ['Account2', 'Tags.key'] } as ICfnGetAttExpression //resolved to: Value 567
         };
@@ -297,6 +312,23 @@ describe('when resolving attribute expressions on remove', () => {
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
     });
+
+
+    test('resolving Join or Ref to accounts can be used in custom deploy command', async () => {
+        task.parameters = {
+            myAccountList: { 'Fn::Join': ['|', [
+                {'Ref': 'MasterAccount'} as ICfnRefExpression,
+                {'Ref': 'CurrentAccount'} as ICfnRefExpression,
+            ]] } as ICfnJoinExpression
+        };
+        task.customRemoveCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters}' } as ICfnSubExpression;
+
+        await binder.createPerformForRemove(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('myAccountList=1232342341234|1232342341235'), expect.anything(), undefined, expect.anything(), true);
+    });
+
 
     test('can resolve AWS::AccountId', async () => {
         task.parameters = {
