@@ -23,8 +23,9 @@ describe('when importing value from another stack', () => {
             describedBucketStack = await cfnClient.describeStacks({StackName: 'scenario-export-bucket'}).promise();
             describeBucketRoleStack = await cfnClient.describeStacks({StackName: 'scenario-export-bucket-role'}).promise();
 
-            await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-cleanup-update-stacks-with-param-expressions.yml', performCleanup: true });
+            await sleepForTest(2000);
 
+            await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-cleanup-update-stacks-with-param-expressions.yml', performCleanup: true });
             stacksAfterCleanup = await cfnClient.listStacks({StackStatusFilter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE']}).promise();
         }catch(err) {
             expect(err.message).toBeUndefined();

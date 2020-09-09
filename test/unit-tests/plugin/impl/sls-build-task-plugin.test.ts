@@ -218,6 +218,27 @@ describe('when resolving attribute expressions on update', () => {
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--myAccountList "1232342341234|1232342341235"'), expect.anything(), undefined, expect.anything(), true);
     });
 
+    test('unresolvable expression will throw exception', async () => {
+        task.parameters = {
+            myAccountList: { 'Fn::Join': ['|', [
+                {'Ref': 'UnknownAccount'} as ICfnRefExpression,
+                {'Ref': 'CurrentAccount'} as ICfnRefExpression,
+            ]] } as ICfnJoinExpression
+        };
+        task.customDeployCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters}' } as ICfnSubExpression;
+        const performDeploy = binder.createPerformForUpdateOrCreate(binding);
+
+        await expect(performDeploy).rejects.toThrowError(/Join/);
+        await expect(performDeploy).rejects.toThrowError(/UnknownAccount/);
+    });
+
+    test('unresolvable expression in custom deploy command will throw exception', async () => {
+        task.customDeployCommand = { 'Fn::Sub': 'something ${xyz}' } as ICfnSubExpression;
+        const performDeploy = binder.createPerformForUpdateOrCreate(binding);
+
+        await expect(performDeploy).rejects.toThrowError(/xyz/);
+    });
+
 
     test('can resolve AWS::AccountId', async () => {
         task.parameters = {
@@ -397,6 +418,27 @@ describe('when resolving attribute expressions on remove', () => {
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--myAccountList "1232342341234|1232342341235"'), expect.anything(), undefined, expect.anything(), true);
     });
 
+
+    test('unresolvable expression will throw exception', async () => {
+        task.parameters = {
+            myAccountList: { 'Fn::Join': ['|', [
+                {'Ref': 'UnknownAccount'} as ICfnRefExpression,
+                {'Ref': 'CurrentAccount'} as ICfnRefExpression,
+            ]] } as ICfnJoinExpression
+        };
+        task.customRemoveCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters}' } as ICfnSubExpression;
+        const performRemove = binder.createPerformForRemove(binding);
+
+        await expect(performRemove).rejects.toThrowError(/Join/);
+        await expect(performRemove).rejects.toThrowError(/UnknownAccount/);
+    });
+
+    test('unresolvable expression in custom remove command will throw exception', async () => {
+        task.customRemoveCommand = { 'Fn::Sub': 'something ${xyz}' } as ICfnSubExpression;
+        const performRemove = binder.createPerformForRemove(binding);
+
+        await expect(performRemove).rejects.toThrowError(/xyz/);
+    });
 
     test('can resolve AWS::AccountId', async () => {
         task.parameters = {

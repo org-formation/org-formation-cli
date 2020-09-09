@@ -148,6 +148,12 @@ export class CfnExpressionResolver {
                         throw new OrgFormationError(`Fn::Join expression second argument expected to be array. found ${arr[1]} of type ${typeof arr[1]}.`);
                     }
 
+                    for(const element of arr[1]) {
+                        if (typeof element === 'object') {
+                            throw new OrgFormationError(`Unable to !Join element, Does this contain an expression that could not fully resolve?\n ${JSON.stringify(element)}`);
+                        }
+                    }
+
                     const joinElements = arr[1];
                     const joined = joinElements.join(arr[0]);
                     expression.resolveToValue(joined);
@@ -224,6 +230,7 @@ export class CfnExpressionResolver {
         resolver.addParameter('AWS::AccountId', accountId);
         resolver.addParameter('AWS::Region', region);
 
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         const currentAccountResolverFn = (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(logicalAccountName, resourcePath, template, state);
 
         resolver.addResourceWithResolverFn('CurrentAccount', currentAccountResolverFn);

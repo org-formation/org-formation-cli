@@ -79,10 +79,6 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
                 ConsoleUtil.LogWarning(`task ${commandArgs.name} specifies 'RunNpmInstall' but cannot find npm package file ${packageLockFilePath}. Will perform 'npm i' as opposed to 'npm ci'.`);
             }
         }
-
-        // Validator.ValidateCustomCommand(commandArgs.customDeployCommand, commandArgs.name, 'CustomDeployCommand');
-        // Validator.ValidateCustomCommand(commandArgs.customRemoveCommand, commandArgs.name, 'CustomRemoveCommand');
-
         Validator.ValidateOrganizationBinding(commandArgs.organizationBinding, commandArgs.name);
     }
 
@@ -120,13 +116,14 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const { task, target } = binding;
         let command: string;
 
-        if (binding.task.customRemoveCommand) {
-            command = binding.task.customRemoveCommand as string;
+        if (task.customRemoveCommand) {
+            Validator.throwForUnresolvedExpressions(task.customRemoveCommand, 'CustomRemoveCommand');
+            command = task.customRemoveCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx sls remove ${CurrentTask.Parameters} ${CurrentTask.ConfigOption} ${CurrentTask.StageOption} ${CurrentTask.RegionOption} --conceal' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression);
 
-            if (binding.task.runNpmInstall) {
+            if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);
             }
         }
@@ -142,6 +139,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         let command: string;
 
         if (task.customDeployCommand) {
+            Validator.throwForUnresolvedExpressions(task.customDeployCommand, 'CustomDeployCommand');
             command = task.customDeployCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx sls deploy ${CurrentTask.Parameters} ${CurrentTask.ConfigOption} ${CurrentTask.StageOption} ${CurrentTask.RegionOption} --conceal' } as ICfnSubExpression;

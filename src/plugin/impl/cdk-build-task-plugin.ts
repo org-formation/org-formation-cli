@@ -112,17 +112,18 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const { task, target } = binding;
         let command: string;
 
-        if (binding.task.customDeployCommand) {
-            command = binding.task.customDeployCommand as string;
+        if (task.customDeployCommand) {
+            Validator.throwForUnresolvedExpressions(task.customDeployCommand, 'CustomDeployCommand');
+            command = task.customDeployCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx cdk deploy ${CurrentTask.Parameters}' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression);
 
-            if (binding.task.runNpmBuild) {
+            if (task.runNpmBuild) {
                 command = 'npm run build && ' + command;
             }
 
-            if (binding.task.runNpmInstall) {
+            if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);
             }
         }
@@ -136,19 +137,19 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
     async performRemove(binding: IPluginBinding<ICdkTask>, resolver: CfnExpressionResolver): Promise<void> {
         const { task, target } = binding;
         let command: string;
-        // const resolver = PluginUtil.CreateExpressionResolver(task, target, template, state, CdkBuildTaskPlugin.GetParametersAsArgument);
 
-        if (binding.task.customRemoveCommand) {
-            command = binding.task.customRemoveCommand as string;
+        if (task.customRemoveCommand) {
+            Validator.throwForUnresolvedExpressions(task.customRemoveCommand, 'CustomRemoveCommand');
+            command = task.customRemoveCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx cdk destroy ${CurrentTask.Parameters}' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression);
 
-            if (binding.task.runNpmBuild) {
+            if (task.runNpmBuild) {
                 command = 'npm run build && ' + command;
             }
 
-            if (binding.task.runNpmInstall) {
+            if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);
             }
         }
@@ -165,7 +166,6 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const collapsed = await resolver.collapse(p);
         const parametersAsString = CdkBuildTaskPlugin.GetParametersAsArgument(collapsed);
         resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString });
-
     }
 
     static GetEnvironmentVariables(target: IGenericTarget<ICdkTask>): Record<string, string> {

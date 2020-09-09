@@ -21,6 +21,13 @@ export class Validator {
 
     }
 
+    static throwForUnresolvedExpressions(mustNotContainExpression: any, attributeName: string): void {
+      const type = typeof mustNotContainExpression;
+      if (type === 'object') {
+        throw new OrgFormationError(`unable to parse expression on attribute ${attributeName}. Is there an error in the expression? ${JSON.stringify(mustNotContainExpression)}`);
+      }
+    }
+
     public static ValidateUpdateStacksTask(config: IUpdateStackTaskConfiguration, taskName: string): void {
         if (config === undefined) { return; }
 
@@ -94,6 +101,7 @@ export class Validator {
         }
 
     }
+
     public static ValidateOrganizationBinding(binding: IOrganizationBinding, id: string): void {
         if (binding === undefined || binding === null) {
             return;
