@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+# Section that contains a named list of Bindings.
+# Bindings determine what resources are deployed where
+# These bindings can be !Ref'd from the Resources in the resource section
+OrganizationBindings:
+
+  # Binding for: S3AccountPublicAccessBlock
+  PrimaryRegionsBinding:
+
+  # Binding for: EbsEncryptionDefaults
+  AllRegionsBinding:
+
+Resources:
+
+  S3AccountPublicAccessBlock:
+    Type: 'Community::S3::PublicAccessBlock'
+    OrganizationBinding: !Ref PrimaryRegionsBinding
+    Properties:
+      BlockPublicAcls: true
+      BlockPublicPolicy: true
+      IgnorePublicAcls: true
+      RestrictPublicBuckets: true
+
+  EbsEncryptionDefaults:
+    Type: 'Community::Organizations::EbsEncryptionDefaults'
+    OrganizationBinding: !Ref AllRegionsBinding
+    Properties:
+      EnableEbsEncryptionByDefault: true

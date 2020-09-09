@@ -1,0 +1,51 @@
+# note: register-type task is only supported in AWS Organization Formation v.0.9.10 (or higher)
+
+Parameters:
+
+  # template uses region in various tasks.
+  # - primaryRegion used for those tasks that need to be deployed only to 1 region.
+  # - allRegions used for those tasks that need to be deployed only to all regions.
+  primaryRegion:
+    Type: String
+    Default: us-east-1
+
+  allRegions:
+    Type: String
+    Default:
+    - us-east-1
+    - eu-central-1
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ../organization.yml
+
+# include that contains the tasks for registering cloudformation types.
+# registering a type takes long, hence the 'MaxConcurrentTasks: 10'
+RegisterTypes:
+  Type: include
+  Path: register-type-tasks.yml
+  MaxConcurrentTasks: 10
+  Parameters:
+    region: !Ref primaryRegion
+    allRegions: !Ref allRegions
+
+# task that deploys a stack that contains service quota values.
+# the values in this sample equal the default values. therefore no service quota changes are requested
+SecureDefaults:
+  Type: update-stacks
+  DependsOn:
+  - RegisterTypes
+  Template: ./secure-defaults-template.yml
+  StackName: secure-defaults
+  MaxConcurrentStacks: 10
+  OrganizationBindings:
+    AllRegionsBinding:
+      IncludeMasterAccount: true
+      Account: '*'
+      Region: !Ref allRegions
+    PrimaryRegionsBinding:
+      IncludeMasterAccount: true
+      Account: '*'
+      Region: !Ref primaryRegion
+

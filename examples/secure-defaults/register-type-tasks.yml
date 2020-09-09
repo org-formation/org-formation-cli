@@ -1,0 +1,38 @@
+# note: register-type task is only supported in AWS Organization Formation v. 0.9.10 (or higher)
+
+Parameters:
+  # template uses region in various tasks.
+  # - primaryRegion used for those tasks that need to be deployed only to 1 region.
+  # - allRegions used for those tasks that need to be deployed only to all regions.
+  primaryRegion:
+    Type: String
+    Default: us-east-1
+
+  allRegions:
+    Type: String
+    Default:
+    - us-east-1
+    - eu-central-1
+
+
+# registration of Community::Organizations::EbsEncryptionDefaults
+EbsEncryptionDefaultsRP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-ec2-ebsencryptiondefaults-0.1.0.zip
+  ResourceType: 'Community::Organizations::EbsEncryptionDefaults'
+  MaxConcurrentTasks: 10
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Account: '*'
+    Region: !Ref allRegions # Ebs Encryption Defaults need to be set in all regions.
+
+# registration of Community::S3::PublicAccessBlock
+AccountPublicAccessBlockRP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-s3-publicaccessblock-0.1.0.zip
+  ResourceType: 'Community::S3::PublicAccessBlock'
+  MaxConcurrentTasks: 10
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Account: '*'
+    Region: !Ref primaryRegion # Public Access Block is an account wide setting. This only needs to be installed to the primary region

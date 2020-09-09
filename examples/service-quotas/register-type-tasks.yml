@@ -1,4 +1,4 @@
-# note: register-type task is only supported in AWS Organization Formation v. 0.9.8 (or higher)
+# note: register-type task is only supported in AWS Organization Formation v. 0.9.10 (or higher)
 
 Parameters:
   # template uses region in various tasks.
