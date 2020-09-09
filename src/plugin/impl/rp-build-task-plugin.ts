@@ -39,10 +39,17 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     validateCommandArgs(command: IRpCommandArgs): void {
-        if (typeof command.resourceType !== 'string') {
-            throw new OrgFormationError(`task ${command.name} does not have required attribute ResourceType`);
+        if (typeof command.resourceType === 'undefined') {
+            throw new OrgFormationError(`task ${command.name} attribute ResourceType is required`);
         }
 
+        if (typeof command.schemaHandlerPackage === 'undefined') {
+            throw new OrgFormationError(`task ${command.name} attribute SchemaHandlerPackage is required`);
+        }
+
+        if (typeof command.schemaHandlerPackage === 'string' && !command.schemaHandlerPackage.startsWith('s3://')) {
+            throw new OrgFormationError(`task ${command.name} SchemaHandlerPackage attribute expected to start with 's3://' (expected format is s3://<bucket>/<path>/<package>.zip). Found: ${command.schemaHandlerPackage}`);
+        }
     }
 
     getValuesForEquality(command: IRpCommandArgs): any {
@@ -151,20 +158,20 @@ interface IRpBuildTaskConfig extends IBuildTaskConfiguration {
     OrganizationBinding: IOrganizationBinding;
     MaxConcurrentTasks?: number;
     FailedTaskTolerance?: number;
-    ExecutionRole: string;
+    ExecutionRole?: string;
 }
 
 export interface IRpCommandArgs extends IBuildTaskPluginCommandArgs {
     schemaHandlerPackage: string;
     resourceType: string;
-    executionRole: string;
+    executionRole?: string;
 }
 
 
 export interface IRpTask extends IPluginTask {
     schemaHandlerPackage: string;
     resourceType: string;
-    executionRole: string;
+    executionRole?: string;
 }
 
 const sleep = (time: number): Promise<void> => {
