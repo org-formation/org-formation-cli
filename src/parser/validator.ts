@@ -53,6 +53,14 @@ export class Validator {
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
             'OrganizationBindings', 'TerminationProtection', 'UpdateProtection', 'CloudFormationRoleName', 'TaskRoleName',
             'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance', 'LogVerbose', 'ForceDeploy' );
+
+
+        Validator.throwForUnresolvedExpressions(config.StackName, 'StackName');
+        Validator.throwForUnresolvedExpressions(config.StackDescription, 'StackDescription');
+        Validator.throwForUnresolvedExpressions(config.Template, 'Template');
+        Validator.throwForUnresolvedExpressions(config.TaskRoleName, 'TaskRoleName');
+        Validator.throwForUnresolvedExpressions(config.CloudFormationRoleName, 'CloudFormationRoleName');
+
     }
 
     public static ValidateTemplateRoot(root: ITemplate): void {

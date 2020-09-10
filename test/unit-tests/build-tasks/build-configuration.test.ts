@@ -186,3 +186,53 @@ describe('when creating build configuration with duplicate stack name', () => {
         expect(commandArgs.stackName).toBe('stack');
     });
 });
+
+describe('when creating build configuration with unresolved expression', () => {
+    let config: IUpdateStackTaskConfiguration;
+
+    beforeEach(() => {
+        config = {
+            Type: 'update-stacks',
+            StackName: 'stack',
+            Template: 'path.yml',
+            FilePath: './.',
+            LogicalName: 'task',
+            MaxConcurrentStacks: 1,
+            FailedStackTolerance: 1,
+        };
+    });
+
+    afterEach(() => {
+
+    });
+    test('unresolved expression in task name fails', () => {
+        config.StackName = { Sub : 'xyz ${var}' } as any;
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/var/);
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/StackName/);
+    });
+
+    test('unresolved expression in task description fails', () => {
+        config.StackDescription = { Sub : 'xyz ${var}' } as any;
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/var/);
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/StackDescription/);
+    });
+
+    test('unresolved expression in cfn role fails', () => {
+        config.CloudFormationRoleName = { Sub : 'xyz ${var}' } as any;
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/var/);
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/CloudFormationRoleName/);
+    });
+    test('unresolved expression in task role fails', () => {
+        config.TaskRoleName = { Sub : 'xyz ${var}' } as any;
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/var/);
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/TaskRoleName/);
+    });
+
+
+    test('unresolved expression in template fails', () => {
+        config.Template = { Sub : 'xyz ${var}' } as any;
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/var/);
+        expect( () => BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs)).toThrowError(/Template/);
+    });
+
+});

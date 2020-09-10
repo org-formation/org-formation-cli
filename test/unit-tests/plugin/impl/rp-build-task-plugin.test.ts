@@ -1,13 +1,4 @@
-import { CdkBuildTaskPlugin, ICdkTask, ICdkCommandArgs } from "~plugin/impl/cdk-build-task-plugin";
-import { ChildProcessUtility } from "~util/child-process-util";
-import { IPluginBinding, PluginBinder } from "~plugin/plugin-binder";
-import { ICfnSubExpression, ICfnGetAttExpression, ICfnRefExpression, ICfnCopyValue, ICfnJoinExpression } from "~core/cfn-expression";
-import { TemplateRoot } from "~parser/parser";
-import { PersistedState } from "~state/persisted-state";
-import { TestTemplates } from "../../test-templates";
-import { AwsUtil, CfnUtil } from "~util/aws-util";
 import { RpBuildTaskPlugin, IRpCommandArgs } from "~plugin/impl/rp-build-task-plugin";
-import { CloudFormation } from "aws-sdk";
 
 describe('when creating rp plugin', () => {
     let plugin: RpBuildTaskPlugin;
@@ -87,7 +78,7 @@ describe('when validating task', () => {
     });
 
 
-    test('invalid schema handler package path does not throw', () => {
+    test('invalid schema handler package path throws', () => {
         commandArgs.schemaHandlerPackage = 'something different';
         expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/SchemaHandlerPackage attribute expected to start with 's3:\/\/'/);
         expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/something different/);

@@ -65,18 +65,6 @@ describe('when validating task', () => {
             OrganizationBinding: { IncludeMasterAccount: true}},
             { organizationFile: './organization.yml'} as any);
     });
-
-    // test('CustomDeployCommand with Sub Expression throws', () => {
-    //     (commandArgs as any).customDeployCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
-    //     expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
-    //     expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomDeployCommand/);
-    // });
-
-    // test('CustomRemoveCommand with Sub Expression throws', () => {
-    //     (commandArgs as any).customRemoveCommand = { 'Fn::Sub': 'expression xyz' } as ICfnSubExpression;
-    //     expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/xyz/);
-    //     expect( ()=> { plugin.validateCommandArgs(commandArgs) }).toThrowError(/CustomRemoveCommand/);
-    // });
 });
 
 describe('when resolving attribute expressions on update', () => {
@@ -292,7 +280,6 @@ describe('when resolving attribute expressions on remove', () => {
         task.customRemoveCommand = { 'Fn::Sub': 'something ${CurrentTask.Parameters} something else' } as ICfnSubExpression;
 
         await binder.createPerformForRemove(binding)();
-
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything(), true);
     });
