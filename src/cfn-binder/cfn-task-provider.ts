@@ -14,7 +14,7 @@ export class CfnTaskProvider {
 
     }
 
-    public createUpdateTemplateTask(binding: ICfnBinding): ICfnTask {
+    public async createUpdateTemplateTask(binding: ICfnBinding): Promise<ICfnTask> {
         const that = this;
         const dependencies: ICrossAccountParameterDependency[] = [];
         const boundParameters = binding.template.enumBoundParameters();
@@ -40,25 +40,30 @@ export class CfnTaskProvider {
             parameters[paramName] = paramValue;
         }
 
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+        const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {
             accountId: binding.accountId,
             region: binding.region,
-            stackName: binding.stackName,
+            stackName,
             action: 'UpdateOrCreate',
             isDependency: (): boolean => false,
             perform: async (): Promise<void> => {
 
-                const templateBody = binding.template.createTemplateBody();
-                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, binding.customRoleName);
+                const customRoleName = await expressionResolver.resolveSingleExpression(binding.customRoleName, 'CustomRoleName');
+                const cloudFormationRoleName = await expressionResolver.resolveSingleExpression(binding.cloudFormationRoleName, 'CloudFormationRoleName');
+
+                const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
+                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName);
                 const clientToken = uuid();
 
                 let roleArn: string;
-                if (binding.cloudFormationRoleName) {
-                    roleArn = AwsUtil.GetRoleArn(binding.accountId, binding.cloudFormationRoleName);
+                if (cloudFormationRoleName) {
+                    roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                 }
                 const stackInput: CreateStackInput | UpdateStackInput = {
-                    StackName: binding.stackName,
+                    StackName: stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
                     ClientRequestToken: clientToken,
@@ -73,7 +78,7 @@ export class CfnTaskProvider {
 
                 for (const dependency of dependencies) {
 
-                    const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, binding.customRoleName);
+                    const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, customRoleName);
 
                     if (foundExport !== undefined) {
                         stackInput.Parameters.push( {
@@ -94,7 +99,6 @@ export class CfnTaskProvider {
                 }
 
                 if (parameters) {
-                    const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
 
                     for (const [key, value] of Object.entries(parameters)) {
 
@@ -123,18 +127,18 @@ export class CfnTaskProvider {
                 try {
                     try {
                         await cfn.updateStack(stackInput).promise();
-                        await cfn.waitFor('stackUpdateComplete', { StackName: binding.stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        await cfn.waitFor('stackUpdateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     } catch (err) {
                         if (err && err.code === 'ValidationError' && err.message) {
                             const message = err.message as string;
                             if (-1 !== message.indexOf('ROLLBACK_COMPLETE')) {
-                                await cfn.deleteStack({ StackName: binding.stackName, RoleARN: roleArn }).promise();
-                                await cfn.waitFor('stackDeleteComplete', { StackName: binding.stackName, $waiter: { delay: 1 } }).promise();
+                                await cfn.deleteStack({ StackName: stackName, RoleARN: roleArn }).promise();
+                                await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1 } }).promise();
                                 await cfn.createStack(stackInput).promise();
-                                await cfn.waitFor('stackCreateComplete', { StackName: binding.stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                                await cfn.waitFor('stackCreateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                             } else if (-1 !== message.indexOf('does not exist')) {
                                 await cfn.createStack(stackInput).promise();
-                                await cfn.waitFor('stackCreateComplete', { StackName: binding.stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                                await cfn.waitFor('stackCreateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                             } else if (-1 !== message.indexOf('No updates are to be performed.')) {
                                 // ignore;
                             } else if (err.code === 'ResourceNotReady') {
@@ -148,18 +152,18 @@ export class CfnTaskProvider {
                     }
 
                     if (binding.state === undefined && binding.terminationProtection === true) {
-                        ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`, this.logVerbose);
-                        await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
+                        ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
+                        await cfn.updateTerminationProtection({StackName: stackName, EnableTerminationProtection: true}).promise();
                     } else if (binding.state !== undefined) {
                         if (binding.terminationProtection) {
                             if (!binding.state.terminationProtection) {
-                                ConsoleUtil.LogDebug(`Enabling termination protection for stack ${binding.stackName}`, this.logVerbose);
-                                await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: true}).promise();
+                                ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
+                                await cfn.updateTerminationProtection({StackName: stackName, EnableTerminationProtection: true}).promise();
                             }
                         } else {
                             if (binding.state.terminationProtection) {
-                                ConsoleUtil.LogDebug(`Disabling termination protection for stack ${binding.stackName}`, this.logVerbose);
-                                await cfn.updateTerminationProtection({StackName: binding.stackName, EnableTerminationProtection: false}).promise();
+                                ConsoleUtil.LogDebug(`Disabling termination protection for stack ${stackName}`, this.logVerbose);
+                                await cfn.updateTerminationProtection({StackName: stackName, EnableTerminationProtection: false}).promise();
                             }
                         }
                     }
@@ -167,17 +171,17 @@ export class CfnTaskProvider {
                     that.state.setTarget({
                         accountId: binding.accountId,
                         region: binding.region,
-                        stackName: binding.stackName,
+                        stackName,
                         lastCommittedHash: binding.templateHash,
                         logicalAccountId: binding.target.accountLogicalId,
                         terminationProtection: binding.terminationProtection,
                     });
                 } catch (err) {
                     if (err.code !== 'OptInRequired') {
-                        ConsoleUtil.LogError(`error updating CloudFormation stack ${binding.stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
+                        ConsoleUtil.LogError(`error updating CloudFormation stack ${stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
                     }
                     try {
-                        const stackEvents = await cfn.describeStackEvents({ StackName: binding.stackName }).promise();
+                        const stackEvents = await cfn.describeStackEvents({ StackName: stackName }).promise();
                         for (const event of stackEvents.StackEvents) {
                             const failureStates = ['CREATE_FAILED', 'DELETE_FAILED', 'UPDATE_FAILED'];
                             if (event.ClientRequestToken === clientToken) {
@@ -202,34 +206,42 @@ export class CfnTaskProvider {
         };
     }
 
-    public createDeleteTemplateTask(binding: ICfnBinding): ICfnTask {
+    public async createDeleteTemplateTask(binding: ICfnBinding): Promise<ICfnTask> {
         const that = this;
+
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+        const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
+
         return {
             accountId: binding.accountId,
             region: binding.region,
-            stackName: binding.stackName,
+            stackName,
             isDependency: (): boolean => false,
             action: 'Delete',
             perform: async (): Promise<void> => {
+
+                const customRoleName = await expressionResolver.resolveSingleExpression(binding.customRoleName, 'CustomRoleName');
+                const cloudFormationRoleName = await expressionResolver.resolveSingleExpression(binding.cloudFormationRoleName, 'CloudFormationRoleName');
+
                 try {
-                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, binding.customRoleName);
+                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName);
 
                     let roleArn: string;
-                    if (binding.cloudFormationRoleName) {
-                        roleArn = AwsUtil.GetRoleArn(binding.accountId, binding.cloudFormationRoleName);
+                    if (cloudFormationRoleName) {
+                        roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                     }
 
                     const deleteStackInput: DeleteStackInput = {
-                        StackName: binding.stackName,
+                        StackName: stackName,
                         RoleARN: roleArn,
                     };
                     await cfn.deleteStack(deleteStackInput).promise();
-                    await cfn.waitFor('stackDeleteComplete', { StackName: deleteStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                 } catch (err) {
-                    ConsoleUtil.LogInfo(`unable to delete stack ${binding.stackName} from ${binding.accountId} / ${binding.region}. Removing stack from state instead.`);
+                    ConsoleUtil.LogInfo(`unable to delete stack ${stackName} from ${binding.accountId} / ${binding.region}. Removing stack from state instead.`);
                 }
                 that.state.removeTarget(
-                    binding.stackName,
+                    stackName,
                     binding.accountId,
                     binding.region);
             },

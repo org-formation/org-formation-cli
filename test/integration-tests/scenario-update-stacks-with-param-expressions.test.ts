@@ -20,8 +20,8 @@ describe('when importing value from another stack', () => {
             await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' })
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' });
 
-            describedBucketStack = await cfnClient.describeStacks({StackName: 'scenario-export-bucket'}).promise();
-            describeBucketRoleStack = await cfnClient.describeStacks({StackName: 'scenario-export-bucket-role'}).promise();
+            describedBucketStack = await cfnClient.describeStacks({StackName: 'my-scenario-export-bucket'}).promise();
+            describeBucketRoleStack = await cfnClient.describeStacks({StackName: 'my-scenario-export-bucket-role'}).promise();
 
             await sleepForTest(2000);
 
@@ -32,6 +32,12 @@ describe('when importing value from another stack', () => {
         }
     });
 
+    test('Stack description is set', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const description = describeBucketRoleStack.Stacks[0].Description;
+        expect(description).toBe('something current account "Organizational Master Account" also account by name "Account A"');
+    })
     test('Stack parameter with CopyValue has value of Output', () =>{
         expect(describeBucketRoleStack).toBeDefined();
 
@@ -142,8 +148,8 @@ describe('when importing value from another stack', () => {
     })
 
     test('cleanup removes deployed stacks', () => {
-        expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'scenario-export-bucket')).toBeUndefined();
-        expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'scenario-export-bucket-role')).toBeUndefined();
+        expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'my-scenario-export-bucket')).toBeUndefined();
+        expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'my-scenario-export-bucket-role')).toBeUndefined();
     });
 
     afterAll(async ()=> {

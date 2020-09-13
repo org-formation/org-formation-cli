@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**unreleased**
+- Added pseudo parameter ORG::PrincipalOrgID.
+- Improved parsing of attributes in task files.
+- Support creating reference to AWSAccount in task file expressions (AWSAccount is an alias for CurrentAccount)
+
 **version 0.9.10**
 - Fixed bug where `register-type` tasks did not properly register execution role.
 

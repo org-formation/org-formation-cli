@@ -45,7 +45,7 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
 
         const cfnBinder = new CloudFormationBinder(stackName, emptyTemplate, state, {}, false, command.verbose === true);
 
-        const cfnTasks = cfnBinder.enumTasks();
+        const cfnTasks = await cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
             ConsoleUtil.LogInfo('no templates found.');
         } else {

@@ -232,6 +232,12 @@ export class CfnTemplate {
         return JSON.stringify(this.resultingTemplate, null, 2);
     }
 
+    public async createTemplateBodyAndResolve(expressionResolver: CfnExpressionResolver): Promise<string> {
+        const template = { ... this.resultingTemplate };
+        template.Description = await expressionResolver.resolveSingleExpression(template.Description, 'Description');
+        return JSON.stringify(template, null, 2);
+    }
+
     private _removeCrossAccountDependsOn(resource: any, resourceIdsForTarget: string[], allResourceIds: string[]): void{
 
         if (resource !== null && typeof resource === 'object') {
