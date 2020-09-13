@@ -121,7 +121,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             command = task.customRemoveCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx sls remove ${CurrentTask.Parameters} ${CurrentTask.ConfigOption} ${CurrentTask.StageOption} ${CurrentTask.RegionOption} --conceal' } as ICfnSubExpression;
-            command = await resolver.resolveSingleExpression(commandExpression);
+            command = await resolver.resolveSingleExpression(commandExpression, 'CustomRemoveCommand');
 
             if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);
@@ -143,7 +143,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             command = task.customDeployCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx sls deploy ${CurrentTask.Parameters} ${CurrentTask.ConfigOption} ${CurrentTask.StageOption} ${CurrentTask.RegionOption} --conceal' } as ICfnSubExpression;
-            command = await resolver.resolveSingleExpression(commandExpression);
+            command = await resolver.resolveSingleExpression(commandExpression, 'CustomDeployCommand');
 
             if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);

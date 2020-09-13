@@ -1,11 +1,12 @@
 import { existsSync, readFileSync } from 'fs';
-import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain } from 'aws-sdk';
+import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
 import AWS from 'aws-sdk';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
 import { ListExportsInput, UpdateStackInput, DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
+import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
@@ -23,6 +24,18 @@ export class AwsUtil {
         AwsUtil.IamServiceCache = {};
         AwsUtil.SupportServiceCache = {};
         AwsUtil.S3ServiceCache = {};
+    }
+
+    private static organization: DescribeOrganizationResponse;
+    public static async GetPrincipalOrgId(): Promise<string> {
+        if (this.organization !== undefined) {
+            return this.organization.Organization.Id;
+        }
+
+        const organizationService = new Organizations({region: 'us-east-1'});
+        this.organization = await organizationService.describeOrganization().promise();
+        return this.organization.Organization.Id;
+
     }
 
     public static async InitializeWithProfile(profile?: string): Promise<void> {

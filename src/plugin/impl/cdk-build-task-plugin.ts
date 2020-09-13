@@ -117,7 +117,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             command = task.customDeployCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx cdk deploy ${CurrentTask.Parameters}' } as ICfnSubExpression;
-            command = await resolver.resolveSingleExpression(commandExpression);
+            command = await resolver.resolveSingleExpression(commandExpression, 'CustomDeployCommand');
 
             if (task.runNpmBuild) {
                 command = 'npm run build && ' + command;
@@ -143,7 +143,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             command = task.customRemoveCommand as string;
         } else {
             const commandExpression = { 'Fn::Sub': 'npx cdk destroy ${CurrentTask.Parameters}' } as ICfnSubExpression;
-            command = await resolver.resolveSingleExpression(commandExpression);
+            command = await resolver.resolveSingleExpression(commandExpression, 'CustomRemoveCommand');
 
             if (task.runNpmBuild) {
                 command = 'npm run build && ' + command;
