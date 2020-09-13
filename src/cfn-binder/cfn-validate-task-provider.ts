@@ -4,21 +4,27 @@ import uuid = require('uuid');
 import { OrgFormationError } from '../org-formation-error';
 import { ICfnBinding } from './cfn-binder';
 import { ICfnTask } from './cfn-task-provider';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
+import { TemplateRoot } from '~parser/parser';
+import { PersistedState } from '~state/persisted-state';
 
 export class CfnValidateTaskProvider {
+    constructor(private readonly template: TemplateRoot, private readonly state: PersistedState, private readonly logVerbose: boolean) {
 
-    public enumTasks(bindings: ICfnBinding[]): ICfnTask[] {
+    }
+
+    public async enumTasks(bindings: ICfnBinding[]): Promise<ICfnTask[]> {
         const result: ICfnTask[] = [];
         for (const binding of bindings) {
             if (binding.action !== 'Delete') {
-                const validationTask = this.createValidationTask(binding);
+                const validationTask = await this.createValidationTask(binding);
                 result.push(validationTask);
             }
         }
         return result;
     }
 
-    private createValidationTask(binding: ICfnBinding): ICfnTask {
+    private async createValidationTask(binding: ICfnBinding): Promise<ICfnTask> {
         const descriptionsOfBoundParameters: string[] = [];
         const boundParameters = binding.template.enumBoundParameters();
         for (const paramName in boundParameters) {
@@ -30,14 +36,17 @@ export class CfnValidateTaskProvider {
             descriptionsOfBoundParameters.push(param.Description);
         }
 
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+        const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
+
         return {
             accountId: binding.accountId,
             region: binding.region,
-            stackName: binding.stackName,
+            stackName,
             isDependency: (): boolean => false,
             action: 'Validate',
             perform: async (): Promise<void> => {
-                const templateBody = binding.template.createTemplateBody();
+                const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
                 const validateInput: ValidateTemplateInput =  {
                     TemplateBody: templateBody,
                 };
