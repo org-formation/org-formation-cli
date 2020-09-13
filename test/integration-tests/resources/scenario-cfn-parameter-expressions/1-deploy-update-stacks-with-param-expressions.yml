@@ -25,8 +25,8 @@ PolicyTemplate:
   Template: ./bucket-policy.yml
   StackName: !Sub '${stackPrefix}-scenario-export-bucket-role'
   StackDescription: !Sub
-  - 'something current account "${currentAccount}" also account by name "${accountByNAme}"'
-  - { currentAccount: !GetAtt CurrentAccount.AccountName, accountByNme: !GetAtt AccountA.AccountName }
+  - 'something current account "${currentAccount}" also account by name "${accountByName}"'
+  - { currentAccount: !GetAtt CurrentAccount.AccountName, accountByName: !GetAtt AccountA.AccountName }
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
     IncludeMasterAccount: true
