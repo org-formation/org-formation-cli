@@ -58,7 +58,7 @@ export class CfnTemplate {
         if (accountLogicalId) {
             result.uniqueNameForImport = accountLogicalId + 'DotResourcesDot' + result.uniqueNameForImport;
         }
-        if (path && path.endsWith('NameServers')) { // todo: add list of other attributes that are not string;
+        if (path && (path.endsWith('NameServers') || path.endsWith('DnsEntries'))) { // todo: add list of other attributes that are not string;
             result.valueType = 'CommaDelimitedList';
             result.expressionForExport = { 'Fn::Join': [', ', { 'Fn::GetAtt': [resourceLogicalId, path] }] };
         }
