@@ -2,9 +2,11 @@
 All notable changes to aws organization formation will be documented in this file.
 
 **version 0.9.11**
-- Added pseudo parameter ORG::PrincipalOrgID.
+- Added pseudo parameter `ORG::PrincipalOrgID`.
 - Improved parsing of attributes in task files.
-- AWSAccount can be used as alias for CurrentAccount in task file expressions.
+- AWSAccount can be used as alias for `CurrentAccount` in task file expressions.
+- Added support for cross account references on `VPCEndpoint.DnsEntries`.
+
 
 **version 0.9.10**
 - Fixed bug where `register-type` tasks did not properly register execution role.
