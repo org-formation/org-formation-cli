@@ -9,3 +9,8 @@ Organization:
       AccountId: '102625093955'
       Tags:
         Tag: tag-value
+  AccountA:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: account+a@olafconijn.awsapps.com
+      AccountName: Account A

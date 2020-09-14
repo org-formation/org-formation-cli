@@ -79,10 +79,6 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
                 ConsoleUtil.LogWarning(`task ${commandArgs.name} specifies 'RunNpmInstall' but cannot find npm package file ${packageLockFilePath}. Will perform 'npm i' as opposed to 'npm ci'.`);
             }
         }
-
-        // Validator.ValidateCustomCommand(commandArgs.customDeployCommand, commandArgs.name, 'CustomDeployCommand');
-        // Validator.ValidateCustomCommand(commandArgs.customRemoveCommand, commandArgs.name, 'CustomRemoveCommand');
-
         Validator.ValidateOrganizationBinding(commandArgs.organizationBinding, commandArgs.name);
     }
 
@@ -120,25 +116,15 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const { task, target } = binding;
         let command: string;
 
-        if (binding.task.customRemoveCommand) {
-            command = binding.task.customDeployCommand as string;
+        if (task.customRemoveCommand) {
+            Validator.throwForUnresolvedExpressions(task.customRemoveCommand, 'CustomRemoveCommand');
+            command = task.customRemoveCommand as string;
         } else {
-            const commandExpression = { 'Fn::Sub': 'npx sls remove ${CurrentTask.Parameters}' } as ICfnSubExpression;
-            command = await resolver.resolveSingleExpression(commandExpression);
+            const commandExpression = { 'Fn::Sub': 'npx sls remove ${CurrentTask.Parameters} ${CurrentTask.ConfigOption} ${CurrentTask.StageOption} ${CurrentTask.RegionOption} --conceal' } as ICfnSubExpression;
+            command = await resolver.resolveSingleExpression(commandExpression, 'CustomRemoveCommand');
 
-            if (binding.task.runNpmInstall) {
+            if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);
-            }
-
-            command = appendArgumentIfTruthy(command, '--stage', task.stage);
-            command = appendArgumentIfTruthy(command, '--region', target.region);
-            command = appendArgumentIfTruthy(command, '--config', task.configFile);
-            command = command + ' --conceal';
-
-            if (binding.task.customRemoveCommand) {
-                command = binding.task.customRemoveCommand.replace('${region}', target.region);
-                command = command.replace('${stage}', task.stage ?? '');
-                command = command.replace('${config}', task.configFile ?? '');
             }
         }
 
@@ -153,24 +139,14 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         let command: string;
 
         if (task.customDeployCommand) {
+            Validator.throwForUnresolvedExpressions(task.customDeployCommand, 'CustomDeployCommand');
             command = task.customDeployCommand as string;
         } else {
-            const commandExpression = { 'Fn::Sub': 'npx sls deploy ${CurrentTask.Parameters}' } as ICfnSubExpression;
-            command = await resolver.resolveSingleExpression(commandExpression);
+            const commandExpression = { 'Fn::Sub': 'npx sls deploy ${CurrentTask.Parameters} ${CurrentTask.ConfigOption} ${CurrentTask.StageOption} ${CurrentTask.RegionOption} --conceal' } as ICfnSubExpression;
+            command = await resolver.resolveSingleExpression(commandExpression, 'CustomDeployCommand');
 
             if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);
-            }
-
-            command = appendArgumentIfTruthy(command, '--stage', task.stage);
-            command = appendArgumentIfTruthy(command, '--region', target.region);
-            command = appendArgumentIfTruthy(command, '--config', task.configFile);
-            command = command + ' --conceal';
-
-            if (task.customDeployCommand) {
-                command = binding.task.customDeployCommand.replace('${region}', target.region);
-                command = command.replace('${stage}', task.stage ?? '');
-                command = command.replace('${config}', task.configFile ?? '');
             }
         }
 
@@ -181,9 +157,20 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ISlsTask>): Promise<void> {
         const { task } = binding;
-        const p = await resolver.resolve(task.parameters);
-        const parametersAsString = SlsBuildTaskPlugin.GetParametersAsArgument(p);
-        resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString, Stage: task.stage, Config: task.configFile });
+        const parameters = await resolver.resolve(task.parameters);
+        const collapsed = await resolver.collapse(parameters);
+        const parametersAsString = SlsBuildTaskPlugin.GetParametersAsArgument(collapsed);
+        const resource  = { Parameters : parametersAsString, Stage: task.stage, StageOption: '', Config: task.configFile, ConfigOption: '', RegionOption: `--region ${binding.target.region}`};
+        if (resource.Stage) {
+            resource.StageOption = `--stage ${resource.Stage}`;
+        }
+        if (resource.Config) {
+            resource.ConfigOption = `--config ${resource.Config}`;
+        }
+        resolver.addResourceWithAttributes('CurrentTask', resource);
+        resolver.addParameter('region', binding.target.region);
+        resolver.addParameter('stage', resource.Stage);
+        resolver.addParameter('config', resource.Config);
     }
 
     static GetParametersAsArgument(parameters: Record<string, any>): string {
@@ -192,12 +179,6 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         return entries.reduce((prev, curr) => prev + `--${curr[0]} "${curr[1]}" `, '');
     }
 }
-
-const appendArgumentIfTruthy = (command: string, option: string, val?: string): string => {
-    if (!val) {return command;}
-    return `${command} ${option} ${val}`;
-};
-
 
 export interface IServerlessComTaskConfig extends IBuildTaskConfiguration {
     Path: string;
@@ -227,6 +208,6 @@ export interface ISlsTask extends IPluginTask {
     stage?: string;
     configFile?: string;
     runNpmInstall: boolean;
-    customDeployCommand?: string;
-    customRemoveCommand?: string;
+    customDeployCommand?: ICfnExpression;
+    customRemoveCommand?: ICfnExpression;
 }

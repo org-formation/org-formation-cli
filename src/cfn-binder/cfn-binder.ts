@@ -171,11 +171,11 @@ export class CloudFormationBinder {
         return result;
     }
 
-    public enumTasks(): ICfnTask[] {
+    public async enumTasks(): Promise<ICfnTask[]> {
         const result: ICfnTask[] = [];
         for (const binding of this.enumBindings()) {
             if (binding.action === 'UpdateOrCreate') {
-                const task = this.taskProvider.createUpdateTemplateTask(binding);
+                const task = await this.taskProvider.createUpdateTemplateTask(binding);
                 task.isDependency = (other: ICfnTask): boolean => {
                     return binding.accountDependencies.includes(other.accountId) ||
                            binding.regionDependencies.includes(other.region) ||
@@ -183,7 +183,7 @@ export class CloudFormationBinder {
                 };
                 result.push(task);
             } else if (binding.action === 'Delete') {
-                const task = this.taskProvider.createDeleteTemplateTask(binding);
+                const task = await this.taskProvider.createDeleteTemplateTask(binding);
                 result.push(task);
             }
         }

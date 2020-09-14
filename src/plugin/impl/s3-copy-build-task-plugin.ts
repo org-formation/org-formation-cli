@@ -1,5 +1,6 @@
 import path from 'path';
-import { existsSync, readFileSync, statSync } from 'fs';
+import { existsSync, statSync } from 'fs';
+import * as fs from 'fs';
 import { PutObjectRequest, DeleteObjectRequest } from 'aws-sdk/clients/s3';
 import { IPluginTask, IPluginBinding } from '../plugin-binder';
 import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin, CommonTaskAttributeNames } from '../plugin';
@@ -81,20 +82,30 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
     }
 
     async performRemove(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
-        const s3client = await AwsUtil.GetS3Service(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
+        const {target, task} = binding;
+
+        Validator.throwForUnresolvedExpressions(task.remotePath, 'RemotePath');
+        Validator.throwForUnresolvedExpressions(task.localPath, 'LocalPath');
+
+        const s3client = await AwsUtil.GetS3Service(target.accountId, target.region, task.taskRoleName);
         const request: DeleteObjectRequest = {
-            ...CopyToS3TaskPlugin.getBucketAndKey(binding.task),
+            ...CopyToS3TaskPlugin.getBucketAndKey(task),
         };
 
         await s3client.deleteObject(request).promise();
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
-        const s3client = await AwsUtil.GetS3Service(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
+        const {target, task} = binding;
+
+        Validator.throwForUnresolvedExpressions(task.remotePath, 'RemotePath');
+        Validator.throwForUnresolvedExpressions(task.localPath, 'LocalPath');
+
+        const s3client = await AwsUtil.GetS3Service(target.accountId, target.region, task.taskRoleName);
         const request: PutObjectRequest = {
-            ...CopyToS3TaskPlugin.getBucketAndKey(binding.task),
+            ...CopyToS3TaskPlugin.getBucketAndKey(task),
         };
-        request.Body = readFileSync(binding.task.localPath);
+        request.Body = fs.readFileSync(task.localPath);
 
         await s3client.putObject(request).promise();
     }
@@ -124,7 +135,7 @@ interface IBucketAndKey {
 }
 
 
-interface IS3CopyBuildTaskConfig extends IBuildTaskConfiguration {
+export interface IS3CopyBuildTaskConfig extends IBuildTaskConfiguration {
     LocalPath: string;
     RemotePath: string;
     ZipBeforePut?: true;
@@ -132,13 +143,13 @@ interface IS3CopyBuildTaskConfig extends IBuildTaskConfiguration {
 
 }
 
-interface IS3CopyCommandArgs extends IBuildTaskPluginCommandArgs {
+export interface IS3CopyCommandArgs extends IBuildTaskPluginCommandArgs {
     localPath: string;
     remotePath: string;
     zipBeforePut: boolean;
 }
 
-interface IS3CopyTask extends IPluginTask {
+export interface IS3CopyTask extends IPluginTask {
     localPath: string;
     remotePath: string;
     zipBeforePut: boolean;

@@ -35,6 +35,7 @@ describe('when cleaning up stacks', () => {
         stacksAfterAddBucket2 = await cfnClient.listStacks(listStackInput).promise();
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'organization-tasks-empty.yml', performCleanup: true});
+
         stacksAfterRemoveBucketWithCleanup = await cfnClient.listStacks(listStackInput).promise();
     });
 

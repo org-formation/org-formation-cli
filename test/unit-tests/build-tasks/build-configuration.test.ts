@@ -5,6 +5,7 @@ import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-
 import { ConsoleUtil } from '~util/console-util';
 import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
+import { assert } from 'console';
 
 
 

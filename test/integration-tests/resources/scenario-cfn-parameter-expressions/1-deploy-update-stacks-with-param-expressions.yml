@@ -1,3 +1,10 @@
+Parameters:
+  stackPrefix:
+    Description: will be used a prefix for stack names.
+    Type: String
+    Default: my
+
+
 
 OrganizationUpdate:
   Type: update-organization
@@ -7,7 +14,7 @@ OrganizationUpdate:
 BucketTemplate:
   Type: update-stacks
   Template: ./bucket.yml
-  StackName: scenario-export-bucket
+  StackName: !Sub '${stackPrefix}-scenario-export-bucket'
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
     IncludeMasterAccount: true
@@ -16,7 +23,10 @@ PolicyTemplate:
   DependsOn: BucketTemplate
   Type: update-stacks
   Template: ./bucket-policy.yml
-  StackName: scenario-export-bucket-role
+  StackName: !Sub '${stackPrefix}-scenario-export-bucket-role'
+  StackDescription: !Sub
+  - 'something current account "${currentAccount}" also account by name "${accountByName}"'
+  - { currentAccount: !GetAtt CurrentAccount.AccountName, accountByName: !GetAtt AccountA.AccountName }
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
     IncludeMasterAccount: true
@@ -27,6 +37,8 @@ PolicyTemplate:
     bucketArn4: !CopyValue [BucketArn, !Ref MasterAccount, 'eu-west-1']
     tagVal: !GetAtt MasterAccount.Tags.Tag
     tagVal2: !GetAtt CurrentAccount.Tags.Tag
+    tagVal3: !GetAtt AWSAccount.Tags.Tag
+    tagVal4: !Ref AWSAccount
     masterAccountId: !Ref MasterAccount
     numericValue: 123
     someSubExpression: !Sub

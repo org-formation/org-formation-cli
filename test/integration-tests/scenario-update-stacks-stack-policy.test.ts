@@ -42,7 +42,6 @@ describe('when calling org-formation perform tasks', () => {
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '6-update-stack-policy-clearing-policy.yml' });
         stackPolicyAfterUpdateClearingPolicy = await cfnClient.getStackPolicy({StackName: 'test-with-stack-policy'}).promise();
 
-
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-stacks-with-stack-policy.yml', performCleanup: true });
         listStacksResponseAfterCleanup = await cfnClient.listStacks({StackStatusFilter: ['CREATE_COMPLETE']}).promise();
     });

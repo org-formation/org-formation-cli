@@ -124,7 +124,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
 
         const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, cloudFormationRoleName);
 
-        const cfnTasks = cfnBinder.enumTasks();
+        const cfnTasks = await cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
             ConsoleUtil.LogInfo(`Stack ${stackName} already up to date.`);
         } else {
