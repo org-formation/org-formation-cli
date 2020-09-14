@@ -7,6 +7,7 @@ All notable changes to aws organization formation will be documented in this fil
 - AWSAccount can be used as alias for `CurrentAccount` in task file expressions.
 - Added support for cross account references on `VPCEndpoint.DnsEntries`.
 
+
 **version 0.9.10**
 - Fixed bug where `register-type` tasks did not properly register execution role.
 
