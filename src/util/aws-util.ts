@@ -203,7 +203,7 @@ export class CfnUtil {
         } catch (err) {
             if (err && err.code === 'ValidationError' && err.message) {
                 const message = err.message as string;
-                if (-1 !== message.indexOf('ROLLBACK_COMPLETE')) {
+                if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || (-1 !== message.indexOf('ROLLBACK_FAILED'))) {
                     await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
                     await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1 } }).promise();
                     await cfn.createStack(updateStackInput).promise();
@@ -214,8 +214,6 @@ export class CfnUtil {
                 } else if (-1 !== message.indexOf('No updates are to be performed.')) {
                     describeStack = await cfn.describeStacks({StackName: updateStackInput.StackName}).promise();
                     // ignore;
-                } else if (err.code === 'ResourceNotReady') {
-                    ConsoleUtil.LogError('error when executing CloudFormation');
                 } else {
                     throw err;
                 }

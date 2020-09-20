@@ -5,7 +5,7 @@ import { CreateStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformati
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { Command } from 'commander';
 import { WritableStream } from 'memory-streams';
-import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util/aws-util';
+import { AwsUtil, CfnUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
@@ -122,31 +122,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             ],
         };
 
-        try {
-            await cfn.updateStack(stackInput).promise();
-            await cfn.waitFor('stackUpdateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-        } catch (err) {
-            if (err && err.code === 'ValidationError' && err.message) {
-                const message = err.message as string;
-                if (-1 !== message.indexOf('ROLLBACK_COMPLETE')) {
-                    await cfn.deleteStack({ StackName: stackName }).promise();
-                    await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1 } }).promise();
-                    await cfn.createStack(stackInput).promise();
-                    await cfn.waitFor('stackCreateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                } else if (-1 !== message.indexOf('does not exist')) {
-                    await cfn.createStack(stackInput).promise();
-                    await cfn.waitFor('stackCreateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                } else if (-1 !== message.indexOf('No updates are to be performed.')) {
-                    // ignore;
-                } else if (err.code === 'ResourceNotReady') {
-                    ConsoleUtil.LogError('error when executing cloudformation');
-                } else {
-                    throw err;
-                }
-            } else {
-                throw err;
-            }
-        }
+        await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
     }
 
     private createTasksFile(path: string, stackName: string, resourcePrefix: string, stateBucketName: string, region: string, repositoryName: string): string {
