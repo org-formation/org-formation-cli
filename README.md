@@ -41,6 +41,23 @@ You can now execute the command line program `org-formation`. try:
 > org-formation --help
 ```
 
+### Docker
+
+If you choose, you can run org-formation in a docker container:
+
+```sh
+# Set the AWS_PROFILE environment variable and pass it to the container
+> AWS_PROFILE=example
+# Run the container
+> docker run --rm -it -v $HOME/.aws:/root/.aws:ro -v $PWD:/workdir -w /workdir -e AWS_PROFILE orgformation/org-formation-cli
+```
+
+Optional: create an alias for the container:
+
+```sh
+> alias org-formation='docker run --rm -it -v $HOME/.aws:/root/.aws:ro -v $PWD:/workdir -w /workdir -e AWS_PROFILE orgformation/org-formation-cli'
+```
+
 ## Getting started
 
 💡Need help getting started? [Get some on slack!](https://join.slack.com/t/org-formation/shared_invite/enQtOTA5NjM3Mzc4ODUwLTMxZjYxYzljZTE5YWUzODE2MTNmYjM5NTY5Nzc3MzljNjVlZGQ1ODEzZDgyMWVkMDg3Mzk1ZjQ1ZjM4MDhlOGM)
