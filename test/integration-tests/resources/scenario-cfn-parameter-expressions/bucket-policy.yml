@@ -44,6 +44,12 @@ Parameters:
   joinedCopyValue:
     Type: String
 
+  findInMap1:
+    Type: String
+
+  findInMap2:
+    Type: String
+
 Resources:
   BucketPolicy:
     Type: AWS::IAM::ManagedPolicy

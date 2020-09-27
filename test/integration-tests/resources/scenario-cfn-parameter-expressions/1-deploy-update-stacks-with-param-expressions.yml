@@ -3,7 +3,18 @@ Parameters:
     Description: will be used a prefix for stack names.
     Type: String
     Default: my
+  parameterToMap:
+    Type: String
+    Default: MyGroup2
 
+Mappings:
+  MyMap:
+    MyGroup1:
+      MyKey: MyVal1
+      MyKey2: MyVal21
+    MyGroup2:
+      MyKey: MyVal2
+      MyKey2: MyVal22
 
 
 OrganizationUpdate:
@@ -49,3 +60,5 @@ PolicyTemplate:
       - val1
       - val2
     joinedCopyValue: !Join ['', [!CopyValue [BucketArn, 102625093955], '-postfix']]
+    findInMap1: !FindInMap [MyMap, MyGroup1, MyKey]
+    findInMap2: !FindInMap [MyMap, !Ref parameterToMap, MyKey]

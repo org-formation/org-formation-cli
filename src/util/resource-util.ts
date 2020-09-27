@@ -1,4 +1,5 @@
 import { SubExpression } from '../cfn-binder/cfn-sub-expression';
+import { CfnMappings } from '~core/cfn-mappings';
 
 const zeroPad = (num: number, places: number): string => String(num).padStart(places, '0');
 
@@ -147,7 +148,9 @@ export class ResourceUtil {
                         target: resource,
                         resolveToValue: (x: string)=> { resourceParent[resourceKey] = x; },
                     } as ICfnFunctionExpression);
-
+                } else if (CfnMappings.accept(key, val)) {
+                    const expression = CfnMappings.create(resource, resourceParent, resourceKey);
+                    result.push( expression );
                 }
             }
 
@@ -185,8 +188,8 @@ interface IResourceExpression {
     resolveToValue(val: string): void;
 }
 
-interface ICfnFunctionExpression {
-    type: 'Sub' | 'Join';
+export interface ICfnFunctionExpression {
+    type: 'Sub' | 'Join' | 'FindInMap';
     target: any;
     resolveToValue(val: string): void;
 }

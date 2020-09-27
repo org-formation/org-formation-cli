@@ -1,5 +1,6 @@
 import { OrgFormationError } from '../org-formation-error';
-import { ICfnExpression, ICfnSubExpression, ICfnJoinExpression } from '~core/cfn-expression';
+import { CfnMappings, CfnMappingsSection } from './cfn-mappings';
+import { ICfnExpression, ICfnSubExpression, ICfnJoinExpression, ICfnFindInMapExpression } from '~core/cfn-expression';
 import { ResourceUtil } from '~util/resource-util';
 import { AccountResource, Resource } from '~parser/model';
 import { PersistedState } from '~state/persisted-state';
@@ -22,6 +23,7 @@ export class CfnExpressionResolver {
     readonly resolvers: Record<string, IResolver> = {};
     readonly globalResolvers: IResolver[] = [];
     readonly treeResolvers: ITreeResolver<any>[] = [];
+    private mapping: CfnMappingsSection;
 
     addResourceWithAttributes(resource: string, attributes: Record<string, string>): void {
         this.resolvers[resource] = { resolve: (resolver: CfnExpressionResolver, resourceName: string, path?: string): string => {
@@ -31,6 +33,10 @@ export class CfnExpressionResolver {
             }
             return val;
         } };
+    }
+
+    addMappings(mapping: CfnMappingsSection): void {
+        this.mapping = mapping;
     }
 
     addParameter(key: string, value: string): void {
@@ -79,7 +85,33 @@ export class CfnExpressionResolver {
                 continue;
             }
         }
+        const functions = ResourceUtil.EnumCfnFunctionsForResource(container);
+        for(const fnExpression of functions) {
+            if (fnExpression.type === 'FindInMap') {
+                const findInMapExpression = fnExpression.target as ICfnFindInMapExpression;
+                const arr = findInMapExpression['Fn::FindInMap'];
 
+                if (!Array.isArray(arr)) {
+                    throw new OrgFormationError(`Fn::FindInMap expression expects an array as value. Found ${typeof arr}`);
+                }
+                if (Array.isArray(arr) && arr.length !== 3) {
+                    throw new OrgFormationError(`Fn::FindInMap expression expects an array of 3 elements as value. Found an array of ${arr.length}`);
+                }
+
+                for(const element of arr) {
+                    if (typeof element !== 'string') {
+                        throw new OrgFormationError(`Unable to resolve FindInMap expression. Not all arguments are of type String. Does this contain an expression that could not fully resolve?\n ${JSON.stringify(element)}`);
+                    }
+                }
+                const mapName = arr[0] as string;
+                const groupName = arr[1] as string;
+                const keyName = arr[2] as string;
+
+                const val = CfnMappings.findInMap(this.mapping, mapName, groupName, keyName);
+
+                fnExpression.resolveToValue(val);
+            }
+        }
         return container.val;
     }
 
@@ -161,6 +193,8 @@ export class CfnExpressionResolver {
                     const joined = joinElements.join(arr[0]);
                     expression.resolveToValue(joined);
                 }
+            } else if (expression.type === 'FindInMap') {
+                throw new OrgFormationError('FindInMap found in an unexpected place.');
             }
         }
 

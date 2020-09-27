@@ -81,7 +81,6 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe(output.OutputValue);
     })
 
-
     test('Stack parameter with !Ref gets resolved ', () =>{
         expect(describeBucketRoleStack).toBeDefined();
 
@@ -145,6 +144,20 @@ describe('when importing value from another stack', () => {
         const output = describedBucketStack.Stacks[0].Outputs[0];
         expect(output.ExportName).toBe('BucketArn');
         expect(parameter.ParameterValue).toBe(output.OutputValue + '-postfix');
+    })
+
+    test('FindInMap gets resolved properly', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'findInMap1');
+        expect(parameter.ParameterValue).toBe('MyVal1');
+    })
+
+    test('FindInMap with parameter gets resolved properly', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'findInMap1');
+        expect(parameter.ParameterValue).toBe('MyVal2');
     })
 
     test('cleanup removes deployed stacks', () => {
