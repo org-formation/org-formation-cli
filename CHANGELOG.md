@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.9.12**
+- Added support for `Mappings`/`FindInMap` for task files
+- Fixed bug on `org-formation init` where tags on the MasterAccount where not added to generated template.
+- Updating stacks that have state ROLLBACK_FAILED will be retried.
+
 **version 0.9.11**
 - Added pseudo parameter `ORG::PrincipalOrgID` (in tasks file).
 - Improved parsing of attributes in task files.
