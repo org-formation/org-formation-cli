@@ -157,7 +157,7 @@ describe('when importing value from another stack', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'findInMap1');
-        expect(parameter.ParameterValue).toBe('MyVal2');
+        expect(parameter.ParameterValue).toBe('MyVal1');
     })
 
     test('cleanup removes deployed stacks', () => {
