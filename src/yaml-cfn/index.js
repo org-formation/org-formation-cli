@@ -89,7 +89,9 @@ const supportedFunctions = [
   'Fn::If',
   'Fn::Not',
   'Fn::Or',
-  'Fn::CopyValue'
+  'Fn::CopyValue',
+  'Fn::ReadFile',
+  'Fn::MD5'
 ];
 
 let allTagTypes = [];

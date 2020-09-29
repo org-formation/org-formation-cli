@@ -203,7 +203,7 @@ export class CfnUtil {
         } catch (err) {
             if (err && err.code === 'ValidationError' && err.message) {
                 const message = err.message as string;
-                if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || (-1 !== message.indexOf('ROLLBACK_FAILED'))) {
+                if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
                     await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
                     await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1 } }).promise();
                     await cfn.createStack(updateStackInput).promise();

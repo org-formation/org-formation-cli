@@ -8,7 +8,7 @@ import { IUpdateStacksBuildTask } from './tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { yamlParse } from '~yaml-cfn/index';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
-import { CfnMappingsSection } from '~core/cfn-mappings';
+import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -149,7 +149,8 @@ export class BuildConfiguration {
             expressionResolver.addParameter(paramName, value);
         }
         expressionResolver.addMappings(this.mappings);
-        const resolvedContents = expressionResolver.resolveParameters(buildFile);
+        expressionResolver.setFilePath(filePath);
+        const resolvedContents = expressionResolver.resolveFirstPass(buildFile);
 
         const result: IBuildTaskConfiguration[] = [];
         for (const name in resolvedContents) {

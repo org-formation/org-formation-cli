@@ -1,6 +1,7 @@
 import { OrgFormationError } from '../org-formation-error';
-import { CfnMappings, CfnMappingsSection } from './cfn-mappings';
-import { ICfnExpression, ICfnSubExpression, ICfnJoinExpression, ICfnFindInMapExpression } from '~core/cfn-expression';
+import { CfnMappingsSection } from './cfn-functions/cfn-find-in-map';
+import { CfnFunctions, ICfnFunctionContext } from './cfn-functions/cfn-functions';
+import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
 import { ResourceUtil } from '~util/resource-util';
 import { AccountResource, Resource } from '~parser/model';
 import { PersistedState } from '~state/persisted-state';
@@ -24,6 +25,7 @@ export class CfnExpressionResolver {
     readonly globalResolvers: IResolver[] = [];
     readonly treeResolvers: ITreeResolver<any>[] = [];
     private mapping: CfnMappingsSection;
+    private filePath: string;
 
     addResourceWithAttributes(resource: string, attributes: Record<string, string>): void {
         this.resolvers[resource] = { resolve: (resolver: CfnExpressionResolver, resourceName: string, path?: string): string => {
@@ -37,6 +39,10 @@ export class CfnExpressionResolver {
 
     addMappings(mapping: CfnMappingsSection): void {
         this.mapping = mapping;
+    }
+
+    setFilePath(filePath: string): void {
+        this.filePath = filePath;
     }
 
     addParameter(key: string, value: string): void {
@@ -71,7 +77,7 @@ export class CfnExpressionResolver {
         Validator.throwForUnresolvedExpressions(collapsed.val, attributeName);
     }
 
-    public resolveParameters<T>(obj: T): T {
+    public resolveFirstPass<T>(obj: T): T {
         if (obj === undefined) {return undefined;}
         const clone = JSON.parse(JSON.stringify(obj)) as T;
 
@@ -85,40 +91,15 @@ export class CfnExpressionResolver {
                 continue;
             }
         }
-        const functions = ResourceUtil.EnumCfnFunctionsForResource(container);
-        for(const fnExpression of functions) {
-            if (fnExpression.type === 'FindInMap') {
-                const findInMapExpression = fnExpression.target as ICfnFindInMapExpression;
-                const arr = findInMapExpression['Fn::FindInMap'];
-
-                if (!Array.isArray(arr)) {
-                    throw new OrgFormationError(`Fn::FindInMap expression expects an array as value. Found ${typeof arr}`);
-                }
-                if (Array.isArray(arr) && arr.length !== 3) {
-                    throw new OrgFormationError(`Fn::FindInMap expression expects an array of 3 elements as value. Found an array of ${arr.length}`);
-                }
-
-                for(const element of arr) {
-                    if (typeof element !== 'string') {
-                        throw new OrgFormationError(`Unable to resolve FindInMap expression. Not all arguments are of type String. Does this contain an expression that could not fully resolve?\n ${JSON.stringify(element)}`);
-                    }
-                }
-                const mapName = arr[0] as string;
-                const groupName = arr[1] as string;
-                const keyName = arr[2] as string;
-
-                const val = CfnMappings.findInMap(this.mapping, mapName, groupName, keyName);
-
-                fnExpression.resolveToValue(val);
-            }
-        }
-        return container.val;
+        const context: ICfnFunctionContext = { filePath: this.filePath, mappings: this.mapping, finalPass: false };
+        const resolved = CfnFunctions.resolveTreeStructural(context, container);
+        return resolved.val;
     }
 
     public async resolve<T>(obj: T): Promise<T> {
         if (obj === undefined) {return undefined;}
 
-        const resolved = this.resolveParameters(obj);
+        const resolved = this.resolveFirstPass(obj);
         const container = {val: resolved};
         const expressions = ResourceUtil.EnumExpressionsForResource(container, 'any');
         for(const expression of expressions) {
@@ -167,36 +148,11 @@ export class CfnExpressionResolver {
                     const value = await resolver.resolveSingleExpression({'Fn::Sub': arr[0]} as ICfnSubExpression, 'Sub');
                     expression.resolveToValue(value);
                 }
-            } else if (expression.type === 'Join') {
-                const subExpression = expression.target as ICfnJoinExpression;
-                if (Array.isArray(subExpression['Fn::Join'])) {
-                    const arr = subExpression['Fn::Join'];
-                    if (arr.length !== 2) {
-                        throw new OrgFormationError('Fn::Join expression expected to have 2 array elements (separator and list of elements)');
-                    }
-
-                    if (typeof arr[0] !== 'string') {
-                        throw new OrgFormationError(`Fn::Join expression first argument expected to be string. found ${arr[0]} of type ${typeof arr[0]}.`);
-                    }
-
-                    if (!Array.isArray(arr[1])) {
-                        throw new OrgFormationError(`Fn::Join expression second argument expected to be array. found ${arr[1]} of type ${typeof arr[1]}.`);
-                    }
-
-                    for(const element of arr[1]) {
-                        if (typeof element === 'object') {
-                            throw new OrgFormationError(`Unable to !Join element, Does this contain an expression that could not fully resolve?\n ${JSON.stringify(element)}`);
-                        }
-                    }
-
-                    const joinElements = arr[1];
-                    const joined = joinElements.join(arr[0]);
-                    expression.resolveToValue(joined);
-                }
-            } else if (expression.type === 'FindInMap') {
-                throw new OrgFormationError('FindInMap found in an unexpected place.');
             }
         }
+
+        const context: ICfnFunctionContext = { filePath: this.filePath, mappings: this.mapping, finalPass: true };
+        CfnFunctions.resolveTreeStructural(context, container);
 
         return container.val;
     }

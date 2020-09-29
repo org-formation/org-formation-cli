@@ -50,6 +50,21 @@ Parameters:
   findInMap2:
     Type: String
 
+  md5:
+    Type: String
+
+  readFile:
+    Type: String
+
+  md5readFile:
+    Type: String
+
+  select:
+    Type: String
+
+  selectFindInMap:
+    Type: String
+
 Resources:
   BucketPolicy:
     Type: AWS::IAM::ManagedPolicy

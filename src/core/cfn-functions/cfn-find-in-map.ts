@@ -1,20 +1,36 @@
+import { ICfnFunctionContext } from './cfn-functions';
 import { OrgFormationError } from '~org-formation-error';
-import { ICfnFunctionExpression } from '~util/resource-util';
 
 export type CfnMappingsSection = Record<string, Record<string, Record<string, string>>>;
 
-export class CfnMappings {
+export class CfnFindInMap {
 
-    static accept(key: string, val: unknown): boolean {
-        return (key === 'Fn::FindInMap' && typeof val === 'object' && Array.isArray(val));
-    }
+    static resolve(context: ICfnFunctionContext, resource: any, resourceParent: any, resourceKey: string, key: string, val: any): void {
+        if (key === 'Fn::FindInMap')
+        {
+            if (!Array.isArray(val)) {
+                if (!context.finalPass) { return; }
+                throw new OrgFormationError(`Fn::FindInMap expression expects an array as value. Found ${typeof val}`);
+            }
+            if (Array.isArray(val) && val.length !== 3) {
+                if (!context.finalPass) { return; }
+                throw new OrgFormationError(`Fn::FindInMap expression expects an array of 3 elements as value. Found an array of ${val.length}`);
+            }
 
-    static create(resource: any, resourceParent: any, resourceKey: string): ICfnFunctionExpression {
-        return {
-            type: 'FindInMap',
-            target: resource,
-            resolveToValue: (x: string): void => { resourceParent[resourceKey] = x; },
-        };
+            for(const element of val) {
+                if (typeof element !== 'string') {
+                    if (!context.finalPass) { return; }
+                    throw new OrgFormationError(`Unable to resolve FindInMap expression. Not all arguments are of type String. Does this contain an expression that could not fully resolve?\n ${JSON.stringify(element)}`);
+                }
+            }
+            const mapName = val[0] as string;
+            const groupName = val[1] as string;
+            const keyName = val[2] as string;
+
+            const found = CfnFindInMap.findInMap(context.mappings, mapName, groupName, keyName);
+
+            resourceParent[resourceKey] = found;
+        }
     }
 
     static findInMap(mappings: CfnMappingsSection, mapName: string, groupName: string, keyName: string): string {
@@ -48,12 +64,7 @@ export class CfnMappings {
         }
 
         const val = group[keyName];
-        if (typeof val !== 'string')  {
-            throw new OrgFormationError(`Unable to find key with name ${groupName} in group ${groupName} (${mapName}) . Did find groups with the following names ${keyNames.join(', ')}`);
-        }
 
         return val;
-
-
     }
 }

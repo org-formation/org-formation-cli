@@ -39,7 +39,7 @@ describe('when having an expression resolver with parameter', () => {
     });
 
     test('FindInMap can be used to resolve value using parameter as group name', async () => {
-        const resolved1 = await resolver.resolveParameters(target);
+        const resolved1 = await resolver.resolveFirstPass(target);
         const resolved = await resolver.resolve(resolved1);
         const collapsed = await resolver.collapse(resolved);
         expect(collapsed.fn2).toBe('MyVal22')

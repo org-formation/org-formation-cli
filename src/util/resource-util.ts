@@ -1,5 +1,5 @@
 import { SubExpression } from '../cfn-binder/cfn-sub-expression';
-import { CfnMappings } from '~core/cfn-mappings';
+
 
 const zeroPad = (num: number, places: number): string => String(num).padStart(places, '0');
 
@@ -29,7 +29,7 @@ export class ResourceUtil {
 
     public static HasExpressions(resourceParent: any, resourceKey: string, resourceIds: string[]): boolean {
         const resource = resourceParent[resourceKey];
-        const expressions =  ResourceUtil.EnumExpressionsForResource(resource, resourceIds, resourceParent, resourceKey);
+        const expressions = ResourceUtil.EnumExpressionsForResource(resource, resourceIds, resourceParent, resourceKey);
         return 0 < expressions.length;
     }
 
@@ -87,7 +87,7 @@ export class ResourceUtil {
 
             for (const [key, val] of entries) {
                 if (val !== null && typeof val === 'object') {
-                   result.push(...ResourceUtil.EnumExpressionsForResource(val, resourceIds, resource, key));
+                    result.push(...ResourceUtil.EnumExpressionsForResource(val, resourceIds, resource, key));
                 }
             }
         }
@@ -123,7 +123,7 @@ export class ResourceUtil {
             }
             for (const [key, val] of entries) {
                 if (val !== null && typeof val === 'object') {
-                   result.push(...this.EnumFunctionsForResource(val, resource, key));
+                    result.push(...this.EnumFunctionsForResource(val, resource, key));
                 }
             }
         }
@@ -137,38 +137,28 @@ export class ResourceUtil {
             if (entries.length === 1 && resourceParent !== undefined && resourceKey !== undefined) {
                 const [key, val]: [string, unknown] = entries[0];
                 if (key === 'Fn::Sub' && typeof val === 'object' && Array.isArray(val) && val.length === 2) {
-                    result.push( {
+                    result.push({
                         type: 'Sub',
                         target: resource,
-                        resolveToValue: (x: string)=> { resourceParent[resourceKey] = x; },
+                        resolveToValue: (x: string) => { resourceParent[resourceKey] = x; },
                     } as ICfnFunctionExpression);
-                } else if (key === 'Fn::Join' && typeof val === 'object' && Array.isArray(val) && val.length === 2) {
-                    result.push( {
-                        type: 'Join',
-                        target: resource,
-                        resolveToValue: (x: string)=> { resourceParent[resourceKey] = x; },
-                    } as ICfnFunctionExpression);
-                } else if (CfnMappings.accept(key, val)) {
-                    const expression = CfnMappings.create(resource, resourceParent, resourceKey);
-                    result.push( expression );
                 }
             }
-
             for (const [key, val] of entries) {
                 if (val !== null && typeof val === 'object') {
-                result.push(...ResourceUtil.EnumCfnFunctionsForResource(val, resource, key));
+                    result.push(...ResourceUtil.EnumCfnFunctionsForResource(val, resource, key));
                 }
             }
         }
+
         return result;
     }
-
 }
 
 const createRewriteExpression = (parent: any, key: string) => {
     return (resource: string, path?: string): void => {
         if (path !== undefined) {
-            parent[key] = { 'Fn::GetAtt': [resource, path]};
+            parent[key] = { 'Fn::GetAtt': [resource, path] };
         } else {
             parent[key] = { Ref: resource };
         }
@@ -181,6 +171,7 @@ const createResolveExpression = (parent: any, key: string) => {
     };
 };
 
+
 interface IResourceExpression {
     resource: string;
     path?: string;
@@ -189,7 +180,7 @@ interface IResourceExpression {
 }
 
 export interface ICfnFunctionExpression {
-    type: 'Sub' | 'Join' | 'FindInMap';
+    type: 'Sub' | 'Join' | 'FindInMap' | 'MD5' | 'ReadFile';
     target: any;
     resolveToValue(val: string): void;
 }
