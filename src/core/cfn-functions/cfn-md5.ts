@@ -6,7 +6,6 @@ export class CfnMD5 {
     static resolve(context: ICfnFunctionContext, resource: any, resourceParent: any, resourceKey: string, key: string, val: any): void {
         if (key === 'Fn::MD5')
         {
-            if (!context.finalPass) { return; }
             resourceParent[resourceKey] = md5(val);
         }
     }

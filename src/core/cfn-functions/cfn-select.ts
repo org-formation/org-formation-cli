@@ -12,12 +12,12 @@ export class CfnSelect {
             }
             if (typeof val[0] !== 'number') {
                 if (!context.finalPass) { return; }
-                throw new OrgFormationError(`Fn::Select expression a number as first element in value. Found ${typeof val[0]}`);
+                throw new OrgFormationError(`Fn::Select expression expects a number as first element in value. Found ${typeof val[0]}`);
             }
             const arr = val[1];
             if (!Array.isArray(arr)) {
                 if (!context.finalPass) { return; }
-                throw new OrgFormationError(`Fn::Select expression an array as second element in value. Found ${typeof val[1]}`);
+                throw new OrgFormationError(`Fn::Select expression expects an array as second element in value. Found ${typeof val[1]}`);
             }
 
             const index = val[0];

@@ -74,4 +74,4 @@ PolicyTemplate:
     md5readFile: !MD5
       - !ReadFile ./file.txt
     select: !Select [2, ['one', 'two', 'three']]
-    selectFindInMap: !Select [0, !FindInMap [MyMap, MyGroup1, MyKey]]
+    selectFindInMap: !Select [0, !FindInMap [MyMapWithArrarys, MyGroup1, MyKey]]
