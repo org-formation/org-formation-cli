@@ -68,7 +68,7 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks,
             isDependency: (): boolean => false,
-            perform: async (): Promise<void> => await BuildRunner.RunValidationTasks(childTasks, commandForInclude.verbose === true, 1, 999),
+            perform: async (): Promise<void> => await BuildRunner.RunValidationTasks(childTasks, commandForInclude.verbose === true, config.MaxConcurrentTasks, config.FailedTaskTolerance),
         };
     }
 
