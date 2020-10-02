@@ -2,7 +2,8 @@
 All notable changes to aws organization formation will be documented in this file.
 
 **(Unreleased) version 0.9.12**
-- Added support for `Mappings`/`FindInMap` for task files
+- Allow failure tolerance to be set to 0 on validate-tasks command (allows CI/CD processes to fail on validation)
+- Added support for `Mappings`/`FindInMap` for task files.
 - Fixed bug on `org-formation init` where tags on the MasterAccount where not added to generated template.
 - Updating stacks that have state ROLLBACK_FAILED will be retried.
 
