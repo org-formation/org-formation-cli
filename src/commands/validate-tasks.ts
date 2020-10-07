@@ -34,6 +34,7 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
 
+
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');

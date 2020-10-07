@@ -1,4 +1,3 @@
-import { CloudFormation } from 'aws-sdk';
 import { ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import uuid = require('uuid');
 import { OrgFormationError } from '../org-formation-error';
