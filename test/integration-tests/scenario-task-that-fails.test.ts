@@ -24,7 +24,7 @@ describe('when task fails', () => {
 
         consoleErrorSpy.mockReset();
         try{
-            await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'organization-tasks.yml'});
+            await ValidateTasksCommand.Perform({...command, failedTasksTolerance: 99, tasksFile: basePathForScenario + 'organization-tasks.yml'});
         } catch (err) {
             errorAfterValidateTasks = err;
         }
