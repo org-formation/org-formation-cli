@@ -91,7 +91,9 @@ const supportedFunctions = [
   'Fn::Or',
   'Fn::CopyValue',
   'Fn::ReadFile',
-  'Fn::MD5'
+  'Fn::MD5',
+  'Fn::JsonString'
+
 ];
 
 let allTagTypes = [];

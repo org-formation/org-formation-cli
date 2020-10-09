@@ -1,5 +1,6 @@
 import { CfnFindInMap, CfnMappingsSection } from './cfn-find-in-map';
 import { CfnJoin } from './cfn-join';
+import { CfnJsonString } from './cfn-json-string';
 import { CfnMD5 } from './cfn-md5';
 import { CfnReadFile } from './cfn-read-file';
 import { CfnSelect } from './cfn-select';
@@ -13,6 +14,7 @@ export class CfnFunctions {
         CfnFindInMap.resolve(context, resource, resourceParent, resourceKey, key, val);
         CfnSelect.resolve(context, resource, resourceParent, resourceKey, key, val);
         CfnJoin.resolve(context, resource, resourceParent, resourceKey, key, val);
+        CfnJsonString.resolve(context, resource, resourceParent, resourceKey, key, val);
 
         if (context.finalPass) {
             CfnSub.resolve(context, resource, resourceParent, resourceKey, key, val);
