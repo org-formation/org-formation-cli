@@ -72,6 +72,8 @@ export class CfnTaskProvider {
 
                 };
 
+                await CfnUtil.UploadTemplateToS3IfTooLarge(stackInput, binding, stackName, this.template.hash);
+
                 if (binding.stackPolicy !== undefined) {
                     stackInput.StackPolicyBody = JSON.stringify(binding.stackPolicy);
                 }

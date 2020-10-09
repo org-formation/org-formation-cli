@@ -9,6 +9,7 @@ All notable changes to aws organization formation will be documented in this fil
 - Added support for `!Ref OrganizationRoot` (and other types) in task files.
 - Fixed bug on `org-formation init` where tags on the MasterAccount where not added to generated template.
 - Updating stacks that have state ROLLBACK_FAILED will be retried.
+- Support for large (> 512000 byte) templates
 
 **version 0.9.11**
 - Added pseudo parameter `ORG::PrincipalOrgID` (in tasks file).

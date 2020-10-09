@@ -6,7 +6,7 @@ import { ICfnTask } from './cfn-task-provider';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
-import { AwsUtil } from '~util/aws-util';
+import { AwsUtil, CfnUtil } from '~util/aws-util';
 
 export class CfnValidateTaskProvider {
     constructor(private readonly template: TemplateRoot, private readonly state: PersistedState, private readonly logVerbose: boolean) {
@@ -54,6 +54,9 @@ export class CfnValidateTaskProvider {
                 const validateInput: ValidateTemplateInput =  {
                     TemplateBody: templateBody,
                 };
+
+                await CfnUtil.UploadTemplateToS3IfTooLarge(validateInput, binding, stackName, this.template.hash);
+
 
                 const result = await cfn.validateTemplate(validateInput).promise();
                 const missingParameters: string[] = [];
