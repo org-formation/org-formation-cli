@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09-OC'
 Description: default template generated for organization with master account 102625093955
 
 Organization:
+
+  OrganizationRoot:
+    Type: OC::ORG::OrganizationRoot
+
   MasterAccount:
     Type: OC::ORG::MasterAccount
     Properties:

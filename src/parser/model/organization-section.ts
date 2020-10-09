@@ -137,6 +137,10 @@ export class OrganizationSection {
         return this.accounts.find(fn);
     }
 
+    public findResource(fn: (x: Resource) => bool): Resource | undefined {
+        return this.resources.find(fn);
+    }
+
     public findAccounts(fn: (x: AccountResource) => bool): AccountResource[] {
         const list: AccountResource[] = this.accounts;
         if (this.masterAccount) {

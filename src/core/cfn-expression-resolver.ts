@@ -157,10 +157,18 @@ export class CfnExpressionResolver {
         return container.val;
     }
 
-    static ResolveAccountExpressionByLogicalName(logicalName: string, path: string | undefined, template: TemplateRoot, state: PersistedState): string | undefined {
+    static ResolveOrganizationExpressionByLogicalName(logicalName: string, path: string | undefined, template: TemplateRoot, state: PersistedState): string | undefined {
         const account = template.organizationSection.findAccount(x=>x.logicalId === logicalName);
-        if (account === undefined) { return undefined; }
-        return CfnExpressionResolver.ResolveAccountExpression(account, path, state);
+        if (account !== undefined) {
+            return CfnExpressionResolver.ResolveAccountExpression(account, path, state);
+        }
+
+        const resource = template.organizationSection.findResource(x=>x.logicalId === logicalName);
+        if (resource !== undefined) {
+            return CfnExpressionResolver.ResolveResourceRef(resource, state);
+        }
+
+        return undefined;
     }
 
     static ResolveAccountExpression(account: AccountResource, path: string | undefined, state: PersistedState): string | undefined {
@@ -225,12 +233,12 @@ export class CfnExpressionResolver {
         resolver.addParameter('AWS::Region', region);
 
         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        const currentAccountResolverFn = (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(logicalAccountName, resourcePath, template, state);
+        const currentAccountResolverFn = (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(logicalAccountName, resourcePath, template, state);
 
         resolver.addResourceWithResolverFn('CurrentAccount', currentAccountResolverFn);
         resolver.addResourceWithResolverFn('AWSAccount', currentAccountResolverFn);
         resolver.addResourceWithResolverFn('ORG::PrincipalOrgID', () => AwsUtil.GetPrincipalOrgId());
-        resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(resource, resourcePath, template, state));
+        resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(resource, resourcePath, template, state));
 
         resolver.addTreeResolver((that: CfnExpressionResolver, obj) => CfnExpressionResolver.ResolveCopyValueFunctions(that, accountId, region, taskRoleName, obj));
 

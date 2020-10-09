@@ -75,3 +75,8 @@ PolicyTemplate:
       - !ReadFile ./file.txt
     select: !Select [2, ['one', 'two', 'three']]
     selectFindInMap: !Select [0, !FindInMap [MyMapWithArrarys, MyGroup1, MyKey]]
+    jsonString1: !JsonString
+      att: 1
+      otherAtt: '2'
+    jsonString2: !JsonString [ !ReadFile ./test.json]
+    refToRoot: !Ref OrganizationRoot

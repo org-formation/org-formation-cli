@@ -195,6 +195,26 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe('MyVal1');
     })
 
+    test('ref to OrganizationRoot resolves to physical id of root', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'refToRoot');
+        expect(parameter.ParameterValue).toBe('r-kvte');
+    })
+
+    test('JsonString resolves to minimized json string', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'jsonString1');
+        expect(parameter.ParameterValue).toBe('{"att":1,"otherAtt":"2"}');
+    })
+
+    test('JsonString can be used with ReadFile', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'jsonString2');
+        expect(parameter.ParameterValue).toBe('{"key":"val"}');
+    })
     test('cleanup removes deployed stacks', () => {
         expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'my-scenario-export-bucket')).toBeUndefined();
         expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'my-scenario-export-bucket-role')).toBeUndefined();

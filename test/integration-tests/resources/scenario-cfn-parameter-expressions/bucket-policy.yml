@@ -65,6 +65,15 @@ Parameters:
   selectFindInMap:
     Type: String
 
+  jsonString1:
+    Type: String
+
+  jsonString2:
+    Type: String
+
+  refToRoot:
+    Type: String
+
 Resources:
   BucketPolicy:
     Type: AWS::IAM::ManagedPolicy
