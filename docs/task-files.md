@@ -119,6 +119,37 @@ PolicyTemplate:
     bucketArn3: !CopyValue [BucketArn, 123123123123, 'eu-west-1']
 ```
 
+
+### !ReadFile
+
+The `!ReadFile` function will take 1 string argument, a file path, and return the contents of the file as a string.
+
+
+### !MD5
+
+The `!MD5` function will take 1 argument and return a message digest over its value. If the argument is a string, the function will calculate a message digest over the string. If the value is an object the `!MD5` function will create a message digest over the JSON string representation of the contents.
+
+See the following examples:
+
+``` yaml
+
+CopyFileWithHashInKey:
+  Type: copy-to-s3
+  LocalPath: ./source-file.yml
+  RemotePath: !Sub
+  - 's3://organization-formation-${AWS::AccountId}/remote-path-${hashOfFile}.yml'
+  - { hashOfFile: !MD5 { file: !ReadFile './source-file.yml'}}
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: us-east-1
+
+```
+
+### !JsonString
+
+The `!JsonString` function will take 1 or 2 arguments. The first argument will be converted to a JSON string representation. If the second argument is the literal 'pretty-print', the result will contain whitespace, otherwise the result will not contain whitespace. If the first argument is a string, the string will be first converted to an object (assuming the string as json) prior to returning the string representation (therefore minifying the input string).
+
+
 ## Task types
 
 ### update-organization
