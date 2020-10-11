@@ -3,7 +3,7 @@ All notable changes to aws organization formation will be documented in this fil
 
 **(Unreleased) version 0.9.12**
 - Allow failure tolerance to be set to 0 on validate-tasks command (allows CI/CD processes to fail on validation)
-- Added support for `Mappings` / `FindInMap` for task files.
+- Added support for `Mappings` / `FindInMap` / `Select` for task files.
 - Added functions `!MD5` / `!ReadFile` that can be used in task files.
 - Added function `!JsonString` that can be used in task files.
 - Added support for `!Ref OrganizationRoot` (and other types) in task files.
