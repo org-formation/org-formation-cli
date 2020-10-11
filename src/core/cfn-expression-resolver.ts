@@ -1,5 +1,7 @@
 import { OrgFormationError } from '../org-formation-error';
-import { ICfnExpression, ICfnSubExpression, ICfnJoinExpression } from '~core/cfn-expression';
+import { CfnMappingsSection } from './cfn-functions/cfn-find-in-map';
+import { CfnFunctions, ICfnFunctionContext } from './cfn-functions/cfn-functions';
+import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
 import { ResourceUtil } from '~util/resource-util';
 import { AccountResource, Resource } from '~parser/model';
 import { PersistedState } from '~state/persisted-state';
@@ -22,6 +24,8 @@ export class CfnExpressionResolver {
     readonly resolvers: Record<string, IResolver> = {};
     readonly globalResolvers: IResolver[] = [];
     readonly treeResolvers: ITreeResolver<any>[] = [];
+    private mapping: CfnMappingsSection;
+    private filePath: string;
 
     addResourceWithAttributes(resource: string, attributes: Record<string, string>): void {
         this.resolvers[resource] = { resolve: (resolver: CfnExpressionResolver, resourceName: string, path?: string): string => {
@@ -31,6 +35,14 @@ export class CfnExpressionResolver {
             }
             return val;
         } };
+    }
+
+    addMappings(mapping: CfnMappingsSection): void {
+        this.mapping = mapping;
+    }
+
+    setFilePath(filePath: string): void {
+        this.filePath = filePath;
     }
 
     addParameter(key: string, value: string): void {
@@ -65,7 +77,7 @@ export class CfnExpressionResolver {
         Validator.throwForUnresolvedExpressions(collapsed.val, attributeName);
     }
 
-    public resolveParameters<T>(obj: T): T {
+    public resolveFirstPass<T>(obj: T): T {
         if (obj === undefined) {return undefined;}
         const clone = JSON.parse(JSON.stringify(obj)) as T;
 
@@ -79,14 +91,15 @@ export class CfnExpressionResolver {
                 continue;
             }
         }
-
-        return container.val;
+        const context: ICfnFunctionContext = { filePath: this.filePath, mappings: this.mapping, finalPass: false };
+        const resolved = CfnFunctions.resolveTreeStructural(context, container);
+        return resolved.val;
     }
 
     public async resolve<T>(obj: T): Promise<T> {
         if (obj === undefined) {return undefined;}
 
-        const resolved = this.resolveParameters(obj);
+        const resolved = this.resolveFirstPass(obj);
         const container = {val: resolved};
         const expressions = ResourceUtil.EnumExpressionsForResource(container, 'any');
         for(const expression of expressions) {
@@ -135,42 +148,27 @@ export class CfnExpressionResolver {
                     const value = await resolver.resolveSingleExpression({'Fn::Sub': arr[0]} as ICfnSubExpression, 'Sub');
                     expression.resolveToValue(value);
                 }
-            } else if (expression.type === 'Join') {
-                const subExpression = expression.target as ICfnJoinExpression;
-                if (Array.isArray(subExpression['Fn::Join'])) {
-                    const arr = subExpression['Fn::Join'];
-                    if (arr.length !== 2) {
-                        throw new OrgFormationError('Fn::Join expression expected to have 2 array elements (separator and list of elements)');
-                    }
-
-                    if (typeof arr[0] !== 'string') {
-                        throw new OrgFormationError(`Fn::Join expression first argument expected to be string. found ${arr[0]} of type ${typeof arr[0]}.`);
-                    }
-
-                    if (!Array.isArray(arr[1])) {
-                        throw new OrgFormationError(`Fn::Join expression second argument expected to be array. found ${arr[1]} of type ${typeof arr[1]}.`);
-                    }
-
-                    for(const element of arr[1]) {
-                        if (typeof element === 'object') {
-                            throw new OrgFormationError(`Unable to !Join element, Does this contain an expression that could not fully resolve?\n ${JSON.stringify(element)}`);
-                        }
-                    }
-
-                    const joinElements = arr[1];
-                    const joined = joinElements.join(arr[0]);
-                    expression.resolveToValue(joined);
-                }
             }
         }
+
+        const context: ICfnFunctionContext = { filePath: this.filePath, mappings: this.mapping, finalPass: true };
+        CfnFunctions.resolveTreeStructural(context, container);
 
         return container.val;
     }
 
-    static ResolveAccountExpressionByLogicalName(logicalName: string, path: string | undefined, template: TemplateRoot, state: PersistedState): string | undefined {
+    static ResolveOrganizationExpressionByLogicalName(logicalName: string, path: string | undefined, template: TemplateRoot, state: PersistedState): string | undefined {
         const account = template.organizationSection.findAccount(x=>x.logicalId === logicalName);
-        if (account === undefined) { return undefined; }
-        return CfnExpressionResolver.ResolveAccountExpression(account, path, state);
+        if (account !== undefined) {
+            return CfnExpressionResolver.ResolveAccountExpression(account, path, state);
+        }
+
+        const resource = template.organizationSection.findResource(x=>x.logicalId === logicalName);
+        if (resource !== undefined) {
+            return CfnExpressionResolver.ResolveResourceRef(resource, state);
+        }
+
+        return undefined;
     }
 
     static ResolveAccountExpression(account: AccountResource, path: string | undefined, state: PersistedState): string | undefined {
@@ -235,12 +233,12 @@ export class CfnExpressionResolver {
         resolver.addParameter('AWS::Region', region);
 
         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        const currentAccountResolverFn = (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(logicalAccountName, resourcePath, template, state);
+        const currentAccountResolverFn = (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(logicalAccountName, resourcePath, template, state);
 
         resolver.addResourceWithResolverFn('CurrentAccount', currentAccountResolverFn);
         resolver.addResourceWithResolverFn('AWSAccount', currentAccountResolverFn);
         resolver.addResourceWithResolverFn('ORG::PrincipalOrgID', () => AwsUtil.GetPrincipalOrgId());
-        resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveAccountExpressionByLogicalName(resource, resourcePath, template, state));
+        resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(resource, resourcePath, template, state));
 
         resolver.addTreeResolver((that: CfnExpressionResolver, obj) => CfnExpressionResolver.ResolveCopyValueFunctions(that, accountId, region, taskRoleName, obj));
 

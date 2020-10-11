@@ -5,12 +5,14 @@ import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
 import AWS from 'aws-sdk';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
-import { ListExportsInput, UpdateStackInput, DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
+import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackInput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
+import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
+import { ICfnBinding } from '~cfn-binder/cfn-binder';
 
 
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
@@ -195,6 +197,41 @@ export const passwordPolicyEquals = (passwordPolicy: IAM.PasswordPolicy, pwdPoli
 };
 
 export class CfnUtil {
+
+    public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackInput | UpdateStackInput | ValidateTemplateInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
+        if (stackInput.TemplateBody && stackInput.TemplateBody.length > 50000) {
+            const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region);
+            const bucketName = `organization-formation-${binding.accountId}-large-templates`;
+            try {
+                await s3Service.createBucket({ Bucket: bucketName }).promise();
+                await s3Service.putPublicAccessBlock({
+                    Bucket: bucketName,
+                    PublicAccessBlockConfiguration: {
+                        BlockPublicAcls: true,
+                        IgnorePublicAcls: true,
+                        BlockPublicPolicy: true,
+                        RestrictPublicBuckets: true,
+                    },
+                }).promise();
+                await s3Service.putBucketEncryption({
+                    Bucket: bucketName, ServerSideEncryptionConfiguration: {
+                        Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }],
+                    },
+                }).promise();
+            } catch (err) {
+                if (err && err.code !== 'BucketAlreadyOwnedByYou') {
+                    throw new OrgFormationError(`unable to create bucket ${bucketName} in account ${binding.accountId}, error: ${err}`);
+                }
+            }
+
+            const putObjetRequest: PutObjectRequest = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody };
+            await s3Service.putObject(putObjetRequest).promise();
+            stackInput.TemplateURL = `https://${bucketName}.s3.amazonaws.com/${putObjetRequest.Key}`;
+            delete stackInput.TemplateBody;
+        }
+    }
+
+
     public static async UpdateOrCreateStack(cfn: CloudFormation, updateStackInput: UpdateStackInput): Promise<DescribeStacksOutput> {
         let describeStack: DescribeStacksOutput;
         try {
@@ -203,7 +240,7 @@ export class CfnUtil {
         } catch (err) {
             if (err && err.code === 'ValidationError' && err.message) {
                 const message = err.message as string;
-                if (-1 !== message.indexOf('ROLLBACK_COMPLETE')) {
+                if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
                     await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
                     await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1 } }).promise();
                     await cfn.createStack(updateStackInput).promise();
@@ -214,8 +251,6 @@ export class CfnUtil {
                 } else if (-1 !== message.indexOf('No updates are to be performed.')) {
                     describeStack = await cfn.describeStacks({StackName: updateStackInput.StackName}).promise();
                     // ignore;
-                } else if (err.code === 'ResourceNotReady') {
-                    ConsoleUtil.LogError('error when executing CloudFormation');
                 } else {
                     throw err;
                 }

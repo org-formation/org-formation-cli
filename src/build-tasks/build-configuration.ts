@@ -8,10 +8,12 @@ import { IUpdateStacksBuildTask } from './tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { yamlParse } from '~yaml-cfn/index';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
+import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
     public parameters: Record<string, IBuildFileParameter>;
+    public mappings: CfnMappingsSection;
     private file: string;
 
     constructor(input: string, private readonly parameterValues: Record<string, string> = {}) {
@@ -103,7 +105,9 @@ export class BuildConfiguration {
     }
     public enumBuildConfigurationFromBuildFile(filePath: string, buildFile: IBuildFile): IBuildTaskConfiguration[] {
         this.parameters = buildFile.Parameters;
+        this.mappings = buildFile.Mappings;
         delete buildFile.Parameters;
+        delete buildFile.Mappings;
 
         const expressionResolver = new CfnExpressionResolver();
         for(const paramName in this.parameters) {
@@ -144,7 +148,9 @@ export class BuildConfiguration {
 
             expressionResolver.addParameter(paramName, value);
         }
-        const resolvedContents = expressionResolver.resolveParameters(buildFile);
+        expressionResolver.addMappings(this.mappings);
+        expressionResolver.setFilePath(filePath);
+        const resolvedContents = expressionResolver.resolveFirstPass(buildFile);
 
         const result: IBuildTaskConfiguration[] = [];
         for (const name in resolvedContents) {
@@ -191,6 +197,7 @@ export interface IBuildTask {
 
 export interface IBuildFile extends Record<string, IBuildTaskConfiguration | {}>{
     Parameters?: Record<string, IBuildFileParameter>;
+    Mappings?: CfnMappingsSection;
 }
 
 export interface IBuildFileParameter {

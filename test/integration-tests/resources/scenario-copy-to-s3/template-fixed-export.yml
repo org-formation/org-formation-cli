@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+
+  RandomResource:
+    Type: AWS::S3::Bucket
+
+Outputs:
+
+  TestS3BucketNameOutput:
+    Description: A fixed value used for testing
+    Value: org-formation-integration-test
+    Export:
+      Name: TestS3BucketName
