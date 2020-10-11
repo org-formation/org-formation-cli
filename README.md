@@ -384,6 +384,9 @@ Really happy to implement this based on someone elses use-case.
 
 Special thanks to the following companies:
 
+
+[![Stedi](./docs/img/stedi.png)](https://www.stedi.com)
+
 [![Moneyou](./docs/img/moneyou.svg)](https://www.moneyou.nl)
 
 [![ChainSlayer](./docs/img/chainslayer.png)](https://www.chainslayer.io/)
