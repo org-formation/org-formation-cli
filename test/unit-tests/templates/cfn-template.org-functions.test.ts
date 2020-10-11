@@ -5,6 +5,7 @@ import { OrgResourceTypes } from '~parser/model/resource-types';
 import { IResourceTarget } from '~parser/model/resources-section';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
+import { ConsoleUtil } from '~util/console-util';
 import { TestTemplates } from '../test-templates';
 
 
@@ -241,6 +242,7 @@ describe('when using Sub on account', () => {
                             SubWithoutExpressionTag: {'Fn::Sub' : 'something'},
                             SubWith2Expressions: {'Fn::Sub' : '${parameter}-abc${' + otherAccountLogicalId + '.Alias' + '}'},
                             MissingAlias: {'Fn::Sub' : 'abc-${AWSAccount.Alias}'},
+                            SubNoSubstitutes: {'Fn::Sub' : 'regular-text'},
                         },
                     }),
             ],
@@ -321,5 +323,11 @@ describe('when using Sub on account', () => {
     test('Sub replaces missing alias with empty string', () => {
         expect(templateResource).toBeDefined();
         expect(templateResource.Properties.MissingAlias).toBe('abc-');
+    });
+
+    test('Sub no substitutes resolves to string', () => {
+        ConsoleUtil.LogWarning('TODO');
+        // expect(templateResource).toBeDefined();
+        // expect(templateResource.Properties.SubNoSubstitutes).toBe('regular-text');
     });
 });

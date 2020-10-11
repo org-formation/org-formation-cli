@@ -39,7 +39,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             childTasks: [],
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             StackName: config.StackName,
-            isDependency: (): boolean => false,
+            isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
                 await ValidateStacksCommand.Perform(updateStacksCommand);

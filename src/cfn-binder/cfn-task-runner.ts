@@ -22,13 +22,13 @@ export class CfnTaskRunner {
         await GenericTaskRunner.RunTasks<ICfnTask>(tasks, delegate);
     }
 
-    public static async ValidateTemplates(tasks: ICfnTask[], logVerbose: boolean): Promise<void> {
+    public static async ValidateTemplates(tasks: ICfnTask[], logVerbose: boolean, maxConcurrentTasks: number, failedTasksTolerance: number): Promise<void> {
 
         const delegate: ITaskRunnerDelegates<ICfnTask> = {
             getName: task => `Stack ${task.stackName} in account ${task.accountId} (${task.region})`,
             getVerb: () => 'validate',
-            maxConcurrentTasks: 99,
-            failedTasksTolerance: 99,
+            maxConcurrentTasks,
+            failedTasksTolerance,
             logVerbose,
         };
         await GenericTaskRunner.RunTasks<ICfnTask>(tasks, delegate);

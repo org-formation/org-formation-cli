@@ -3,7 +3,25 @@ Parameters:
     Description: will be used a prefix for stack names.
     Type: String
     Default: my
+  parameterToMap:
+    Type: String
+    Default: MyGroup2
 
+Mappings:
+  MyMap:
+    MyGroup1:
+      MyKey: MyVal1
+      MyKey2: MyVal21
+    MyGroup2:
+      MyKey: MyVal2
+      MyKey2: MyVal22
+  MyMapWithArrarys:
+    MyGroup1:
+      MyKey: [MyVal1]
+      MyKey2: [MyVal21]
+    MyGroup2:
+      MyKey: [MyVal2]
+      MyKey2: [MyVal22]
 
 
 OrganizationUpdate:
@@ -49,3 +67,16 @@ PolicyTemplate:
       - val1
       - val2
     joinedCopyValue: !Join ['', [!CopyValue [BucketArn, 102625093955], '-postfix']]
+    findInMap1: !FindInMap [MyMap, MyGroup1, MyKey]
+    findInMap2: !FindInMap [MyMap, !Ref parameterToMap, MyKey]
+    md5: !MD5 'input text'
+    readFile: !ReadFile ./file.txt
+    md5readFile: !MD5
+      - !ReadFile ./file.txt
+    select: !Select [2, ['one', 'two', 'three']]
+    selectFindInMap: !Select [0, !FindInMap [MyMapWithArrarys, MyGroup1, MyKey]]
+    jsonString1: !JsonString
+      att: 1
+      otherAtt: '2'
+    jsonString2: !JsonString [ !ReadFile ./test.json]
+    refToRoot: !Ref OrganizationRoot

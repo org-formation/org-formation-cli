@@ -1,6 +1,6 @@
 import { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import uuid = require('uuid');
-import { AwsUtil } from '../util/aws-util';
+import { AwsUtil, CfnUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../../src/org-formation-error';
 import { ICfnBinding } from './cfn-binder';
@@ -72,6 +72,8 @@ export class CfnTaskProvider {
 
                 };
 
+                await CfnUtil.UploadTemplateToS3IfTooLarge(stackInput, binding, stackName, this.template.hash);
+
                 if (binding.stackPolicy !== undefined) {
                     stackInput.StackPolicyBody = JSON.stringify(binding.stackPolicy);
                 }
@@ -125,31 +127,7 @@ export class CfnTaskProvider {
                     }
                 }
                 try {
-                    try {
-                        await cfn.updateStack(stackInput).promise();
-                        await cfn.waitFor('stackUpdateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                    } catch (err) {
-                        if (err && err.code === 'ValidationError' && err.message) {
-                            const message = err.message as string;
-                            if (-1 !== message.indexOf('ROLLBACK_COMPLETE')) {
-                                await cfn.deleteStack({ StackName: stackName, RoleARN: roleArn }).promise();
-                                await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1 } }).promise();
-                                await cfn.createStack(stackInput).promise();
-                                await cfn.waitFor('stackCreateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                            } else if (-1 !== message.indexOf('does not exist')) {
-                                await cfn.createStack(stackInput).promise();
-                                await cfn.waitFor('stackCreateComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                            } else if (-1 !== message.indexOf('No updates are to be performed.')) {
-                                // ignore;
-                            } else if (err.code === 'ResourceNotReady') {
-                                ConsoleUtil.LogError('error when executing CloudFormation');
-                            } else {
-                                throw err;
-                            }
-                        } else {
-                            throw err;
-                        }
-                    }
+                    await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
 
                     if (binding.state === undefined && binding.terminationProtection === true) {
                         ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);

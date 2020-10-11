@@ -1,4 +1,3 @@
-import { CloudFormation } from 'aws-sdk';
 import { ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import uuid = require('uuid');
 import { OrgFormationError } from '../org-formation-error';
@@ -7,6 +6,7 @@ import { ICfnTask } from './cfn-task-provider';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
+import { AwsUtil, CfnUtil } from '~util/aws-util';
 
 export class CfnValidateTaskProvider {
     constructor(private readonly template: TemplateRoot, private readonly state: PersistedState, private readonly logVerbose: boolean) {
@@ -46,12 +46,18 @@ export class CfnValidateTaskProvider {
             isDependency: (): boolean => false,
             action: 'Validate',
             perform: async (): Promise<void> => {
+                const customRoleName = await expressionResolver.resolveSingleExpression(binding.customRoleName, 'CustomRoleName');
+
                 const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
+                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName);
+
                 const validateInput: ValidateTemplateInput =  {
                     TemplateBody: templateBody,
                 };
 
-                const cfn = new CloudFormation({region: binding.region});
+                await CfnUtil.UploadTemplateToS3IfTooLarge(validateInput, binding, stackName, this.template.hash);
+
+
                 const result = await cfn.validateTemplate(validateInput).promise();
                 const missingParameters: string[] = [];
                 for (const param of result.Parameters) {

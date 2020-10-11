@@ -1,12 +1,21 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.9.12**
+- Allow failure tolerance to be set to 0 on validate-tasks command (allows CI/CD processes to fail on validation)
+- Added support for `Mappings` section / `!FindInMap` / `!Select` for task files.
+- Added functions `!MD5` / `!ReadFile` that can be used in task files.
+- Added function `!JsonString` that can be used in task files.
+- Added support for `!Ref OrganizationRoot` (and other types) in task files.
+- Fixed bug on `org-formation init` where tags on the MasterAccount where not added to generated template.
+- Updating stacks that have state `ROLLBACK_FAILED` will be retried.
+- Support for large (> 512000 byte) templates
+
 **version 0.9.11**
-- Added pseudo parameter `ORG::PrincipalOrgID`.
+- Added pseudo parameter `ORG::PrincipalOrgID` (in tasks file).
 - Improved parsing of attributes in task files.
 - AWSAccount can be used as alias for `CurrentAccount` in task file expressions.
 - Added support for cross account references on `VPCEndpoint.DnsEntries`.
-
 
 **version 0.9.10**
 - Fixed bug where `register-type` tasks did not properly register execution role.

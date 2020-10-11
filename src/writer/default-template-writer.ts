@@ -244,6 +244,15 @@ export class DefaultTemplateWriter {
         if (masterAccount.Alias) {
             lines.push(new Line('Alias', masterAccount.Alias, 6));
         }
+        if (masterAccount.Tags) {
+            const tags = Object.entries(masterAccount.Tags);
+            if (tags.length > 0) {
+                lines.push(new Line('Tags', '', 6));
+                for (const tag of tags) {
+                    lines.push(new Line(tag[0], tag[1], 8));
+                }
+            }
+        }
         lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
         lines.push(new EmptyLine());
 

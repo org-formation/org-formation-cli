@@ -4,9 +4,28 @@ OrganizationUpdate:
   Skip: true
   Template: ./organization.yml
 
+Template:
+  Type: update-stacks
+  Template: ./template-fixed-export.yml
+  StackName: my-template-fixed-export
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+
 CopyToS3:
   Type: copy-to-s3
   RemotePath: !Sub s3://org-formation-integration-test/${MasterAccount}/file.txt
+  LocalPath: ./files/file.txt
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+
+CopyToS3WithCopyValue:
+  Type: copy-to-s3
+  DependsOn: Template
+  RemotePath: !Sub
+  - s3://${bucketName}/${MasterAccount}/file2.txt
+  - { bucketName: !CopyValue 'TestS3BucketName' }
   LocalPath: ./files/file.txt
   OrganizationBinding:
     Account: !Ref AccountA

@@ -3,6 +3,7 @@ import { ConsoleUtil } from '../../util/console-util';
 import { ICommandArgs, IUpdateOrganizationCommandArgs, UpdateOrganizationCommand } from '../../commands/index';
 import { IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IBuildTaskProvider } from '~build-tasks/build-task-provider';
+import { ValidateOrganizationCommand } from '~commands/validate-organization';
 
 export abstract class BaseOrganizationTask implements IBuildTask {
     public name: string;
@@ -50,8 +51,9 @@ export class UpdateOrganizationTask extends BaseOrganizationTask {
 }
 
 export class ValidateOrganizationTask extends BaseOrganizationTask {
-    protected async innerPerform(/* commandArgs: IUpdateOrganizationCommandArgs */): Promise<void> {
-        // no op.
+    protected async innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void> {
+        ConsoleUtil.LogInfo(`Executing: ${this.config.Type} ${this.templatePath}.`);
+        await ValidateOrganizationCommand.Perform(commandArgs);
     }
 
 }

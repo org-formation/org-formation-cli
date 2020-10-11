@@ -2,10 +2,12 @@ import { Command } from 'commander';
 import { ConsoleUtil } from '../util/console-util';
 import { BaseCliCommand } from './base-command';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from './update-stacks';
+import { ValidateOrganizationCommand } from './validate-organization';
 import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { CfnValidateTaskProvider } from '~cfn-binder/cfn-validate-task-provider';
 import { GlobalState } from '~util/global-state';
+import { Validator } from '~parser/validator';
 
 const commandName = 'validate-stacks <templateFile>';
 const commandDescription = 'validates the CloudFormation templates that will be generated';
@@ -28,6 +30,16 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
 
     public async performCommand(command: IUpdateStacksCommandArgs): Promise<void> {
         const templateFile = command.templateFile;
+
+        if (ValidateOrganizationCommand.SkipValidationForTasks) {
+            return;
+        }
+
+        Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
+        Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
+        Validator.validateBoolean(command.terminationProtection, 'terminationProtection');
+        Validator.validateBoolean(command.updateProtection, 'updateProtection');
+
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);
         GlobalState.Init(state, template);
@@ -40,6 +52,6 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
 
         const validationTaskProvider = new CfnValidateTaskProvider(template, state, command.verbose === true);
         const tasks = await validationTaskProvider.enumTasks(bindings);
-        await CfnTaskRunner.ValidateTemplates(tasks, command.verbose === true);
+        await CfnTaskRunner.ValidateTemplates(tasks, command.verbose === true, command.maxConcurrentStacks, command.failedStacksTolerance);
     }
 }
