@@ -11,6 +11,7 @@ import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { ICfnExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
+import { CfnFunctions, ICfnFunctionContext } from '~core/cfn-functions/cfn-functions';
 
 export class CfnTemplate {
 
@@ -91,6 +92,7 @@ export class CfnTemplate {
     private resourceIdsNotInTarget: string[];
     private otherAccountsLogicalIds: string[];
     private accountResource: AccountResource;
+    private resolverContext: ICfnFunctionContext;
     private masterAccountLogicalId: string;
 
     constructor(target: IResourceTarget, private templateRoot: TemplateRoot, private state: PersistedState) {
@@ -113,6 +115,9 @@ export class CfnTemplate {
             Outputs: this.outputs,
         };
 
+        this.resolverContext = { finalPass: false, filePath: this.templateRoot.filepath, mappings: {} };
+
+
         for (const resource of target.resources) {
             const clonedResource = JSON.parse(JSON.stringify(resource.resourceForTemplate));
             ResourceUtil.FixVersions(clonedResource);
@@ -125,10 +130,10 @@ export class CfnTemplate {
                     const binding = this.state.getAccountBinding(accountName);
                     if (!binding) { throw new OrgFormationError(`unable to find account ${accountName} in state. Is your organization up to date?`); }
 
-                    this.resources[resource.logicalId + binding.physicalId] = this._resolveOrganizationFunctions(keywordReplaced, this.accountResource);
+                    this.resources[resource.logicalId + binding.physicalId] = this._resolveOrganizationFunctionsAndStructuralFunctions(keywordReplaced, this.accountResource);
                 }
             } else {
-                this.resources[resource.logicalId] = this._resolveOrganizationFunctions(clonedResource, this.accountResource);
+                this.resources[resource.logicalId] = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedResource, this.accountResource);
             }
         }
 
@@ -138,14 +143,14 @@ export class CfnTemplate {
             const hasExpressionsToResourcesOutsideTarget = ResourceUtil.HasExpressions(outputs, outputName, this.resourceIdsNotInTarget);
             if (!hasExpressionsToResourcesOutsideTarget) {
                 const clonedOutput = JSON.parse(JSON.stringify(outputs[outputName]));
-                this.outputs[outputName] = this._resolveOrganizationFunctions(clonedOutput, this.accountResource);
+                this.outputs[outputName] = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedOutput, this.accountResource);
             }
         }
 
         for (const paramName in this.templateRoot.contents.Parameters) {
             const param = this.templateRoot.contents.Parameters[paramName];
             const clonedParam = JSON.parse(JSON.stringify(param));
-            const parameter = this._resolveOrganizationFunctions(clonedParam, this.accountResource) as ICfnParameter;
+            const parameter = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedParam, this.accountResource) as ICfnParameter;
             if (parameter.ExportAccountId) {
                 const val = (parameter.ExportAccountId as any).Ref;
                 if (val !== undefined) {
@@ -157,19 +162,18 @@ export class CfnTemplate {
 
         if (this.templateRoot.contents.Metadata) {
             const clonedMetadata = JSON.parse(JSON.stringify(this.templateRoot.contents.Metadata));
-            this.resultingTemplate.Metadata = this._resolveOrganizationFunctions(clonedMetadata, this.accountResource);
+            this.resultingTemplate.Metadata = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedMetadata, this.accountResource);
 
         }
         if (this.templateRoot.contents.Conditions) {
             const clonedConditions = JSON.parse(JSON.stringify(this.templateRoot.contents.Conditions));
-            this.resultingTemplate.Conditions = this._resolveOrganizationFunctions(clonedConditions, this.accountResource);
+            this.resultingTemplate.Conditions = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedConditions, this.accountResource);
         }
 
         if (this.templateRoot.contents.Mappings) {
             const clonedMappings = JSON.parse(JSON.stringify(this.templateRoot.contents.Mappings));
-            this.resultingTemplate.Mappings = this._resolveOrganizationFunctions(clonedMappings, this.accountResource);
+            this.resultingTemplate.Mappings = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedMappings, this.accountResource);
         }
-
         for (const prop in this.resultingTemplate) {
             if (!this.resultingTemplate[prop]) {
                 delete this.resultingTemplate[prop];
@@ -320,6 +324,13 @@ export class CfnTemplate {
             expression.rewriteExpression(replacement, expression.path);
         }
         return resource;
+    }
+
+
+    private _resolveOrganizationFunctionsAndStructuralFunctions(resource: any, account: AccountResource): any {
+        const resolved = this._resolveOrganizationFunctions(resource, account);
+
+        return CfnFunctions.resolveTreeStructural(this.resolverContext, false, resolved);
     }
 
     private _resolveOrganizationFunctions(resource: any, account: AccountResource): any {

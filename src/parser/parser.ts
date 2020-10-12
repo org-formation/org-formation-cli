@@ -153,6 +153,8 @@ export class TemplateRoot {
 
     public readonly contents: ITemplate;
     public readonly dirname: string;
+    public readonly filename: string;
+    public readonly filepath: string;
     public readonly organizationSection: OrganizationSection;
     public readonly defaultOrganizationBinding: IOrganizationBinding;
     public readonly defaultOrganizationBindingRegion: string | string[];
@@ -167,7 +169,9 @@ export class TemplateRoot {
         Validator.ValidateTemplateRoot(contents);
 
         this.contents = contents;
-        this.dirname = dirname;
+        this.dirname = dirname ?? './';
+        this.filename = filename ?? 'template.yml';
+        this.filepath = Path.resolve(this.dirname, this.filename);
         this.source = JSON.stringify(contents);
         this.hash = md5(this.source);
         if (paramValues !== undefined) {

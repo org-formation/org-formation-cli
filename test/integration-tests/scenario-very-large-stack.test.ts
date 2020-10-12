@@ -1,13 +1,12 @@
+import { DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
-import { ListStacksOutput, GetStackPolicyOutput } from 'aws-sdk/clients/cloudformation';
-import { ConsoleUtil } from '~util/console-util';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-very-large-stack/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let veryLargeStack: GetStackPolicyOutput;
+    let veryLargeStack: DescribeStacksOutput;
 
     beforeAll(async () => {
 
@@ -19,15 +18,18 @@ describe('when calling org-formation perform tasks', () => {
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-very-large-stack.yml' })
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-very-large-stack.yml' });
 
-        veryLargeStack = await cfnClient.getStackPolicy({StackName: 'test-with-very-large-stack'}).promise();
+        veryLargeStack = await cfnClient.describeStacks({StackName: 'test-with-very-large-stack'}).promise();
 
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-very-large-stack.yml', performCleanup: true });
 
     });
 
-    test('stack has Stack Policy', () => {
+    test('stack was deployed successfully', () => {
         expect(veryLargeStack).toBeDefined();
+        expect(veryLargeStack.Stacks.length).toBe(1);
+        expect(veryLargeStack.Stacks[0]).toBeDefined();
+        expect(veryLargeStack.Stacks[0].StackStatus).toBe('CREATE_COMPLETE');
     });
 
 });

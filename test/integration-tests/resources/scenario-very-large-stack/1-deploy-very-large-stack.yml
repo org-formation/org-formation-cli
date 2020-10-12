@@ -5,7 +5,6 @@ OrganizationUpdate:
   Template: ./organization.yml
 
 TestVeryLargeStack:
-  DependsOn: MyRoles
   Type: update-stacks
   StackName: test-with-very-large-stack
   Template: ./buckets.yml

@@ -92,7 +92,7 @@ export class CfnExpressionResolver {
             }
         }
         const context: ICfnFunctionContext = { filePath: this.filePath, mappings: this.mapping, finalPass: false };
-        const resolved = CfnFunctions.resolveTreeStructural(context, container);
+        const resolved = CfnFunctions.resolveTreeStructural(context, true, container);
         return resolved.val;
     }
 
@@ -152,7 +152,7 @@ export class CfnExpressionResolver {
         }
 
         const context: ICfnFunctionContext = { filePath: this.filePath, mappings: this.mapping, finalPass: true };
-        CfnFunctions.resolveTreeStructural(context, container);
+        CfnFunctions.resolveTreeStructural(context, true, container);
 
         return container.val;
     }

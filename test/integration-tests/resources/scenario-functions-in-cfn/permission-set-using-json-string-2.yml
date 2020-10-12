@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Resources:
+
+  TestPS:
+    Type: AWS::SSO::PermissionSet
+    Properties:
+      Name: TestPS2
+      Description: Readonly Access
+      InstanceArn:  arn:aws:sso:::instance/ssoins-6804a82852974434
+      ManagedPolicies:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+      SessionDuration: PT12H
+      InlinePolicy: !JsonString [ !ReadFile 'permission-set-using-json-string-2-inline-policy.json']
