@@ -1,7 +1,9 @@
 import path from 'path';
 import { existsSync, statSync } from 'fs';
 import * as fs from 'fs';
-import { PutObjectRequest, DeleteObjectRequest } from 'aws-sdk/clients/s3';
+import S3, { PutObjectRequest, DeleteObjectRequest } from 'aws-sdk/clients/s3';
+import archiver from 'archiver';
+import { WritableStream } from 'memory-streams';
 import { IPluginTask, IPluginBinding } from '../plugin-binder';
 import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin, CommonTaskAttributeNames } from '../plugin';
 import { OrgFormationError } from '../../../src/org-formation-error';
@@ -50,8 +52,10 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         }
 
         const stat = statSync(commandArgs.localPath);
-        if (!stat.isFile()) {
-            throw new OrgFormationError(`task ${commandArgs.name} ${commandArgs.localPath} is not a file. Only files are supported - for now`);
+        if (stat.isDirectory()) {
+            if (!commandArgs.zipBeforePut) {
+                throw new OrgFormationError(`task ${commandArgs.name} ${commandArgs.localPath} points at a directory. This is only supported if the ZipBeforePut option is set to true.`);
+            }
         }
 
         if (!commandArgs.remotePath) {
@@ -105,9 +109,34 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         const request: PutObjectRequest = {
             ...CopyToS3TaskPlugin.getBucketAndKey(task),
         };
-        request.Body = fs.readFileSync(task.localPath);
+        request.Body = await this.createBody(task);
 
         await s3client.putObject(request).promise();
+    }
+
+    async createBody(task: IS3CopyTask): Promise<S3.Body> {
+        if (!task.zipBeforePut) {
+            return fs.readFileSync(task.localPath);
+        } else {
+            return await this.createZip(task.localPath);
+        }
+    }
+
+    createZip(directory: string): Promise<S3.Body> {
+        return new Promise<S3.Body>((resolve, reject) => {
+            const output = new WritableStream();
+            const archive = archiver('zip');
+
+            archive.on('error', reject);
+
+            archive.on('end', () => {
+                resolve(output.toBuffer());
+            });
+
+            archive.pipe(output);
+            archive.directory(directory, false);
+            archive.finalize();
+        });
     }
 
     appendResolvers(): Promise<void> {
