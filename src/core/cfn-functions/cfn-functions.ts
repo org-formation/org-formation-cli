@@ -25,7 +25,6 @@ export class CfnFunctions {
     }
 
     static resolveTreeStructural<T>(context: ICfnFunctionContext, polyfillCloudFormation: boolean, resource: T, resourceParent?: any, resourceKey?: string): T {
-
         if (resource !== null && typeof resource === 'object') {
             const entries = Object.entries(resource);
 

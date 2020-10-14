@@ -51,7 +51,7 @@ Resources:
     Properties:
       Name: !Sub '${resourcePrefix}-domains-hosted-zone-id'
       Type: String
-      Value: !Ref HostedZone
+      Value: !GetAtt AWSAccount.Resources.HostedZone
 
   HostedZoneNameParam:
     Type: AWS::SSM::Parameter

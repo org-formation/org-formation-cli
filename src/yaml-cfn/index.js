@@ -92,8 +92,9 @@ const supportedFunctions = [
   'Fn::CopyValue',
   'Fn::ReadFile',
   'Fn::MD5',
+  'Fn::MD5Dir',
+  'Fn::MD5File',
   'Fn::JsonString'
-
 ];
 
 let allTagTypes = [];

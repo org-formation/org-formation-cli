@@ -30,3 +30,15 @@ CopyToS3WithCopyValue:
   OrganizationBinding:
     Account: !Ref AccountA
     Region: eu-central-1
+
+CopyToS3WithZipBeforePut:
+  Type: copy-to-s3
+  DependsOn: Template
+  RemotePath: !Sub
+  - s3://org-formation-integration-test/dir-${hash}.zip
+  - { hash: !MD5Dir ./files }
+  LocalPath: ./files
+  ZipBeforePut: true
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
