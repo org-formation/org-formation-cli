@@ -1,7 +1,6 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
-import { ListStacksOutput, GetStackPolicyOutput } from 'aws-sdk/clients/cloudformation';
-import { ConsoleUtil } from '~util/console-util';
+import { IIntegrationTestContext, baseBeforeAll } from './base-integration-test';
+import { DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-very-large-stack/';
 
