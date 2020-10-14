@@ -178,7 +178,7 @@ describe('when importing value from another stack', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'md5readFile');
-        expect(parameter.ParameterValue).toBe('93b885adfe0da089cdf634904fd59f71');
+        expect(parameter.ParameterValue).toBe('4d06f8349b277ddc4cd33dc192bfccf3');
     })
 
     test('select gets resolved properly', () =>{
