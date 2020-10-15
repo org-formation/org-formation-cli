@@ -2,7 +2,7 @@
 import path from 'path';
 import { ConsoleUtil } from '../../util/console-util';
 import { IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
-import { IPerformTasksCommandArgs, DeleteStacksCommand, IUpdateStacksCommandArgs, UpdateStacksCommand, ValidateStacksCommand, BaseCliCommand } from '~commands/index';
+import { IPerformTasksCommandArgs, DeleteStacksCommand, IUpdateStacksCommandArgs, UpdateStacksCommand, ValidateStacksCommand, BaseCliCommand, PrintStacksCommand } from '~commands/index';
 import { Validator } from '~parser/validator';
 import { IBuildTaskProvider, BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { IOrganizationBinding } from '~parser/parser';
@@ -43,6 +43,21 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
                 await ValidateStacksCommand.Perform(updateStacksCommand);
+            },
+        };
+    }
+
+    createTaskForPrint(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs): IUpdateStacksBuildTask {
+        return {
+            type: config.Type,
+            name: config.LogicalName,
+            childTasks: [],
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
+            StackName: config.StackName,
+            isDependency: BuildTaskProvider.createIsDependency(config),
+            perform: async (): Promise<void> => {
+                const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
+                await PrintStacksCommand.Perform({...updateStacksCommand, stackName: config.StackName });
             },
         };
     }

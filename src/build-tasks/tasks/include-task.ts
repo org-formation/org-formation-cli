@@ -5,9 +5,11 @@ import { IBuildTask, BuildConfiguration, IBuildTaskConfiguration } from '~build-
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { IBuildTaskProvider, BuildTaskProvider } from '~build-tasks/build-task-provider';
+import { IPrintTasksCommandArgs } from '~commands/print-tasks';
 
 
 export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfiguration> {
+
     public type = 'include';
 
     createTask(config: IIncludeTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
@@ -72,6 +74,32 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
         };
     }
 
+    createTaskForPrint(config: IIncludeTaskConfiguration, command: IPrintTasksCommandArgs): IBuildTask {
+        if (config.Path === undefined) {
+            throw new OrgFormationError(`Required attribute Path missing for task ${config.LogicalName}`);
+        }
+
+        const dir = path.dirname(config.FilePath);
+        const taskFilePath = path.join(dir, config.Path);
+        const buildConfig = new BuildConfiguration(taskFilePath);
+
+        const commandForInclude: IPrintTasksCommandArgs = {
+            ...command,
+            verbose: typeof config.LogVerbose === 'boolean' ? config.LogVerbose : command.verbose,
+        };
+
+        const childTasks = buildConfig.enumPrintTasks(commandForInclude);
+
+        return {
+            type: config.Type,
+            name: config.LogicalName,
+            skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
+            childTasks,
+            isDependency: (): boolean => false,
+            perform: async (): Promise<void> => await BuildRunner.RunPrintTasks(childTasks, commandForInclude.verbose === true, config.MaxConcurrentTasks, config.FailedTaskTolerance),
+        };
+    }
+
     createTaskForCleanup(): IBuildTask | undefined {
         return undefined;
     }
@@ -80,7 +108,6 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
     createLogicalNamePrefix(logicalNamePrefixOfParent: string | undefined, logicalNameOfParent: string): string {
         return `${logicalNamePrefixOfParent === undefined ? '' : logicalNamePrefixOfParent + '-'}${logicalNameOfParent}`;
     }
-
 }
 export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {
     Path: string;

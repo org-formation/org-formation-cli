@@ -51,6 +51,10 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
         return task;
     }
 
+    createTaskForPrint(): IBuildTask | undefined {
+        return undefined;
+    }
+
     createTaskForValidation(config: TBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
         return {
             type: config.Type,

@@ -5,13 +5,13 @@ import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { Validator } from '~parser/validator';
 
-const commandName = 'validate-tasks <tasksFile>';
-const commandDescription = 'Will validate the tasks file, including configured tasks';
+const commandName = 'print-tasks <tasksFile>';
+const commandDescription = 'Will print out all cloudformation templates that will be deployed by tasksFile';
 
-export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs> {
+export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
 
-    public static async Perform(command: IPerformTasksCommandArgs): Promise<void> {
-        const x = new ValidateTasksCommand();
+    public static async Perform(command: IPrintTasksCommandArgs): Promise<void> {
+        const x = new PrintTasksCommand();
         await x.performCommand(command);
     }
 
@@ -26,13 +26,13 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
+        command.option('--output-path [output-path]', 'path, within the root directory, used to store printed templates', './.printed-stacks/');
 
         super.addOptions(command);
     }
 
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
-
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
@@ -42,7 +42,13 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
 
-        const validationTasks = config.enumValidationTasks(command);
-        await BuildRunner.RunValidationTasks(validationTasks, command.verbose === true , command.maxConcurrentTasks, command.failedTasksTolerance);
+        const printTasks = config.enumPrintTasks(command);
+        await BuildRunner.RunPrintTasks(printTasks, command.verbose === true , command.maxConcurrentTasks, command.failedTasksTolerance);
     }
+}
+
+export interface IPrintTasksCommandArgs extends IPerformTasksCommandArgs {
+    stackName: string;
+    organizationFile?: string;
+    outputPath?: string;
 }

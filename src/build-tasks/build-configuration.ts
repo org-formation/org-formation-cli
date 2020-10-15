@@ -36,6 +36,19 @@ export class BuildConfiguration {
         return result;
     }
 
+    public enumPrintTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
+        this.fixateOrganizationFile(command);
+        const result: IBuildTask[] = [];
+        for (const taskConfig of this.tasks) {
+            const task = BuildTaskProvider.createPrintTask(taskConfig, command);
+            if (task !== undefined) {
+                result.push(task);
+            }
+        }
+
+        return result;
+    }
+
     public enumBuildTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
         this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
