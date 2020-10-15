@@ -6,6 +6,7 @@ import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { IPerformTasksCommandArgs } from './perform-tasks';
+import { IPrintTasksCommandArgs } from './print-tasks';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AwsOrganizationReader } from '~aws-provider/aws-organization-reader';
 import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
@@ -232,6 +233,15 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 }
             }
 
+            if (rc.printStacksOutputPath && rc.config) {
+                const dir = path.dirname(rc.config);
+                const absolutePath = path.join(dir, rc.printStacksOutputPath);
+                if (absolutePath !== rc.printStacksOutputPath) {
+                    ConsoleUtil.LogDebug(`print-stacks output path from runtime configuration resolved to absolute file path: ${absolutePath} (${rc.config} + ${rc.printStacksOutputPath})`);
+                    rc.printStacksOutputPath = absolutePath;
+                }
+            }
+
             ConsoleUtil.LogDebug(`runtime configuration: \n${JSON.stringify(rc)}`);
             Validator.validateRC(rc);
 
@@ -250,6 +260,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             if (process.argv.indexOf('--organization-file') === -1 && rc.organizationFile !== undefined) {
                 (command as IPerformTasksCommandArgs).organizationFile = rc.organizationFile;
             }
+
+            if (process.argv.indexOf('--output-path') === -1 && rc.printStacksOutputPath !== undefined) {
+                (command as IPrintTasksCommandArgs).outputPath = rc.printStacksOutputPath;
+            }
         }
 
     }
@@ -267,6 +281,7 @@ export interface ICommandArgs {
 }
 
 export interface IRCObject {
+    printStacksOutputPath?: string;
     organizationFile?: string;
     stateBucketName?: string;
     stateObject?: string;
