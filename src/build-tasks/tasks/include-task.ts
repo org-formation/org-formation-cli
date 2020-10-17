@@ -81,7 +81,8 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const buildConfig = new BuildConfiguration(taskFilePath);
+        const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
+        const buildConfig = new BuildConfiguration(taskFilePath, parameters);
 
         const commandForInclude: IPrintTasksCommandArgs = {
             ...command,
