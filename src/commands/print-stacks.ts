@@ -29,6 +29,8 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in CloudFormation', 'print');
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--output-path [output-path]', 'path, within the root directory, used to store printed templates', undefined);
+        command.option('--output [output]', 'the serialization format used when printing stacks. Either json or yaml.', 'yaml');
+        command.option('--output-cross-account-exports [output-path]', 'when set, output well generate cross account exports as part of cfn parameter', false);
         super.addOptions(command);
     }
 
@@ -50,9 +52,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
                 continue;
             }
 
-            const templateBody = binding.template.createTemplateBody();
-            ConsoleUtil.Out(`template for account ${binding.accountId} and region ${binding.region}`);
-            ConsoleUtil.Out(templateBody);
+            const templateBody = binding.template.createTemplateBody({ outputCrossAccountExports: command.outputCrossAccountExports, output: command.output });
 
             if (command.outputPath !== undefined)  {
                 const outputPath = path.resolve(command.outputPath, command.stackName);
@@ -62,11 +62,15 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
 
                 try{
                     mkdirSync(outputPath, { recursive: true });
-                    writeFileSync(resolvedPath, binding.template.createTemplateBody(), { });
+                    writeFileSync(resolvedPath, templateBody, { });
                 }catch(err) {
                     ConsoleUtil.LogError('error writing template to file', err);
                     throw new OrgFormationError('error writing file');
                 }
+            }
+            else {
+                ConsoleUtil.Out(`template for account ${binding.accountId} and region ${binding.region}`);
+                ConsoleUtil.Out(templateBody);
             }
         }
     }
@@ -84,4 +88,6 @@ export interface IPrintStacksCommandArgs extends ICommandArgs {
     stackName: string;
     organizationFile?: string;
     outputPath?: string;
+    outputCrossAccountExports?: boolean;
+    output?: 'json' | 'yaml';
 }

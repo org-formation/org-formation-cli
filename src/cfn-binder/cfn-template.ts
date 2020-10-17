@@ -1,3 +1,4 @@
+import { dump as yamlDump } from 'js-yaml';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { ResourceUtil } from '../util/resource-util';
@@ -232,8 +233,20 @@ export class CfnTemplate {
         return parameters;
     }
 
-    public createTemplateBody(): string {
-        return JSON.stringify(this.resultingTemplate, null, 2);
+    public createTemplateBody(options: ITemplateGenerationOptions): string {
+        const replacer = (k: string, val: any): any => {
+            if (k === 'ExportAccountId' || k === 'ExportName' || k === 'ExportRegion') {
+                return undefined;
+            }
+            return val;
+        };
+
+        const template = JSON.parse(JSON.stringify(this.resultingTemplate, options.outputCrossAccountExports ? undefined : replacer));
+        if (options.output === 'json') {
+            return JSON.stringify(template, null, 2);
+        } else {
+            return yamlDump(template);
+        }
     }
 
     public async createTemplateBodyAndResolve(expressionResolver: CfnExpressionResolver): Promise<string> {
@@ -579,4 +592,8 @@ interface ICfnCrossAccountReference {
     expressionForExport: ICfnExpression;
     uniqueNameForImport: string;
     conditionForExport?: string;
+}
+interface ITemplateGenerationOptions {
+    output: 'json' | 'yaml';
+    outputCrossAccountExports: boolean;
 }
