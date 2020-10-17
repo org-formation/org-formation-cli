@@ -41,6 +41,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                         logicalNamePrefix: this.logicalNamePrefix,
                         organizationLogicalName: this.organizationLogicalName,
                         lastCommittedHash: this.task.hash,
+                        lastCommittedLocalHash: this.task.taskLocalHash,
                     },
                     task: this.task,
                 };
@@ -131,6 +132,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
             that.state.removeGenericTarget(task.type, this.organizationLogicalName, this.logicalNamePrefix, task.name, target.accountId, target.region);
         };
     }
+
     public createPerformForUpdateOrCreate(binding: IPluginBinding<TTaskDefinition>): () => Promise<void> {
         const { task, target } = binding;
         const that = this;
@@ -168,6 +170,7 @@ export interface IPluginTask {
     name: string;
     type: string;
     hash: string;
+    taskLocalHash?: string;
     taskRoleName?: string;
     parameters?: Record<string, ICfnExpression>;
     logVerbose: boolean;

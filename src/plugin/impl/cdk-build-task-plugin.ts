@@ -91,12 +91,12 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         };
     }
 
-    convertToTask(command: ICdkCommandArgs, hashOfTask: string): ICdkTask {
+    convertToTask(command: ICdkCommandArgs, globalHash: string): ICdkTask {
         return {
             type: this.type,
             name: command.name,
             path: command.path,
-            hash: hashOfTask,
+            hash: globalHash,
             runNpmInstall: command.runNpmInstall,
             runNpmBuild: command.runNpmBuild,
             taskRoleName: command.taskRoleName,
