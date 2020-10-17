@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**(Unreleased) version 0.9.13**
+- Added a new command: `print-tasks`, which will generate all cloudformation templates and write to disk.
+- Added `zip-before-put` support to `copy-to-s3` task.
+- Added support for `!ReadFile` and `!JsonString` inside CloudFormation templates.
+- Added functions `!MD5Dir` and `!MD5File`, which can be used in both task files and cloudformation.
+
+
 **version 0.9.12**
 - Allow failure tolerance to be set to 0 on validate-tasks command (allows CI/CD processes to fail on validation)
 - Added support for `Mappings` section / `!FindInMap` / `!Select` for task files.
