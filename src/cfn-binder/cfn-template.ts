@@ -233,7 +233,7 @@ export class CfnTemplate {
         return parameters;
     }
 
-    public createTemplateBody(options: ITemplateGenerationOptions): string {
+    public createTemplateBody(options: ITemplateGenerationOptions = {output: 'json',  outputCrossAccountExports: true}): string {
         const replacer = (k: string, val: any): any => {
             if (k === 'ExportAccountId' || k === 'ExportName' || k === 'ExportRegion') {
                 return undefined;

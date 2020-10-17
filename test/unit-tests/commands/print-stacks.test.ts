@@ -112,6 +112,7 @@ describe('when executing print-stacks command', () => {
             ...subCommanderCommand,
             stackName: 'myStackName',
             templateFile: 'template.yml',
+            output: 'json'
         } as unknown as IPrintStacksCommandArgs;
     });
 
