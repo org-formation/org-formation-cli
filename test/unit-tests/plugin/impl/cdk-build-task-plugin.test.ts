@@ -106,6 +106,7 @@ describe('when resolving attribute expressions on update', () => {
                 definition: task,
             },
             task,
+            previousBindingLocalHash: 'abcdef'
         };
         binder = new PluginBinder<ICdkTask>(task, 'default', undefined, state, template, undefined, plugin);
     });
@@ -263,6 +264,7 @@ describe('when resolving attribute expressions on remove', () => {
                 definition: task,
             },
             task,
+            previousBindingLocalHash: 'abcdef'
         };
 
         binder = new PluginBinder<ICdkTask>(task, 'default', undefined, state, template, undefined, plugin);

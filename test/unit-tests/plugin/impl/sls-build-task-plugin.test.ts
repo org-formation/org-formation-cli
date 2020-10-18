@@ -109,6 +109,7 @@ describe('when resolving attribute expressions on update', () => {
                 definition: task,
             },
             task,
+            previousBindingLocalHash: 'abcdef'
         };
         binder = new PluginBinder<ISlsTask>(task, 'default', undefined, state, template, undefined, plugin);
     });
@@ -292,6 +293,7 @@ describe('when resolving attribute expressions on remove', () => {
                 definition: task,
             },
             task,
+            previousBindingLocalHash: 'abcdef'
         };
         binder = new PluginBinder<ISlsTask>(task, 'default', undefined, state, template, undefined, plugin);
     });
