@@ -6,6 +6,7 @@ All notable changes to aws organization formation will be documented in this fil
 - Added `zip-before-put` support to `copy-to-s3` task.
 - Added support for `!ReadFile` and `!JsonString` inside CloudFormation templates.
 - Added functions `!MD5Dir` and `!MD5File`, which can be used in both task files and cloudformation.
+- Added psuedo parameter `ORG::StateBucketName`.
 - Optimized build time by locally skipping resource providers if task did not change.
 
 

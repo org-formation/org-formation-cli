@@ -27,6 +27,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected firstArg: any;
 
     static CliCommandArgs: ICommandArgs;
+    static StateBucketName: string;
 
     static async CreateAdditionalArgsForInvocation(): Promise<string> {
         let additionalArgs = '';
@@ -94,6 +95,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             return command.state;
         }
         const storageProvider = await this.getStateBucket(command);
+        BaseCliCommand.StateBucketName = storageProvider.bucketName;
         const accountId = await AwsUtil.GetMasterAccountId();
 
         try {

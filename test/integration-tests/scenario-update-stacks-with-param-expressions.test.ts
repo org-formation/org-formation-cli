@@ -215,6 +215,21 @@ describe('when importing value from another stack', () => {
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'jsonString2');
         expect(parameter.ParameterValue).toBe('{"key":"val"}');
     })
+
+    test('ref to orgPrincipalId resolves correctly', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'orgPrincipalId');
+        expect(parameter.ParameterValue).toBe('o-82c6hlhsvp');
+    })
+
+    test('ref to orgStateBucket resolves correctly', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'orgStateBucketName');
+        expect(parameter.ParameterValue).toBe(context.stateBucketName);
+    })
+
     test('cleanup removes deployed stacks', () => {
         expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'my-scenario-export-bucket')).toBeUndefined();
         expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'my-scenario-export-bucket-role')).toBeUndefined();
