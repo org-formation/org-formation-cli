@@ -27,9 +27,9 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
-        command.option('--output [output]', 'the serialization format used when printing stacks. Either json or yaml.', 'yaml');
-        command.option('--output-path [output-path]', 'path, within the root directory, used to store printed templates', './.printed-stacks/');
-        command.option('--output-cross-account-exports [output-path]', 'when set, output well generate cross account exports as part of cfn parameter', false);
+        command.option('--output <output>', 'the serialization format used when printing stacks. Either json or yaml.', 'yaml');
+        command.option('--output-path <output-path>', 'path, within the root directory, used to store printed templates', './.printed-stacks/');
+        command.option('--output-cross-account-exports <output-path>', 'when set, output well generate cross account exports as part of cfn parameter', false);
 
         super.addOptions(command);
     }
@@ -51,7 +51,5 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
 }
 
 export interface IPrintTasksCommandArgs extends IPerformTasksCommandArgs, IPrintStacksCommandArgs {
-    // stackName: string;
-    // organizationFile?: string;
-    // outputPath?: string;
+
 }

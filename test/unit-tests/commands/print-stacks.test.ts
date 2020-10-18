@@ -40,6 +40,30 @@ describe('when creating print stacks command', () => {
         expect(stackNameOpt.required).toBeTruthy();
     });
 
+    test('command has required output path parameter with default', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const stackNameOpt = opts.find((x) => x.long === '--output-path');
+        expect(stackNameOpt).toBeDefined();
+        expect(stackNameOpt.required).toBeFalsy();
+        expect(subCommanderCommand.outputPath).toBe(undefined);
+    });
+
+    test('command has required output parameter with default', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const stackNameOpt = opts.find((x) => x.long === '--output');
+        expect(stackNameOpt).toBeDefined();
+        expect(stackNameOpt.required).toBeTruthy();
+        expect(subCommanderCommand.output).toBe('yaml');
+    });
+
+    test('command has required output parameter with default', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const stackNameOpt = opts.find((x) => x.long === '--output-cross-account-exports');
+        expect(stackNameOpt).toBeDefined();
+        expect(stackNameOpt.required).toBeTruthy();
+        expect(subCommanderCommand.outputCrossAccountExports).toBe(false);
+    });
+
     test('command has state bucket parameter with correct default', () => {
         const opts: Option[] = subCommanderCommand.options;
         const stateBucketOpt = opts.find((x) => x.long === '--state-bucket-name');

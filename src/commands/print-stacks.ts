@@ -29,8 +29,8 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in CloudFormation', 'print');
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--output-path [output-path]', 'path, within the root directory, used to store printed templates', undefined);
-        command.option('--output [output]', 'the serialization format used when printing stacks. Either json or yaml.', 'yaml');
-        command.option('--output-cross-account-exports [output-path]', 'when set, output well generate cross account exports as part of cfn parameter', false);
+        command.option('--output <output>', 'the serialization format used when printing stacks. Either json or yaml.', 'yaml');
+        command.option('--output-cross-account-exports <output-path>', 'when set, output well generate cross account exports as part of cfn parameter', false);
         super.addOptions(command);
     }
 
@@ -57,7 +57,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
             if (command.outputPath !== undefined)  {
                 const outputPath = path.resolve(command.outputPath, command.stackName);
 
-                const fileName = toKebabCase(`${binding.region}-${binding.accountLogicalId}.json`);
+                const fileName = toKebabCase(`${binding.region}-${binding.accountLogicalId}`) + '.' + command.output;
                 const resolvedPath = path.resolve(outputPath, fileName);
 
                 try{

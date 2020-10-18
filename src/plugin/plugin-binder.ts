@@ -29,6 +29,9 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                 ConsoleUtil.LogWarning(`Task ${this.task.type} / ${this.task.name} is not bind to any region. Therefore, this task will not be executed.`);
             }
             for(const region of regions) {
+
+                const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.organizationLogicalName, this.logicalNamePrefix, this.task.name, accountBinding.physicalId, region);
+
                 const binding: IPluginBinding<TTaskDefinition> = {
                     action: 'UpdateOrCreate',
                     target: {
@@ -44,9 +47,9 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                         lastCommittedLocalHash: this.task.taskLocalHash,
                     },
                     task: this.task,
+                    previousBindingLocalHash: existingTargetBinding?.lastCommittedLocalHash,
                 };
 
-                const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.organizationLogicalName, this.logicalNamePrefix, this.task.name, accountBinding.physicalId, region);
                 if (this.task.forceDeploy) {
                     ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${binding.target.accountId}/${binding.target.region} to ${binding.action} - update was forced.`, this.task.logVerbose);
                 } else  if (!existingTargetBinding) {
@@ -78,6 +81,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                     logicalName: targetToBeDeleted.definition.name,
                     lastCommittedHash: targetToBeDeleted.definition.hash,
                 },
+                previousBindingLocalHash: targetToBeDeleted.lastCommittedLocalHash,
             });
 
             ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${targetToBeDeleted.accountId} to Delete`, this.task.logVerbose);
@@ -164,6 +168,7 @@ export interface IPluginBinding<ITaskDefinition> {
     action: GenericAction;
     target: IGenericTarget<ITaskDefinition>;
     task: ITaskDefinition;
+    previousBindingLocalHash: string;
 }
 
 export interface IPluginTask {

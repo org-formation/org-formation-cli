@@ -2,7 +2,7 @@
 OrganizationUpdate:
   Type: update-organization
   Skip: true
-  Template: ./organization.yml
+  Template: ./organization-3.yml
 
 RegisterType:
   Type: register-type

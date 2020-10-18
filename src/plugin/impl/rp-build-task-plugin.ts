@@ -91,12 +91,13 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
 
     async performCreateOrUpdate(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver */): Promise<void> {
 
-        const {task, target } = binding;
+        const {task, target, previousBindingLocalHash } = binding;
         if (task.forceDeploy !== true &&
             task.taskLocalHash !== undefined &&
-            task.taskLocalHash === target.lastCommittedLocalHash) {
+            task.taskLocalHash === previousBindingLocalHash) {
 
             ConsoleUtil.LogInfo(`skipping deploy of resource provider ${task.name}, because task itself did not change. Use ForceTask to force deployment.`);
+            return;
         }
 
 

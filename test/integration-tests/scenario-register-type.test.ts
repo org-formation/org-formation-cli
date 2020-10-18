@@ -8,8 +8,11 @@ const basePathForScenario = './test/integration-tests/resources/scenario-registe
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
     let typesAfterRegister : ListTypeVersionsOutput;
+    let typesAfterSecondRegister : ListTypeVersionsOutput;
+    let typesAfterThirdRegister : ListTypeVersionsOutput;
     let typesAfterCleanup : ListTypeVersionsOutput;
     let stateAfterRegister: GetObjectOutput;
+    let stateAfterThirdRegister: GetObjectOutput;
     let stateAfterCleanup: GetObjectOutput;
     let describeStacksOutput: DescribeStacksOutput;
 
@@ -30,10 +33,22 @@ describe('when calling org-formation perform tasks', () => {
         typesAfterRegister = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
         describeStacksOutput = await cfnClient.describeStacks({StackName: 'community-servicequotas-s3-resource-role'}).promise();
 
-        await sleepForTest(5000);
+
+        await sleepForTest(1000);
         stateAfterRegister = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-cleanup.yml', performCleanup: true});
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-register-type-changed-org.yml' });
+        typesAfterSecondRegister = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
+
+        await sleepForTest(1000);
+
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-register-type-added-account.yml' });
+        typesAfterThirdRegister = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
+
+        await sleepForTest(1000);
+        stateAfterThirdRegister = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup.yml', performCleanup: true});
         typesAfterCleanup = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
         stateAfterCleanup = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
     });
@@ -50,6 +65,7 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.targets).toBeDefined();
         expect(state.targets['register-type']).toBeDefined();
         expect(state.targets['register-type']['default']['default']['RegisterType']).toBeDefined();
+        expect(Object.keys(state.targets['register-type']['default']['default']['RegisterType']).length).toBe(2)
         expect(state.targets['register-type']['default']['default']['RegisterType']['102625093955']).toBeDefined();
         expect(state.targets['register-type']['default']['default']['RegisterType']['102625093955']['eu-west-1']).toBeDefined();
         expect(state.targets['register-type']['default']['default']['RegisterType']['340381375986']).toBeDefined();
@@ -78,10 +94,38 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.trackedTasks.default[0].physicalIdForCleanup).toBe('undefined/RegisterType');
     })
 
+
+
+    test('state after adding account to organization ', () => {
+        const stateAsString = stateAfterThirdRegister.Body.toString();
+        const state = JSON.parse(stateAsString);
+        expect(state).toBeDefined();
+        expect(state.targets).toBeDefined();
+        expect(state.targets['register-type']).toBeDefined();
+        expect(state.targets['register-type']['default']['default']['RegisterType']).toBeDefined();
+        expect(Object.keys(state.targets['register-type']['default']['default']['RegisterType']).length).toBe(3)
+        expect(state.targets['register-type']['default']['default']['RegisterType']['102625093955']).toBeDefined();
+        expect(state.targets['register-type']['default']['default']['RegisterType']['102625093955']['eu-west-1']).toBeDefined();
+        expect(state.targets['register-type']['default']['default']['RegisterType']['340381375986']).toBeDefined();
+        expect(state.targets['register-type']['default']['default']['RegisterType']['340381375986']['eu-west-1']).toBeDefined();
+        expect(state.targets['register-type']['default']['default']['RegisterType']['549476213961']).toBeDefined();
+        expect(state.targets['register-type']['default']['default']['RegisterType']['549476213961']['eu-west-1']).toBeDefined();
+
+    })
+
+    test('type doesnt get updated if only org file changed', () => {
+        const foundType1 = typesAfterRegister.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
+        const foundType2 = typesAfterSecondRegister.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
+        const foundType3 = typesAfterSecondRegister.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
+        expect(foundType1.VersionId).toBe(foundType2.VersionId);
+        expect(foundType1.VersionId).toBe(foundType3.VersionId);
+    });
+
     test('types after cleanup does not contain registered type', () => {
         const foundType = typesAfterCleanup.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
         expect(foundType).toBeUndefined();
     });
+
 
     test('state after cleanup does not contain any', () => {
         const stateAsString = stateAfterCleanup.Body.toString();

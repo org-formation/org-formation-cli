@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: XXXX
+
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: Organizational Master Account
+      AccountId: '102625093955'
+
+  AccountA:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: account+a@olafconijn.awsapps.com
+      AccountName: Account A
+
+
+# this is here to have the comparison with other org file to
