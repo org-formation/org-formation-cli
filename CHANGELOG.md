@@ -8,6 +8,7 @@ All notable changes to aws organization formation will be documented in this fil
 - Added functions `!MD5Dir` and `!MD5File`, which can be used in both task files and cloudformation.
 - Added psuedo parameter `ORG::StateBucketName`.
 - Optimized build time by locally skipping resource providers if task did not change.
+- Updated codebuild image used to create new pipelines with to standard:4.0.
 
 
 **version 0.9.12**
