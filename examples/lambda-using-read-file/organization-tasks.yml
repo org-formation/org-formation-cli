@@ -1,0 +1,15 @@
+# this example uses features that are part of the 0.9.13 release
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+DeployCodeAndLambda:
+  Type: update-stacks
+  Template: ./lambda-using-read-file.yml
+  StackName: org-formation-example-lambda-using-read-file
+  DefaultOrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+

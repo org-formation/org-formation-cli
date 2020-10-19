@@ -1,0 +1,49 @@
+# this example uses features that are part of the 0.9.13 release
+
+
+Parameters:
+  deploymentBucketName:
+    Type: String
+    Default: !Sub '${ORG::StateBucketName}-deployments'
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+OrgFormationUploadBucket:
+  Type: update-stacks
+  Template: ./org-formation-deployment-bucket.yml
+  StackName: org-formation-deployment-bucket
+  StackDescription: Creates a bucket that can be used by org-formation to upload artifacts and use this bucket to deploy resources across the organization
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+    Region: eu-central-1
+  Parameters:
+    deploymentBucketName: !Ref deploymentBucketName
+    organizationPrincipalId: !Ref ORG::PrincipalOrgID
+
+DeployLambdaSourceCode:
+  Type: copy-to-s3
+  RemotePath: !Sub
+  - s3://${bucket}/lambdas/my-lambda-source-${hashOfDir}.zip
+  - { bucket: !Ref deploymentBucketName, hashOfDir: !MD5Dir ./src }
+  LocalPath: ./src
+  ZipBeforePut: true
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: eu-central-1
+
+DeployLambda:
+  Type: update-stacks
+  DependsOn: DeployLambdaSourceCode
+  Template: ./lambda-template-using-zip.yml
+  StackName: org-formation-example-lambda-using-uploaded-zip
+  DefaultOrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+  Parameters:
+    deploymentBucketName: !Ref deploymentBucketName
+    lambdaS3Key: !Sub
+    - lambdas/my-lambda-source-${hashOfDir}.zip
+    - { bucket: !Ref ORG::StateBucketName, hashOfDir: !MD5Dir ./src }

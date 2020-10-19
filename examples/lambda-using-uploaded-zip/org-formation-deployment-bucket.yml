@@ -1,0 +1,49 @@
+
+AWSTemplateFormatVersion: 2010-09-09-OC
+
+Parameters:
+  deploymentBucketName:
+    Type: String
+
+  organizationPrincipalId:
+    Type: String
+
+Resources:
+
+  OrgFormationDeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref deploymentBucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+
+  OrgFormationDeploymentBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref OrgFormationDeploymentBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: 'OwnerAllowEverything'
+            Effect: 'Allow'
+            Principal:
+              AWS: !Ref AWS::AccountId
+            Action: 's3:*'
+            Resource:
+              - !Sub '${OrgFormationDeploymentBucket.Arn}'
+              - !Sub '${OrgFormationDeploymentBucket.Arn}/*'
+          - Sid: 'OrgAllowGetObject'
+            Effect: 'Allow'
+            Principal: '*'
+            Action:
+              - 's3:GetObject'
+              - 's3:GetObjectVersion'
+            Resource:
+              - !Sub '${OrgFormationDeploymentBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                  'aws:PrincipalOrgID':
+                    - !Ref organizationPrincipalId
