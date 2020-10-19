@@ -278,4 +278,4 @@ Resources:
           GroupName: !Ref OrgBuildLogGroup
           Status: ENABLED
       SourceVersion: refs/heads/master
-      TimeoutInMinutes: 60
+      TimeoutInMinutes: 180
