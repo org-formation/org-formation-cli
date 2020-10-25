@@ -1,4 +1,4 @@
-import fs, { readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import path from 'path';
 import md5 from 'md5';
 import { OrgFormationError } from '../org-formation-error';
@@ -6,9 +6,9 @@ import { BuildTaskProvider } from './build-task-provider';
 import { IUpdateOrganizationTaskConfiguration } from './tasks/organization-task';
 import { IUpdateStacksBuildTask } from './tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
-import { yamlParse } from '~yaml-cfn/index';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
+import { yamlParseWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -107,10 +107,8 @@ export class BuildConfiguration {
     }
 
     public loadBuildFile(filePath: string): IBuildFile {
-        const buffer = fs.readFileSync(filePath);
-        const contents = buffer.toString('utf-8');
 
-        const buildFile = yamlParse(contents) as IBuildFile;
+        const buildFile = yamlParseWithIncludes(filePath) as IBuildFile;
         if (buildFile === undefined) {
             return {};
         }
@@ -131,7 +129,7 @@ export class BuildConfiguration {
                 throw new OrgFormationError(`expected Type on parameter ${paramName} declared in tasks file ${filePath}`);
             }
 
-            const supportedParamTypes = ['String', 'Number', 'Boolean'];
+            const supportedParamTypes = ['String', 'Number', 'Boolean', 'List<String>'];
             if (!supportedParamTypes.includes(paramType)) {
                 throw new OrgFormationError(`unsupported Type on parameter ${paramName} expected one of ${supportedParamTypes.join(', ')}, found: ${paramType}`);
             }
