@@ -1,0 +1,17 @@
+allRegions:
+  Type: List<String>
+  Default:
+    - 'eu-central-1'
+    - 'us-east-1'
+
+primaryRegion:
+  Type: String
+  Default: 'eu-central-1'
+
+resourcePrefix:
+  Type: String
+  Default: 'my'
+
+includeMasterAccount:
+  Type: Boolean
+  Default: true

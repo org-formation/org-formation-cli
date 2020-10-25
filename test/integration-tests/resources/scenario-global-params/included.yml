@@ -1,0 +1,17 @@
+Parameters: !Include './global-parameters.yml'
+
+PrimaryRegion:
+  Type: update-stacks
+  Template: ./bucket.yml
+  StackName: !Sub '${resourcePrefix}-stack-name-primary-region'
+  DefaultOrganizationBindingRegion: !Ref primaryRegion
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: !Ref includeMasterAccount
+
+AllRegions:
+  Type: update-stacks
+  Template: ./bucket.yml
+  StackName: !Sub '${resourcePrefix}-stack-name-all-regions'
+  DefaultOrganizationBindingRegion: !Ref allRegions
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: !Ref includeMasterAccount

@@ -1,0 +1,16 @@
+Parameters: !Include './global-parameters.yml'
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+  Skip: true
+
+includeOther:
+  DependsOn: UpdateStack
+  Type: include
+  Path: ./included.yml
+  Parameters:
+    allRegions: !Ref allRegions
+    primaryRegion: !Ref primaryRegion
+    resourcePrefix: !Ref resourcePrefix
+    includeMasterAccount: !Ref includeMasterAccount

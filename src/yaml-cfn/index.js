@@ -94,7 +94,8 @@ const supportedFunctions = [
   'Fn::MD5',
   'Fn::MD5Dir',
   'Fn::MD5File',
-  'Fn::JsonString'
+  'Fn::JsonString',
+  'Fn::Include'
 ];
 
 let allTagTypes = [];
