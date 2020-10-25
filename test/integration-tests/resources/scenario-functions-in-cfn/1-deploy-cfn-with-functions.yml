@@ -1,0 +1,29 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+LambdaUsingReadFile:
+  Type: update-stacks
+  StackName: lambda-using-read-file
+  Template: ./lambda-using-read-file.yml
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+      IncludeMasterAccount: true
+
+PermissionSetWithInlinePolicy1:
+  Type: update-stacks
+  StackName: permission-set-using-json-string-1
+  Template: ./permission-set-using-json-string-1.yml
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+      IncludeMasterAccount: true
+
+PermissionSetWithInlinePolicy2:
+  Type: update-stacks
+  StackName: permission-set-using-json-string-2
+  Template: ./permission-set-using-json-string-2.yml
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+      IncludeMasterAccount: true

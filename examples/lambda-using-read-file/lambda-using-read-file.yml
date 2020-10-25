@@ -1,0 +1,29 @@
+
+AWSTemplateFormatVersion: 2010-09-09-OC
+Description: Org formation example
+
+Resources:
+  MyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+
+  MyLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: 'org-formation-example-lambda-using-read-file'
+      Code:
+        ZipFile: !ReadFile './src/index.js'
+      Handler: index.handler
+      Role: !GetAtt MyRole.Arn
+      Runtime: nodejs12.x

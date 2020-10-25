@@ -43,6 +43,14 @@ export class BuildTaskProvider {
         return validationTask;
     }
 
+    static createPrintTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
+        const taskProvider = this.GetBuildTaskProvider();
+        const provider = taskProvider.providers[configuration.Type];
+        if (provider === undefined) {throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);}
+        const validationTask = provider.createTaskForPrint(configuration, command);
+        return validationTask;
+    }
+
     public static createBuildTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[configuration.Type];
@@ -104,5 +112,6 @@ export interface IBuildTaskProvider<TConfig extends IBuildTaskConfiguration> {
     type: string;
     createTask(config: TConfig, command: IPerformTasksCommandArgs): IBuildTask;
     createTaskForValidation(config: TConfig, command: IPerformTasksCommandArgs): IBuildTask | undefined;
+    createTaskForPrint(config: TConfig, command: IPerformTasksCommandArgs): IBuildTask | undefined;
     createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs): IBuildTask | undefined;
 }

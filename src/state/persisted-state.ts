@@ -538,6 +538,7 @@ export interface IGenericTarget<TTaskDefinition> {
     organizationLogicalName: string;
     logicalNamePrefix?: string;
     lastCommittedHash: string;
+    lastCommittedLocalHash?: string;
     definition: TTaskDefinition;
 }
 

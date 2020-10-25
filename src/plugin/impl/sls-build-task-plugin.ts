@@ -95,14 +95,14 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         };
     }
 
-    convertToTask(command: ISlsCommandArgs, hashOfTask: string): ISlsTask {
+    convertToTask(command: ISlsCommandArgs, globalHash: string): ISlsTask {
         return {
             type: this.type,
             stage: command.stage,
             configFile: command.configFile,
             name: command.name,
             path: command.path,
-            hash: hashOfTask,
+            hash: globalHash,
             runNpmInstall: command.runNpmInstall,
             taskRoleName: command.taskRoleName,
             customDeployCommand: command.customDeployCommand,

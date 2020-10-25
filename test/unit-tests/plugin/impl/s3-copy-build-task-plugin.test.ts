@@ -94,6 +94,7 @@ describe('when performing copy to s3', () => {
                 definition: task,
             },
             task,
+            previousBindingLocalHash: 'abcdef'
         };
         binder = new PluginBinder<IS3CopyTask>(task, 'default', undefined, state, template, undefined, plugin);
     });
@@ -169,6 +170,7 @@ describe('when removing copy-to-s3', () => {
                 definition: task,
             },
             task,
+            previousBindingLocalHash: 'abcdef'
         };
         binder = new PluginBinder<IS3CopyTask>(task, 'default', undefined, state, template, undefined, plugin);
     });

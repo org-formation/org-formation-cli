@@ -5,7 +5,7 @@ import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { Validator } from '~parser/validator';
 
-const commandName = 'validate-tasks <templateFile>';
+const commandName = 'validate-tasks <tasksFile>';
 const commandDescription = 'Will validate the tasks file, including configured tasks';
 
 export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs> {
@@ -20,7 +20,6 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
     }
 
     public addOptions(command: Command): void {
-        command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--max-concurrent-tasks <max-concurrent-tasks>', 'maximum number of tasks to be executed concurrently', 1);
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks (within a task) to be executed concurrently', 1);
         command.option('--failed-tasks-tolerance <failed-tasks-tolerance>', 'the number of failed tasks after which execution stops', 99);

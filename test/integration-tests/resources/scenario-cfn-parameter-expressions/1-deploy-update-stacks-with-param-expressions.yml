@@ -80,3 +80,5 @@ PolicyTemplate:
       otherAtt: '2'
     jsonString2: !JsonString [ !ReadFile ./test.json]
     refToRoot: !Ref OrganizationRoot
+    orgPrincipalId: !Ref ORG::PrincipalOrgID
+    orgStateBucketName: !Ref ORG::StateBucketName

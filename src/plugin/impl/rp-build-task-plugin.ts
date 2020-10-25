@@ -7,6 +7,7 @@ import { IPerformTasksCommandArgs } from '~commands/index';
 import { Validator } from '~parser/validator';
 import { OrgFormationError } from '~org-formation-error';
 import { AwsUtil, CfnUtil } from '~util/aws-util';
+import { ConsoleUtil } from '~util/console-util';
 
 const communityResourceProviderCatalog = 'community-resource-provider-catalog';
 const communityResourceProviderCatalogS3Path = 's3://' + communityResourceProviderCatalog + '/';
@@ -61,13 +62,13 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         };
     }
 
-    convertToTask(command: IRpCommandArgs, hashOfTask: string): IRpTask {
+    convertToTask(command: IRpCommandArgs, globalHash: string): IRpTask {
         return {
             schemaHandlerPackage: command.schemaHandlerPackage,
             resourceType: command.resourceType,
             executionRole: command.executionRole,
             name: command.name,
-            hash: hashOfTask,
+            hash: globalHash,
             type: this.type,
             forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
             logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
@@ -89,19 +90,30 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver */): Promise<void> {
-        const cfn = await AwsUtil.GetCloudFormation(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
 
-        let roleArn = binding.task.executionRole;
-        const schemaHandlerPackage = binding.task.schemaHandlerPackage;
+        const {task, target, previousBindingLocalHash } = binding;
+        if (task.forceDeploy !== true &&
+            task.taskLocalHash !== undefined &&
+            task.taskLocalHash === previousBindingLocalHash) {
+
+            ConsoleUtil.LogInfo(`Workload (register-type) ${task.name} in ${target.accountId}/${target.region} skipped, task itself did not change. Use ForceTask to force deployment.`);
+            return;
+        }
+
+
+        const cfn = await AwsUtil.GetCloudFormation(target.accountId, target.region, task.taskRoleName);
+
+        let roleArn = task.executionRole;
+        const schemaHandlerPackage = task.schemaHandlerPackage;
 
         if (roleArn === undefined) {
             roleArn = await this.ensureExecutionRole(cfn, schemaHandlerPackage);
         }
 
         const response = await cfn.registerType({
-            TypeName: binding.task.resourceType,
+            TypeName: task.resourceType,
             Type: 'RESOURCE',
-            SchemaHandlerPackage: binding.task.schemaHandlerPackage,
+            SchemaHandlerPackage: task.schemaHandlerPackage,
             ExecutionRoleArn: roleArn,
         }).promise();
 
@@ -112,7 +124,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         }while(registrationStatus.ProgressStatus === 'IN_PROGRESS');
 
         if (registrationStatus.ProgressStatus !== 'COMPLETE') {
-            throw new OrgFormationError(`Registration of Resource Type ${binding.task.resourceType} failed. ${registrationStatus.Description}`);
+            throw new OrgFormationError(`Registration of Resource Type ${task.resourceType} failed. ${registrationStatus.Description}`);
         }
 
         await cfn.setTypeDefaultVersion({Arn: registrationStatus.TypeVersionArn}).promise();

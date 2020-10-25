@@ -74,6 +74,12 @@ Parameters:
   refToRoot:
     Type: String
 
+  orgPrincipalId:
+    Type: String
+
+  orgStateBucketName:
+    Type: String
+
 Resources:
   BucketPolicy:
     Type: AWS::IAM::ManagedPolicy

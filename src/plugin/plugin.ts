@@ -19,7 +19,7 @@ export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfigurati
     validateCommandArgs(command: TCommandArgs): void;
 
     getValuesForEquality(command: TCommandArgs): any;
-    convertToTask(command: TCommandArgs, hashOfTask: string): TTask;
+    convertToTask(command: TCommandArgs, globalHash: string): TTask;
 
     performRemove(binding: IPluginBinding<TTask>, resolver: CfnExpressionResolver): Promise<void>;
     performCreateOrUpdate(binding: IPluginBinding<TTask>, resolver: CfnExpressionResolver): Promise<void>;

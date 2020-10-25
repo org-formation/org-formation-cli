@@ -12,5 +12,5 @@ RegisterType:
   FailedTaskTolerance: 5
   OrganizationBinding:
     IncludeMasterAccount: true
-    Account: !Ref AccountA
+    Account: '*'
     Region: eu-west-1

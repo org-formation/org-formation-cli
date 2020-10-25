@@ -1,0 +1,40 @@
+
+AWSTemplateFormatVersion: 2010-09-09-OC
+Description: Org formation example
+
+Parameters:
+
+  deploymentBucketName:
+    Type: String
+    Description: Name of the bucket that contains the lambda source code
+
+  lambdaS3Key:
+    Type: String
+    Description: S3 Key that contains the location of lambda source code
+
+Resources:
+  MyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+
+  MyLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: 'org-formation-example-lambda-using-uploaded-zip'
+      Code:
+        S3Bucket: !Ref deploymentBucketName
+        S3Key: !Ref lambdaS3Key
+      Handler: index.handler
+      Role: !GetAtt MyRole.Arn
+      Runtime: nodejs12.x

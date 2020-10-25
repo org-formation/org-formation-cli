@@ -71,14 +71,14 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             path: hashOfLocalDirectory,
         };
     }
-    convertToTask(command: IS3CopyCommandArgs, hashOfTask: string): IS3CopyTask {
+    convertToTask(command: IS3CopyCommandArgs, globalHash: string): IS3CopyTask {
         return {
             type: this.type,
             name: command.name,
             localPath: command.localPath,
             remotePath: command.remotePath,
             zipBeforePut: command.zipBeforePut,
-            hash: hashOfTask,
+            hash: globalHash,
             taskRoleName: command.taskRoleName,
             forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
             logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,

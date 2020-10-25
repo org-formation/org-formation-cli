@@ -8,6 +8,7 @@ import { PersistedState } from '~state/persisted-state';
 import { TemplateRoot } from '~parser/parser';
 import { AwsUtil } from '~util/aws-util';
 import { Validator } from '~parser/validator';
+import { BaseCliCommand } from '~commands/base-command';
 
 
 interface IResolver {
@@ -92,7 +93,7 @@ export class CfnExpressionResolver {
             }
         }
         const context: ICfnFunctionContext = { filePath: this.filePath, mappings: this.mapping, finalPass: false };
-        const resolved = CfnFunctions.resolveTreeStructural(context, container);
+        const resolved = CfnFunctions.resolveTreeStructural(context, true, container);
         return resolved.val;
     }
 
@@ -152,7 +153,7 @@ export class CfnExpressionResolver {
         }
 
         const context: ICfnFunctionContext = { filePath: this.filePath, mappings: this.mapping, finalPass: true };
-        CfnFunctions.resolveTreeStructural(context, container);
+        CfnFunctions.resolveTreeStructural(context, true, container);
 
         return container.val;
     }
@@ -231,6 +232,7 @@ export class CfnExpressionResolver {
         const resolver = new CfnExpressionResolver();
         resolver.addParameter('AWS::AccountId', accountId);
         resolver.addParameter('AWS::Region', region);
+        resolver.addParameter('ORG::StateBucketName', BaseCliCommand.StateBucketName);
 
         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         const currentAccountResolverFn = (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(logicalAccountName, resourcePath, template, state);
