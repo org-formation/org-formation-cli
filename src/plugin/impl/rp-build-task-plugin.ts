@@ -96,10 +96,9 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
             task.taskLocalHash !== undefined &&
             task.taskLocalHash === previousBindingLocalHash) {
 
-            ConsoleUtil.LogInfo(`Workload (register-type) ${task.name} in ${target.accountId}/${target.region} skipped, task itself did not change. Use ForceTask to force deployment.`);
+            ConsoleUtil.LogInfo(`Workload (${this.typeForTask}) ${task.name} in ${target.accountId}/${target.region} skipped, task itself did not change. Use ForceTask to force deployment.`);
             return;
         }
-
 
         const cfn = await AwsUtil.GetCloudFormation(target.accountId, target.region, task.taskRoleName);
 
