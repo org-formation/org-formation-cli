@@ -34,6 +34,7 @@ export class Md5Util {
                 }
                 hashes.push(hashForFile);
             } catch {
+                // ignore
             }
         });
 
