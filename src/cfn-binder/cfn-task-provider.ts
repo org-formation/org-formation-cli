@@ -65,7 +65,7 @@ export class CfnTaskProvider {
                 const stackInput: CreateStackInput | UpdateStackInput = {
                     StackName: stackName,
                     TemplateBody: templateBody,
-                    Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
+                    Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM', 'CAPABILITY_AUTO_EXPAND'],
                     ClientRequestToken: clientToken,
                     RoleARN: roleArn,
                     Parameters: [],
