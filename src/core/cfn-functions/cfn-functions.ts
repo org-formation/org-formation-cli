@@ -2,6 +2,7 @@ import { CfnFindInMap, CfnMappingsSection } from './cfn-find-in-map';
 import { CfnJoin } from './cfn-join';
 import { CfnJsonString } from './cfn-json-string';
 import { CfnMD5 } from './cfn-md5';
+import { CfnMerge } from './cfn-merge';
 import { CfnReadFile } from './cfn-read-file';
 import { CfnSelect } from './cfn-select';
 import { CfnSub } from './cfn-sub';
@@ -29,10 +30,14 @@ export class CfnFunctions {
             const entries = Object.entries(resource);
 
             for (const [key, val] of entries) {
+                if (key === '<<') {
+                    CfnMerge.resolve(context, resource, resourceParent, resourceKey, key, val);
+                }
                 if (val !== null && typeof val === 'object') {
                     this.resolveTreeStructural(context, polyfillCloudFormation, val, resource, key);
                 }
             }
+
 
             if (entries.length === 1 && resourceParent !== undefined && resourceKey !== undefined) {
                 const [key, val]: [string, unknown] = entries[0];

@@ -120,9 +120,9 @@ export class BuildConfiguration {
         delete buildFile.Parameters;
         delete buildFile.Mappings;
 
-        const expressionResolver = new CfnExpressionResolver();
-        for(const paramName in this.parameters) {
-            const param = this.parameters[paramName];
+        const expressionResolver = new CfnExpressionResolver();        const parametersSection = expressionResolver.resolveFirstPass(this.parameters);
+        for(const paramName in parametersSection) {
+            const param = parametersSection[paramName];
             const paramType = param.Type;
 
             if (paramType === undefined) {
