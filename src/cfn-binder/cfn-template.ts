@@ -365,16 +365,18 @@ export class CfnTemplate {
                 if (localExpression.includes('.')) {
                     const allParts = localExpression.split('.');
                     const path = allParts.splice(1).join('.');
-
-                    expression.rewriteExpression(allParts[0], path);
-                    continue;
-
+                    if (this.resourceIdsForTarget.includes(allParts[0])) {
+                        expression.rewriteExpression(allParts[0], path);
+                        continue;
+                    }
                 } else  {
-
-                    expression.rewriteExpression(localExpression);
-                    continue;
-
+                    if (this.resourceIdsForTarget.includes(localExpression)) {
+                        expression.rewriteExpression(localExpression);
+                        continue;
+                    }
                 }
+
+                expression.rewriteExpression(account.logicalId, expression.path);
             }
         }
 
