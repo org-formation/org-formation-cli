@@ -139,12 +139,15 @@ export class CfnTemplate {
         }
 
         const outputs = this.templateRoot.contents.Outputs;
-        for (const outputName in outputs) {
+        if (outputs !== undefined) {
+            const clonedOutputs = JSON.parse(JSON.stringify(outputs));
+            const resolvedOutput = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedOutputs, this.accountResource);
+            for (const outputName in outputs) {
 
-            const hasExpressionsToResourcesOutsideTarget = ResourceUtil.HasExpressions(outputs, outputName, this.resourceIdsNotInTarget);
-            if (!hasExpressionsToResourcesOutsideTarget) {
-                const clonedOutput = JSON.parse(JSON.stringify(outputs[outputName]));
-                this.outputs[outputName] = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedOutput, this.accountResource);
+                const hasExpressionsToResourcesOutsideTarget = ResourceUtil.HasExpressions(resolvedOutput, outputName, this.resourceIdsNotInTarget);
+                if (!hasExpressionsToResourcesOutsideTarget) {
+                    this.outputs[outputName] = resolvedOutput[outputName];
+                }
             }
         }
 
@@ -362,22 +365,20 @@ export class CfnTemplate {
                 if (localExpression.includes('.')) {
                     const allParts = localExpression.split('.');
                     const path = allParts.splice(1).join('.');
-                    if (this.resourceIdsForTarget.includes(allParts[0])) {
-                        expression.rewriteExpression(allParts[0], path);
-                        continue;
-                    }
-                } else  {
-                    if (this.resourceIdsForTarget.includes(localExpression)) {
-                        expression.rewriteExpression(localExpression);
-                        continue;
-                    }
-                }
 
-                expression.rewriteExpression(account.logicalId, expression.path);
+                    expression.rewriteExpression(allParts[0], path);
+                    continue;
+
+                } else  {
+
+                    expression.rewriteExpression(localExpression);
+                    continue;
+
+                }
             }
         }
 
-        const expressionsToOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, this.otherAccountsLogicalIds);
+        const expressionsToOtherAccounts = ResourceUtil.EnumExpressionsForResource(resource, [...this.otherAccountsLogicalIds]);
         for (const expression of expressionsToOtherAccounts) {
             const otherAccount = this.templateRoot.organizationSection.findAccount(x => x.logicalId === expression.resource);
 

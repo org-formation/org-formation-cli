@@ -151,6 +151,12 @@ describe('when creating cloudformation with output section', () => {
             OutputRefOtherTarget: {
                 Value: {Ref: 'bucket2'},
             },
+            Output2 : {
+                Value: {'Fn::GetAtt': ['AWSAccount', 'Resources.bucket']},
+            },
+            OutputRefOtherTarget2: {
+                Value: {'Fn::GetAtt': ['AWSAccount', 'Resources.bucket2']},
+            },
             OutputGetAttOtherTarget: {
                 Value: {'Fn::GetAtt': ['bucket2', 'bucketName']},
             },
@@ -169,11 +175,25 @@ describe('when creating cloudformation with output section', () => {
         expect(result.Outputs.Output.Value.Ref).toBe('bucket');
     });
 
+    test('template contains output in same target using AWSAccount.Resources syntax', () => {
+        const result = JSON.parse(templateForTarget);
+        expect(result).toBeDefined();
+        expect(result.Outputs).toBeDefined();
+        expect(result.Outputs.Output2.Value.Ref).toBe('bucket');
+    });
+
     test('output to Ref in other target is removed', () => {
         const result = JSON.parse(templateForTarget);
         expect(result).toBeDefined();
         expect(result.Outputs).toBeDefined();
         expect(result.Outputs.OutputRefOtherTarget).toBeUndefined();
+    });
+
+    test('output to Ref in other target is removed using AWSAccount.Resources syntax', () => {
+        const result = JSON.parse(templateForTarget);
+        expect(result).toBeDefined();
+        expect(result.Outputs).toBeDefined();
+        expect(result.Outputs.OutputRefOtherTarget2).toBeUndefined();
     });
 
     test('output to GetAtt in other target is removed', () => {
