@@ -10,6 +10,8 @@ import { S3StorageProvider } from "~state/storage-provider";
 import { CloudFormationBinder, ICfnBinding } from "~cfn-binder/cfn-binder";
 import { CfnTemplate } from "~cfn-binder/cfn-template";
 import { GlobalState } from "~util/global-state";
+import { AccountResource } from "~parser/model/account-resource";
+import { OrgResourceTypes } from "~parser/model";
 
 describe('when creating print stacks command', () => {
     let command: PrintStacksCommand;
@@ -110,6 +112,9 @@ describe('when executing print-stacks command', () => {
             OrganizationFile:  './test/resources/valid-basic.yml',
             DefaultOrganizationBinding: { Account: '*', Region: 'eu-central-1'}
         });
+
+        const acc = new AccountResource(template, 'Account1', { Type: OrgResourceTypes.Account, Properties: { AccountId: '123123123123', RootEmail: 'email@email.com', AccountName: 'Account'} })
+        template.organizationSection.accounts.push(acc)
 
         const emptyState = PersistedState.CreateEmpty('123456789012');
         createTemplate = sandbox.stub(TemplateRoot, 'create');
