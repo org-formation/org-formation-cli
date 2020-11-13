@@ -16,6 +16,7 @@ type TemplateVersion = '2010-09-09-OC';
 
 export interface ITemplate {
     AWSTemplateFormatVersion: TemplateVersion;
+    Transform?: string;
     StackName?: string;
     Description?: string;
     Organization?: IOrganization;

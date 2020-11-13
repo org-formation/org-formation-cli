@@ -178,6 +178,11 @@ export class CfnTemplate {
             const clonedMappings = JSON.parse(JSON.stringify(this.templateRoot.contents.Mappings));
             this.resultingTemplate.Mappings = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedMappings, this.accountResource);
         }
+
+        if (this.templateRoot.contents.Transform) {
+            this.resultingTemplate.Transform = this.templateRoot.contents.Transform;
+        }
+
         for (const prop in this.resultingTemplate) {
             if (!this.resultingTemplate[prop]) {
                 delete this.resultingTemplate[prop];
