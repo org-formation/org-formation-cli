@@ -8,7 +8,7 @@ import {
     AccountResource,
     IResourceTarget,
 } from '~parser/model';
-import { TemplateRoot } from '~parser/parser';
+import { ITemplate, TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { ICfnExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
@@ -84,7 +84,7 @@ export class CfnTemplate {
         };
     }
 
-    private resultingTemplate: any;
+    private resultingTemplate: ITemplate;
     private resources: Record<string, any>;
     private outputs: Record<string, ICfnOutput>;
     private parameters: Record<string, ICfnParameter>;
@@ -182,12 +182,6 @@ export class CfnTemplate {
         if (this.templateRoot.contents.Transform) {
             this.resultingTemplate.Transform = this.templateRoot.contents.Transform;
         }
-
-        for (const prop in this.resultingTemplate) {
-            if (!this.resultingTemplate[prop]) {
-                delete this.resultingTemplate[prop];
-            }
-        }
     }
 
     public listDependencies(binding: ICfnBinding, others: ICfnBinding[]): ICfnCrossAccountDependency[] {
@@ -257,9 +251,12 @@ export class CfnTemplate {
         }
     }
 
-    public async createTemplateBodyAndResolve(expressionResolver: CfnExpressionResolver): Promise<string> {
-        const template = { ... this.resultingTemplate };
+    public async createTemplateBodyAndResolve(expressionResolver: CfnExpressionResolver, addBogusTransform = false): Promise<string> {
+        const template = { ... this.resultingTemplate } as ITemplate;
         template.Description = await expressionResolver.resolveSingleExpression(template.Description, 'Description');
+        if (addBogusTransform  && template.Transform === undefined) {
+            template.Transform = 'bogus-transform-to-allow-custom-types-to-pass-validation';
+        }
         return JSON.stringify(template, null, 2);
     }
 

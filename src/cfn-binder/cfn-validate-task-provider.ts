@@ -48,7 +48,7 @@ export class CfnValidateTaskProvider {
             perform: async (): Promise<void> => {
                 const customRoleName = await expressionResolver.resolveSingleExpression(binding.customRoleName, 'CustomRoleName');
 
-                const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
+                const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver, true);
                 const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName);
 
                 const validateInput: ValidateTemplateInput =  {

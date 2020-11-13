@@ -12,7 +12,7 @@ import { Validator } from './validator';
 import { OrganizationalUnitResource } from './model/organizational-unit-resource';
 import { yamlParse } from '~yaml-cfn/index';
 
-type TemplateVersion = '2010-09-09-OC';
+type TemplateVersion = '2010-09-09-OC' | '2010-09-09';
 
 export interface ITemplate {
     AWSTemplateFormatVersion: TemplateVersion;

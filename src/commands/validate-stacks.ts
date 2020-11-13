@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { ConsoleUtil } from '../util/console-util';
 import { BaseCliCommand } from './base-command';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from './update-stacks';
-import { ValidateOrganizationCommand } from './validate-organization';
 import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { CfnValidateTaskProvider } from '~cfn-binder/cfn-validate-task-provider';
@@ -30,10 +29,6 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
 
     public async performCommand(command: IUpdateStacksCommandArgs): Promise<void> {
         const templateFile = command.templateFile;
-
-        if (ValidateOrganizationCommand.SkipValidationForTasks) {
-            return;
-        }
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');

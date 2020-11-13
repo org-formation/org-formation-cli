@@ -46,8 +46,8 @@ describe('when task fails', () => {
 
     test('validate logs error', () => {
         expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('Stack invalid-template'));
-        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('XX::S3::Bucket'));
-        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('Unrecognized resource types'));
+        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('template expects parameter'));
+        expect(mockAfterValidation.calls[0][0]).toEqual(expect.stringContaining('ThisWillNotBePassed which have not been provided'));
     });
 
     test('perform tasks throws error', () => {
@@ -56,8 +56,7 @@ describe('when task fails', () => {
 
     test('perform tasks logs error', () => {
         expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('error updating CloudFormation stack invalid-template in account'));
-        expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('XX::S3::Bucket'));
-        expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('Unrecognized resource types:'));
+        expect(mockAfterPerform.calls[0][0]).toEqual(expect.stringContaining('[ThisWillNotBePassed] must have values'));
     });
 
     afterAll(async () => {
