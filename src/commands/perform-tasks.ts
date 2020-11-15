@@ -72,7 +72,7 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     failedStacksTolerance: number;
     organizationFile?: string;
     organizationFileHash?: string;
-    parameters?: string;
+    parameters?: string | {};
     parsedParameters?: Record<string, string>;
     logicalNamePrefix?: string;
     forceDeploy?: boolean;

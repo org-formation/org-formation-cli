@@ -11,7 +11,7 @@ describe('when resolving enum-expressions', () => {
     let bindings: ICfnBinding[];
     let masterAccountTemplate: ICfnTemplate;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/enum-expressions/enum-expressions.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -22,7 +22,7 @@ describe('when resolving enum-expressions', () => {
         persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc' });
 
         cloudformationBinder = new CloudFormationBinder('enum-expressions', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         masterAccountTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody()) as ICfnTemplate;
     });
 

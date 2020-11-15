@@ -17,7 +17,7 @@ describe('when loading cloudtrail template', () => {
     const expectedExportNameFors3Bucket = 'cloudtrail-CloudTrailS3Bucket';
     const expectedOutputLogicalId = 'cloudtrailDashCloudTrailS3Bucket';
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/cloudtrail/cloudtrail.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -27,7 +27,7 @@ describe('when loading cloudtrail template', () => {
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'SharedComplianceAccount', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('cloudtrail', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         masterBinding = bindings.find((x) => x.accountId === '000000000000');
         masterCfnTemplate = JSON.parse(masterBinding.template.createTemplateBody()) as ICfnTemplate;
         servicesBinding = bindings.find((x) => x.accountId === '222222222222');

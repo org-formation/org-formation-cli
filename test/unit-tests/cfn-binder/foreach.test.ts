@@ -9,7 +9,7 @@ describe('when loading template with resource that does Foreach', () => {
     let bindings: ICfnBinding[];
     let masterAccountCfnTemplate: ICfnTemplate;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/foreach/foreach.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -20,7 +20,7 @@ describe('when loading template with resource that does Foreach', () => {
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         const cloudformationBinder = new CloudFormationBinder('foreach', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         masterAccountCfnTemplate = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody()) as ICfnTemplate;
     });
 

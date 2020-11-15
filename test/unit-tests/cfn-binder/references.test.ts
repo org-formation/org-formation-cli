@@ -6,20 +6,26 @@ import { ICfnResource, ICfnTemplate, ICfnGetAttValue, ICfnRefValue } from '../cf
 import { ICfnSubExpression } from '~core/cfn-expression';
 
 describe('when loading reference to multiple', () => {
-    test('fails with exception', () => {
+    test('fails with exception', async () => {
         const template = TemplateRoot.create('./test/resources/references/reference-to-multiple.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc' });
 
         const cloudformationBinder = new CloudFormationBinder('foreach', template, persistedState);
-        expect(() =>  cloudformationBinder.enumBindings()).toThrowError(/Topic/);
-        expect(() =>  cloudformationBinder.enumBindings()).toThrowError(/multiple targets/);
-
+        let error;
+        try {
+            await cloudformationBinder.enumBindings();
+        } catch (err) {
+            error = err;
+        }
+        expect(error).toBeDefined();
+        expect(error.message).toContain('Topic');
+        expect(error.message).toContain('multiple targets');
     });
 });
 
@@ -30,18 +36,18 @@ describe('when loading cross account references through sub', () => {
     let templateAccount2: ICfnTemplate;
     let masterAccount: ICfnTemplate;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         const template = TemplateRoot.create('./test/resources/references/reference-using-sub.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
-        persistedState.setBinding({type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
+        persistedState.setBinding({ type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc' });
 
         const cloudformationBinder = new CloudFormationBinder('reference-using-sub', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
 
         masterAccount = JSON.parse(bindings.find((x) => x.accountId === '000000000000').template.createTemplateBody());
         templateAccount1 = JSON.parse(bindings.find((x) => x.accountId === '111111111111').template.createTemplateBody());
@@ -200,7 +206,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 12 Attributes to local !Ref using Resources resolves to !Ref',
         () => {
-            const val: ICfnRefValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesRef;
+            const val: ICfnRefValue = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesRef;
 
             expect(val.Ref).toBeDefined();
             expect(val.Ref).toBe('Topic');
@@ -209,7 +215,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 12 Attributes to local !GetAtt using Resources resolves to !GetAtt',
         () => {
-            const  val: ICfnGetAttValue  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesGetAtt;
+            const val: ICfnGetAttValue = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesGetAtt;
 
             expect(val['Fn::GetAtt']).toBeDefined();
             expect(val['Fn::GetAtt'][0]).toBe('Topic');
@@ -219,7 +225,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 12 Attributes to local !Sub using Resources resolves to !Sub',
         () => {
-            const val: ICfnSubExpression  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubRef;
+            const val: ICfnSubExpression = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubRef;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic}'));
@@ -228,7 +234,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 12 Attributes to local !Sub using Resources resolves to !Sub with path',
         () => {
-            const val: ICfnSubExpression  = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubGetAtt;
+            const val: ICfnSubExpression = templateAccount1.Resources.S3Bucket12.Properties.SameAccountResourcesSubGetAtt;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic.Arn}'));
@@ -238,7 +244,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 13 Attributes to AWSAccount !Ref using Resources resolves to !Ref',
         () => {
-            const val: ICfnRefValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesRef;
+            const val: ICfnRefValue = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesRef;
 
             expect(val.Ref).toBeDefined();
             expect(val.Ref).toBe('Topic');
@@ -248,7 +254,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 13 Attributes to AWSAccount !GetAtt using Resources resolves to !GetAtt',
         () => {
-            const  val: ICfnGetAttValue  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesGetAtt;
+            const val: ICfnGetAttValue = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesGetAtt;
 
             expect(val['Fn::GetAtt']).toBeDefined();
             expect(val['Fn::GetAtt'][0]).toBe('Topic');
@@ -259,7 +265,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 13 Attributes to AWSAccount !Sub using Resources resolves to !Sub',
         () => {
-            const val: ICfnSubExpression  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubRef;
+            const val: ICfnSubExpression = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubRef;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic}'));
@@ -269,7 +275,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 1 S3Bucket 13 Attributes to AWSAccount !Sub using Resources resolves to !Sub with path',
         () => {
-            const val: ICfnSubExpression  = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubGetAtt;
+            const val: ICfnSubExpression = templateAccount1.Resources.S3Bucket13.Properties.AWSAccountResourcesSubGetAtt;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Topic.Arn}'));
@@ -279,7 +285,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 14 Attributes to other account !Ref using Resources resolves to !Ref',
         () => {
-            const val: ICfnRefValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesRef;
+            const val: ICfnRefValue = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesRef;
 
             expect(val.Ref).toBeDefined();
             expect(val.Ref).toBe('Account1DotResourcesDotTopic');
@@ -292,7 +298,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 14 Attributes to other account !GetAtt using Resources resolves to !GetAtt',
         () => {
-            const  val: ICfnRefValue  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesGetAtt;
+            const val: ICfnRefValue = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesGetAtt;
 
             expect(val.Ref).toBeDefined();
             expect(val.Ref).toBe('Account1DotResourcesDotTopicDotArn');
@@ -305,7 +311,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 14 Attributes to other account !Sub using Resources resolves to !Sub',
         () => {
-            const val: ICfnSubExpression  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubRef;
+            const val: ICfnSubExpression = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubRef;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Account1DotResourcesDotTopic}'));
@@ -315,7 +321,7 @@ describe('when loading cross account references through sub', () => {
     test(
         'Account 2 S3Bucket 14 Attributes to other account !Sub using Resources resolves to !Sub with path',
         () => {
-            const val: ICfnSubExpression  = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubGetAtt;
+            const val: ICfnSubExpression = templateAccount2.Resources.S3Bucket14.Properties.OtherAccountResourcesSubGetAtt;
 
             expect(val['Fn::Sub']).toBeDefined();
             expect(val['Fn::Sub']).toEqual(expect.stringContaining('${Account1DotResourcesDotTopicDotArn}'));
@@ -324,18 +330,18 @@ describe('when loading cross account references through sub', () => {
 });
 
 describe('when loading reference to account in param', () => {
-    test('resolved account id', () => {
+    test('resolved account id', async () => {
         const template = TemplateRoot.create('./test/resources/references/reference-to-account-in-param.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
-        persistedState.setBinding({type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc'});
-        persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
+        persistedState.setBinding({ type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'Account3', lastCommittedHash: 'abc' });
+        persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc' });
 
         const cloudformationBinder = new CloudFormationBinder('references', template, persistedState);
-        const binding = cloudformationBinder.enumBindings()[0];
+        const binding = (await cloudformationBinder.enumBindings())[0];
         const cfnTemplate = JSON.parse(binding.template.createTemplateBody());
         expect(cfnTemplate).toBeDefined();
         expect(cfnTemplate.Parameters.masterAccountId.Default).toBe('000000000000');

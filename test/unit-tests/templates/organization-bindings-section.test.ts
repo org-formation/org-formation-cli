@@ -8,7 +8,7 @@ describe('when  using organization bindings section', () => {
     let cloudformationBinder: CloudFormationBinder;
     let bindings: ICfnBinding[];
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/organization-bindings-section/organization-bindings-section.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -19,7 +19,7 @@ describe('when  using organization bindings section', () => {
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('organization-bindings-section', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
     });
 
     test('can create cfn bindings for template', () => {

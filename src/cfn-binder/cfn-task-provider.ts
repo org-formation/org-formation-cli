@@ -40,7 +40,7 @@ export class CfnTaskProvider {
             parameters[paramName] = paramValue;
         }
 
-        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template.organizationSection, this.state, true);
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {
@@ -187,7 +187,7 @@ export class CfnTaskProvider {
     public async createDeleteTemplateTask(binding: ICfnBinding): Promise<ICfnTask> {
         const that = this;
 
-        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName,  this.template.organizationSection, this.state, true);
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {

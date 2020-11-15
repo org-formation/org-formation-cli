@@ -6,7 +6,7 @@ import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { UpdateStacksCommand, IUpdateStacksCommandArgs } from './update-stacks';
-import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
+import { CloudFormationBinder, ICfnBinding } from '~cfn-binder/cfn-binder';
 import { GlobalState } from '~util/global-state';
 
 const commandName = 'print-stacks <templateFile>';
@@ -42,10 +42,10 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command as IUpdateStacksCommandArgs, command.templateFile);
         const state = await this.getState(command);
         GlobalState.Init(state, template);
+        const parameters = this.parseCfnParameters(command.parameters);
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters);
 
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state);
-
-        const bindings = cfnBinder.enumBindings();
+        const bindings = await cfnBinder.enumBindings();
         for (const binding of bindings) {
             if (binding.action === 'Delete') {
                 ConsoleUtil.LogInfo(`stack ${command.stackName} for account ${binding.accountId} and region ${binding.region} will be deleted`);
@@ -53,16 +53,23 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
             }
 
             const templateBody = binding.template.createTemplateBody({ outputCrossAccountExports: command.outputCrossAccountExports, output: command.output });
+            const resolvedParameters = createParametersFileInput(binding);
 
             if (command.outputPath !== undefined)  {
                 const outputPath = path.resolve(command.outputPath, command.stackName);
 
                 const fileName = toKebabCase(`${binding.region}-${binding.accountLogicalId}`) + '.' + command.output;
+                const parametersFileName = toKebabCase(`${binding.region}-${binding.accountLogicalId}`) + '.parameters.json';
                 const resolvedPath = path.resolve(outputPath, fileName);
+                const resolvedParametersPath  = path.resolve(outputPath, parametersFileName);
 
                 try{
                     mkdirSync(outputPath, { recursive: true });
                     writeFileSync(resolvedPath, templateBody, { });
+                    if (resolvedParameters.length > 0) {
+                        const parametersString = JSON.stringify(resolvedParameters, null, 2);
+                        writeFileSync(resolvedParametersPath, parametersString, { });
+                    }
                 }catch(err) {
                     ConsoleUtil.LogError('error writing template to file', err);
                     throw new OrgFormationError('error writing file');
@@ -75,6 +82,18 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         }
     }
 }
+
+
+const createParametersFileInput = (task: ICfnBinding): {ParameterKey: string; ParameterValue: string | unknown}[] => {
+    if (task === undefined || task.resolvedParameters === undefined) {
+        return [];
+    }
+    const result: {ParameterKey: string; ParameterValue: unknown}[] = [];
+    for(const [ParameterKey, ParameterValue] of Object.entries(task.resolvedParameters)) {
+        result.push({ParameterKey, ParameterValue});
+    }
+    return result;
+};
 
 const toKebabCase = (input: string): string => {
     if (input !== undefined) {
@@ -89,5 +108,6 @@ export interface IPrintStacksCommandArgs extends ICommandArgs {
     organizationFile?: string;
     outputPath?: string;
     outputCrossAccountExports?: boolean;
+    parameters?: string | {};
     output?: 'json' | 'yaml';
 }
