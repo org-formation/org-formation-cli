@@ -13,7 +13,7 @@ describe('when loading budget alarms template', () => {
     let complianceBinding: ICfnBinding;
     let complianceCfnTemplate: ICfnTemplate;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/budget-alarms/budget-alarms.yml');
         const persistedState = PersistedState.CreateEmpty('000000000000');
 
@@ -21,7 +21,7 @@ describe('when loading budget alarms template', () => {
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '333333333333', logicalId: 'SharedComplianceAccount', lastCommittedHash: 'abc'});
 
         cloudFormationBinder = new CloudFormationBinder('budget-alarms', template, persistedState);
-        bindings = cloudFormationBinder.enumBindings();
+        bindings = await cloudFormationBinder.enumBindings();
         masterBinding = bindings.find((x) => x.accountId === '000000000000');
         masterCfnTemplate = JSON.parse(masterBinding.template.createTemplateBody()) as ICfnTemplate;
         complianceBinding = bindings.find((x) => x.accountId === '333333333333');

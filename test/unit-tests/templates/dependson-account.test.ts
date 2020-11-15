@@ -8,7 +8,7 @@ describe('when loading template with resources that depend on account or region'
     let bindings: ICfnBinding[];
     let account1Binding: ICfnBinding;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/depends-on-account/depends-on-account.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -19,7 +19,7 @@ describe('when loading template with resources that depend on account or region'
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         const cloudformationBinder = new CloudFormationBinder('depends-on-account', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
     });
 
@@ -43,7 +43,7 @@ describe('when loading template with resources that depend on account or region'
     let bindings: ICfnBinding[];
     let account1Binding: ICfnBinding;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/depends-on-account/depends-on-account-multiple.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -54,7 +54,7 @@ describe('when loading template with resources that depend on account or region'
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         const cloudformationBinder = new CloudFormationBinder('depends-on-account-multiple', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
     });
 
@@ -78,7 +78,7 @@ describe('when loading template with resource that depends on master account', (
     let bindings: ICfnBinding[];
     let account1Binding: ICfnBinding;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/depends-on-account/depends-on-master-account.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -89,7 +89,7 @@ describe('when loading template with resource that depends on master account', (
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         const cloudformationBinder = new CloudFormationBinder('depends-on-account', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
     });
 

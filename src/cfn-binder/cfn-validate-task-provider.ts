@@ -36,7 +36,7 @@ export class CfnValidateTaskProvider {
             descriptionsOfBoundParameters.push(param.Description);
         }
 
-        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName,  this.template.organizationSection, this.state, false);
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {

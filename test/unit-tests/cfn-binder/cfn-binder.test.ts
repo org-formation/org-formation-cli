@@ -8,7 +8,7 @@ describe('when enumerating bindings on template resource with multiple accounts'
     let binder: CloudFormationBinder;
     let bindings: ICfnBinding[];
 
-    beforeEach(() => {
+    beforeEach(async () => {
         const templateRoot = TestTemplates.createBasicTemplate( {
             resource:  {
                 Type: 'AWS::Custom',
@@ -30,7 +30,7 @@ describe('when enumerating bindings on template resource with multiple accounts'
         state.setBinding({logicalId: 'Account2', physicalId: '123123123124', type: OrgResourceTypes.Account, lastCommittedHash: 'asd'});
 
         binder =  new CloudFormationBinder('test-stack', templateRoot, state);
-        bindings = binder.enumBindings();
+        bindings = await binder.enumBindings();
     });
 
     test('creates a binding for every target account', () => {
@@ -45,7 +45,7 @@ describe('when enumerating bindings on template resource with multiple regions',
     let binder: CloudFormationBinder;
     let bindings: ICfnBinding[];
 
-    beforeEach(() => {
+    beforeEach(async () => {
         const templateRoot = TestTemplates.createBasicTemplate( {
             resource:  {
                 Type: 'AWS::Custom',
@@ -63,7 +63,7 @@ describe('when enumerating bindings on template resource with multiple regions',
         state.setBinding({logicalId: 'Account', physicalId: '123123123123', type: OrgResourceTypes.Account, lastCommittedHash: 'asd'});
 
         binder =  new CloudFormationBinder('test-stack', templateRoot, state);
-        bindings = binder.enumBindings();
+        bindings = await binder.enumBindings();
     });
 
     test('creates a binding for every target region', () => {
@@ -78,7 +78,7 @@ describe('when enumerating bindings on template resource with cross account depe
     let binder: CloudFormationBinder;
     let bindings: ICfnBinding[];
 
-    beforeEach(() => {
+    beforeEach(async () => {
         const templateRoot = TestTemplates.createBasicTemplate( {
             resource1:  {
                 Type: 'AWS::Custom',
@@ -108,7 +108,7 @@ describe('when enumerating bindings on template resource with cross account depe
         state.setBinding({logicalId: 'Account2', physicalId: '123123123124', type: OrgResourceTypes.Account, lastCommittedHash: 'asd'});
 
         binder =  new CloudFormationBinder('test-stack', templateRoot, state);
-        bindings = binder.enumBindings();
+        bindings = await binder.enumBindings();
     });
 
     test('creates a binding for every target account/region', () => {
