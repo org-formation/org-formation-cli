@@ -30,6 +30,7 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         command.option('--output <output>', 'the serialization format used when printing stacks. Either json or yaml.', 'yaml');
         command.option('--output-path <output-path>', 'path, within the root directory, used to store printed templates', './.printed-stacks/');
         command.option('--output-cross-account-exports <output-path>', 'when set, output well generate cross account exports as part of cfn parameter', false);
+        command.option('--no-print-parameters', 'will not print parameter files when printing stacks');
 
         super.addOptions(command);
     }

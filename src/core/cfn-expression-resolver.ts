@@ -213,6 +213,8 @@ export class CfnExpressionResolver {
         return binding.physicalId;
     }
 
+    public static ValueUsedForUnresolvedCopyValueExpression = 'value-used-for-unresolved-copy-value-on-validation';
+
     private static async ResolveCopyValueFunctions<T>(resolver: CfnExpressionResolver, targetAccount: string, targetRegion: string, taskRoleName: string,  obj: T, finalPerform: boolean): Promise<T> {
         const functions = ResourceUtil.EnumFunctionsForResource(obj);
 
@@ -226,7 +228,7 @@ export class CfnExpressionResolver {
                 if (finalPerform) {
                     throw new OrgFormationError(`unable to find export ${exportName} in account ${accountId}/${region}.`);
                 } else {
-                    val = 'temporary-value';
+                    val = CfnExpressionResolver.ValueUsedForUnresolvedCopyValueExpression;
                 }
             }
             fn.resolveToValue(val);

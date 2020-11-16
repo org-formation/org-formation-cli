@@ -31,6 +31,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         command.option('--output-path [output-path]', 'path, within the root directory, used to store printed templates', undefined);
         command.option('--output <output>', 'the serialization format used when printing stacks. Either json or yaml.', 'yaml');
         command.option('--output-cross-account-exports <output-path>', 'when set, output well generate cross account exports as part of cfn parameter', false);
+        command.option('--no-print-parameters', 'will not print parameter files when printing stacks');
         super.addOptions(command);
     }
 
@@ -66,7 +67,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
                 try{
                     mkdirSync(outputPath, { recursive: true });
                     writeFileSync(resolvedPath, templateBody, { });
-                    if (resolvedParameters.length > 0) {
+                    if (resolvedParameters.length > 0 && (command.printParameters === true)) {
                         const parametersString = JSON.stringify(resolvedParameters, null, 2);
                         writeFileSync(resolvedParametersPath, parametersString, { });
                     }
@@ -108,6 +109,7 @@ export interface IPrintStacksCommandArgs extends ICommandArgs {
     organizationFile?: string;
     outputPath?: string;
     outputCrossAccountExports?: boolean;
+    printParameters?: boolean;
     parameters?: string | {};
     output?: 'json' | 'yaml';
 }
