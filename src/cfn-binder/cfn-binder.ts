@@ -3,7 +3,7 @@ import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { CfnTaskProvider, ICfnTask } from './cfn-task-provider';
 import { CfnTemplate } from './cfn-template';
-import { CfnParameters, IResolvedParameter } from './cfn-parameters';
+import { CfnParameters } from './cfn-parameters';
 import { IResourceTarget } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
 import { ICfnTarget, PersistedState } from '~state/persisted-state';
@@ -182,7 +182,7 @@ export class CloudFormationBinder {
         return result;
     }
 
-    private calculateHash(template: string, parameters: Record<string, IResolvedParameter>): string {
+    private calculateHash(template: string, parameters: Record<string, string>): string {
 
         const invocation: any = {
             stackName: this.stackName,
