@@ -61,6 +61,14 @@ export class CloudFormationBinder {
             const resolvedParameters = await CfnParameters.resolveParameters(this.parameters, expressionResolver);
             const template = await cfnTemplate.createTemplateBodyAndResolve(expressionResolver);
 
+            let foundResolveExpression = (template.match(/{{resolve:/).length !== 0);
+            for(const values of Object.values(resolvedParameters)) {
+                if (foundResolveExpression) {
+                    break;
+                }
+
+                foundResolveExpression = values.startsWith('{{resolve:');
+            }
 
             const invocationHash = this.calculateHash(template, resolvedParameters);
 
@@ -109,7 +117,10 @@ export class CloudFormationBinder {
             }
             /* end move elsewhere */
 
-            if (this.forceDeploy === true) {
+            if (this.forceDeploy !== false && foundResolveExpression) {
+                binding.action = 'UpdateOrCreate';
+                ConsoleUtil.LogInfo(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - a cloudformation resolve expression was found in either template or parameters. To ignore the found cloudformation resolve expression, set ForceDeploy explicitly to false.`);
+            } else if (this.forceDeploy === true) {
                 binding.action = 'UpdateOrCreate';
                 ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - update was forced.`, this.logVerbose);
             } else if (!stored) {
