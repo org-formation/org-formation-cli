@@ -9,6 +9,7 @@ import { IPerformTasksCommandArgs } from '~commands/index';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
 import { yamlParseWithIncludes } from '~yaml-cfn/yaml-parse-includes';
+import { ConsoleUtil } from '~util/console-util';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -120,7 +121,9 @@ export class BuildConfiguration {
         delete buildFile.Parameters;
         delete buildFile.Mappings;
 
-        const expressionResolver = new CfnExpressionResolver();        const parametersSection = expressionResolver.resolveFirstPass(this.parameters);
+        const expressionResolver = new CfnExpressionResolver();
+        const parametersSection = expressionResolver.resolveFirstPass(this.parameters);
+
         for(const paramName in parametersSection) {
             const param = parametersSection[paramName];
             const paramType = param.Type;
@@ -168,6 +171,23 @@ export class BuildConfiguration {
             const config = resolvedContents[name] as IBuildTaskConfiguration;
             result.push({...config, LogicalName: name, FilePath: filePath});
         }
+
+        for(const task of result) {
+            if (task.DependsOn === undefined) {continue;}
+
+            let dependencies = task.DependsOn;
+            if (!Array.isArray(dependencies)) {
+                dependencies = [dependencies];
+            }
+
+            for(const dependency of dependencies) {
+                const found = result.find(x=>x.LogicalName === dependency);
+                if (found === undefined) {
+                    ConsoleUtil.LogWarning(`Task ${task.LogicalName} depends on task ${dependency} which was not found.`);
+                }
+            }
+        }
+
         return result;
 
     }

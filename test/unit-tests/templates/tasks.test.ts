@@ -246,3 +246,30 @@ describe('when referencing account on parameter', () => {
         expect(taskRan.find(x=>x.accountId = '222222222222')).toBeDefined();
     });
 });
+
+describe('when referencing non-existing task using DependsOns', () => {
+    let buildconfig: BuildConfiguration;
+    const sandbox = Sinon.createSandbox();
+    let stub: Sinon.SinonStub;
+    beforeEach(() => {
+        stub = sandbox.stub(ConsoleUtil, 'LogWarning');
+        buildconfig = new BuildConfiguration('./test/resources/tasks/task-depends-on-non-existing.yml');
+    });
+
+    test('file is loaded without errors', () => {
+        const tasks = buildconfig.enumBuildTasks({} as any);
+        expect(tasks).toBeDefined();
+        expect(tasks.length).toBe(2);
+        const updateStacks = tasks.filter((x) => x.type === 'update-stacks');
+        expect(updateStacks.length).toBe(1);
+    });
+
+    test('warning is logged', () => {
+        const tasks = buildconfig.enumBuildTasks({} as any);
+        expect(stub.callCount).toBe(1);
+    })
+
+    afterEach(() => {
+        sandbox.restore();
+    })
+});

@@ -1,0 +1,10 @@
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+SomeTask:
+  Type: update-stacks
+  DependsOn: NonExistingTask
+  Template: ./templates/org-template.yml
+  StackName: stack-name
