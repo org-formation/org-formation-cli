@@ -62,12 +62,12 @@ export class CloudFormationBinder {
             const template = await cfnTemplate.createTemplateBodyAndResolve(expressionResolver);
 
             let foundResolveExpression = (template.match(/{{resolve:/) !== null);
-            for(const values of Object.values(resolvedParameters)) {
+            for(const value of Object.values(resolvedParameters)) {
                 if (foundResolveExpression) {
                     break;
                 }
-
-                foundResolveExpression = values.startsWith('{{resolve:');
+                if (!value) {continue;}
+                foundResolveExpression = value.startsWith('{{resolve:');
             }
 
             const invocationHash = this.calculateHash(template, resolvedParameters);

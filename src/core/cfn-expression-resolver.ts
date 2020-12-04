@@ -90,8 +90,17 @@ export class CfnExpressionResolver {
         for(const expression of expressions) {
 
             const paramVal = this.parameters[expression.resource];
-            if (paramVal !== undefined && !expression.path) {
-                expression.resolveToValue(paramVal);
+            if (!expression.path && paramVal !== undefined) {
+                if (typeof paramVal !== 'object') {
+                    expression.resolveToValue(paramVal);
+                } else {
+                    const valueAsExpression = ResourceUtil.GetExpression(paramVal);
+                    if (valueAsExpression) {
+                        const resource = valueAsExpression.resource;
+                        const path = valueAsExpression.path;
+                        expression.rewriteExpression(resource, path);
+                    }
+                }
                 continue;
             }
         }

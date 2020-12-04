@@ -230,6 +230,16 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe(context.stateBucketName);
     })
 
+
+    test('refToAccountBinding resolves correctly', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'refToAccountBinding');
+        expect(parameter.ParameterValue).toBe('account binding: 340381375986');
+    })
+
+
+
     test('cleanup removes deployed stacks', () => {
         expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'my-scenario-export-bucket')).toBeUndefined();
         expect(stacksAfterCleanup.StackSummaries.find(x=>x.StackName === 'my-scenario-export-bucket-role')).toBeUndefined();
