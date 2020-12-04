@@ -33,7 +33,21 @@ export class ResourceUtil {
         return 0 < expressions.length;
     }
 
-    public static EnumExpressionsForResource(resource: any, resourceIds: string[] | 'any', resourceParent?: any, resourceKey?: string): IResourceExpression[] {
+    public static GetExpression(resource: any): IResourceExpression | undefined {
+        const foundExpressions = this.EnumExpressionsForResource(resource, 'any', {}, 'parent', false);
+        if (foundExpressions.length === 0) {
+            return undefined;
+        }
+
+        return {
+            resolveToValue: undefined,
+            rewriteExpression: undefined,
+            resource: foundExpressions[0].resource,
+            path: foundExpressions[0].path,
+        };
+    }
+
+    public static EnumExpressionsForResource(resource: any, resourceIds: string[] | 'any', resourceParent?: any, resourceKey?: string, recurse = true): IResourceExpression[] {
         const result: IResourceExpression[] = [];
         if (resource !== null && typeof resource === 'object') {
             const entries = Object.entries(resource);
@@ -85,9 +99,11 @@ export class ResourceUtil {
                 }
             }
 
-            for (const [key, val] of entries) {
-                if (val !== null && typeof val === 'object') {
-                    result.push(...ResourceUtil.EnumExpressionsForResource(val, resourceIds, resource, key));
+            if (recurse) {
+                for (const [key, val] of entries) {
+                    if (val !== null && typeof val === 'object') {
+                        result.push(...ResourceUtil.EnumExpressionsForResource(val, resourceIds, resource, key));
+                    }
                 }
             }
         }

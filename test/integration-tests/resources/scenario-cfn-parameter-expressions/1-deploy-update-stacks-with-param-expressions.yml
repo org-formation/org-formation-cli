@@ -6,6 +6,9 @@ Parameters:
   parameterToMap:
     Type: String
     Default: MyGroup2
+  accountBinding:
+    Type: String
+    Default: !Ref AccountA
 
 Mappings:
   MyMap:
@@ -57,6 +60,7 @@ PolicyTemplate:
     tagVal2: !GetAtt CurrentAccount.Tags.Tag
     tagVal3: !GetAtt AWSAccount.Tags.Tag
     tagVal4: !Ref AWSAccount
+    refToAccountBinding: !Sub "account binding: ${accountBinding}"
     masterAccountId: !Ref MasterAccount
     numericValue: 123
     someSubExpression: !Sub
