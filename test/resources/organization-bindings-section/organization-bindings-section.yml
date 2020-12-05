@@ -14,7 +14,10 @@ OrganizationBindings:
     IncludeMasterAccount: true
     Region: 'eu-central-1'
 
-  EmptyBinding: #empty
+  EmptyBinding: #0 account binding
+    IncludeMasterAccount: false
+
+  NullBinding: #0 account binding
 
 Resources:
 
@@ -37,5 +40,19 @@ Resources:
     Type: AWS::ANYTHING::GOES
     OrganizationBinding: !Ref OnlyMasterBinding
     ForeachAccount: !Ref AllAccountsBinding
+    Properties:
+      Name: Test resource
+
+  Resource4:
+    Type: AWS::ANYTHING::GOES
+    OrganizationBinding: !Ref OnlyMasterBinding
+    ForeachAccount: !Ref EmptyBinding
+    Properties:
+      Name: Test resource
+
+  Resource5:
+    Type: AWS::ANYTHING::GOES
+    OrganizationBinding: !Ref OnlyMasterBinding
+    ForeachAccount: !Ref NullBinding
     Properties:
       Name: Test resource
