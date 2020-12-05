@@ -1,4 +1,4 @@
-import { PerformTasksCommand, RemoveCommand } from "~commands/index";
+import { PerformTasksCommand, RemoveCommand, ValidateTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { GetObjectOutput } from "aws-sdk/clients/s3";
 import { PersistedState } from "~state/persisted-state";
@@ -13,6 +13,7 @@ describe('when cleaning up stacks', () => {
     let stateAfterPerformTask1Includes: GetObjectOutput;
     let stateAfterRemove: GetObjectOutput;
     let performRemoveSpy: jest.SpyInstance;
+    let errorValidateIncludeMissingParameter: Error;
 
     beforeAll(async () => {
         try{
@@ -32,6 +33,12 @@ describe('when cleaning up stacks', () => {
             await RemoveCommand.Perform({...command, type: 'copy-to-s3', namespace: 'Include2', name: 'CopyS3File' });
             await sleepForTest(500);
             stateAfterRemove = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+
+            try{
+                await ValidateTasksCommand.Perform({...command,  tasksFile: basePathForScenario + '1-organization-tasks-missing-param.yml', performCleanup: false});
+            }catch(err) {
+                errorValidateIncludeMissingParameter = err;
+            }
         }
         catch(err) {
             expect(err.message).toBe('');
@@ -92,6 +99,10 @@ describe('when cleaning up stacks', () => {
         const copyToS3 = obj.targets['copy-to-s3']['default'];
         expect(Object.keys(copyToS3).length).toBe(1);
         expect(copyToS3.Include2).toBeUndefined();
+    });
+
+    test('include with missing parameter throws error', () => {
+        expect(errorValidateIncludeMissingParameter).toBeUndefined();
     });
 
     afterAll(async () => {
