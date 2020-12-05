@@ -1,0 +1,13 @@
+Parameters:
+
+  bucketName:
+    Type: String
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+Include1:
+  Type: include
+  Path: ./included-task-file.yml
