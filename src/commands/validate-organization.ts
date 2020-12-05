@@ -10,6 +10,9 @@ const commandName = 'validate <templateFile>';
 const commandDescription = 'validate organization resources';
 
 export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizationCommandArgs> {
+
+    static SkipValidationForTasks = false;
+
     constructor(command?: Command) {
         super(command, commandName, commandDescription, 'templateFile');
     }
@@ -35,6 +38,14 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
         }
 
         const binder = await this.getOrganizationBinder(template, state);
-        binder.enumBuildTasks();
+
+        const tasks = binder.enumBuildTasks();
+        const createTasks = tasks.filter(x=>x.action === 'Create');
+        if (createTasks.length > 0) {
+            ConsoleUtil.LogWarning('Accounts where added to the organization model.');
+            ConsoleUtil.LogWarning('Tasks might depend on updating the organization.');
+            ConsoleUtil.LogWarning('validation of tasks will be skipped.');
+            ValidateOrganizationCommand.SkipValidationForTasks = true;
+        }
     }
 }
