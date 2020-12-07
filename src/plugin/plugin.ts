@@ -25,6 +25,9 @@ export interface IBuildTaskPlugin<TBuildTaskConfig extends IBuildTaskConfigurati
     performCreateOrUpdate(binding: IPluginBinding<TTask>, resolver: CfnExpressionResolver): Promise<void>;
 
     appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<TTask>):  Promise<void>;
+
+    getPhysicalIdForCleanup(command: TBuildTaskConfig): string | undefined;
+
 }
 
 export interface IBuildTaskPluginCommandArgs extends ICommandArgs {

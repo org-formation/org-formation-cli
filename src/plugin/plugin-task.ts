@@ -20,7 +20,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
         const task: IBuildTask = {
             type: config.Type,
             name: config.LogicalName,
-            physicalIdForCleanup: command.logicalNamePrefix + '/' + config.LogicalName,
+            physicalIdForCleanup: this.plugin.getPhysicalIdForCleanup(config),
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),

@@ -16,6 +16,7 @@ import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig, ICdkCommandArgs, ICdkTask> {
+
     type = 'cdk';
     typeForTask = 'update-cdk';
 
@@ -187,6 +188,10 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             CDK_DEPLOY_REGION: target.region,
             CDK_DEPLOY_ACCOUNT: target.accountId,
         };
+    }
+
+    getPhysicalIdForCleanup(): string {
+        return undefined;
     }
 
     static GetParametersAsArgument(parameters: Record<string, any>): string {

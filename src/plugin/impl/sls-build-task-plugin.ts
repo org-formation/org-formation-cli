@@ -18,6 +18,12 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
     type = 'serverless.com';
     typeForTask = 'update-serverless.com';
 
+
+    getPhysicalIdForCleanup(): string {
+        return undefined;
+    }
+
+
     convertToCommandArgs(config: IServerlessComTaskConfig, command: IPerformTasksCommandArgs): ISlsCommandArgs {
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName,...CommonTaskAttributeNames, 'Path',

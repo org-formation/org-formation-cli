@@ -84,6 +84,9 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
         };
     }
+    getPhysicalIdForCleanup(): string {
+        return undefined;
+    }
 
     async performRemove(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
         const {target, task} = binding;
