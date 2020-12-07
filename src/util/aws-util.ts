@@ -34,7 +34,7 @@ export class AwsUtil {
             return this.organization.Organization.Id;
         }
 
-        const organizationService = new Organizations({region: 'us-east-1'});
+        const organizationService = new Organizations({ region: 'us-east-1' });
         this.organization = await organizationService.describeOrganization().promise();
         return this.organization.Organization.Id;
 
@@ -45,7 +45,7 @@ export class AwsUtil {
         if (profile) {
             await this.Initialize([
                 (): AWS.Credentials => new CustomMFACredentials(profile),
-                (): AWS.Credentials => new AWS.SharedIniFileCredentials({profile}),
+                (): AWS.Credentials => new AWS.SharedIniFileCredentials({ profile }),
             ]);
         } else {
             await this.Initialize(CredentialProviderChain.defaultProviders);
@@ -85,15 +85,15 @@ export class AwsUtil {
     }
 
     public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string): Promise<CloudFormation> {
-        return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId,  `${accountId}/${region}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
+        return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId, `${accountId}/${region}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string): Promise<void> {
         const s3client = new S3();
-        await s3client.deleteObject({Bucket: bucketName, Key: objectKey}).promise();
+        await s3client.deleteObject({ Bucket: bucketName, Key: objectKey }).promise();
     }
 
-    private static async GetOrCreateService<TService>(ctr: new(args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string): Promise<TService> {
+    private static async GetOrCreateService<TService>(ctr: new (args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string): Promise<TService> {
         const cachedService = cache[cacheKey];
         if (cachedService) {
             return cachedService;
@@ -234,30 +234,48 @@ export class CfnUtil {
 
     public static async UpdateOrCreateStack(cfn: CloudFormation, updateStackInput: UpdateStackInput): Promise<DescribeStacksOutput> {
         let describeStack: DescribeStacksOutput;
-        try {
-            await cfn.updateStack(updateStackInput).promise();
-            describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-        } catch (err) {
-            if (err && err.code === 'ValidationError' && err.message) {
-                const message = err.message as string;
-                if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
-                    await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
-                    await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                    await cfn.createStack(updateStackInput).promise();
-                    describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                } else if (-1 !== message.indexOf('does not exist')) {
-                    await cfn.createStack(updateStackInput).promise();
-                    describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                } else if (-1 !== message.indexOf('No updates are to be performed.')) {
-                    describeStack = await cfn.describeStacks({StackName: updateStackInput.StackName}).promise();
-                    // ignore;
+        let retryStackIsBeingUpdated = false;
+        let retryStackIsBeingUpdatedCount = 0;
+
+        ConsoleUtil.LogInfo('start update');
+        do {
+            retryStackIsBeingUpdated = false;
+            try {
+                await cfn.updateStack(updateStackInput).promise();
+                describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+            } catch (err) {
+                ConsoleUtil.LogInfo(`err ${err}`);
+                if (err && err.code === 'ValidationError' && err.message) {
+                    const message = err.message as string;
+                    if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
+                        await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
+                        await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        await cfn.createStack(updateStackInput).promise();
+                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    } else if (-1 !== message.indexOf('does not exist')) {
+                        await cfn.createStack(updateStackInput).promise();
+                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    } else if (-1 !== message.indexOf('No updates are to be performed.')) {
+                        describeStack = await cfn.describeStacks({ StackName: updateStackInput.StackName }).promise();
+                        // ignore;
+                    } else if ((-1 !== message.indexOf('is in UPDATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) || (-1 !== message.indexOf('is in UPDATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) || (-1 !== message.indexOf('is in UPDATE_IN_PROGRESS state and can not be updated.'))) {
+                        if (retryStackIsBeingUpdatedCount >= 20) { // 20 * 30 sec = 10 minutes
+                            throw new OrgFormationError(`Stack ${updateStackInput.StackName} seems stuck in UPDATE_IN_PROGRESS or UPDATE_COMPLETE_CLEANUP_IN_PROGRESS.`);
+                        }
+
+                        ConsoleUtil.LogInfo(`Stack ${updateStackInput.StackName} is already being updated. waiting.... `);
+                        retryStackIsBeingUpdatedCount += 1;
+                        await sleep(30);
+                        retryStackIsBeingUpdated = true;
+
+                    } else{
+                        throw err;
+                    }
                 } else {
                     throw err;
                 }
-            } else {
-                throw err;
             }
-        }
+        } while (retryStackIsBeingUpdated);
         return describeStack;
     }
 }
@@ -323,3 +341,7 @@ class CustomMFACredentials extends AWS.Credentials {
     }
 
 }
+
+const sleep = (seconds: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, 1000 * seconds));
+};
