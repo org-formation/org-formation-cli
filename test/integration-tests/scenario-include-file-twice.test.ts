@@ -102,7 +102,8 @@ describe('when cleaning up stacks', () => {
     });
 
     test('include with missing parameter throws error', () => {
-        expect(errorValidateIncludeMissingParameter).toBeUndefined();
+        expect(errorValidateIncludeMissingParameter).toBeDefined();
+        expect(errorValidateIncludeMissingParameter.message).toContain('bucketName');
     });
 
     afterAll(async () => {
