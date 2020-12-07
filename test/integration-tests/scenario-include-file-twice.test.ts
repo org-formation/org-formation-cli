@@ -79,16 +79,6 @@ describe('when cleaning up stacks', () => {
         expect(state.getTrackedTasks('default').find(x=>x.physicalIdForCleanup === 'include2-my-stack-name')).toBeUndefined();
     });
 
-    test('after removing include contained plugins have last committed hash set to deleted', () => {
-        const str = stateAfterPerformTask1Includes.Body.toString();
-        const obj = JSON.parse(str);
-        const copyToS3 = obj.targets['copy-to-s3']['default'];
-        expect(Object.keys(copyToS3).length).toBe(2);
-        expect(copyToS3.Include1).toBeDefined();
-        expect(copyToS3.Include2).toBeDefined();
-        expect(copyToS3.Include2.CopyS3File['102625093955']['eu-central-1'].lastCommittedHash).toBe('deleted');
-    });
-
     test('after removing previously deleted plugin task performDelete was called', () => {
         expect(performRemoveSpy).toBeCalledTimes(1);
     });
