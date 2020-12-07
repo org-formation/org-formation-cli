@@ -10,9 +10,11 @@ describe('when calling org-formation perform tasks', () => {
     let typesAfterRegister : ListTypeVersionsOutput;
     let typesAfterSecondRegister : ListTypeVersionsOutput;
     let typesAfterThirdRegister : ListTypeVersionsOutput;
+    let typesAfterMoveTypesToInclude : ListTypeVersionsOutput;
     let typesAfterCleanup : ListTypeVersionsOutput;
     let stateAfterRegister: GetObjectOutput;
     let stateAfterThirdRegister: GetObjectOutput;
+    let stateAfterMoveTypesToInclude: GetObjectOutput;
     let stateAfterCleanup: GetObjectOutput;
     let describeStacksOutput: DescribeStacksOutput;
 
@@ -47,6 +49,12 @@ describe('when calling org-formation perform tasks', () => {
 
         await sleepForTest(1000);
         stateAfterThirdRegister = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '4-move-register-type-to-include.yml', performCleanup: true});
+        typesAfterMoveTypesToInclude = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
+
+        await sleepForTest(1000);
+        stateAfterMoveTypesToInclude = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup.yml', performCleanup: true});
         typesAfterCleanup = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
@@ -91,7 +99,7 @@ describe('when calling org-formation perform tasks', () => {
         expect(state.trackedTasks.default[0]).toBeDefined();
         expect(state.trackedTasks.default[0].logicalName).toBe('RegisterType');
         expect(state.trackedTasks.default[0].type).toBe('register-type');
-        expect(state.trackedTasks.default[0].physicalIdForCleanup).toBe('undefined/RegisterType');
+        expect(state.trackedTasks.default[0].physicalIdForCleanup).toBe('Community::ServiceQuotas::S3');
     })
 
 
@@ -121,6 +129,23 @@ describe('when calling org-formation perform tasks', () => {
         expect(foundType1.VersionId).toBe(foundType3.VersionId);
     });
 
+
+    test('type continues to be registered after moved to include', () => {
+        const foundType1 = typesAfterMoveTypesToInclude.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
+        expect(foundType1).toBeDefined();
+    });
+
+    test('physical id of type doesnt change after move to include', () => {
+        const stateAsStringAfterRegister = stateAfterThirdRegister.Body.toString();
+        const stateAfterRegister = JSON.parse(stateAsStringAfterRegister);
+        const stringifiedTrackedTasksAfterRegister = JSON.stringify(stateAfterRegister.trackedTasks);
+
+        const stateAsStringAfterMove = stateAfterMoveTypesToInclude.Body.toString();
+        const stateAfterMove = JSON.parse(stateAsStringAfterMove);
+        const stringifiedTrackedTasksAfterMove = JSON.stringify(stateAfterMove.trackedTasks);
+
+        expect(stringifiedTrackedTasksAfterRegister).toBe(stringifiedTrackedTasksAfterMove);
+    });
     test('types after cleanup does not contain registered type', () => {
         const foundType = typesAfterCleanup.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
         expect(foundType).toBeUndefined();

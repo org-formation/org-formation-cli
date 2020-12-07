@@ -75,6 +75,10 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         };
     }
 
+    getPhysicalIdForCleanup(command: IRpBuildTaskConfig): string | undefined {
+        return command.ResourceType;
+    }
+
     async performRemove(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver*/): Promise<void> {
         const cfn = await AwsUtil.GetCloudFormation(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
         let listVersionsResponse: ListTypeVersionsOutput = {};
