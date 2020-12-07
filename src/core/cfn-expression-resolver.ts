@@ -91,7 +91,7 @@ export class CfnExpressionResolver {
 
             const paramVal = this.parameters[expression.resource];
             if (!expression.path && paramVal !== undefined) {
-                if (typeof paramVal !== 'object') {
+                if (typeof paramVal !== 'object' || Array.isArray(paramVal)) {
                     expression.resolveToValue(paramVal);
                 } else {
                     const valueAsExpression = ResourceUtil.GetExpression(paramVal);
