@@ -117,9 +117,9 @@ export class CloudFormationBinder {
             }
             /* end move elsewhere */
 
-            if (this.forceDeploy !== false && foundResolveExpression) {
+            if (foundResolveExpression) {
                 binding.action = 'UpdateOrCreate';
-                ConsoleUtil.LogInfo(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - a cloudformation resolve expression was found in either template or parameters. To ignore the found cloudformation resolve expression, set ForceDeploy explicitly to false.`);
+                ConsoleUtil.LogInfo(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - a cloudformation resolve expression was found in either template or parameters.`);
             } else if (this.forceDeploy === true) {
                 binding.action = 'UpdateOrCreate';
                 ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - update was forced.`, this.logVerbose);
@@ -202,7 +202,6 @@ export class CloudFormationBinder {
             cloudFormationRoleName: this.customRoleName,
             taskRoleName: this.taskRoleName,
             parameters,
-            templateHash: md5(template),
         } ;
 
 
