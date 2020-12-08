@@ -82,8 +82,8 @@ describe('when binding templates that did not change', () => {
         state.setBinding({ logicalId: 'Account', physicalId: '123123123123', type: OrgResourceTypes.Account, lastCommittedHash: 'asd' });
         state.setBinding({ logicalId: 'Account2', physicalId: '123123123124', type: OrgResourceTypes.Account, lastCommittedHash: 'asd' });
 
-        state.setTarget({ stackName: 'test-stack', accountId: '123123123123', region: 'eu-central-1', logicalAccountId: 'Account', lastCommittedHash: '1babbbaa897bd1ffa6ad2f9e82e26fe2' })
-        state.setTarget({ stackName: 'test-stack', accountId: '123123123124', region: 'eu-central-1', logicalAccountId: 'Account2', lastCommittedHash: '1babbbaa897bd1ffa6ad2f9e82e26fe2' })
+        state.setTarget({ stackName: 'test-stack', accountId: '123123123123', region: 'eu-central-1', logicalAccountId: 'Account', lastCommittedHash: '8d98b33af016ab56abcbd87dd0731417' })
+        state.setTarget({ stackName: 'test-stack', accountId: '123123123124', region: 'eu-central-1', logicalAccountId: 'Account2', lastCommittedHash: '8d98b33af016ab56abcbd87dd0731417' })
 
     });
 
@@ -127,15 +127,6 @@ describe('when binding templates that did not change', () => {
 
     test('then template with resolve expression will change actions to UpdateOrCreate', async () => {
         binder = new CloudFormationBinder('test-stack', templateRootWithResolve, state);
-        bindings = await binder.enumBindings();
-
-        expect(bindings.length).toBe(2);
-        expect(bindings[0].action).toBe('UpdateOrCreate');
-        expect(bindings[1].action).toBe('UpdateOrCreate');
-    });
-
-    test('then template with resolve expression and explicit forceDeploy to false will leave actions to None', async () => {
-        binder = new CloudFormationBinder('test-stack', templateRootWithResolve, state, { }, false);
         bindings = await binder.enumBindings();
 
         expect(bindings.length).toBe(2);
