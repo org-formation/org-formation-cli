@@ -82,8 +82,8 @@ describe('when binding templates that did not change', () => {
         state.setBinding({ logicalId: 'Account', physicalId: '123123123123', type: OrgResourceTypes.Account, lastCommittedHash: 'asd' });
         state.setBinding({ logicalId: 'Account2', physicalId: '123123123124', type: OrgResourceTypes.Account, lastCommittedHash: 'asd' });
 
-        state.setTarget({ stackName: 'test-stack', accountId: '123123123123', region: 'eu-central-1', logicalAccountId: 'Account', lastCommittedHash: '8d98b33af016ab56abcbd87dd0731417' })
-        state.setTarget({ stackName: 'test-stack', accountId: '123123123124', region: 'eu-central-1', logicalAccountId: 'Account2', lastCommittedHash: '8d98b33af016ab56abcbd87dd0731417' })
+        state.setTarget({ stackName: 'test-stack', accountId: '123123123123', region: 'eu-central-1', logicalAccountId: 'Account', lastCommittedHash: '1babbbaa897bd1ffa6ad2f9e82e26fe2' })
+        state.setTarget({ stackName: 'test-stack', accountId: '123123123124', region: 'eu-central-1', logicalAccountId: 'Account2', lastCommittedHash: '1babbbaa897bd1ffa6ad2f9e82e26fe2' })
 
     });
 
