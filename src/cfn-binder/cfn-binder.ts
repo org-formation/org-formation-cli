@@ -202,7 +202,8 @@ export class CloudFormationBinder {
             cloudFormationRoleName: this.customRoleName,
             taskRoleName: this.taskRoleName,
             parameters,
-        } ;
+            templateHash: md5(template),
+        };
 
 
         return md5(JSON.stringify(invocation));
