@@ -1,11 +1,14 @@
 import { Command } from 'commander';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { UpdateOrganizationCommand } from './update-organization';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
-import { ITrackedTask } from '~state/persisted-state';
+import { ITrackedTask, PersistedState } from '~state/persisted-state';
 import { Validator } from '~parser/validator';
 import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { ConsoleUtil } from '~util/console-util';
+import { S3StorageProvider } from '~state/storage-provider';
+import { AwsEvents } from '~aws-provider/aws-events';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -43,11 +46,13 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
+
         const state = await this.getState(command);
         const tasks = config.enumBuildTasks(command);
         ConsoleUtil.state = state;
 
         state.performUpdateToVersion2IfNeeded();
+        UpdateOrganizationCommand.ResetHasRan();
 
         await BuildRunner.RunTasks(tasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
         const tracked = state.getTrackedTasks(command.logicalName);
@@ -58,7 +63,27 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         const tasksToTrack = BuildTaskProvider.recursivelyFilter(tasks, x=> x.physicalIdForCleanup !== undefined);
         const trackedTasks: ITrackedTask[] = tasksToTrack.map(x=> { return {physicalIdForCleanup: x.physicalIdForCleanup, logicalName: x.name, type: x.type  }; });
         state.setTrackedTasks(command.logicalName, trackedTasks);
-        state.save();
+
+        if (UpdateOrganizationCommand.HasRan === true) {
+            await PerformTasksCommand.PublishChangedOrganizationFileIfChanged(command, state);
+        }
+
+        await state.save();
+
+    }
+
+    public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {
+        if (command.organizationFileHash !== state.getTemplateHashLastPublished()) {
+            const contents = command.organizationFile;
+            const objectKey = command.organizationObject;
+            const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
+            const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+
+            await storageProvider.putObject(contents);
+            state.putTemplateHashLastPublished(command.organizationFileHash);
+            await AwsEvents.putOrganizationChangedEvent(stateBucketName, objectKey);
+        }
+
     }
 }
 

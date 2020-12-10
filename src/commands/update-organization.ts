@@ -18,6 +18,13 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         await x.performCommand(command);
     }
 
+    static HasRan: boolean;
+
+    static ResetHasRan(): void {
+        this.HasRan = false;
+    }
+
+
     constructor(command?: Command) {
         super(command, commandName, commandDescription, 'templateFile');
     }
@@ -58,6 +65,7 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
             }
             state.putTemplateHash(templateHash);
             state.setPreviousTemplate(template.source);
+            this.HasRan = true;
         }
         finally {
             await state.save();
