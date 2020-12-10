@@ -64,6 +64,14 @@ export class PersistedState {
         return this.getValue('organization.template.hash');
     }
 
+    public putTemplateHashLastPublished(val: string): void {
+        this.putValue('organization.template-last-published.hash', val);
+    }
+
+    public getTemplateHashLastPublished(): string {
+        return this.getValue('organization.template-last-published.hash');
+    }
+
     public putValue(key: string, val: string): void {
         if (this.state.values === undefined) {
             this.state.values = {};

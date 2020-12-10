@@ -171,6 +171,13 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return storageProvider;
     }
 
+    protected async getOrganizationFileStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
+        const objectKey = command.organizationObject;
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
+        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+        return storageProvider;
+    }
+
     protected static async GetStateBucketName(command: ICommandArgs): Promise<string> {
         const bucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
@@ -272,6 +279,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 }
 
 export interface ICommandArgs {
+    organizationObject: any;
     stateBucketName: string;
     stateObject: string;
     profile?: string;
