@@ -4,6 +4,7 @@ import { IPerformTasksCommandArgs } from './perform-tasks';
 import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { Validator } from '~parser/validator';
+import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'validate-tasks <tasksFile>';
 const commandDescription = 'Will validate the tasks file, including configured tasks';
@@ -33,6 +34,9 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
 
+        if (command.masterAccountId !== undefined) {
+            AwsUtil.SetMasterAccountId(command.masterAccountId);
+        }
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');

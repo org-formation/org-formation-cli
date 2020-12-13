@@ -172,6 +172,10 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             args.taskRoleName = config.TaskRoleName;
         }
 
+        if (config.TaskViaRoleArn) {
+            args.taskViaRoleArn = config.TaskViaRoleArn;
+        }
+
         return args;
     }
 
@@ -200,6 +204,7 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     FailedStackTolerance: number;
     CloudFormationRoleName?: string;
     TaskRoleName?: string;
+    TaskViaRoleArn?: string;
     LogVerbose?: boolean;
     ForceDeploy?: boolean;
 }

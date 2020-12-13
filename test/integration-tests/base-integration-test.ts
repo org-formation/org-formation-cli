@@ -7,8 +7,10 @@ import { readFileSync } from "fs";
 
 export const profileForIntegrationTests = 'org-formation-test-v2'
 
-export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
+export const baseBeforeAll = async (profileName: string = profileForIntegrationTests): Promise<IIntegrationTestContext> => {
     jest.setTimeout(99999999);
+
+    AwsUtil.SetMasterAccountId(undefined);
 
     ConsoleUtil.verbose = true;
     ConsoleUtil.printStacktraces = true;
@@ -23,7 +25,7 @@ export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
 
     await AwsUtil.Initialize([
         () => new EnvironmentCredentials('TST_AWS'),
-        () => new SharedIniFileCredentials({ profile: profileForIntegrationTests }),
+        () => new SharedIniFileCredentials({ profile: profileName }),
     ]);
 
     const stateBucketName = `${v4()}`;

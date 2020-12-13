@@ -9,9 +9,13 @@ import { BuildRunner } from '~build-tasks/build-runner';
 import { ConsoleUtil } from '~util/console-util';
 import { S3StorageProvider } from '~state/storage-provider';
 import { AwsEvents } from '~aws-provider/aws-events';
+import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
+
+const DEFAULT_ORGANIZATION_OBJECT = 'organization.yml';
+
 
 export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs> {
     static async Perform(command: IPerformTasksCommandArgs): Promise<void> {
@@ -44,6 +48,11 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
         this.storeCommand(command);
 
+
+        if (command.masterAccountId !== undefined) {
+            AwsUtil.SetMasterAccountId(command.masterAccountId);
+        }
+
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
 
@@ -75,7 +84,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
     public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {
         if (command.organizationFileHash !== state.getTemplateHashLastPublished()) {
             const contents = command.organizationFile;
-            const objectKey = command.organizationObject;
+            const objectKey = command.organizationObject || DEFAULT_ORGANIZATION_OBJECT;
             const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
             const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
 
@@ -101,4 +110,6 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     parsedParameters?: Record<string, string>;
     logicalNamePrefix?: string;
     forceDeploy?: boolean;
+    masterAccountId?: string;
+    organizationObject?: any;
 }

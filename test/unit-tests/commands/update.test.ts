@@ -73,6 +73,8 @@ describe('when executing update command', () => {
         subCommanderCommand = commanderCommand.commands[0];
 
         sandbox.stub(AwsUtil, 'GetMasterAccountId').returns(Promise.resolve('123456789012'));
+        sandbox.stub(AwsUtil, 'GetBuildProcessAccountId').returns(Promise.resolve('123456789012'));
+
 
         const template = TemplateRoot.create('./test/resources/valid-basic.yml');
         templateHash = template.hash;

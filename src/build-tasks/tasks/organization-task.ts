@@ -10,6 +10,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
     public type: string;
     public skip: boolean;
     public forceDeploy: boolean;
+    public taskRoleName: string;
     public templatePath: string;
     public childTasks: IBuildTask[] = [];
     protected config: IUpdateOrganizationTaskConfiguration;
@@ -18,6 +19,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
     constructor(config: IUpdateOrganizationTaskConfiguration, command: ICommandArgs) {
         this.name = config.LogicalName;
         this.type = config.Type;
+        this.taskRoleName = config.TaskRoleName;
         this.forceDeploy = config.ForceDeploy === true;
         this.config = config;
         const dir = path.dirname(config.FilePath);
@@ -32,6 +34,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         const updateCommand = this.command as IUpdateOrganizationCommandArgs;
         updateCommand.templateFile = this.templatePath;
         updateCommand.forceDeploy = this.forceDeploy;
+        updateCommand.taskRoleName = this.taskRoleName;
         await this.innerPerform(updateCommand);
     }
 

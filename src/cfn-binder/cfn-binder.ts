@@ -23,7 +23,8 @@ export class CloudFormationBinder {
                 private readonly terminationProtection = false,
                 private readonly stackPolicy: {} = undefined,
                 private readonly customRoleName?: string,
-                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state, logVerbose)) {
+                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state, logVerbose),
+                private readonly taskViaRoleName: string = undefined) {
 
         this.masterAccount = template.organizationSection.masterAccount.accountId;
 
@@ -83,6 +84,7 @@ export class CloudFormationBinder {
                 terminationProtection: this.terminationProtection,
                 stackPolicy: this.stackPolicy,
                 customRoleName: this.taskRoleName,
+                customViaRoleArn: this.taskViaRoleName,
                 cloudFormationRoleName: this.customRoleName,
                 state: stored,
                 template: cfnTemplate,
@@ -156,6 +158,7 @@ export class CloudFormationBinder {
                     accountId,
                     region,
                     stackName,
+                    customViaRoleArn: storedTarget.customViaRoleArn,
                     customRoleName: storedTarget.customRoleName,
                     cloudFormationRoleName: storedTarget.cloudFormationRoleName,
                     templateHash: 'deleted',
@@ -201,6 +204,7 @@ export class CloudFormationBinder {
             stackPolicy: this.stackPolicy,
             cloudFormationRoleName: this.customRoleName,
             taskRoleName: this.taskRoleName,
+            taskViaRoleName: this.taskViaRoleName,
             parameters,
             templateHash: md5(template),
         };
@@ -228,6 +232,7 @@ export interface ICfnBinding {
     resolvedParameters?: Record<string, string>;
     terminationProtection?: boolean;
     customRoleName?: string;
+    customViaRoleArn?: string;
     cloudFormationRoleName?: string;
     stackPolicy?: {};
 }
