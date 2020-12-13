@@ -143,7 +143,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState, roleInMasterAccount?: string): Promise<OrganizationBinder> {
 
         const masterAccountId = await AwsUtil.GetMasterAccountId();
-        const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount)
+        const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
 
         const awsReader = new AwsOrganizationReader(organizations);
         const awsOrganization = new AwsOrganization(awsReader);

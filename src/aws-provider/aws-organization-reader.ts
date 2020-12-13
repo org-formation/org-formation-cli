@@ -202,9 +202,9 @@ export class AwsOrganizationReader {
                     }
 
                     let tags: IAWSTags = {};
-                    let alias: string = undefined;
-                    let passwordPolicy: IAM.PasswordPolicy = undefined;
-                    let supportLevel: string = 'basic';
+                    let alias: string;
+                    let passwordPolicy: IAM.PasswordPolicy;
+                    let supportLevel = 'basic';
 
                     try {
                         [tags, alias, passwordPolicy, supportLevel] = await Promise.all([

@@ -143,7 +143,7 @@ export class AwsUtil {
         return await AwsUtil.GetCredentialsForRole(roleArn, config);
     }
 
-    private static async GetCredentialsForRole(roleArn: string, config: STS.ClientConfiguration) {
+    private static async GetCredentialsForRole(roleArn: string, config: STS.ClientConfiguration): Promise<CredentialsOptions>  {
         const sts = new STS(config);
         const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
         const credentialOptions: CredentialsOptions = {
