@@ -201,32 +201,19 @@ export class AwsOrganizationReader {
                         continue;
                     }
 
+                    let tags: IAWSTags = {};
+                    let alias: string = undefined;
+                    let passwordPolicy: IAM.PasswordPolicy = undefined;
+                    let supportLevel: string = 'basic';
+
                     try {
-                        const [tags, alias, passwordPolicy, supportLevel] = await Promise.all([
+                        [tags, alias, passwordPolicy, supportLevel] = await Promise.all([
                             AwsOrganizationReader.getTagsForAccount(that, acc.Id),
                             AwsOrganizationReader.getIamAliasForAccount(that, acc.Id),
                             AwsOrganizationReader.getIamPasswordPolicyForAccount(that, acc.Id),
                             AwsOrganizationReader.getSupportLevelForAccount(that, acc.Id),
                         ]);
 
-                        const account = {
-                            ...acc,
-                            Type: 'Account',
-                            Name: acc.Name,
-                            Id: acc.Id,
-                            ParentId: req.ParentId,
-                            Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT'),
-                            Tags: tags,
-                            Alias: alias,
-                            PasswordPolicy: passwordPolicy,
-                            SupportLevel: supportLevel,
-                        };
-
-                        const parentOU = organizationalUnits.find(x => x.Id === req.ParentId);
-                        if (parentOU) {
-                            parentOU.Accounts.push(account);
-                        }
-                        result.push(account);
                     } catch (err) {
                         if (err.code === 'AccessDenied') {
                             ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot:`
@@ -235,6 +222,25 @@ export class AwsOrganizationReader {
                             throw err;
                         }
                     }
+
+                    const account = {
+                        ...acc,
+                        Type: 'Account',
+                        Name: acc.Name,
+                        Id: acc.Id,
+                        ParentId: req.ParentId,
+                        Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT'),
+                        Tags: tags,
+                        Alias: alias,
+                        PasswordPolicy: passwordPolicy,
+                        SupportLevel: supportLevel,
+                    };
+
+                    const parentOU = organizationalUnits.find(x => x.Id === req.ParentId);
+                    if (parentOU) {
+                        parentOU.Accounts.push(account);
+                    }
+                    result.push(account);
                 }
 
             } while (resp.NextToken);

@@ -58,18 +58,37 @@ export class AwsUtil {
         AWS.config.credentials = await chainProvider.resolvePromise();
     }
 
+    public static SetMasterAccountId(masterAccountId: string): void {
+        AwsUtil.masterAccountId = masterAccountId;
+    }
+
     public static async GetMasterAccountId(): Promise<string> {
         if (AwsUtil.masterAccountId !== undefined) {
             return AwsUtil.masterAccountId;
         }
-        const stsClient = new STS();
+        const stsClient = new STS(); // if not set, assume build process runs in master
         const caller = await stsClient.getCallerIdentity().promise();
         AwsUtil.masterAccountId = caller.Account;
         return AwsUtil.masterAccountId;
     }
 
+    public static async GetBuildProcessAccountId(): Promise<string> {
+        if (AwsUtil.buildProcessAccountId !== undefined) {
+            return AwsUtil.buildProcessAccountId;
+        }
+        const stsClient = new STS();
+        const caller = await stsClient.getCallerIdentity().promise();
+        AwsUtil.buildProcessAccountId = caller.Account;
+        return AwsUtil.buildProcessAccountId;
+    }
+
+
+    public static async GetOrganizationsService(accountId: string, roleInTargetAccount: string): Promise<Organizations> {
+        return await AwsUtil.GetOrCreateService<Organizations>(Organizations, AwsUtil.OrganizationsServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, { region: 'us-east-1' }, roleInTargetAccount);
+    }
+
     public static async GetSupportService(accountId: string, roleInTargetAccount: string): Promise<Support> {
-        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' }, roleInTargetAccount);
+        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, { region: 'us-east-1' }, roleInTargetAccount);
     }
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
@@ -77,15 +96,15 @@ export class AwsUtil {
     }
 
     public static async GetS3Service(accountId: string, region: string, roleInTargetAccount?: string): Promise<S3> {
-        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region }, roleInTargetAccount);
+        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
     }
 
     public static async GetIamService(accountId: string, roleInTargetAccount?: string): Promise<IAM> {
-        return await AwsUtil.GetOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, accountId, {}, roleInTargetAccount);
+        return await AwsUtil.GetOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, {}, roleInTargetAccount);
     }
 
-    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string): Promise<CloudFormation> {
-        return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId, `${accountId}/${region}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
+    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string): Promise<CloudFormation> {
+        return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId, `${accountId}/${region}/${roleInTargetAccount}/${roleInTargetAccount}/${viaRoleArn}`, { region }, roleInTargetAccount, viaRoleArn);
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string): Promise<void> {
@@ -93,19 +112,19 @@ export class AwsUtil {
         await s3client.deleteObject({ Bucket: bucketName, Key: objectKey }).promise();
     }
 
-    private static async GetOrCreateService<TService>(ctr: new (args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string): Promise<TService> {
+    private static async GetOrCreateService<TService>(ctr: new (args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string, viaRoleArn?: string): Promise<TService> {
         const cachedService = cache[cacheKey];
         if (cachedService) {
             return cachedService;
         }
 
         const config = clientConfig;
-        const masterAccountId = await AwsUtil.GetMasterAccountId();
-        if (accountId !== masterAccountId) {
+        const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
+        if (accountId !== buildAccountId || typeof roleInTargetAccount === 'string') {
             if (typeof roleInTargetAccount !== 'string') {
                 roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
             }
-            const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
+            const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn);
             config.credentials = credentialOptions;
         }
 
@@ -115,9 +134,17 @@ export class AwsUtil {
         return service;
     }
 
-    public static async GetCredentials(accountId: string, roleInTargetAccount: string): Promise<CredentialsOptions> {
-        const sts = new STS();
+    public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string): Promise<CredentialsOptions> {
         const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
+        const config: STS.ClientConfiguration = {};
+        if (viaRoleArn !== undefined) {
+            config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
+        }
+        return await AwsUtil.GetCredentialsForRole(roleArn, config);
+    }
+
+    private static async GetCredentialsForRole(roleArn: string, config: STS.ClientConfiguration) {
+        const sts = new STS(config);
         const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
         const credentialOptions: CredentialsOptions = {
             accessKeyId: response.Credentials.AccessKeyId,
@@ -142,8 +169,10 @@ export class AwsUtil {
     }
 
     private static masterAccountId: string | PromiseLike<string>;
+    private static buildProcessAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAM> = {};
     private static SupportServiceCache: Record<string, Support> = {};
+    private static OrganizationsServiceCache: Record<string, Organizations> = {};
     private static CfnServiceCache: Record<string, CloudFormation> = {};
     private static S3ServiceCache: Record<string, S3> = {};
 }

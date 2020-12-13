@@ -532,6 +532,7 @@ export interface ICfnTarget {
     accountId: string;
     stackName: string;
     customRoleName?: string;
+    customViaRoleArn?: string;
     cloudFormationRoleName?: string;
     terminationProtection?: boolean;
     lastCommittedHash: string;

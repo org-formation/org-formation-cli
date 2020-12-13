@@ -53,9 +53,10 @@ export class CfnTaskProvider {
 
                 const customRoleName = await expressionResolver.resolveSingleExpression(binding.customRoleName, 'CustomRoleName');
                 const cloudFormationRoleName = await expressionResolver.resolveSingleExpression(binding.cloudFormationRoleName, 'CloudFormationRoleName');
+                const customViaRoleArn = await expressionResolver.resolveSingleExpression(binding.customViaRoleArn, 'CustomViaRoleArn');
 
                 const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
-                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName);
+                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
                 const clientToken = uuid();
 
                 let roleArn: string;
@@ -199,10 +200,11 @@ export class CfnTaskProvider {
             perform: async (): Promise<void> => {
 
                 const customRoleName = await expressionResolver.resolveSingleExpression(binding.customRoleName, 'CustomRoleName');
+                const customViaRoleArn = await expressionResolver.resolveSingleExpression(binding.customViaRoleArn, 'CustomViaRoleArn');
                 const cloudFormationRoleName = await expressionResolver.resolveSingleExpression(binding.cloudFormationRoleName, 'CloudFormationRoleName');
 
                 try {
-                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName);
+                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
                     let roleArn: string;
                     if (cloudFormationRoleName) {

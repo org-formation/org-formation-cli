@@ -140,8 +140,11 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--no-color', 'will disable colorization of console logs');
     }
 
-    protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState): Promise<OrganizationBinder> {
-        const organizations = new Organizations({ region: 'us-east-1' });
+    protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState, roleInMasterAccount?: string): Promise<OrganizationBinder> {
+
+        const masterAccountId = await AwsUtil.GetMasterAccountId();
+        const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount)
+
         const awsReader = new AwsOrganizationReader(organizations);
         const awsOrganization = new AwsOrganization(awsReader);
         await awsOrganization.initialize();
@@ -171,7 +174,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return storageProvider;
     }
 
-    protected async getOrganizationFileStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
+    protected async getOrganizationFileStorageProvider(command: IPerformTasksCommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.organizationObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
         const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
@@ -279,7 +282,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 }
 
 export interface ICommandArgs {
-    organizationObject: any;
     stateBucketName: string;
     stateObject: string;
     profile?: string;
