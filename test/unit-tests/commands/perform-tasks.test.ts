@@ -7,7 +7,6 @@ import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ConsoleUtil } from '~util/console-util';
 import { DeleteStacksCommand, BaseCliCommand } from '~commands/index';
 import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/organization-task';
-import { GlobalState } from '~util/global-state';
 
 describe('when creating perform-tasks command', () => {
     let command: PerformTasksCommand;
@@ -71,6 +70,13 @@ describe('when creating perform-tasks command', () => {
         const parametersOpt = opts.find((x) => x.long === '--parameters');
         expect(parametersOpt).toBeDefined();
         expect(parametersOpt.required).toBe(false);
+    });
+
+    test('perform-tasks has master-account-id which is optional', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const stateBucketOpt = opts.find((x) => x.long === '--master-account-id');
+        expect(stateBucketOpt).toBeDefined();
+        expect(stateBucketOpt.required).toBeFalsy();
     });
 });
 

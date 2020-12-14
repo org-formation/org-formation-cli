@@ -21,13 +21,13 @@ export class GlobalState {
         if (account === undefined) {
             account = this.OrganizationTemplate.organizationSection.findAccount(x=>x.accountId === accountId);
             if (account === undefined) {
-                const organizationRootDefaultRole = this.OrganizationTemplate.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName;
+                const organizationRootDefaultRole = this.OrganizationTemplate.organizationSection.organizationRoot?.defaultBuildAccessRoleName;
                 if (!organizationRootDefaultRole) {
                     return DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName;
                 }
                 return organizationRootDefaultRole;
             }
         }
-        return account.organizationAccessRoleName;
+        return account.buildAccessRoleName;
     }
 }
