@@ -12,7 +12,7 @@ describe('when calling org-formation perform tasks', () => {
 
     beforeAll(async () => {
 
-        context = await baseBeforeAll('org-formation-test-delegated-build');
+        context = await baseBeforeAll('org-formation-test-delegated-build', 'BUILD_ACCT_AWS');
         await context.prepareStateBucket(basePathForScenario + '../state.json');
         const command = context.command;
         const s3client = context.s3client;
