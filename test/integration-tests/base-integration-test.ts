@@ -7,7 +7,7 @@ import { readFileSync } from "fs";
 
 export const profileForIntegrationTests = 'org-formation-test-v2'
 
-export const baseBeforeAll = async (profileName: string = profileForIntegrationTests): Promise<IIntegrationTestContext> => {
+export const baseBeforeAll = async (profileName: string = profileForIntegrationTests, environmentCredentials: string = 'TST_AWS'): Promise<IIntegrationTestContext> => {
     jest.setTimeout(99999999);
 
     AwsUtil.SetMasterAccountId(undefined);
@@ -24,7 +24,7 @@ export const baseBeforeAll = async (profileName: string = profileForIntegrationT
     const logWarningMock = jest.spyOn(ConsoleUtil, 'LogWarning').mockImplementation();
 
     await AwsUtil.Initialize([
-        () => new EnvironmentCredentials('TST_AWS'),
+        () => new EnvironmentCredentials(environmentCredentials),
         () => new SharedIniFileCredentials({ profile: profileName }),
     ]);
 

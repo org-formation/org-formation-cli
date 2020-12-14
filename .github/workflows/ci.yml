@@ -46,5 +46,7 @@ jobs:
         env:
           TST_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           TST_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          BUILD_ACCT_AWS_ACCESS_KEY_ID: ${{ secrets.BUILD_ACCT_AWS_ACCESS_KEY_ID }}
+          BUILD_ACCT_AWS_SECRET_ACCESS_KEY: ${{ secrets.BUILD_ACCT_AWS_SECRET_KEY_ID }}
         run: |
           npm run test:integration
