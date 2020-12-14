@@ -202,6 +202,28 @@ Will validate the *tasks-file*, including configured tasks.
 |---|---|---|
 |<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
 
+Validation requires the following set of permissions:
+
+``` yaml
+PolicyDocument:
+  Version: 2012-10-17
+  Statement:
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+      Resource: '*' # you can specify the state bucket by arn
+    - Effect: Allow
+      Action:
+        - cloudformation:GetExports
+        - cloudformation:ListExports
+        - cloudformation:ValidateTemplate
+      Resource: '*'
+    - Effect: Allow
+      Action:
+        - sts:AssumeRole
+      Resource: 'arn:aws:iam::*:role/OrganizationAccountAccessRole' # you can restrict to certain accounts 
+```
+
 ## Global options
 
 |option|default|description|
