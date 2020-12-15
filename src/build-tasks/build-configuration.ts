@@ -10,6 +10,7 @@ import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
 import { yamlParseWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 import { ConsoleUtil } from '~util/console-util';
+import { AwsUtil } from '~util/aws-util';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -23,7 +24,6 @@ export class BuildConfiguration {
     }
 
     public enumValidationTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
-        this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
         for (const taskConfig of this.tasks) {
             const task = BuildTaskProvider.createValidationTask(taskConfig, command);
@@ -38,7 +38,6 @@ export class BuildConfiguration {
     }
 
     public enumPrintTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
-        this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
         for (const taskConfig of this.tasks) {
             const task = BuildTaskProvider.createPrintTask(taskConfig, command);
@@ -51,7 +50,6 @@ export class BuildConfiguration {
     }
 
     public enumBuildTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
-        this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
 
         for (const taskConfig of this.tasks) {
@@ -75,7 +73,7 @@ export class BuildConfiguration {
         }
     }
 
-    private fixateOrganizationFile(command: IPerformTasksCommandArgs): void{
+    public async fixateOrganizationFile(command: IPerformTasksCommandArgs): Promise<void>{
 
         if (command.organizationFile === undefined) {
             const updateOrgTasks = this.tasks.filter(x => x.Type === 'update-organization');
@@ -89,13 +87,27 @@ export class BuildConfiguration {
             if (updateOrgTask.Template === undefined) {
                 throw new OrgFormationError('update-organization task does not contain required Template attribute');
             }
+
             const dir = path.dirname(this.file);
             command.organizationFile = path.resolve(dir, updateOrgTask.Template);
         }
 
         if (command.organizationFileHash === undefined) {
-            const organizationTemplateContent = readFileSync(command.organizationFile);
+            const organizationTemplateContent = await this.readOrganizationFileContents(command.organizationFile);
             command.organizationFileHash = md5(organizationTemplateContent);
+        }
+    }
+
+    private async readOrganizationFileContents(organizationFileLocation: string): Promise<string> {
+        if (organizationFileLocation.startsWith('s3://')) {
+            const buildProcessAccountId = await AwsUtil.GetBuildProcessAccountId();
+            const s3client = await AwsUtil.GetS3Service(buildProcessAccountId, undefined);
+            const bucketAndKey = organizationFileLocation.substring(5);
+            const bucketAndKeySplit = bucketAndKey.split('/');
+            const response = await s3client.getObject({Bucket: bucketAndKeySplit[0], Key: bucketAndKeySplit[1]}).promise();
+            return response.Body.toString();
+        } else {
+            return readFileSync(organizationFileLocation).toString();
         }
     }
 
