@@ -58,6 +58,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
 
         const state = await this.getState(command);
+        await config.fixateOrganizationFile(command);
         const tasks = config.enumBuildTasks(command);
         ConsoleUtil.state = state;
 
