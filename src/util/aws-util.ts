@@ -265,14 +265,24 @@ export class CfnUtil {
         let describeStack: DescribeStacksOutput;
         let retryStackIsBeingUpdated = false;
         let retryStackIsBeingUpdatedCount = 0;
+        let retryAccountIsBeingInitialized = false;
+        let retryAccountIsBeingInitializedCount = 0;
 
         do {
             retryStackIsBeingUpdated = false;
+            retryAccountIsBeingInitialized = false;
             try {
                 await cfn.updateStack(updateStackInput).promise();
                 describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
             } catch (err) {
-                if (err && err.code === 'ValidationError' && err.message) {
+                if (err && (err.code === 'OptInRequired' || err.code === 'InvalidClientTokenId')) {
+                    if (retryAccountIsBeingInitializedCount >= 20) { // 20 * 30 sec = 10 minutes
+                        throw new OrgFormationError('Account seems stuck initializing.');
+                    }
+                    retryAccountIsBeingInitializedCount += 1;
+                    await sleep(30);
+                    retryAccountIsBeingInitialized = true;
+                } else if (err && err.code === 'ValidationError' && err.message) {
                     const message = err.message as string;
                     if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
                         await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
@@ -302,7 +312,7 @@ export class CfnUtil {
                     throw err;
                 }
             }
-        } while (retryStackIsBeingUpdated);
+        } while (retryStackIsBeingUpdated || retryAccountIsBeingInitialized);
         return describeStack;
     }
 }

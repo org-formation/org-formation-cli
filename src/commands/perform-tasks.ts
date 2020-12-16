@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import { Command } from 'commander';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { UpdateOrganizationCommand } from './update-organization';
@@ -85,7 +86,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
     public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {
         if (command.organizationFileHash !== state.getTemplateHashLastPublished()) {
-            const contents = command.organizationFile;
+            const contents = readFileSync(command.organizationFile).toString();
             const objectKey = command.organizationObject || DEFAULT_ORGANIZATION_OBJECT;
             const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
             const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
