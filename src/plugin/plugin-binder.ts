@@ -1,4 +1,4 @@
-import { OrgFormationError } from '../org-formation-error';
+import { ErrorCode, OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../util/console-util';
 import { IGenericTarget, PersistedState } from '~state/persisted-state';
 import { TemplateRoot, IOrganizationBinding } from '~parser/parser';
@@ -131,11 +131,16 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
             myTask = await expressionResolver.collapse(myTask);
 
             if (binding.target.region !== undefined && binding.target.region !== 'no-region') {
-                // try {
+                try {
                     await that.plugin.performRemove({ ...binding, task: myTask }, expressionResolver);
-                // } catch (err) {
-                //     ConsoleUtil.LogWarning(`Error when removing ${myTask.type} task ${myTask.name} from target ${target.accountId}/${target.region}.\nError: ${err}`);
-                // }
+                } catch (err) {
+                    if (err instanceof OrgFormationError && err.code === ErrorCode.FailureToRemove) {
+                        ConsoleUtil.LogWarning(`Error when removing ${myTask.type} task ${myTask.name} from target ${target.accountId}/${target.region}.\nError: ${err}`);
+                    }
+                    else {
+                        throw err;
+                    }
+                }
             }
             that.state.removeGenericTarget(task.type, this.organizationLogicalName, this.logicalNamePrefix, task.name, target.accountId, target.region);
         };

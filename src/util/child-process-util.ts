@@ -3,6 +3,7 @@ import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import AWS from 'aws-sdk';
 import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from './aws-util';
 import { ConsoleUtil } from './console-util';
+import { ErrorCode, OrgFormationError } from '~org-formation-error';
 
 
 export class ChildProcessUtility {
@@ -10,31 +11,35 @@ export class ChildProcessUtility {
     public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName, env: Record<string, string> = {}, logVerbose: boolean | undefined = undefined): Promise<void> {
         ConsoleUtil.LogInfo(`Executing command: ${command} in account ${accountId}`);
 
-        let credentials: CredentialsOptions = AWS.config.credentials;
-        if (accountId !== await AwsUtil.GetMasterAccountId()) {
-            credentials = await AwsUtil.GetCredentials(accountId,  roleInTargetAccount);
-        } else if (roleInTargetAccount !== DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName) {
-            credentials = await AwsUtil.GetCredentials(accountId,  roleInTargetAccount);
-        }
-        const options: ExecOptions = {
-            cwd,
-            env: {...process.env, ...env},
-            maxBuffer: 1024 * 500,
-        };
-
-        if (credentials) {
-            options.env = {
-                ...options.env,
-                AWS_ACCESS_KEY_ID: credentials.accessKeyId,
-                AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+        try {
+            let credentials: CredentialsOptions = AWS.config.credentials;
+            if (accountId !== await AwsUtil.GetMasterAccountId()) {
+                credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
+            } else if (roleInTargetAccount !== DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName) {
+                credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
+            }
+            const options: ExecOptions = {
+                cwd,
+                env: { ...process.env, ...env },
+                maxBuffer: 1024 * 500,
             };
-        }
 
-        if (credentials.sessionToken) {
-            options.env.AWS_SESSION_TOKEN = credentials.sessionToken;
-        }
+            if (credentials) {
+                options.env = {
+                    ...options.env,
+                    AWS_ACCESS_KEY_ID: credentials.accessKeyId,
+                    AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+                };
+            }
 
-        return await this.SpawnProcess(command, options, logVerbose);
+            if (credentials.sessionToken) {
+                options.env.AWS_SESSION_TOKEN = credentials.sessionToken;
+            }
+
+            return await this.SpawnProcess(command, options, logVerbose);
+        } catch (err) {
+            throw new OrgFormationError(`error invoking external command ${command}.\n error: ${err}`, ErrorCode.FailureToRemove);
+        }
     };
 
     public static SpawnProcess(command: string, options: ExecOptions, logVerbose: boolean | undefined = undefined): Promise<void> {
@@ -51,10 +56,10 @@ export class ChildProcessUtility {
             childProcess.stdout.on('data', x => {
                 if (typeof x === 'string') {
                     const trimmed = x.trim();
-                    if (trimmed.length === 0) {return;}
+                    if (trimmed.length === 0) { return; }
 
                     const emptyIfOnlyDots = trimmed.replace(/\./g, '');
-                    if (emptyIfOnlyDots.length === 0) {return;}
+                    if (emptyIfOnlyDots.length === 0) { return; }
 
                     ConsoleUtil.LogDebug(trimmed, logVerbose);
                 }
@@ -63,7 +68,7 @@ export class ChildProcessUtility {
             childProcess.stderr.on('data', x => {
                 if (typeof x === 'string') {
                     const trimmed = x.trim();
-                    if (trimmed.length === 0) {return;}
+                    if (trimmed.length === 0) { return; }
 
                     ConsoleUtil.LogDebug(trimmed, logVerbose);
                 }
