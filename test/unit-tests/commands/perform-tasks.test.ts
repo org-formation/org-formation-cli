@@ -88,6 +88,7 @@ describe('when executing perform-tasks command', () => {
     let subCommanderCommand: Command;
     let buildConfigurationEnumConfigMock: jest.SpyInstance;
     let buildConfigurationEnumTasksMock: jest.SpyInstance;
+    let buildConfigurationFixateConfigMock: jest.SpyInstance;
     let performTasksGetStateMock: jest.SpyInstance;
     let buildRunnerRunTasksMock: jest.SpyInstance;
     let commandArgs: IPerformTasksCommandArgs;
@@ -117,6 +118,7 @@ describe('when executing perform-tasks command', () => {
 
         buildConfigurationEnumConfigMock = jest.spyOn(BuildConfiguration.prototype, 'enumBuildConfiguration').mockReturnValue(configs);
         buildConfigurationEnumTasksMock = jest.spyOn(BuildConfiguration.prototype, 'enumBuildTasks').mockReturnValue(tasks);
+        buildConfigurationFixateConfigMock = jest.spyOn(BuildConfiguration.prototype, 'fixateOrganizationFile').mockReturnValue(Promise.resolve());
         performTasksGetStateMock = jest.spyOn(PerformTasksCommand.prototype, 'getState').mockReturnValue(Promise.resolve(state));
         buildRunnerRunTasksMock = jest.spyOn(BuildRunner, 'RunTasks').mockImplementation();
 
@@ -136,6 +138,11 @@ describe('when executing perform-tasks command', () => {
         await command.performCommand(commandArgs);
         expect(buildConfigurationEnumConfigMock).toHaveBeenCalledTimes(1);
         expect(buildConfigurationEnumConfigMock).toHaveBeenCalledWith('tasks.yml');
+    });
+
+    test('BuildConfiguration called to fixate configuration file', async () => {
+        await command.performCommand(commandArgs);
+        expect(buildConfigurationFixateConfigMock).toHaveBeenCalledTimes(1);
     });
 
     test('BuildConfiguration called to enum tasks', async () => {

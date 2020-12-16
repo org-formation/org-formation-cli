@@ -96,7 +96,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
         const storageProvider = await this.getStateBucket(command);
         BaseCliCommand.StateBucketName = storageProvider.bucketName;
-        const accountId = await AwsUtil.GetMasterAccountId();
+        const accountId = await AwsUtil.GetBuildProcessAccountId();
 
         try {
             const state = await PersistedState.Load(storageProvider, accountId);

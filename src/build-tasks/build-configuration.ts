@@ -193,9 +193,13 @@ export class BuildConfiguration {
             }
 
             for(const dependency of dependencies) {
-                const found = result.find(x=>x.LogicalName === dependency);
-                if (found === undefined) {
-                    ConsoleUtil.LogWarning(`Task ${task.LogicalName} depends on task ${dependency} which was not found.`);
+                if (typeof dependency !== 'string') {
+                    ConsoleUtil.LogWarning(`Task ${task.LogicalName} declares DependsOn that is not a string. you must use the name of the task, not !Ref to the task.`);
+                } else {
+                    const found = result.find(x=>x.LogicalName === dependency);
+                    if (found === undefined) {
+                        ConsoleUtil.LogWarning(`Task ${task.LogicalName} depends on task ${dependency} which was not found.`);
+                    }
                 }
             }
         }
