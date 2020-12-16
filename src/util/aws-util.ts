@@ -266,14 +266,12 @@ export class CfnUtil {
         let retryStackIsBeingUpdated = false;
         let retryStackIsBeingUpdatedCount = 0;
 
-        ConsoleUtil.LogInfo('start update');
         do {
             retryStackIsBeingUpdated = false;
             try {
                 await cfn.updateStack(updateStackInput).promise();
                 describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
             } catch (err) {
-                ConsoleUtil.LogInfo(`err ${err}`);
                 if (err && err.code === 'ValidationError' && err.message) {
                     const message = err.message as string;
                     if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
