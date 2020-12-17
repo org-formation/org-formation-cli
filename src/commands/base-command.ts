@@ -236,7 +236,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         const rc = RC('org-formation', {}, {}) as IRCObject;
         if (rc.configs !== undefined){
 
-            if (rc.organizationFile && rc.config) {
+            if (rc.organizationFile && rc.config && !rc.organizationFile.startsWith('s3://')) {
                 const dir = path.dirname(rc.config);
                 const absolutePath = path.join(dir, rc.organizationFile);
                 if (absolutePath !== rc.organizationFile) {
@@ -276,6 +276,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             if (process.argv.indexOf('--output-path') === -1 && rc.printStacksOutputPath !== undefined) {
                 (command as IPrintTasksCommandArgs).outputPath = rc.printStacksOutputPath;
             }
+
+            if (process.argv.indexOf('--master-account-id') === -1 && rc.masterAccountId !== undefined) {
+                (command as IPerformTasksCommandArgs).masterAccountId = rc.masterAccountId;
+            }
         }
 
     }
@@ -295,6 +299,7 @@ export interface ICommandArgs {
 export interface IRCObject {
     printStacksOutputPath?: string;
     organizationFile?: string;
+    masterAccountId?: string;
     stateBucketName?: string;
     stateObject?: string;
     profile?: string;

@@ -85,6 +85,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
     }
 
     public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {
+        if (command.organizationFile.startsWith('s3://')) {return;}
         if (command.organizationFileHash !== state.getTemplateHashLastPublished()) {
             const contents = readFileSync(command.organizationFile).toString();
             const objectKey = command.organizationObject || DEFAULT_ORGANIZATION_OBJECT;
@@ -108,6 +109,7 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
     organizationFile?: string;
+    organizationFileContents?: string;
     organizationFileHash?: string;
     parameters?: string | {};
     parsedParameters?: Record<string, string>;

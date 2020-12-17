@@ -78,7 +78,7 @@ export class BuildConfiguration {
         if (command.organizationFile === undefined) {
             const updateOrgTasks = this.tasks.filter(x => x.Type === 'update-organization');
             if (updateOrgTasks.length === 0) {
-                throw new OrgFormationError('tasks file does not contain a task with type update-organization');
+                throw new OrgFormationError('tasks file does not contain a task with type update-organization and no --organization-file was provided on the cli.');
             }
             if (updateOrgTasks.length > 1) {
                 throw new OrgFormationError('tasks file has multiple tasks with type update-organization');
@@ -93,8 +93,8 @@ export class BuildConfiguration {
         }
 
         if (command.organizationFileHash === undefined) {
-            const organizationTemplateContent = await this.readOrganizationFileContents(command.organizationFile);
-            command.organizationFileHash = md5(organizationTemplateContent);
+            command.organizationFileContents = await this.readOrganizationFileContents(command.organizationFile);
+            command.organizationFileHash = md5(command.organizationFileContents);
         }
     }
 

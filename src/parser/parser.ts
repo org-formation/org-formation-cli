@@ -72,6 +72,7 @@ export interface ITemplateOverrides {
     StackName?: string;
     Description?: string;
     OrganizationFile?: string;
+    OrganizationFileContents?: string;
     OrganizationBinding?: IOrganizationBinding;
     OrganizationBindingRegion?: string | string[];
     DefaultOrganizationBindingRegion?: string | string[];
@@ -96,6 +97,19 @@ export class TemplateRoot {
             throw new OrgFormationError(`unable to load file ${path}. \nreason: ${reason}.`);
         }
     }
+    public static createFromS3(contents: string, path: string, overrides: ITemplateOverrides = {}): TemplateRoot {
+        try {
+            const dirname = Path.dirname(path);
+            const filename = 'organization.yml';
+            return TemplateRoot.createFromContents(contents, dirname, filename, overrides);
+        } catch (err) {
+            let reason = 'unknown';
+            if (err && err.message) {
+                reason = err.message;
+            }
+            throw new OrgFormationError(`unable to load file ${path}. \nreason: ${reason}.`);
+        }
+    }
 
     public static createFromContents(contents: string, dirname = './', filename = 'n/a', overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
         if (contents === undefined) { throw new OrgFormationError('contents is undefined'); }
@@ -107,11 +121,13 @@ export class TemplateRoot {
             normalizedContentsForParser = normalizedContentsForParser.replace(organizationInclude[0], 'Organization:');
             const includePath = Path.join(dirname, organizationInclude[1]);
             includedOrganization = TemplateRoot.getIncludedOrganization(includePath, templateImportContentMd5);
+        } else if (overrides.OrganizationFileContents) {
+            includedOrganization = TemplateRoot.getIncludedOrganizationFromContents(overrides.OrganizationFileContents);
         } else if (overrides.OrganizationFile) {
             includedOrganization = TemplateRoot.getIncludedOrganization(overrides.OrganizationFile, templateImportContentMd5);
-
         }
         delete overrides.OrganizationFile;
+        delete overrides.OrganizationFileContents;
 
         const obj = yamlParse(normalizedContentsForParser) as ITemplate;
         if (includedOrganization && !obj.Organization) {
@@ -145,13 +161,16 @@ export class TemplateRoot {
                 throw new OrgFormationError(`Organization include file (${path}) must be the same as used elsewhere in tasks.`);
             }
         }
-        const includedTemplate = yamlParse(includeContents) as ITemplate;
+        return TemplateRoot.getIncludedOrganizationFromContents(includeContents);
+    }
+
+    private static getIncludedOrganizationFromContents(contents: string): IOrganization {
+        const includedTemplate = yamlParse(contents) as ITemplate;
         if (!includedTemplate.Organization) {
-            throw new OrgFormationError(`Organization include file (${path}) does not contain top level Organization.`);
+            throw new OrgFormationError('Organization include file does not contain top level Organization.');
         }
         return includedTemplate.Organization;
     }
-
     public readonly contents: ITemplate;
     public readonly dirname: string;
     public readonly filename: string;
