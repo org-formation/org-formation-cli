@@ -60,6 +60,9 @@ export class S3StorageProvider implements IStorageProvider {
             if (err && err.code === 'BucketAlreadyOwnedByYou') {
                 return;
             }
+            if (err && err.code === 'AccessDenied') {
+                return; // assume bucket has been set up properly
+            }
             throw err;
         }
     }
@@ -98,6 +101,7 @@ export class S3StorageProvider implements IStorageProvider {
     }
 
     public async put(contents: string): Promise<void> {
+        try{
         const s3client = new S3();
         const putObjectRequest: PutObjectRequest = {
             Bucket: this.bucketName,
@@ -112,6 +116,10 @@ export class S3StorageProvider implements IStorageProvider {
         }, undefined, 2)}`);
 
         await s3client.putObject(putObjectRequest).promise();
+        }catch(err) {
+            ConsoleUtil.LogError(`unable to put object to s3 (bucket: ${this.bucketName}, key: ${this.objectKey})`, err);
+            throw err;
+        }
     }
 }
 
