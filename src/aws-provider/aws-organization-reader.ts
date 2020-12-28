@@ -3,6 +3,7 @@ import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, L
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { GlobalState } from '~util/global-state';
+import { ICrossAccountAccess } from './aws-account-access';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
@@ -56,6 +57,28 @@ const GetPoliciesForTarget = (list: AWSPolicy[], targetId: string, targetType: T
 };
 
 export class AwsOrganizationReader {
+
+    private static getOrganizationAccessRoleInTargetAccount(that: AwsOrganizationReader, accountId: string): ICrossAccountAccess {
+        if (that.masterAccountId === accountId) {
+            if (that.roleInMasterAccount !== undefined) {
+                return {
+                    role: that.roleInMasterAccount
+                };
+            }
+             else {
+                 return {
+                 }
+             }
+        } else {
+            const config: ICrossAccountAccess = {
+                role: GlobalState.GetOrganizationAccessRoleName(accountId),
+            }
+            if (that.roleInMasterAccount !== undefined) {
+                config.viaRole = AwsUtil.GetRoleArn(that.masterAccountId, that.roleInMasterAccount);
+            }
+            return config;
+        }
+    }
 
     private static async getOrganization(that: AwsOrganizationReader): Promise<Organization> {
         that.organizationService.listTagsForResource();
@@ -273,7 +296,8 @@ export class AwsOrganizationReader {
     private static async getSupportLevelForAccount(that: AwsOrganizationReader, accountId: string): Promise<SupportLevel> {
         await that.organization.getValue();
         try {
-            const supportService = await AwsUtil.GetSupportService(accountId, GlobalState.GetCrossAccountRoleName(accountId));
+            const targetRoleConfig = this.getOrganizationAccessRoleInTargetAccount(that, accountId);
+            const supportService = await AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
             const severityLevels = await supportService.describeSeverityLevels().promise();
             const critical = severityLevels.severityLevels.find(x => x.code === 'critical');
             if (critical !== undefined) {
@@ -295,7 +319,8 @@ export class AwsOrganizationReader {
     private static async getIamAliasForAccount(that: AwsOrganizationReader, accountId: string): Promise<string> {
         try {
             await that.organization.getValue();
-            const iamService = await AwsUtil.GetIamService(accountId, GlobalState.GetCrossAccountRoleName(accountId));
+            const targetRoleConfig = this.getOrganizationAccessRoleInTargetAccount(that, accountId);
+            const iamService = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
             const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
             if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
                 return response.AccountAliases[0];
@@ -311,7 +336,8 @@ export class AwsOrganizationReader {
     private static async getIamPasswordPolicyForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAM.PasswordPolicy> {
         try {
             await that.organization.getValue();
-            const iamService = await AwsUtil.GetIamService(accountId, GlobalState.GetCrossAccountRoleName(accountId));
+            const targetRoleConfig = this.getOrganizationAccessRoleInTargetAccount(that, accountId);
+            const iamService = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
             try {
                 const response = await iamService.getAccountPasswordPolicy().promise();
                 return response.PasswordPolicy;
@@ -351,7 +377,11 @@ export class AwsOrganizationReader {
     public readonly roots: Lazy<AWSRoot[]>;
     private readonly organizationService: Organizations;
 
-    constructor(organizationService: Organizations) {
+    constructor(organizationService: Organizations, private readonly masterAccountId: string, private readonly roleInMasterAccount?: string) {
+
+        if (roleInMasterAccount && roleInMasterAccount.includes(':role/')) {
+            throw new Error(`roleInMasterAccount must be role name, not arn. found: ${roleInMasterAccount}`);
+        }
         this.organizationService = organizationService;
         this.policies = new Lazy(this, AwsOrganizationReader.listPolicies);
         this.organizationalUnits = new Lazy(this, AwsOrganizationReader.listOrganizationalUnits);

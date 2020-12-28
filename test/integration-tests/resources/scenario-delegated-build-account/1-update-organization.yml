@@ -1,7 +1,7 @@
 
 OrganizationUpdate:
   Type: update-organization
-  Template: ./organization.yml
+  Template: ./organization-2.yml
   TaskRoleName: 'OrganizationFormationBuildRole'
 
 OrganizationFormationBuildRole:

@@ -58,8 +58,7 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         try {
             if (tasks.length === 0) {
                 ConsoleUtil.LogInfo('organization up to date, no work to be done.');
-            }
-            else {
+            } else {
                 await TaskRunner.RunTasks(tasks);
                 ConsoleUtil.LogInfo('done');
             }

@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: default template generated for organization with master account 102625093955
+
+Organization:
+
+  OrganizationRoot:
+    Type: OC::ORG::OrganizationRoot
+    Properties:
+      DefaultBuildAccessRoleName: OrganizationFormationBuildRole
+
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: Organizational Master Account
+      AccountId: '102625093955'
+      Alias: alias-102625093955
+      PasswordPolicy: !Ref PasswordPolicy
+      Tags:
+        Test: tag-value
+      ServiceControlPolicies:
+        - !Ref DenyS3DeleteBucket
+
+  OrganizationBuildAccount:
+    Type: OC::ORG::Account
+    Properties:
+      Alias: alias-340381375986
+      PasswordPolicy: !Ref PasswordPolicy
+      AccountName: Account A
+      AccountId: '340381375986'
+      RootEmail: account+a@olafconijn.awsapps.com
+      ServiceControlPolicies:
+        - !Ref DenyS3DeleteBucket
+
+  AccountB:
+    Type: OC::ORG::Account
+    Properties:
+      Alias: alias-362239514602
+      PasswordPolicy: !Ref PasswordPolicy
+      AccountName: Account B
+      AccountId: '362239514602'
+      RootEmail: account+b@olafconijn.awsapps.com
+      OrganizationAccessRoleName: CustomCrossAccountRole
+      ServiceControlPolicies:
+        - !Ref DenyS3DeleteBucket
+
+  AccountC:
+    Type: OC::ORG::Account
+    Properties:
+      Alias: alias-673026687213
+      PasswordPolicy: !Ref PasswordPolicy
+      AccountName: Account C
+      AccountId: '673026687213'
+      RootEmail: account+c@olafconijn.awsapps.com
+      OrganizationAccessRoleName: AnotherCustomRole
+      ServiceControlPolicies:
+        - !Ref DenyS3DeleteBucket
+
+  AnotherAccount:
+    Type: OC::ORG::Account
+    Properties:
+      Alias: alias-549476213961
+      PasswordPolicy: !Ref PasswordPolicy
+      AccountName: Users Account
+      AccountId: '549476213961'
+      RootEmail: account+users@olafconijn.awsapps.com
+      ServiceControlPolicies:
+        - !Ref DenyS3DeleteBucket
+
+
+  PasswordPolicy:
+    Type: OC::ORG::PasswordPolicy
+    Properties:
+      MaxPasswordAge: 30
+      MinimumPasswordLength: 30
+      RequireLowercaseCharacters: true
+      RequireNumbers: true
+      RequireSymbols: true
+      RequireUppercaseCharacters: true
+      PasswordReusePrevention: 24
+      AllowUsersToChangePassword: true
+
+  DenyS3DeleteBucket:
+    Type: OC::ORG::ServiceControlPolicy
+    Properties:
+      Description: Prevents the deletion of s3 buckets
+      PolicyName: DenyS3DeleteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyS3DeleteBucket
+            Effect: Deny
+            Action: s3:DeleteBucket
+            Resource: '*'

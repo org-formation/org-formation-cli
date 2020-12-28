@@ -105,7 +105,6 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
         return undefined;
     }
 
-
     createLogicalNamePrefix(logicalNamePrefixOfParent: string | undefined, logicalNameOfParent: string): string {
         return `${logicalNamePrefixOfParent === undefined ? '' : logicalNamePrefixOfParent + '-'}${logicalNameOfParent}`;
     }

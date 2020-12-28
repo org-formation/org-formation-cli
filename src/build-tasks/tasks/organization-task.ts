@@ -4,6 +4,7 @@ import { ICommandArgs, IUpdateOrganizationCommandArgs, UpdateOrganizationCommand
 import { IBuildTask, IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IBuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ValidateOrganizationCommand } from '~commands/validate-organization';
+import { OrgFormationError } from '~org-formation-error';
 
 export abstract class BaseOrganizationTask implements IBuildTask {
     public name: string;
@@ -11,6 +12,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
     public skip: boolean;
     public forceDeploy: boolean;
     public taskRoleName: string;
+    public taskViaRoleArn: string;
     public templatePath: string;
     public childTasks: IBuildTask[] = [];
     protected config: IUpdateOrganizationTaskConfiguration;
@@ -26,15 +28,20 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         this.templatePath = path.join(dir, config.Template);
         this.command = command;
         this.skip = config.Skip === true;
-
+        if (typeof config.TaskRoleName !== 'string' && typeof config.TaskRoleName !== 'undefined') {
+            throw new OrgFormationError(`update-organization TaskViaRoleName attribute must be string, found: ${typeof config.TaskRoleName}`);
+        }
+        if (config.TaskViaRoleArn !== undefined){
+            throw new OrgFormationError(`update-organization task does not support TaskViaRoleArn attribute`);
+        }
     }
 
     public async perform(): Promise<void> {
-
         const updateCommand = this.command as IUpdateOrganizationCommandArgs;
         updateCommand.templateFile = this.templatePath;
         updateCommand.forceDeploy = this.forceDeploy;
         updateCommand.taskRoleName = this.taskRoleName;
+
         await this.innerPerform(updateCommand);
     }
 
@@ -42,7 +49,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         return false;
     }
 
-    protected abstract async innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void>;
+    protected abstract innerPerform(commandArgs: IUpdateOrganizationCommandArgs): Promise<void>;
 }
 
 export class UpdateOrganizationTask extends BaseOrganizationTask {
@@ -78,7 +85,6 @@ export class UpdateOrganizationTaskProvider implements IBuildTaskProvider<IUpdat
     createTaskForCleanup(): IBuildTask | undefined {
         return undefined;
     }
-
 }
 
 export interface IUpdateOrganizationTaskConfiguration extends IBuildTaskConfiguration {

@@ -21,6 +21,22 @@ Organization:
       AccountId: '340381375986'
       RootEmail: account+a@olafconijn.awsapps.com
 
+  AccountB:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Account B
+      AccountId: '362239514602'
+      RootEmail: account+b@olafconijn.awsapps.com
+      OrganizationAccessRoleName: CustomCrossAccountRole
+
+  AccountC:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Account C
+      AccountId: '673026687213'
+      RootEmail: account+c@olafconijn.awsapps.com
+      OrganizationAccessRoleName: AnotherCustomRole
+
   AnotherAccount:
     Type: OC::ORG::Account
     Properties:

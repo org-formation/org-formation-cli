@@ -12,7 +12,7 @@ export const baseBeforeAll = async (profileName: string = profileForIntegrationT
 
     AwsUtil.SetMasterAccountId(undefined);
 
-    ConsoleUtil.verbose = true;
+    ConsoleUtil.verbose = false;
     ConsoleUtil.printStacktraces = true;
     process.on('unhandledRejection', error => {
         // Will print "unhandledRejection err is not defined"
