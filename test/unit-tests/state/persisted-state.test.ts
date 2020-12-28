@@ -1,6 +1,7 @@
 import { PersistedState, IState } from "~state/persisted-state";
 import Sinon = require("sinon");
 import { S3StorageProvider, IStorageProvider } from "~state/storage-provider";
+import { OrgResourceTypes } from "~parser/model";
 
 describe('when creating empty persisted state', () => {
     let emptyState: PersistedState;
@@ -250,7 +251,6 @@ describe('when setting binding for unique type', () => {
     })
 });
 
-
 describe('when setting binding physical id', () => {
     let state: PersistedState;
 
@@ -443,5 +443,84 @@ describe('when setting tracked tasks', () => {
 
     test('state is marked as dirty', () => {
         expect((state as any).dirty).toBe(true);
+    })
+});
+
+
+describe('when creating state with detached organization state', () => {
+    let state: PersistedState;
+    let orgState: PersistedState;
+
+    beforeEach(() => {
+        orgState = PersistedState.CreateEmpty('123123123123');
+        state = PersistedState.CreateEmpty('123123123123');
+
+        orgState.putTemplateHash('template-hash');
+        orgState.putTemplateHashLastPublished('last-published');
+
+        orgState.setBinding({
+            logicalId: 'logical-id-1',
+            type: OrgResourceTypes.Account,
+            physicalId: 'physical-id',
+            lastCommittedHash: '23123'
+        });
+
+        state.setReadonlyOrganizationState(orgState);
+    })
+
+    test('template hash can be read through both states', () => {
+        const templateHashOrgState = orgState.getTemplateHash();
+        expect(templateHashOrgState).toBe('template-hash');
+        const templateHashState = orgState.getTemplateHash();
+        expect(templateHashState).toBe('template-hash');
+
+    })
+
+    test('template last published can be read through both states', () => {
+        const templateHashLPOrgState = orgState.getTemplateHashLastPublished();
+        expect(templateHashLPOrgState).toBe('last-published');
+        const templateHashLPState = orgState.getTemplateHashLastPublished();
+        expect(templateHashLPState).toBe('last-published');
+
+    })
+
+    test('org state is readonly', () => {
+        expect((orgState as any).readonly).toBe(true);
+        expect(() => { orgState.putTemplateHash('xxx'); }).toThrow();
+        expect(() => { orgState.putTemplateHashLastPublished('yyy'); }).toThrow();
+
+    });
+
+    test('writing binding to org state throws', () => {
+        expect(() => { orgState.setBinding({ } as any) }).toThrow();
+
+    })
+    test('writing binding through child state throws', () => {
+        expect(() => { state.setBinding({ } as any) }).toThrow();
+
+    })
+
+    test('can read organization binding through child', () => {
+        const binding = state.getBinding(OrgResourceTypes.Account, 'logical-id-1');
+        expect(binding).toBeDefined();
+        expect(binding.physicalId).toBe('physical-id')
+    })
+
+    test('can list bindings through child', () => {
+        const bindings = state.enumBindings(OrgResourceTypes.Account)
+        expect(bindings).toBeDefined();
+        expect(bindings.length).toBe(1);
+    })
+
+    test('can resolve logical id through child', () => {
+        const logicalId = state.getLogicalIdForPhysicalId('physical-id')
+        expect(logicalId).toBeDefined();
+        expect(logicalId).toBe('logical-id-1');
+    })
+
+    test('can resolve account through child', () => {
+        const acc = state.getAccountBinding('logical-id-1')
+        expect(acc).toBeDefined();
+        expect(acc.physicalId).toBe('physical-id');
     })
 });
