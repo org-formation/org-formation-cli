@@ -13,7 +13,7 @@ export interface ICrossAccountConfig {
 
 
 export const GetOrganizationAccessRoleInTargetAccount = (config: ICrossAccountConfig, targetAccountId: string): ICrossAccountAccess => {
-    if (config.masterAccountId === targetAccountId) {
+    if (config && config.masterAccountId === targetAccountId) {
         if (config.masterAccountRoleName !== undefined) {
             return {
                 role: config.masterAccountRoleName,
@@ -27,7 +27,7 @@ export const GetOrganizationAccessRoleInTargetAccount = (config: ICrossAccountCo
         const result: ICrossAccountAccess = {
             role: GlobalState.GetOrganizationAccessRoleName(targetAccountId),
         };
-        if (config.masterAccountRoleName !== undefined) {
+        if (config && config.masterAccountRoleName !== undefined) {
             result.viaRole = AwsUtil.GetRoleArn(config.masterAccountId, config.masterAccountRoleName);
         }
         return result;
