@@ -42,7 +42,7 @@ export class AwsOrganizationWriter {
     private organization: AwsOrganization;
     private organizationService: Organizations;
 
-    constructor(organizationService: Organizations, organization: AwsOrganization, private readonly masterAccountId: string, private readonly roleInMasterAccount?: string) {
+    constructor(organizationService: Organizations, organization: AwsOrganization, private readonly masterAccountId?: string, private readonly roleInMasterAccount?: string) {
         if (roleInMasterAccount && roleInMasterAccount.includes(':role/')) {
             throw new Error(`roleInMasterAccount must be role name, not arn. found: ${roleInMasterAccount}`);
         }
