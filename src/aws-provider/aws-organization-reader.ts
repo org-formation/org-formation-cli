@@ -2,8 +2,8 @@ import { IAM, Organizations } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
-import { GlobalState } from '~util/global-state';
 import { ICrossAccountAccess } from './aws-account-access';
+import { GlobalState } from '~util/global-state';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
@@ -62,17 +62,17 @@ export class AwsOrganizationReader {
         if (that.masterAccountId === accountId) {
             if (that.roleInMasterAccount !== undefined) {
                 return {
-                    role: that.roleInMasterAccount
+                    role: that.roleInMasterAccount,
                 };
             }
              else {
                  return {
-                 }
+                 };
              }
         } else {
             const config: ICrossAccountAccess = {
                 role: GlobalState.GetOrganizationAccessRoleName(accountId),
-            }
+            };
             if (that.roleInMasterAccount !== undefined) {
                 config.viaRole = AwsUtil.GetRoleArn(that.masterAccountId, that.roleInMasterAccount);
             }

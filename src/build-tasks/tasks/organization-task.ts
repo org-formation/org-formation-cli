@@ -32,7 +32,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
             throw new OrgFormationError(`update-organization TaskViaRoleName attribute must be string, found: ${typeof config.TaskRoleName}`);
         }
         if (config.TaskViaRoleArn !== undefined){
-            throw new OrgFormationError(`update-organization task does not support TaskViaRoleArn attribute`);
+            throw new OrgFormationError('update-organization task does not support TaskViaRoleArn attribute');
         }
     }
 

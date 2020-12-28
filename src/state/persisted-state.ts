@@ -61,7 +61,7 @@ export class PersistedState {
     }
 
 
-    public setReadonlyOrganizationState(organizationState: PersistedState) {
+    public setReadonlyOrganizationState(organizationState: PersistedState): void {
         this.organizationState = organizationState;
         this.organizationState.readonly = true;
         this.organizationState.organizationLevelState = true;

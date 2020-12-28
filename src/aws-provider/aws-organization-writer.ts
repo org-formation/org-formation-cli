@@ -1,43 +1,42 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
-import { AwsUtil, passwordPolicyEquals, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util/aws-util';
+import { AwsUtil, passwordPolicyEquals } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsEvents } from './aws-events';
 import { AwsOrganization } from './aws-organization';
+import { ICrossAccountAccess } from './aws-account-access';
 import {
     AccountResource,
     OrganizationalUnitResource,
     ServiceControlPolicyResource,
 } from '~parser/model';
 import { GlobalState } from '~util/global-state';
-import { ICrossAccountAccess } from './aws-account-access';
 export class AwsOrganizationWriter {
 
     private static getOrganizationAccessRoleInTargetAccount(that: AwsOrganizationWriter, accountId: string): ICrossAccountAccess{
         if (that.masterAccountId === accountId) {
             if (that.roleInMasterAccount !== undefined) {
                 return {
-                    role: that.roleInMasterAccount
+                    role: that.roleInMasterAccount,
                 };
             }
              else {
                  return {
 
-                 }
+                 };
              }
         } else {
             const config: ICrossAccountAccess = {
                 role: GlobalState.GetOrganizationAccessRoleName(accountId),
-            }
+            };
             if (that.roleInMasterAccount !== undefined) {
                 config.viaRole = AwsUtil.GetRoleArn(that.masterAccountId, that.roleInMasterAccount);
             }
             return config;
         }
     }
-
 
 
     private organization: AwsOrganization;
