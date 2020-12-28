@@ -78,9 +78,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     public async generateDefaultTemplate(): Promise<DefaultTemplate> {
-        const masterAccountId = await AwsUtil.GetMasterAccountId();
         const organizations = new Organizations({ region: 'us-east-1' });
-        const awsReader = new AwsOrganizationReader(organizations, masterAccountId);
+        const awsReader = new AwsOrganizationReader(organizations);
         const awsOrganization = new AwsOrganization(awsReader);
         const writer = new DefaultTemplateWriter(awsOrganization);
         const template = await writer.generateDefaultTemplate();
@@ -147,11 +146,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
+        const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount};
 
-        const awsReader = new AwsOrganizationReader(organizations, masterAccountId, roleInMasterAccount);
+        const awsReader = new AwsOrganizationReader(organizations, crossAccountConfig);
         const awsOrganization = new AwsOrganization(awsReader);
         await awsOrganization.initialize();
-        const awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, masterAccountId, roleInMasterAccount);
+        const awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig);
         const taskProvider = new TaskProvider(template, state, awsWriter);
         const binder = new OrganizationBinder(template, state, taskProvider);
         return binder;

@@ -31,7 +31,7 @@ describe('when calling org-formation perform tasks', () => {
         await sleepForTest(500);
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-update-organization.yml', masterAccountId: '102625093955'});
         await sleepForTest(500);
-        orgAfterUpdate = new AwsOrganization(new AwsOrganizationReader(orgClient, '102625093955', 'OrganizationFormationBuildRole'));
+        orgAfterUpdate = new AwsOrganization(new AwsOrganizationReader(orgClient, { masterAccountId: '102625093955', masterAccountRoleName: 'OrganizationFormationBuildRole' }));
         await orgAfterUpdate.initialize();
 
         await sleepForTest(500);
@@ -39,7 +39,7 @@ describe('when calling org-formation perform tasks', () => {
         await sleepForTest(500);
         stateAfterCleanup = await s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
         await sleepForTest(500);
-        orgAfterCleanup = new AwsOrganization(new AwsOrganizationReader(orgClient, '102625093955', 'OrganizationFormationBuildRole'));
+        orgAfterCleanup = new AwsOrganization(new AwsOrganizationReader(orgClient, { masterAccountId: '102625093955', masterAccountRoleName: 'OrganizationFormationBuildRole' }));
         await orgAfterCleanup.initialize();
     });
 

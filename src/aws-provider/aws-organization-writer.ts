@@ -6,46 +6,19 @@ import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsEvents } from './aws-events';
 import { AwsOrganization } from './aws-organization';
-import { ICrossAccountAccess } from './aws-account-access';
+import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
 import {
     AccountResource,
     OrganizationalUnitResource,
     ServiceControlPolicyResource,
 } from '~parser/model';
-import { GlobalState } from '~util/global-state';
 export class AwsOrganizationWriter {
-
-    private static getOrganizationAccessRoleInTargetAccount(that: AwsOrganizationWriter, accountId: string): ICrossAccountAccess{
-        if (that.masterAccountId === accountId) {
-            if (that.roleInMasterAccount !== undefined) {
-                return {
-                    role: that.roleInMasterAccount,
-                };
-            }
-             else {
-                 return {
-
-                 };
-             }
-        } else {
-            const config: ICrossAccountAccess = {
-                role: GlobalState.GetOrganizationAccessRoleName(accountId),
-            };
-            if (that.roleInMasterAccount !== undefined) {
-                config.viaRole = AwsUtil.GetRoleArn(that.masterAccountId, that.roleInMasterAccount);
-            }
-            return config;
-        }
-    }
-
 
     private organization: AwsOrganization;
     private organizationService: Organizations;
 
-    constructor(organizationService: Organizations, organization: AwsOrganization, private readonly masterAccountId?: string, private readonly roleInMasterAccount?: string) {
-        if (roleInMasterAccount && roleInMasterAccount.includes(':role/')) {
-            throw new Error(`roleInMasterAccount must be role name, not arn. found: ${roleInMasterAccount}`);
-        }
+    constructor(organizationService: Organizations, organization: AwsOrganization, private readonly crossAccountConfig?: ICrossAccountConfig) {
+
         this.organizationService = organizationService;
         this.organization = organization;
     }
@@ -365,7 +338,7 @@ export class AwsOrganizationWriter {
         }
 
         if (account.Alias !== resource.alias) {
-            const assumeRoleConfig = AwsOrganizationWriter.getOrganizationAccessRoleInTargetAccount(this, accountId);
+            const assumeRoleConfig = GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
             const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
             if (account.Alias) {
                 try {
@@ -405,8 +378,9 @@ export class AwsOrganizationWriter {
                     throw new OrgFormationError(`account ${resource.logicalId} specifies support level ${resource.supportLevel}, expected is support level ${masterAccountSupportLevel}, based on the support subscription for the organization master account.`);
                 } else {
                     try{
-                        const assumeRoleConfig = AwsOrganizationWriter.getOrganizationAccessRoleInTargetAccount(this, this.masterAccountId);
-                        const support = await AwsUtil.GetSupportService(this.masterAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
+                        const targetAccountId = this.organization.masterAccount.Id;
+                        const assumeRoleConfig = GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, targetAccountId);
+                        const support = await AwsUtil.GetSupportService(targetAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
                         const createCaseRequest: CreateCaseRequest = {
                             subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
                             communicationBody: `Hi AWS,
@@ -431,7 +405,7 @@ export class AwsOrganizationWriter {
         }
 
         if (!passwordPolicyEquals(account.PasswordPolicy, resource.passwordPolicy)) {
-            const assumeRoleConfig = AwsOrganizationWriter.getOrganizationAccessRoleInTargetAccount(this, this.masterAccountId);
+            const assumeRoleConfig = GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
             const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
             if (account.PasswordPolicy) {
                 try {
