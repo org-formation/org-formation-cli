@@ -377,7 +377,7 @@ export class AwsOrganizationReader {
     public readonly roots: Lazy<AWSRoot[]>;
     private readonly organizationService: Organizations;
 
-    constructor(organizationService: Organizations, private readonly masterAccountId: string, private readonly roleInMasterAccount?: string) {
+    constructor(organizationService: Organizations, private readonly masterAccountId?: string, private readonly roleInMasterAccount?: string) {
 
         if (roleInMasterAccount && roleInMasterAccount.includes(':role/')) {
             throw new Error(`roleInMasterAccount must be role name, not arn. found: ${roleInMasterAccount}`);
