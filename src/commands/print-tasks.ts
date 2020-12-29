@@ -5,6 +5,7 @@ import { IPrintStacksCommandArgs } from './print-stacks';
 import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { Validator } from '~parser/validator';
+import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'print-tasks <tasksFile>';
 const commandDescription = 'Will print out all cloudformation templates that will be deployed by tasksFile';
@@ -42,6 +43,10 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
+
+        if (command.masterAccountId !== undefined) {
+            AwsUtil.SetMasterAccountId(command.masterAccountId);
+        }
 
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
