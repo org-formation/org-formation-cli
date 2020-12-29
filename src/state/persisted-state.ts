@@ -1,6 +1,6 @@
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../util/console-util';
-import { IStorageProvider } from './storage-provider';
+import { IStorageProvider, S3StorageProvider } from './storage-provider';
 import { OrgResourceTypes } from '~parser/model';
 
 export class PersistedState {
@@ -26,6 +26,9 @@ export class PersistedState {
         } catch (err) {
             if (err instanceof SyntaxError) {
                 throw new OrgFormationError(`unable to parse state file ${err}`);
+            }
+            if (provider instanceof S3StorageProvider) {
+                throw new OrgFormationError(`unable to load state, bucket: ${provider.bucketName}, key: ${provider.objectKey}. Err: ${err}`);
             }
             throw err;
         }

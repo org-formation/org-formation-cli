@@ -73,7 +73,7 @@ describe('when executing init organization command', () => {
     let command: InitOrganizationCommand;
     let commanderCommand: Command;
     let subCommanderCommand: Command;
-    let getMasterAccountIdStub: Sinon.SinonStub;
+    let getBuildProcessAccountIdStub: Sinon.SinonStub;
     let storageProviderCreateStub: Sinon.SinonStub;
     let storageProviderPutStub: Sinon.SinonStub;
     let generateDefaultTemplateStub: Sinon.SinonStub;
@@ -86,8 +86,8 @@ describe('when executing init organization command', () => {
     beforeEach(() => {
         consoleInfo = sandbox.stub(ConsoleUtil, 'LogInfo');
 
-        getMasterAccountIdStub = sandbox.stub(AwsUtil, 'GetMasterAccountId');
-        getMasterAccountIdStub.returns(Promise.resolve(masterAccountId));
+        getBuildProcessAccountIdStub = sandbox.stub(AwsUtil, 'GetBuildProcessAccountId');
+        getBuildProcessAccountIdStub.returns(Promise.resolve(masterAccountId));
 
         generateDefaultTemplateStub = sandbox.stub(BaseCliCommand.prototype, 'generateDefaultTemplate');
         generateDefaultTemplateStub.returns(new DefaultTemplate('template', PersistedState.CreateEmpty(masterAccountId)));
@@ -112,7 +112,7 @@ describe('when executing init organization command', () => {
 
     test('calls getMasterAccountId', async () => {
         await command.performCommand(commandArgs);
-        expect(getMasterAccountIdStub.callCount).toBe(1);
+        expect(getBuildProcessAccountIdStub.callCount).toBe(1);
     });
 
     test('has default cross account role name', async () => {

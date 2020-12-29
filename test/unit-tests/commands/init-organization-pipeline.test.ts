@@ -99,7 +99,7 @@ describe('when executing init pipeline command', () => {
     let command: InitPipelineCommand;
     let commanderCommand: Command;
     let subCommanderCommand: Command;
-    let getMasterAccountIdStub: Sinon.SinonStub;
+    let getBuildProcessAccountIdStub: Sinon.SinonStub;
     let storageProviderCreateStub: Sinon.SinonStub;
     let storageProviderPutStub: Sinon.SinonStub;
     let generateDefaultTemplateStub: Sinon.SinonStub;
@@ -114,8 +114,8 @@ describe('when executing init pipeline command', () => {
 
     beforeEach(() => {
 
-        getMasterAccountIdStub = sandbox.stub(AwsUtil, 'GetMasterAccountId');
-        getMasterAccountIdStub.returns(Promise.resolve(masterAccountId));
+        getBuildProcessAccountIdStub = sandbox.stub(AwsUtil, 'GetBuildProcessAccountId');
+        getBuildProcessAccountIdStub.returns(Promise.resolve(masterAccountId));
 
         uploadInitialCommitStub = sandbox.stub(InitPipelineCommand.prototype, 'uploadInitialCommit');
         executeStackStub = sandbox.stub(InitPipelineCommand.prototype, 'executeStack');
@@ -144,9 +144,9 @@ describe('when executing init pipeline command', () => {
         sandbox.restore();
     });
 
-    test('calls getMasterAccountId', async () => {
+    test('calls GetBuildProcessAccountId', async () => {
         await command.performCommand(commandArgs);
-        expect(getMasterAccountIdStub.callCount).toBe(1);
+        expect(getBuildProcessAccountIdStub.callCount).toBe(1);
     });
 
 

@@ -41,7 +41,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 additionalArgs += `--profile ${profile} `;
             }
 
-            const defaultStateBucketName = await BaseCliCommand.GetStateBucketName({} as ICommandArgs);
+            const defaultStateBucketName = await BaseCliCommand.GetStateBucketName(undefined);
 
             if (stateBucketName !== undefined && stateBucketName !== defaultStateBucketName) {
                 additionalArgs += `--state-bucket-name ${stateBucketName} `;
@@ -176,29 +176,29 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     protected async getStateStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
-        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
         const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 
     protected async getOrganizationStateStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.organizationStateObject;
-        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.organizationStateBucketName || command.stateBucketName);
         const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 
     protected async getOrganizationFileStorageProvider(command: IPerformTasksCommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.organizationObject;
-        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
         const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 
-    protected static async GetStateBucketName(command: ICommandArgs): Promise<string> {
-        const bucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
+    protected static async GetStateBucketName(stateBucketName: string): Promise<string> {
+        const bucketName = stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
-            const accountId = await AwsUtil.GetMasterAccountId();
+            const accountId = await AwsUtil.GetBuildProcessAccountId();
             return bucketName.replace('${AWS::AccountId}', accountId);
         }
         return bucketName;
@@ -298,6 +298,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             if (process.argv.indexOf('--organization-state-object') === -1 && rc.organizationStateObject !== undefined) {
                 (command as IPerformTasksCommandArgs).organizationStateObject = rc.organizationStateObject;
             }
+
+            if (process.argv.indexOf('--organization-state-bucket-name') === -1 && rc.organizationStateBucketName !== undefined) {
+                (command as IPerformTasksCommandArgs).organizationStateBucketName = rc.organizationStateBucketName;
+            }
         }
 
     }
@@ -307,6 +311,7 @@ export interface ICommandArgs {
     stateBucketName: string;
     stateObject: string;
     organizationStateObject?: string;
+    organizationStateBucketName?: string;
     profile?: string;
     state?: PersistedState;
     initialized?: boolean;
@@ -322,6 +327,7 @@ export interface IRCObject {
     stateBucketName?: string;
     stateObject?: string;
     organizationStateObject?: string;
+    organizationStateBucketName?: string;
     profile?: string;
     configs: string[];
     config: string;
