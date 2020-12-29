@@ -17,7 +17,7 @@ export class Validator {
         delete clone.config;
 
         Validator.ThrowForUnknownAttribute(clone, `runtime configuration file (${rc.configs.join(', ')})`,
-            'organizationFile', 'stateBucketName', 'stateObject', 'profile', 'printStacksOutputPath', 'masterAccountId');
+            'organizationFile', 'stateBucketName', 'stateObject', 'profile', 'printStacksOutputPath', 'masterAccountId', 'organizationStateObject');
 
     }
 

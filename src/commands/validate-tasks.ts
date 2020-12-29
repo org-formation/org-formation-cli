@@ -28,6 +28,7 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
         command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
+        command.option('--organization-state-object [organization-state-object]', 'key for object used to load read-only organization state');
 
         super.addOptions(command);
     }

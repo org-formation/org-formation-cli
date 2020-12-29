@@ -74,9 +74,15 @@ describe('when creating perform-tasks command', () => {
 
     test('perform-tasks has master-account-id which is optional', () => {
         const opts: Option[] = subCommanderCommand.options;
-        const stateBucketOpt = opts.find((x) => x.long === '--master-account-id');
-        expect(stateBucketOpt).toBeDefined();
-        expect(stateBucketOpt.required).toBeFalsy();
+        const masterAccountIdOpt = opts.find((x) => x.long === '--master-account-id');
+        expect(masterAccountIdOpt).toBeDefined();
+        expect(masterAccountIdOpt.required).toBeFalsy();
+    });
+    test('perform-tasks has organization-state-object which is optional', () => {
+        const opts: Option[] = subCommanderCommand.options;
+        const organizationStateObjectOpt = opts.find((x) => x.long === '--organization-state-object');
+        expect(organizationStateObjectOpt).toBeDefined();
+        expect(organizationStateObjectOpt.required).toBeFalsy();
     });
 });
 

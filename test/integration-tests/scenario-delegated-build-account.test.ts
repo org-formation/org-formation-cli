@@ -35,7 +35,7 @@ describe('when calling org-formation perform tasks', () => {
         await orgAfterUpdate.initialize();
 
         await sleepForTest(500);
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-organization.yml', masterAccountId: '102625093955'});
+        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-organization.yml', masterAccountId: '102625093955', performCleanup: true});
         await sleepForTest(500);
         stateAfterCleanup = await s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
         await sleepForTest(500);
@@ -174,8 +174,7 @@ describe('when calling org-formation perform tasks', () => {
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
         const target = state.getTarget('org-formation-build-role', '549476213961', 'eu-west-1');
-        expect(target).toBeDefined();
-        expect(target.lastCommittedHash).toBe('deleted');
+        expect(target).toBeUndefined();
     })
 
     test('buckets where cleaned up', () => {
@@ -186,12 +185,13 @@ describe('when calling org-formation perform tasks', () => {
         const buildAccountTarget = state.getTarget('bucket', '340381375986', 'eu-west-1');
         const anotherAccountTarget = state.getTarget('bucket', '549476213961', 'eu-west-1');
         const masterAccountTarget = state.getTarget('bucket', '102625093955', 'eu-west-1');
-        expect(buildAccountTarget).toBeDefined();
-        expect(buildAccountTarget.lastCommittedHash).toBe('deleted');
-        expect(anotherAccountTarget).toBeDefined();
-        expect(anotherAccountTarget.lastCommittedHash).toBe('deleted');
-        expect(masterAccountTarget).toBeDefined();
-        expect(masterAccountTarget.lastCommittedHash).toBe('deleted');
+        const accountBTarget = state.getTarget('bucket', '362239514602', 'eu-west-1');
+        const accountCTarget = state.getTarget('bucket', '673026687213', 'eu-west-1');
+        expect(buildAccountTarget).toBeUndefined();
+        expect(anotherAccountTarget).toBeUndefined();
+        expect(masterAccountTarget).toBeUndefined();
+        expect(accountBTarget).toBeUndefined();
+        expect(accountCTarget).toBeUndefined();
     })
 
     afterAll(async () => {

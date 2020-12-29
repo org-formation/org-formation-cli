@@ -93,12 +93,17 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (command.state) {
             return command.state;
         }
-        const storageProvider = await this.getStateBucket(command);
+        const storageProvider = await this.getStateStorageProvider(command);
         BaseCliCommand.StateBucketName = storageProvider.bucketName;
         const accountId = await AwsUtil.GetMasterAccountId();
 
         try {
             const state = await PersistedState.Load(storageProvider, accountId);
+            if (command.organizationStateObject !== undefined) {
+                const orgStorageProvider = await this.getOrganizationStateStorageProvider(command);
+                const orgState = await PersistedState.Load(orgStorageProvider, accountId);
+                state.setReadonlyOrganizationState(orgState);
+            }
             command.state = state;
             return state;
         } catch (err) {
@@ -140,7 +145,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState, roleInMasterAccount?: string): Promise<OrganizationBinder> {
-
         if (roleInMasterAccount && roleInMasterAccount.includes(':role/')) {
             throw new Error(`roleInMasterAccount must be role name, not arn. found: ${roleInMasterAccount}`);
         }
@@ -158,7 +162,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     protected async createOrGetStateBucket(command: ICommandArgs, region: string): Promise<S3StorageProvider> {
-        const storageProvider = await this.getStateBucket(command);
+        const storageProvider = await this.getStateStorageProvider(command);
         try {
             await storageProvider.create(region);
         } catch (err) {
@@ -170,8 +174,15 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return storageProvider;
     }
 
-    protected async getStateBucket(command: ICommandArgs): Promise<S3StorageProvider> {
+    protected async getStateStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
+        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+        return storageProvider;
+    }
+
+    protected async getOrganizationStateStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
+        const objectKey = command.organizationStateObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
         const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
@@ -283,6 +294,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             if (process.argv.indexOf('--master-account-id') === -1 && rc.masterAccountId !== undefined) {
                 (command as IPerformTasksCommandArgs).masterAccountId = rc.masterAccountId;
             }
+
+            if (process.argv.indexOf('--organization-state-object') === -1 && rc.organizationStateObject !== undefined) {
+                (command as IPerformTasksCommandArgs).organizationStateObject = rc.organizationStateObject;
+            }
         }
 
     }
@@ -291,6 +306,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 export interface ICommandArgs {
     stateBucketName: string;
     stateObject: string;
+    organizationStateObject?: string;
     profile?: string;
     state?: PersistedState;
     initialized?: boolean;
@@ -305,6 +321,7 @@ export interface IRCObject {
     masterAccountId?: string;
     stateBucketName?: string;
     stateObject?: string;
+    organizationStateObject?: string;
     profile?: string;
     configs: string[];
     config: string;

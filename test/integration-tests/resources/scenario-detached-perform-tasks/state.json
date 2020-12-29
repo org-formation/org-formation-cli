@@ -1,0 +1,144 @@
+{
+  "masterAccountId": "102625093955",
+  "bindings": {
+    "OC::ORG::MasterAccount": {
+      "MasterAccount": {
+        "type": "OC::ORG::MasterAccount",
+        "logicalId": "MasterAccount",
+        "lastCommittedHash": "d1d3dec2eec43b3b340d7fe2ee6b2c53",
+        "physicalId": "102625093955"
+      }
+    },
+    "OC::ORG::OrganizationRoot": {
+      "OrganizationRoot": {
+        "type": "OC::ORG::OrganizationRoot",
+        "logicalId": "OrganizationRoot",
+        "lastCommittedHash": "1de10ce758c788affbdf15f93f0f2fd8",
+        "physicalId": "r-kvte"
+      }
+    },
+    "OC::ORG::Account": {
+      "OrganizationBuildAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "OrganizationBuildAccount",
+        "lastCommittedHash": "c860fe1c012da3019864b060798b1647",
+        "physicalId": "340381375986"
+      },
+      "AccountB": {
+        "type": "OC::ORG::Account",
+        "logicalId": "AccountB",
+        "lastCommittedHash": "35e5fed83a0a87449aefe6a71e1a7d93",
+        "physicalId": "362239514602"
+      },
+      "AccountC": {
+        "type": "OC::ORG::Account",
+        "logicalId": "AccountC",
+        "lastCommittedHash": "538cf8cce28323f605ee506fa1c5f3bd",
+        "physicalId": "673026687213"
+      },
+      "AnotherAccount": {
+        "type": "OC::ORG::Account",
+        "logicalId": "AnotherAccount",
+        "lastCommittedHash": "d33be4a5cb91831eda2753e0c68376ca",
+        "physicalId": "549476213961"
+      }
+    }
+  },
+  "stacks": {
+    "org-formation-build-role-b": {
+      "362239514602": {
+        "eu-west-1": {
+          "accountId": "362239514602",
+          "region": "eu-west-1",
+          "stackName": "org-formation-build-role-b",
+          "lastCommittedHash": "de747cb125d759abb4ee3ef25682fdb1",
+          "logicalAccountId": "AccountB",
+          "terminationProtection": true
+        }
+      }
+    },
+    "org-formation-build-role": {
+      "549476213961": {
+        "eu-west-1": {
+          "accountId": "549476213961",
+          "region": "eu-west-1",
+          "stackName": "org-formation-build-role",
+          "lastCommittedHash": "b8bb73b79594c109912170191bcc49c6",
+          "logicalAccountId": "AnotherAccount",
+          "terminationProtection": true
+        }
+      }
+    },
+    "org-formation-build-role-c": {
+      "673026687213": {
+        "eu-west-1": {
+          "accountId": "673026687213",
+          "region": "eu-west-1",
+          "stackName": "org-formation-build-role-c",
+          "lastCommittedHash": "2e1c78dbfd64f96e701ca70d13b28656",
+          "logicalAccountId": "AccountC",
+          "terminationProtection": true
+        }
+      }
+    },
+    "bucket": {
+      "340381375986": {
+        "eu-west-1": {
+          "accountId": "340381375986",
+          "region": "eu-west-1",
+          "stackName": "bucket",
+          "lastCommittedHash": "7b2bd79446e521db82a64fa46d2c33ce",
+          "logicalAccountId": "OrganizationBuildAccount",
+          "terminationProtection": false
+        }
+      },
+      "673026687213": {
+        "eu-west-1": {
+          "accountId": "673026687213",
+          "region": "eu-west-1",
+          "stackName": "bucket",
+          "lastCommittedHash": "7b2bd79446e521db82a64fa46d2c33ce",
+          "logicalAccountId": "AccountC",
+          "terminationProtection": false
+        }
+      },
+      "362239514602": {
+        "eu-west-1": {
+          "accountId": "362239514602",
+          "region": "eu-west-1",
+          "stackName": "bucket",
+          "lastCommittedHash": "7b2bd79446e521db82a64fa46d2c33ce",
+          "logicalAccountId": "AccountB",
+          "terminationProtection": false
+        }
+      },
+      "102625093955": {
+        "eu-west-1": {
+          "accountId": "102625093955",
+          "region": "eu-west-1",
+          "stackName": "bucket",
+          "lastCommittedHash": "7b2bd79446e521db82a64fa46d2c33ce",
+          "logicalAccountId": "MasterAccount",
+          "terminationProtection": false
+        }
+      },
+      "549476213961": {
+        "eu-west-1": {
+          "accountId": "549476213961",
+          "region": "eu-west-1",
+          "stackName": "bucket",
+          "lastCommittedHash": "7b2bd79446e521db82a64fa46d2c33ce",
+          "logicalAccountId": "AnotherAccount",
+          "terminationProtection": false
+        }
+      }
+    }
+  },
+  "values": {
+    "state-version": "2",
+    "organization.template.hash": "575e8bf12e83c3fd42e8b373d6bad791",
+    "organization.template-last-published.hash": "041d38a0deeb3ac61ddef2f5c580ab4a"
+  },
+  "previousTemplate": "{\"AWSTemplateFormatVersion\":\"2010-09-09-OC\",\"Description\":\"default template generated for organization with master account 102625093955\",\"Organization\":{\"OrganizationRoot\":{\"Type\":\"OC::ORG::OrganizationRoot\",\"Properties\":{\"DefaultBuildAccessRoleName\":\"OrganizationFormationBuildRole\"}},\"MasterAccount\":{\"Type\":\"OC::ORG::MasterAccount\",\"Properties\":{\"AccountName\":\"Organizational Master Account\",\"AccountId\":\"102625093955\"}},\"OrganizationBuildAccount\":{\"Type\":\"OC::ORG::Account\",\"Properties\":{\"AccountName\":\"Account A\",\"AccountId\":\"340381375986\",\"RootEmail\":\"account+a@olafconijn.awsapps.com\"}},\"AccountB\":{\"Type\":\"OC::ORG::Account\",\"Properties\":{\"AccountName\":\"Account B\",\"AccountId\":\"362239514602\",\"RootEmail\":\"account+b@olafconijn.awsapps.com\",\"OrganizationAccessRoleName\":\"CustomCrossAccountRole\"}},\"AccountC\":{\"Type\":\"OC::ORG::Account\",\"Properties\":{\"AccountName\":\"Account C\",\"AccountId\":\"673026687213\",\"RootEmail\":\"account+c@olafconijn.awsapps.com\",\"OrganizationAccessRoleName\":\"AnotherCustomRole\"}},\"AnotherAccount\":{\"Type\":\"OC::ORG::Account\",\"Properties\":{\"AccountName\":\"Users Account\",\"AccountId\":\"549476213961\",\"RootEmail\":\"account+users@olafconijn.awsapps.com\"}}}}"
+
+}
