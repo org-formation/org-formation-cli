@@ -73,7 +73,7 @@ export class BuildConfiguration {
         }
     }
 
-    public async fixateOrganizationFile(command: IPerformTasksCommandArgs): Promise<void>{
+    public async fixateOrganizationFile(command: IPerformTasksCommandArgs): Promise<void> {
 
         if (command.organizationFile === undefined) {
             const updateOrgTasks = this.tasks.filter(x => x.Type === 'update-organization');
@@ -99,15 +99,20 @@ export class BuildConfiguration {
     }
 
     private async readOrganizationFileContents(organizationFileLocation: string): Promise<string> {
-        if (organizationFileLocation.startsWith('s3://')) {
-            const buildProcessAccountId = await AwsUtil.GetBuildProcessAccountId();
-            const s3client = await AwsUtil.GetS3Service(buildProcessAccountId, undefined);
-            const bucketAndKey = organizationFileLocation.substring(5);
-            const bucketAndKeySplit = bucketAndKey.split('/');
-            const response = await s3client.getObject({Bucket: bucketAndKeySplit[0], Key: bucketAndKeySplit[1]}).promise();
-            return response.Body.toString();
-        } else {
-            return readFileSync(organizationFileLocation).toString();
+        try {
+            if (organizationFileLocation.startsWith('s3://')) {
+                const buildProcessAccountId = await AwsUtil.GetBuildProcessAccountId();
+                const s3client = await AwsUtil.GetS3Service(buildProcessAccountId, undefined);
+                const bucketAndKey = organizationFileLocation.substring(5);
+                const bucketAndKeySplit = bucketAndKey.split('/');
+                const response = await s3client.getObject({ Bucket: bucketAndKeySplit[0], Key: bucketAndKeySplit[1] }).promise();
+                return response.Body.toString();
+            } else {
+                return readFileSync(organizationFileLocation).toString();
+            }
+        } catch (err) {
+            ConsoleUtil.LogError(`unable to load organization file from ${organizationFileLocation}.`, err);
+            throw err;
         }
     }
 
@@ -136,7 +141,7 @@ export class BuildConfiguration {
         const expressionResolver = new CfnExpressionResolver();
         const parametersSection = expressionResolver.resolveFirstPass(this.parameters);
 
-        for(const paramName in parametersSection) {
+        for (const paramName in parametersSection) {
             const param = parametersSection[paramName];
             const paramType = param.Type;
 
@@ -159,7 +164,7 @@ export class BuildConfiguration {
             }
 
             if (paramType === 'Boolean') {
-                if (value === 'true' || value === 1 || value === true){
+                if (value === 'true' || value === 1 || value === true) {
                     value = true;
                 } else if (value === 'false' || value === 0 || value === false) {
                     value = false;
@@ -181,22 +186,22 @@ export class BuildConfiguration {
         const result: IBuildTaskConfiguration[] = [];
         for (const name in resolvedContents) {
             const config = resolvedContents[name] as IBuildTaskConfiguration;
-            result.push({...config, LogicalName: name, FilePath: filePath});
+            result.push({ ...config, LogicalName: name, FilePath: filePath });
         }
 
-        for(const task of result) {
-            if (task.DependsOn === undefined) {continue;}
+        for (const task of result) {
+            if (task.DependsOn === undefined) { continue; }
 
             let dependencies = task.DependsOn;
             if (!Array.isArray(dependencies)) {
                 dependencies = [dependencies];
             }
 
-            for(const dependency of dependencies) {
+            for (const dependency of dependencies) {
                 if (typeof dependency !== 'string') {
                     ConsoleUtil.LogWarning(`Task ${task.LogicalName} declares DependsOn that is not a string. you must use the name of the task, not !Ref to the task.`);
                 } else {
-                    const found = result.find(x=>x.LogicalName === dependency);
+                    const found = result.find(x => x.LogicalName === dependency);
                     if (found === undefined) {
                         ConsoleUtil.LogWarning(`Task ${task.LogicalName} depends on task ${dependency} which was not found.`);
                     }
@@ -243,7 +248,7 @@ export interface IBuildTask {
     physicalIdForCleanup?: string;
 }
 
-export interface IBuildFile extends Record<string, IBuildTaskConfiguration | {}>{
+export interface IBuildFile extends Record<string, IBuildTaskConfiguration | {}> {
     Parameters?: Record<string, IBuildFileParameter>;
     Mappings?: CfnMappingsSection;
 }

@@ -1,7 +1,6 @@
 
 BucketToAllAccounts:
   Type: update-stacks
-  DependsOn: OrganizationFormationBuildRole
   Template: ./bucket.yml
   StackName: bucket
   DefaultOrganizationBindingRegion: eu-west-1
