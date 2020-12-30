@@ -13,6 +13,7 @@ import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
 export class DefaultTemplateWriter {
     public organizationModel: AwsOrganization;
     public logicalNames: LogicalNames;
+    public DefaultBuildProcessAccessRoleName: string;
 
     constructor(organizationModel?: AwsOrganization) {
         if (organizationModel) {
@@ -199,6 +200,9 @@ export class DefaultTemplateWriter {
         lines.push(new Line('Type', OrgResourceTypes.OrganizationRoot, 4));
         lines.push(new Line('Properties', '', 4));
         lines.push(new Line('DefaultOrganizationAccessRoleName', DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName, 6));
+        if (this.DefaultBuildProcessAccessRoleName !== undefined) {
+            lines.push(new Line('DefaultBuildAccessRoleName', this.DefaultBuildProcessAccessRoleName, 6));
+        }
         lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
         lines.push(new EmptyLine());
 

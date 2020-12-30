@@ -1,0 +1,32 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+  TaskRoleName: XXX-organizationFormationBuildAccessRoleName
+
+OrganizationFormationBuildRole:
+  Type: update-stacks
+  Template: ./templates/org-formation-build-role.yml
+  StackName: XXX-roleStackName
+  TerminationProtection: true
+  DefaultOrganizationBindingRegion: XXX-region
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+    Account: '*'
+    ExcludeAccount: !Ref XXX-buildAccountLogicalName
+  Parameters:
+    buildAccountId: !Ref XXX-buildAccountLogicalName
+  TaskRoleName: XXX-organizationAccountAccessRoleName
+  TaskViaRoleArn: !Sub 'arn:aws:iam::${MasterAccount}:role/XXX-organizationFormationBuildAccessRoleName'
+
+OrganizationBuild:
+  Type: update-stacks
+  Template: ./templates/org-formation-build.yml
+  StackName: XXX-stackName
+  Parameters:
+    stateBucketName: XXX-stateBucketName
+    resourcePrefix: XXX-resourcePrefix
+    repositoryName: XXX-repositoryName
+  DefaultOrganizationBindingRegion: XXX-region
+  DefaultOrganizationBinding:
+    Account: !Ref XXX-buildAccountLogicalName

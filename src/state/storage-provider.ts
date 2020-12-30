@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { S3 } from 'aws-sdk';
 import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
+import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../util/console-util';
 
@@ -30,14 +31,14 @@ export class S3StorageProvider implements IStorageProvider {
         this.objectKey = stateObject;
     }
 
-    public async create(region: string): Promise<void> {
+    public async create(region: string, throwOnAccessDenied = false, credentials: CredentialsOptions = undefined): Promise<void> {
         const request: CreateBucketRequest = {
             Bucket: this.bucketName,
         };
         if (!region) {
             region = 'us-east-1';
         }
-        const s3client = new S3({ region });
+        const s3client = new S3({ region, credentials });
         try {
             await s3client.createBucket(request).promise();
             await s3client.putPublicAccessBlock({
@@ -60,7 +61,7 @@ export class S3StorageProvider implements IStorageProvider {
             if (err && err.code === 'BucketAlreadyOwnedByYou') {
                 return;
             }
-            if (err && err.code === 'AccessDenied') {
+            if (err && !throwOnAccessDenied && err.code === 'AccessDenied') {
                 return; // assume bucket has been set up properly
             }
             throw err;
@@ -101,22 +102,22 @@ export class S3StorageProvider implements IStorageProvider {
     }
 
     public async put(contents: string): Promise<void> {
-        try{
-        const s3client = new S3();
-        const putObjectRequest: PutObjectRequest = {
-            Bucket: this.bucketName,
-            Key: this.objectKey,
-            Body: contents,
-        };
+        try {
+            const s3client = new S3();
+            const putObjectRequest: PutObjectRequest = {
+                Bucket: this.bucketName,
+                Key: this.objectKey,
+                Body: contents,
+            };
 
-        // create a copy of `putObjectRequest` to ensure no circular references
-        ConsoleUtil.LogDebug(`putting object to S3: \n${JSON.stringify({
-            Bucket: putObjectRequest.Bucket,
-            Key: putObjectRequest.Key,
-        }, undefined, 2)}`);
+            // create a copy of `putObjectRequest` to ensure no circular references
+            ConsoleUtil.LogDebug(`putting object to S3: \n${JSON.stringify({
+                Bucket: putObjectRequest.Bucket,
+                Key: putObjectRequest.Key,
+            }, undefined, 2)}`);
 
-        await s3client.putObject(putObjectRequest).promise();
-        }catch(err) {
+            await s3client.putObject(putObjectRequest).promise();
+        } catch (err) {
             ConsoleUtil.LogError(`unable to put object to s3 (bucket: ${this.bucketName}, key: ${this.objectKey})`, err);
             throw err;
         }

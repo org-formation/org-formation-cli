@@ -63,6 +63,10 @@ export class AwsUtil {
         AwsUtil.masterAccountId = masterAccountId;
     }
 
+    static SetBuildAccountId(buildAccountId: string): void {
+        AwsUtil.buildProcessAccountId = buildAccountId;
+    }
+
     public static async GetMasterAccountId(): Promise<string> {
         if (AwsUtil.masterAccountId !== undefined) {
             return AwsUtil.masterAccountId;
@@ -108,8 +112,8 @@ export class AwsUtil {
         return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId, `${accountId}/${region}/${roleInTargetAccount}/${roleInTargetAccount}/${viaRoleArn}`, { region }, roleInTargetAccount, viaRoleArn);
     }
 
-    public static async DeleteObject(bucketName: string, objectKey: string): Promise<void> {
-        const s3client = new S3();
+    public static async DeleteObject(bucketName: string, objectKey: string, credentials: CredentialsOptions = undefined): Promise<void> {
+        const s3client = new S3({credentials});
         await s3client.deleteObject({ Bucket: bucketName, Key: objectKey }).promise();
     }
 

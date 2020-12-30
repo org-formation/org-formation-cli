@@ -77,11 +77,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
     }
 
-    public async generateDefaultTemplate(): Promise<DefaultTemplate> {
+    public async generateDefaultTemplate(defaultBuildAccessRoleName?: string): Promise<DefaultTemplate> {
         const organizations = new Organizations({ region: 'us-east-1' });
         const awsReader = new AwsOrganizationReader(organizations);
         const awsOrganization = new AwsOrganization(awsReader);
         const writer = new DefaultTemplateWriter(awsOrganization);
+        writer.DefaultBuildProcessAccessRoleName = defaultBuildAccessRoleName;
         const template = await writer.generateDefaultTemplate();
         template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
         const parsedTemplate = TemplateRoot.createFromContents(template.template, './');
