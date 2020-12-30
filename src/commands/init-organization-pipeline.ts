@@ -107,7 +107,6 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             ? this.createBuildAccessRoleTemplate(path, command.buildProcessRoleName)
             : undefined;
 
-        const stateStorageProvider = S3StorageProvider.Create(stateBucketName, command.stateObject);
 
         if (command.delegateToBuildAccount) {
             await this.executeOrgFormationRoleStack(this.currentAccountId, this.buildAccountId, buildAccessRoleTemplate, region, command.roleStackName);
@@ -119,7 +118,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         ConsoleUtil.LogInfo('creating codecommit / codebuild and codepipeline resources using CloudFormation...');
         await this.executePipelineStack(this.buildAccountId, cloudformationTemplateContents, command.region, stateBucketName, resourcePrefix, stackName, repositoryName);
 
-        await template.state.save(stateStorageProvider);
+        await template.state.save(storageProvider);
 
         await AwsUtil.DeleteObject(stateBucketName, 'initial-commit.zip', this.s3credentials);
         ConsoleUtil.LogInfo('done');

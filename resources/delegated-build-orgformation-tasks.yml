@@ -9,6 +9,7 @@ MasterOrganizationFormationBuildRole:
   Template: ./templates/org-formation-build-role.yml
   StackName: XXX-roleStackName
   TerminationProtection: true
+  IgnoreDuplicateStackName: true
   DefaultOrganizationBindingRegion: XXX-region
   DefaultOrganizationBinding:
     IncludeMasterAccount: true
@@ -20,6 +21,7 @@ OrganizationFormationBuildRole:
   Template: ./templates/org-formation-build-role.yml
   StackName: XXX-roleStackName
   TerminationProtection: true
+  IgnoreDuplicateStackName: true
   DefaultOrganizationBindingRegion: XXX-region
   DefaultOrganizationBinding:
     IncludeMasterAccount: false
