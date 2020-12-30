@@ -145,6 +145,8 @@ export class DefaultTemplateWriter {
         lines.push(new Line('PolicyName', policy.Name, 6));
         if (policy.PolicySummary && policy.PolicySummary.Description) {
             lines.push(new Line('Description', policy.PolicySummary.Description, 6));
+        } else {
+            lines.push(new Line('Description', '\'\'', 6));
         }
         if (policy.Content) {
             lines.push(new ObjLine('PolicyDocument', JSON.parse(policy.Content), 6));
