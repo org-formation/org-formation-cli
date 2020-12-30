@@ -4,8 +4,6 @@ import { v4 } from 'uuid';
 import { InitOrganizationCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests } from './base-integration-test';
 import { TemplateRoot } from '~parser/parser';
-import { dirname } from 'path';
-import { readFileSync } from 'fs';
 
 describe('when calling org-formation init', () => {
     let context: IIntegrationTestContext;

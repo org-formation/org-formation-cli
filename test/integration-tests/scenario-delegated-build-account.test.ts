@@ -57,10 +57,9 @@ describe('when calling org-formation perform tasks', () => {
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
-        const target = state.getTarget('org-formation-build-role-b', '362239514602', 'eu-west-1');
+        const target = state.getTarget('org-formation-build-role', '362239514602', 'eu-west-1');
         expect(target).toBeDefined();
     })
-
 
     test('role was created in account c', () => {
         const str = stateAfterUpdate.Body.toString();

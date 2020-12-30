@@ -8,31 +8,18 @@ OrganizationFormationBuildRole:
   Type: update-stacks
   Template: ./build-role.yml
   StackName: org-formation-build-role
+  IgnoreDuplicateStackName: true
   TerminationProtection: true
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
     IncludeMasterAccount: false # OrganizationFormationBuildRole must have been manually added to the build account in order to bootstrap
     ExcludeAccount:
     - !Ref OrganizationBuildAccount
-    - !Ref AccountB
     - !Ref AccountC
     Account: '*'
   Parameters:
     buildAccountId: !Ref OrganizationBuildAccount
-  TaskRoleName: 'OrganizationAccountAccessRole'
-  TaskViaRoleArn: !Sub 'arn:aws:iam::${MasterAccount}:role/OrganizationFormationBuildRole'
-
-OrganizationFormationBuildRoleB:
-  Type: update-stacks
-  Template: ./build-role.yml
-  StackName: org-formation-build-role-b
-  TerminationProtection: true
-  DefaultOrganizationBindingRegion: eu-west-1
-  DefaultOrganizationBinding:
-    Account: !Ref AccountB
-  Parameters:
-    buildAccountId: !Ref OrganizationBuildAccount
-  TaskRoleName: 'CustomCrossAccountRole'
+  TaskRoleName: !GetAtt CurrentAccount.OrganizationAccessRoleName
   TaskViaRoleArn: !Sub 'arn:aws:iam::${MasterAccount}:role/OrganizationFormationBuildRole'
 
 OrganizationFormationBuildRoleC:

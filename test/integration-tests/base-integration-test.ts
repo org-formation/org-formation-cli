@@ -28,6 +28,7 @@ export const baseBeforeAll = async (profileName: string = profileForIntegrationT
         () => new SharedIniFileCredentials({ profile: profileName }),
     ]);
 
+
     const stateBucketName = `${v4()}`;
     const stackName = `a${Math.floor(Math.random() * 10000)}`;
     const command = {stateBucketName: stateBucketName, stateObject: 'state.json', logicalName: 'default', stackName: stackName, profile: profileForIntegrationTests, verbose: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 } as any;

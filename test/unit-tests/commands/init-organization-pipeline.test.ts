@@ -285,7 +285,9 @@ describe('when executing init pipeline', () => {
             }
             catch(err) {
                 expect(err).toBeDefined();
-                expect(err.message).toBe(`account with id ${commandArgs.buildAccountId} does not exist in organization`)
+                expect(err.message).toContain(`${commandArgs.buildAccountId}`);
+                expect(err.message).toContain(`is not authorized to perform: sts:AssumeRole on resource`);
+                expect(err.message).toContain(`${commandArgs.buildAccountId}`);
             }
         });
     });
@@ -338,11 +340,13 @@ describe('when executing init pipeline', () => {
             expect(executeRoleStackStackStub.callCount).toBe(1);
             const args = executeRoleStackStackStub.lastCall.args;
             const targetAccountId = args[0] as string;
-            const cfnTemplate = args[1] as string;
-            const region = args[2] as string;
-            const stackName = args[3] as string;
+            const buildAcctId = args[1] as string;
+            const cfnTemplate = args[2] as string;
+            const region = args[3] as string;
+            const stackName = args[4] as string;
 
             expect(cfnTemplate).toEqual(expect.stringContaining('AWSTemplateFormatVersion: \'2010-09-09\''));
+            expect(buildAcctId).toBe(buildAccountId);
             expect(region).toBe(commandArgs.region);
             expect(stackName).toBe(commandArgs.roleStackName);
             expect(targetAccountId).toBe(masterAccountId);

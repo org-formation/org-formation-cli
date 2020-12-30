@@ -145,7 +145,7 @@ describe('when resolving tasks from configuration', () => {
 
 })
 
-describe('when creating build configuration with duplicate stack name', () => {
+describe('when creating build configuration', () => {
     let task: IBuildTask;
     let updateStacksResources: sinon.SinonStub;
     const sandbox = Sinon.createSandbox();

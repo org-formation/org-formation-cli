@@ -4,7 +4,7 @@ OrganizationUpdate:
   Template: ./organization.yml
   TaskRoleName: XXX-organizationFormationBuildAccessRoleName
 
-OrganizationFormationBuildRole:
+MasterOrganizationFormationBuildRole:
   Type: update-stacks
   Template: ./templates/org-formation-build-role.yml
   StackName: XXX-roleStackName
@@ -12,11 +12,22 @@ OrganizationFormationBuildRole:
   DefaultOrganizationBindingRegion: XXX-region
   DefaultOrganizationBinding:
     IncludeMasterAccount: true
+  Parameters:
+    buildAccountId: !Ref XXX-buildAccountLogicalName
+
+OrganizationFormationBuildRole:
+  Type: update-stacks
+  Template: ./templates/org-formation-build-role.yml
+  StackName: XXX-roleStackName
+  TerminationProtection: true
+  DefaultOrganizationBindingRegion: XXX-region
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: false
     Account: '*'
     ExcludeAccount: !Ref XXX-buildAccountLogicalName
   Parameters:
     buildAccountId: !Ref XXX-buildAccountLogicalName
-  TaskRoleName: XXX-organizationAccountAccessRoleName
+  TaskRoleName: !GetAtt CurrentAccount.OrganizationAccessRoleName
   TaskViaRoleArn: !Sub 'arn:aws:iam::${MasterAccount}:role/XXX-organizationFormationBuildAccessRoleName'
 
 OrganizationBuild:

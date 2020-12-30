@@ -2,6 +2,7 @@ import path from 'path';
 import { Organizations } from 'aws-sdk';
 import { Command } from 'commander';
 import RC from 'rc';
+import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -162,8 +163,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return binder;
     }
 
-    protected async createOrGetStateBucket(command: ICommandArgs, region: string): Promise<S3StorageProvider> {
-        const storageProvider = await this.getStateStorageProvider(command);
+    protected async createOrGetStateBucket(command: ICommandArgs, region: string, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
+        const storageProvider = await this.getStateStorageProvider(command, accountId, credentials);
         try {
             await storageProvider.create(region);
         } catch (err) {
@@ -175,10 +176,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return storageProvider;
     }
 
-    protected async getStateStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
+    protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
-        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
-        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName, accountId);
+        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, credentials);
         return storageProvider;
     }
 
@@ -196,10 +197,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return storageProvider;
     }
 
-    protected static async GetStateBucketName(stateBucketName: string): Promise<string> {
+    protected static async GetStateBucketName(stateBucketName: string, accountId?: string): Promise<string> {
         const bucketName = stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
-            const accountId = await AwsUtil.GetBuildProcessAccountId();
+            if (accountId === undefined){
+                accountId = await AwsUtil.GetBuildProcessAccountId();
+            }
             return bucketName.replace('${AWS::AccountId}', accountId);
         }
         return bucketName;

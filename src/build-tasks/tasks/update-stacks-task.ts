@@ -20,6 +20,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             name: config.LogicalName,
             physicalIdForCleanup: config.StackName,
             StackName: config.StackName,
+            IgnoreDuplicateStackName: config.IgnoreDuplicateStackName === true,
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
@@ -39,6 +40,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             childTasks: [],
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             StackName: config.StackName,
+            IgnoreDuplicateStackName: config.IgnoreDuplicateStackName === true,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
@@ -54,6 +56,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             childTasks: [],
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             StackName: config.StackName,
+            IgnoreDuplicateStackName: config.IgnoreDuplicateStackName === true,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
@@ -183,6 +186,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
 
 export interface IUpdateStacksBuildTask extends IBuildTask {
     StackName: string;
+    IgnoreDuplicateStackName: boolean;
 }
 
 export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
@@ -207,4 +211,5 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     TaskViaRoleArn?: string;
     LogVerbose?: boolean;
     ForceDeploy?: boolean;
+    IgnoreDuplicateStackName?: boolean;
 }

@@ -64,7 +64,7 @@ export class BuildConfiguration {
 
     private validateTasksFile(tasks: IBuildTask[]): void {
         const updateStackTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-stacks') as IUpdateStacksBuildTask[];
-        const stackNames = updateStackTasks.map(x => x.StackName);
+        const stackNames = updateStackTasks.filter(x=>x.IgnoreDuplicateStackName !== true).map(x => x.StackName);
         this.throwForDuplicateVal(stackNames, x => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
 
         const updateOrgTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-organization');

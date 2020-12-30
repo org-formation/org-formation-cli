@@ -207,6 +207,10 @@ export class CfnExpressionResolver {
         } else if (path === 'RootEmail') {
             if (!account.rootEmail) { return ''; }
             return account.rootEmail;
+        } else if (path === 'OrganizationAccessRoleName') {
+            return account.organizationAccessRoleName;
+        } else if (path === 'BuildAccessRoleName') {
+            return account.buildAccessRoleName;
         }
         if (!path.startsWith('Resources.')) {
             throw new OrgFormationError(`unable to resolve account attribute ${account.logicalId}.${path}`);

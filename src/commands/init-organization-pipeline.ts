@@ -19,7 +19,7 @@ const commandDescription = 'initializes organization and created codecommit repo
 
 export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs> {
     private currentAccountId: string;
-    private pipelineAccountId: string;
+    private buildAccountId: string;
     private s3credentials: CredentialsOptions;
 
     constructor(command: Command) {
@@ -45,14 +45,14 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
         // in this context currentAccountId is the master account
         this.currentAccountId = await AwsUtil.GetMasterAccountId();
-        this.pipelineAccountId = this.currentAccountId;
+        this.buildAccountId = this.currentAccountId;
 
         command.delegateToBuildAccount = command.buildAccountId !== undefined;
         if (command.delegateToBuildAccount) {
             command.buildProcessRoleName = 'OrganizationFormationBuildAccessRole';
-            this.pipelineAccountId = command.buildAccountId;
+            this.buildAccountId = command.buildAccountId;
+            this.s3credentials = await AwsUtil.GetCredentials(command.buildAccountId, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
         }
-        AwsUtil.SetBuildAccountId(this.pipelineAccountId);
 
         Validator.validateRegion(command.region);
 
@@ -65,7 +65,9 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         const resourcePrefix = command.resourcePrefix;
         const stackName = command.stackName;
         const repositoryName = command.repositoryName;
-        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
+
+        const storageProvider = await this.createOrGetStateBucket(command, region, this.buildAccountId, this.s3credentials);
+        const stateBucketName = storageProvider.bucketName;
 
         const codePipelineTemplateFileName = 'orgformation-codepipeline.yml';
         let path = __dirname + '/../../../resources/';
@@ -106,20 +108,16 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             : undefined;
 
         const stateStorageProvider = S3StorageProvider.Create(stateBucketName, command.stateObject);
-        if (command.delegateToBuildAccount) {
-            this.s3credentials = await AwsUtil.GetCredentials(command.buildAccountId, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
-        }
-        await stateStorageProvider.create(command.region, true, this.s3credentials);
 
         if (command.delegateToBuildAccount) {
-            await this.executeOrgFormationRoleStack(this.currentAccountId, buildAccessRoleTemplate, region, command.roleStackName);
+            await this.executeOrgFormationRoleStack(this.currentAccountId, this.buildAccountId, buildAccessRoleTemplate, region, command.roleStackName);
         }
 
         ConsoleUtil.LogInfo(`uploading initial commit to S3 ${stateBucketName}/initial-commit.zip...`);
         await this.uploadInitialCommit(stateBucketName, path + 'initial-commit/', template.template, buildSpecContents, organizationTasksContents, cloudformationTemplateContents, buildAccessRoleTemplate);
 
         ConsoleUtil.LogInfo('creating codecommit / codebuild and codepipeline resources using CloudFormation...');
-        await this.executePipelineStack(this.pipelineAccountId, cloudformationTemplateContents, command.region, stateBucketName, resourcePrefix, stackName, repositoryName);
+        await this.executePipelineStack(this.buildAccountId, cloudformationTemplateContents, command.region, stateBucketName, resourcePrefix, stackName, repositoryName);
 
         await template.state.save(stateStorageProvider);
 
@@ -131,7 +129,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     public uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string, organizationTasksContents: string, cloudformationTemplateContents: string, buildAccessRoleTemplateContents: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                const s3client = new S3();
+                const s3client = new S3({credentials: this.s3credentials});
                 const output = new WritableStream();
                 const archive = archiver('zip');
 
@@ -167,12 +165,15 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         });
     }
 
-    public async executeOrgFormationRoleStack(targetAccountId: string, cfnTemplate: string, region: string, stackName: string): Promise<void> {
+    public async executeOrgFormationRoleStack(targetAccountId: string, buildAccountId: string, cfnTemplate: string, region: string, stackName: string): Promise<void> {
         const cfn = await AwsUtil.GetCloudFormation(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
         const stackInput: CreateStackInput | UpdateStackInput = {
             StackName: stackName,
             TemplateBody: cfnTemplate,
             Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
+            Parameters: [
+                { ParameterKey: 'buildAccountId', ParameterValue: buildAccountId },
+            ],
         };
 
         await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
@@ -198,7 +199,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         let buildSpecContents = readFileSync(path + 'local-build-orgformation-tasks.yml').toString('utf-8');
 
         for (const [key, val] of Object.entries(replacements)) {
-            buildSpecContents = buildSpecContents.replace(key, val);
+            buildSpecContents = buildSpecContents.replace(new RegExp(key, 'g'), val);
         }
 
         return buildSpecContents;
@@ -208,7 +209,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         let buildSpecContents = readFileSync(path + 'delegated-build-orgformation-tasks.yml').toString('utf-8');
 
         for (const [key, val] of Object.entries(replacements)) {
-            buildSpecContents = buildSpecContents.replace(key, val);
+            buildSpecContents = buildSpecContents.replace(new RegExp(key, 'g'), val);
         }
 
         return buildSpecContents;
