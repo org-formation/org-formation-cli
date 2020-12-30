@@ -10,6 +10,7 @@ import { DefaultTemplate } from '~writer/default-template-writer';
 import { ConsoleUtil } from '~util/console-util';
 import { OrgResourceTypes } from '~parser/model';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { STS } from 'aws-sdk';
 
 describe('when creating init organization pipeline command', () => {
     let command: InitPipelineCommand;
@@ -270,26 +271,6 @@ describe('when executing init pipeline', () => {
         });
 
 
-    });
-
-    describe('with non-existing build acct id parameter', () => {
-
-        beforeEach(() => {
-            commandArgs.buildAccountId = '111222333444';
-        });
-
-        test('initializing pipeline fails', async () => {
-            try {
-                await command.performCommand(commandArgs);
-                expect('invocation').toBe('to throw')
-            }
-            catch(err) {
-                expect(err).toBeDefined();
-                expect(err.message).toContain(`${commandArgs.buildAccountId}`);
-                expect(err.message).toContain(`is not authorized to perform: sts:AssumeRole on resource`);
-                expect(err.message).toContain(`${commandArgs.buildAccountId}`);
-            }
-        });
     });
 
     describe('with build acct id parameter', () => {
