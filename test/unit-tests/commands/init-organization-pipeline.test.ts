@@ -136,6 +136,7 @@ describe('when executing init pipeline', () => {
         getMasterAccountIdStub = sandbox.stub(AwsUtil, 'GetMasterAccountId');
         getMasterAccountIdStub.returns(Promise.resolve(masterAccountId));
 
+        sandbox.stub(InitPipelineCommand.prototype, 'checkRunInMasterAccount');
         uploadInitialCommitStub = sandbox.stub(InitPipelineCommand.prototype, 'uploadInitialCommit');
         executePipelineStackStackStub = sandbox.stub(InitPipelineCommand.prototype, 'executePipelineStack');
         executeRoleStackStackStub = sandbox.stub(InitPipelineCommand.prototype, 'executeOrgFormationRoleStack');

@@ -247,7 +247,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         return buildSpecContents;
     }
 
-    private async checkRunInMasterAccount(): Promise<void> {
+    public async checkRunInMasterAccount(): Promise<void> {
         try {
             const org = new Organizations({ region: 'us-east-1' });
             const result = await org.describeOrganization().promise();
