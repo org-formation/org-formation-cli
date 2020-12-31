@@ -1,6 +1,6 @@
 import archiver = require('archiver');
 import { existsSync, readFileSync } from 'fs';
-import { S3 } from 'aws-sdk';
+import { Organizations, S3 } from 'aws-sdk';
 import { CreateStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { Command } from 'commander';
@@ -11,7 +11,6 @@ import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { Validator } from '~parser/validator';
-import { S3StorageProvider } from '~state/storage-provider';
 
 
 const commandName = 'init-pipeline';
@@ -46,6 +45,8 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         // in this context currentAccountId is the master account
         this.currentAccountId = await AwsUtil.GetMasterAccountId();
         this.buildAccountId = this.currentAccountId;
+
+        await this.checkRunInMasterAccount();
 
         command.delegateToBuildAccount = command.buildAccountId !== undefined;
         if (command.delegateToBuildAccount) {
@@ -128,7 +129,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     public uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string, organizationTasksContents: string, cloudformationTemplateContents: string, buildAccessRoleTemplateContents: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                const s3client = new S3({credentials: this.s3credentials});
+                const s3client = new S3({ credentials: this.s3credentials });
                 const output = new WritableStream();
                 const archive = archiver('zip');
 
@@ -165,33 +166,41 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     }
 
     public async executeOrgFormationRoleStack(targetAccountId: string, buildAccountId: string, cfnTemplate: string, region: string, stackName: string): Promise<void> {
-        const cfn = await AwsUtil.GetCloudFormation(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
-        const stackInput: CreateStackInput | UpdateStackInput = {
-            StackName: stackName,
-            TemplateBody: cfnTemplate,
-            Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
-            Parameters: [
-                { ParameterKey: 'buildAccountId', ParameterValue: buildAccountId },
-            ],
-        };
+        try {
+            const cfn = await AwsUtil.GetCloudFormation(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
+            const stackInput: CreateStackInput | UpdateStackInput = {
+                StackName: stackName,
+                TemplateBody: cfnTemplate,
+                Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
+                Parameters: [
+                    { ParameterKey: 'assumeRolePrincipal', ParameterValue: buildAccountId },
+                ],
+            };
 
-        await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
+            await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
+        } catch (err) {
+            throw new OrgFormationError(`unable to create stack ${stackName} in account ${targetAccountId}, region ${region}, err: ${err}`);
+        }
     }
 
     public async executePipelineStack(targetAccountId: string, cfnTemplate: string, region: string, stateBucketName: string, resourcePrefix: string, stackName: string, repositoryName: string): Promise<void> {
-        const cfn = await AwsUtil.GetCloudFormation(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
-        const stackInput: CreateStackInput | UpdateStackInput = {
-            StackName: stackName,
-            TemplateBody: cfnTemplate,
-            Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
-            Parameters: [
-                { ParameterKey: 'stateBucketName', ParameterValue: stateBucketName },
-                { ParameterKey: 'resourcePrefix', ParameterValue: resourcePrefix },
-                { ParameterKey: 'repositoryName', ParameterValue: repositoryName },
-            ],
-        };
+        try {
+            const cfn = await AwsUtil.GetCloudFormation(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
+            const stackInput: CreateStackInput | UpdateStackInput = {
+                StackName: stackName,
+                TemplateBody: cfnTemplate,
+                Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
+                Parameters: [
+                    { ParameterKey: 'stateBucketName', ParameterValue: stateBucketName },
+                    { ParameterKey: 'resourcePrefix', ParameterValue: resourcePrefix },
+                    { ParameterKey: 'repositoryName', ParameterValue: repositoryName },
+                ],
+            };
 
-        await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
+            await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
+        } catch (err) {
+            throw new OrgFormationError(`unable to create stack ${stackName} in account ${targetAccountId}, region ${region}, err: ${err}`);
+        }
     }
 
     private createLocalBuildTaskFile(path: string, replacements: Record<string, string>): string {
@@ -213,6 +222,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
         return buildSpecContents;
     }
+
     private createBuildAccessRoleTemplate(path: string, buildProcessRoleName: string): string {
         let buildSpecContents = readFileSync(path + 'orgformation-build-access-role.yml').toString('utf-8');
 
@@ -235,6 +245,18 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
         buildSpecContents = buildSpecContents.replace('XXX-ARGS', '');
         return buildSpecContents;
+    }
+
+    private async checkRunInMasterAccount(): Promise<void> {
+        try {
+            const org = new Organizations({ region: 'us-east-1' });
+            const result = await org.describeOrganization().promise();
+            if (result.Organization.MasterAccountId !== this.currentAccountId) {
+                throw new OrgFormationError('init-pipeline command must be ran from organization master account');
+            }
+        } catch (err) {
+            throw new OrgFormationError('init-pipeline command must be ran from organization master account');
+        }
     }
 }
 

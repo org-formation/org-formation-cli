@@ -279,3 +279,10 @@ Resources:
           Status: ENABLED
       SourceVersion: refs/heads/master
       TimeoutInMinutes: 180
+
+
+Outputs:
+  OrgBuildRole:
+    Value: !GetAtt OrgBuildRole.RoleId
+    Export:
+      Name: !Sub ${AWS::StackName}-build-role-id
