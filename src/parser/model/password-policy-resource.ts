@@ -64,6 +64,9 @@ export class PasswordPolicyResource extends Resource {
                 throw new OrgFormationError(`PasswordReusePrevention for resource ${id} must have value smaller than or equal to 24`);
             }
         }
+        if (this.passwordReusePrevention === undefined) {
+            this.passwordReusePrevention = 0;
+        }
         this.allowUsersToChangePassword = this.props.AllowUsersToChangePassword;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
