@@ -10,7 +10,7 @@ describe('when having a default expression resolver', () => {
     beforeEach(async () => {
         const template = TestTemplates.createBasicTemplate();
         const state = TestTemplates.createState(template);
-        resolver = await CfnExpressionResolver.CreateDefaultResolver('Account2', '1232342341236', 'eu-central-1', 'XXX',  template.organizationSection, state, true);
+        resolver = await CfnExpressionResolver.CreateDefaultResolver('Account2', '1232342341236', 'eu-central-1', 'XXX', undefined,  template.organizationSection, state, true);
 
         target = {
             obj: { att: 'val'},

@@ -53,7 +53,7 @@ export class CloudFormationBinder {
             const stackName = this.stackName;
             const key = {accountId, region, stackName};
 
-            const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.accountLogicalId, accountId, target.region, this.customRoleName, this.template.organizationSection, this.state, false);
+            const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.accountLogicalId, accountId, target.region, this.taskRoleName, this.taskViaRoleArn, this.template.organizationSection, this.state, false);
 
             targetsInTemplate.push(key);
 

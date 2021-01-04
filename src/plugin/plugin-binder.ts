@@ -125,7 +125,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
         const that = this;
 
         return async (): Promise<void> => {
-            const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, this.template.organizationSection, this.state, true);
+            const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, task.taskViaRoleArn, this.template.organizationSection, this.state, true);
             await this.plugin.appendResolvers(expressionResolver, binding);
             let myTask = await expressionResolver.resolve(binding.task);
             myTask = await expressionResolver.collapse(myTask);
@@ -151,7 +151,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
         const that = this;
 
         return async (): Promise<void> => {
-            const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, this.template.organizationSection, this.state, true);
+            const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, task.taskViaRoleArn, this.template.organizationSection, this.state, true);
             await this.plugin.appendResolvers(expressionResolver, binding);
             let myTask = await expressionResolver.resolve(binding.task);
             myTask = await expressionResolver.collapse(myTask);
@@ -186,6 +186,7 @@ export interface IPluginTask {
     hash: string;
     taskLocalHash?: string;
     taskRoleName?: string;
+    taskViaRoleArn?: string;
     parameters?: Record<string, ICfnExpression>;
     logVerbose: boolean;
     forceDeploy: boolean;

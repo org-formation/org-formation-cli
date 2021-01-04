@@ -228,7 +228,7 @@ export class CfnExpressionResolver {
 
     public static ValueUsedForUnresolvedCopyValueExpression = 'value-used-for-unresolved-copy-value-on-validation';
 
-    private static async ResolveCopyValueFunctions<T>(resolver: CfnExpressionResolver, targetAccount: string, targetRegion: string, taskRoleName: string,  obj: T, finalPerform: boolean): Promise<T> {
+    private static async ResolveCopyValueFunctions<T>(resolver: CfnExpressionResolver, targetAccount: string, targetRegion: string, taskRoleName: string, viaRoleArn: string,  obj: T, finalPerform: boolean): Promise<T> {
         const functions = ResourceUtil.EnumFunctionsForResource(obj);
 
         for(const fn of functions) {
@@ -250,7 +250,7 @@ export class CfnExpressionResolver {
         return obj;
     }
 
-    public static CreateDefaultResolver(logicalAccountName: string, accountId: string, region: string, taskRoleName: string, organizationSection: OrganizationSection, state: PersistedState, finalPerform: boolean): CfnExpressionResolver {
+    public static CreateDefaultResolver(logicalAccountName: string, accountId: string, region: string, taskRoleName: string, viaRoleArn: string, organizationSection: OrganizationSection, state: PersistedState, finalPerform: boolean): CfnExpressionResolver {
         const resolver = new CfnExpressionResolver();
         resolver.addParameter('AWS::AccountId', accountId);
         resolver.addParameter('AWS::Region', region);
@@ -264,7 +264,7 @@ export class CfnExpressionResolver {
         resolver.addResourceWithResolverFn('ORG::PrincipalOrgID', () => AwsUtil.GetPrincipalOrgId());
         resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(resource, resourcePath, organizationSection, state));
 
-        resolver.addTreeResolver((that: CfnExpressionResolver, obj) => CfnExpressionResolver.ResolveCopyValueFunctions(that, accountId, region, taskRoleName, obj, finalPerform));
+        resolver.addTreeResolver((that: CfnExpressionResolver, obj) => CfnExpressionResolver.ResolveCopyValueFunctions(that, accountId, region, taskRoleName, viaRoleArn, obj, finalPerform));
 
         return resolver;
     }

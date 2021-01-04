@@ -161,8 +161,8 @@ export class AwsUtil {
 
     }
 
-    public static async GetCloudFormationExport(exportName: string, accountId: string, region: string, customRoleName: string): Promise<string | undefined> {
-        const cfnRetrieveExport = await AwsUtil.GetCloudFormation(accountId, region, customRoleName);
+    public static async GetCloudFormationExport(exportName: string, accountId: string, region: string, customRoleName: string, customViaRoleArn?: string): Promise<string | undefined> {
+        const cfnRetrieveExport = await AwsUtil.GetCloudFormation(accountId, region, customRoleName, customViaRoleArn);
         const listExportsRequest: ListExportsInput = {};
         do {
             const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();

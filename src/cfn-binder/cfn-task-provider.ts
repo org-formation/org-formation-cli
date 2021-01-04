@@ -40,7 +40,7 @@ export class CfnTaskProvider {
             parameters[paramName] = paramValue;
         }
 
-        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template.organizationSection, this.state, true);
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, binding.customViaRoleArn, this.template.organizationSection, this.state, true);
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {
@@ -81,7 +81,7 @@ export class CfnTaskProvider {
 
                 for (const dependency of dependencies) {
 
-                    const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, customRoleName);
+                    const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, customRoleName, customViaRoleArn);
 
                     if (foundExport !== undefined) {
                         stackInput.Parameters.push( {
@@ -188,7 +188,7 @@ export class CfnTaskProvider {
     public async createDeleteTemplateTask(binding: ICfnBinding): Promise<ICfnTask> {
         const that = this;
 
-        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName,  this.template.organizationSection, this.state, true);
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, binding.customViaRoleArn, this.template.organizationSection, this.state, true);
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {
