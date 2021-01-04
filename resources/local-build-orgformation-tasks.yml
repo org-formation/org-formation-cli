@@ -1,16 +1,23 @@
+Parameters:
+  <<: !Include "../organization-parameters.yml"
+
+  resourcePrefix: # overwrite the resource prefix specified in ../organization-parameters
+    Type: String
+    Default: XXX-resourcePrefix
 
 OrganizationUpdate:
   Type: update-organization
-  Template: ./organization.yml
+  Template: ../organization.yml
 
-OrganizationBuild:
+OrganizationBuildPipeline:
   Type: update-stacks
-  Template: ./templates/org-formation-build.yml
+  Template: ./org-formation-build.yml
   StackName: XXX-stackName
+  StackDescription: Organization Formation Build Infrastructure (CodeCommit, CodeBuild and CodePipeline)
   Parameters:
-    stateBucketName: XXX-stateBucketName
-    resourcePrefix: XXX-resourcePrefix
+    stateBucketName: !Ref stateBucketName
+    resourcePrefix: !Ref resourcePrefix
     repositoryName: XXX-repositoryName
-  DefaultOrganizationBindingRegion: XXX-region
+  DefaultOrganizationBindingRegion: !Ref primaryRegion
   DefaultOrganizationBinding:
     IncludeMasterAccount: true

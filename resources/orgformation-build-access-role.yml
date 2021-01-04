@@ -10,7 +10,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/AdministratorAccess
+      - arn:aws:iam::aws:policy/AdministratorAccess # see: https://github.com/org-formation/org-formation-cli/blob/master/docs/least-priviledge.md
       RoleName: XXX-OrganizationFormationBuildAccessRole
       AssumeRolePolicyDocument:
        Version: 2012-10-17

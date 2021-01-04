@@ -53,7 +53,7 @@ Resources:
               - sts:AssumeRole
       Path: /
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+        - 'arn:aws:iam::aws:policy/AdministratorAccess' # see: https://github.com/org-formation/org-formation-cli/blob/master/docs/least-priviledge.md
       Policies:
         - PolicyName: !Sub '${resourcePrefix}-build-service-role-policy'
           PolicyDocument:
@@ -285,4 +285,4 @@ Outputs:
   OrgBuildRole:
     Value: !GetAtt OrgBuildRole.RoleId
     Export:
-      Name: !Sub ${AWS::StackName}-build-role-id
+      Name: !Sub ${AWS::StackName}-role-id

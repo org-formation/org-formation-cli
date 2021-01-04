@@ -59,8 +59,7 @@ export class Validator {
             'Type', 'DependsOn', 'Skip', 'Template', 'StackName', 'StackDescription', 'Parameters', 'StackPolicy',
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
             'OrganizationBindings', 'TerminationProtection', 'UpdateProtection', 'CloudFormationRoleName', 'TaskRoleName',
-            'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance', 'LogVerbose', 'ForceDeploy', 'TaskViaRoleArn',
-            'IgnoreDuplicateStackName');
+            'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance', 'LogVerbose', 'ForceDeploy', 'TaskViaRoleArn');
     }
 
     public static ValidateTemplateRoot(root: ITemplate): void {

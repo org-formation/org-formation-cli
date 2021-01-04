@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { ConsoleUtil } from '../util/console-util';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { ICfnTarget } from '~state/persisted-state';
+import { AwsUtil } from '~util/aws-util';
 
 
 const commandName = 'describe-stacks';
@@ -44,4 +45,5 @@ export class DescribeStacksCommand extends BaseCliCommand<IDescribeStackCommandA
 
 export interface IDescribeStackCommandArgs extends ICommandArgs {
     stackName?: string;
+    masterAccountId?: string;
 }

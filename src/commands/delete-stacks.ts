@@ -6,6 +6,7 @@ import { CloudFormationBinder } from '~cfn-binder/cfn-binder';
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { ITemplate, TemplateRoot } from '~parser/parser';
 import { GlobalState } from '~util/global-state';
+import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'delete-stacks';
 const commandDescription = 'removes all stacks deployed to accounts using org-formation';
@@ -61,4 +62,5 @@ interface IDeleteStackCommandArgs extends ICommandArgs {
     stackName: string;
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
+    masterAccountId?: any;
 }

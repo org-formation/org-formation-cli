@@ -38,7 +38,6 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
-        command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
         command.option('--organization-state-object [organization-state-object]', 'key for object used to load read-only organization state');
         command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
 
@@ -53,11 +52,6 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
         this.storeCommand(command);
-
-        if (command.masterAccountId !== undefined) {
-            AwsUtil.SetMasterAccountId(command.masterAccountId);
-        }
-
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
 
@@ -119,6 +113,5 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     parsedParameters?: Record<string, string>;
     logicalNamePrefix?: string;
     forceDeploy?: boolean;
-    masterAccountId?: string;
     organizationObject?: any;
 }

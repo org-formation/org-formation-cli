@@ -27,7 +27,6 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
-        command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
         command.option('--organization-state-object [organization-state-object]', 'key for object used to load read-only organization state');
         command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
 
@@ -36,10 +35,6 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
 
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
-
-        if (command.masterAccountId !== undefined) {
-            AwsUtil.SetMasterAccountId(command.masterAccountId);
-        }
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');

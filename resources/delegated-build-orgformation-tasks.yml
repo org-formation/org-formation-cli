@@ -1,47 +1,55 @@
+Parameters:
+  <<: !Include "../organization-parameters.yml"
+
+  resourcePrefix: # overwrite the resource prefix specified in ../organization-parameters
+    Type: String
+    Default: XXX-resourcePrefix
 
 OrganizationUpdate:
   Type: update-organization
-  Template: ./organization.yml
+  Template: ../organization.yml
   TaskRoleName: XXX-organizationFormationBuildAccessRoleName
 
-OrganizationBuild:
+OrganizationBuildPipeline:
   Type: update-stacks
-  Template: ./templates/org-formation-build.yml
+  Template: ./org-formation-build.yml
   StackName: XXX-stackName
+  StackDescription: Organization Formation Build Infrastructure (CodeCommit, CodeBuild and CodePipeline)
   Parameters:
-    stateBucketName: XXX-stateBucketName
-    resourcePrefix: XXX-resourcePrefix
+    stateBucketName: !Ref stateBucketName
+    resourcePrefix: !Ref resourcePrefix
     repositoryName: XXX-repositoryName
-  DefaultOrganizationBindingRegion: XXX-region
+  DefaultOrganizationBindingRegion: !Ref primaryRegion
   DefaultOrganizationBinding:
     Account: !Ref XXX-buildAccountLogicalName
 
-MasterOrganizationFormationBuildRole:
+MasterOrganizationFormationRole:
   Type: update-stacks
-  DependsOn: OrganizationBuild
-  Template: ./templates/org-formation-build-role.yml
-  StackName: XXX-roleStackName
+  DependsOn: OrganizationBuildPipeline
+  Template: ./org-formation-role.yml
+  StackName: XXX-roleStackName-master
+  StackDescription: Organization Formation Build Infrastructure (IAM Role for cross account access by build process)
   TerminationProtection: true
-  IgnoreDuplicateStackName: true
-  DefaultOrganizationBindingRegion: XXX-region
+  DefaultOrganizationBindingRegion: !Ref primaryRegion
   DefaultOrganizationBinding:
     IncludeMasterAccount: true
   Parameters:
-    assumeRolePrincipal: !CopyValue ['XXX-stackName-build-role-id', !Ref XXX-buildAccountLogicalName, XXX-region]
+    assumeRolePrincipal: !CopyValue [XXX-stackName-role-id, !Ref XXX-buildAccountLogicalName, !Ref primaryRegion]
 
-OrganizationFormationBuildRole:
+OrganizationFormationRole:
   Type: update-stacks
-  DependsOn: OrganizationBuild
-  Template: ./templates/org-formation-build-role.yml
+  DependsOn: OrganizationBuildPipeline
+  Template: ./org-formation-role.yml
   StackName: XXX-roleStackName
+  StackDescription: Organization Formation Build Infrastructure (IAM Role for cross account access by build process)
   TerminationProtection: true
-  IgnoreDuplicateStackName: true
-  DefaultOrganizationBindingRegion: XXX-region
+  DefaultOrganizationBindingRegion: !Ref primaryRegion
   DefaultOrganizationBinding:
     IncludeMasterAccount: false
     Account: '*'
     ExcludeAccount: !Ref XXX-buildAccountLogicalName
+  MaxConcurrentStacks: 10
   Parameters:
-    assumeRolePrincipal: !CopyValue ['XXX-stackName-build-role-id', !Ref XXX-buildAccountLogicalName, XXX-region]
+    assumeRolePrincipal: !CopyValue [XXX-stackName-role-id, !Ref XXX-buildAccountLogicalName, !Ref primaryRegion]
   TaskRoleName: !GetAtt CurrentAccount.OrganizationAccessRoleName
   TaskViaRoleArn: !Sub 'arn:aws:iam::${MasterAccount}:role/XXX-organizationFormationBuildAccessRoleName'

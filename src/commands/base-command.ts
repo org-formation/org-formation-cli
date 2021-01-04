@@ -19,6 +19,7 @@ import { S3StorageProvider } from '~state/storage-provider';
 import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template-writer';
 import { CfnParameters } from '~core/cfn-parameters';
 import { Validator } from '~parser/validator';
+import { String } from 'aws-sdk/clients/cloudsearchdomain';
 
 const DEFAULT_STATE_OBJECT = 'state.json';
 
@@ -144,6 +145,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--print-stack', 'will print stack traces for errors');
         command.option('--verbose', 'will enable debug logging');
         command.option('--no-color', 'will disable colorization of console logs');
+        command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
     }
 
     protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState, roleInMasterAccount?: string): Promise<OrganizationBinder> {
@@ -247,6 +249,11 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         await AwsUtil.InitializeWithProfile(command.profile);
 
+
+        if (command.masterAccountId !== undefined) {
+            AwsUtil.SetMasterAccountId(command.masterAccountId);
+        }
+
         command.initialized = true;
     }
 
@@ -312,6 +319,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 }
 
 export interface ICommandArgs {
+    masterAccountId?: String;
     stateBucketName: string;
     stateObject: string;
     organizationStateObject?: string;

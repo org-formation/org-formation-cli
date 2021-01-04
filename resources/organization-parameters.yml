@@ -1,0 +1,17 @@
+resourcePrefix:
+  Type: String
+  Default: my # if you use this resource prefix in all stacks deployed by this project they are easily identifiable
+
+primaryRegion:
+  Type: String
+  Default: XXX-region
+
+allRegions:
+  Type: List<String>
+  Default: # sometimes you will need to deploy a task to all regions you allow. you can use this parameter to keep that list in 1 place
+    - XXX-region
+    # - us-east-1
+
+stateBucketName:
+  Type: String
+  Default: XXX-stateBucketName

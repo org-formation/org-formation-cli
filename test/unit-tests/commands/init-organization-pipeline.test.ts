@@ -78,7 +78,7 @@ describe('when creating init organization pipeline command', () => {
         const resourcePrefixOpt = opts.find((x) => x.long === '--resource-prefix');
         expect(resourcePrefixOpt).toBeDefined();
         expect(resourcePrefixOpt.required).toBe(true);
-        expect(subCommanderCommand.resourcePrefix).toBe('orgformation');
+        expect(subCommanderCommand.resourcePrefix).toBe('organization-formation');
     });
 
     test('command has repository-name option', () => {
