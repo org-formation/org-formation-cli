@@ -4,7 +4,6 @@ import { IPerformTasksCommandArgs } from './perform-tasks';
 import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { Validator } from '~parser/validator';
-import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'validate-tasks <tasksFile>';
 const commandDescription = 'Will validate the tasks file, including configured tasks';

@@ -110,7 +110,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             : undefined;
 
 
-        const orgParametersInclude = this.replaceContents(path + 'organization-parameters.yml', replacements)
+        const orgParametersInclude = this.replaceContents(path + 'organization-parameters.yml', replacements);
 
         if (command.delegateToBuildAccount) {
             await this.executeOrgFormationRoleStack(this.currentAccountId, this.buildAccountId, buildAccessRoleTemplate, region, command.roleStackName + '-master');
@@ -127,10 +127,10 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         await AwsUtil.DeleteObject(stateBucketName, 'initial-commit.zip', this.s3credentials);
 
         ConsoleUtil.LogInfo('');
-        ConsoleUtil.LogInfo(`Your pipeline and initial commit have been created in AWS.`);
+        ConsoleUtil.LogInfo('Your pipeline and initial commit have been created in AWS.');
         ConsoleUtil.LogInfo('Hope this will get you started!');
         ConsoleUtil.LogInfo('');
-        ConsoleUtil.LogInfo(`Take your time and browse through the source, there is some additional guidance as comments.`);
+        ConsoleUtil.LogInfo('Take your time and browse through the source, there is some additional guidance as comments.');
         ConsoleUtil.LogInfo('');
         ConsoleUtil.LogInfo('Have fun!');
         ConsoleUtil.LogInfo('');

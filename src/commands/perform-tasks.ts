@@ -10,7 +10,6 @@ import { BuildRunner } from '~build-tasks/build-runner';
 import { ConsoleUtil } from '~util/console-util';
 import { S3StorageProvider } from '~state/storage-provider';
 import { AwsEvents } from '~aws-provider/aws-events';
-import { AwsUtil } from '~util/aws-util';
 import { yamlParse } from '~yaml-cfn/index';
 
 const commandName = 'perform-tasks <tasks-file>';

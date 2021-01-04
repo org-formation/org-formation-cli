@@ -19,7 +19,6 @@ import { S3StorageProvider } from '~state/storage-provider';
 import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template-writer';
 import { CfnParameters } from '~core/cfn-parameters';
 import { Validator } from '~parser/validator';
-import { String } from 'aws-sdk/clients/cloudsearchdomain';
 
 const DEFAULT_STATE_OBJECT = 'state.json';
 
@@ -319,7 +318,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 }
 
 export interface ICommandArgs {
-    masterAccountId?: String;
+    masterAccountId?: string;
     stateBucketName: string;
     stateObject: string;
     organizationStateObject?: string;

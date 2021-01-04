@@ -4,7 +4,6 @@ import { BaseCliCommand, ICommandArgs } from './base-command';
 import { ChangeSetProvider } from '~change-set/change-set-provider';
 import { TemplateRoot } from '~parser/parser';
 import { GlobalState } from '~util/global-state';
-import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'create-change-set <templateFile>';
 const commandDescription = 'create change set that can be reviewed and executed later';
