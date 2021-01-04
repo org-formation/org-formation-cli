@@ -330,7 +330,7 @@ describe('when executing init pipeline', () => {
             expect(cfnTemplate).toEqual(expect.stringContaining('AWSTemplateFormatVersion: \'2010-09-09\''));
             expect(buildAcctId).toBe(buildAccountId);
             expect(region).toBe(commandArgs.region);
-            expect(stackName).toBe(commandArgs.roleStackName);
+            expect(stackName).toBe(commandArgs.roleStackName + '-master');
             expect(targetAccountId).toBe(masterAccountId);
         });
 
