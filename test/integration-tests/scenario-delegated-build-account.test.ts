@@ -23,6 +23,8 @@ describe('when calling org-formation perform tasks', () => {
         const s3client = context.s3client;
         const orgClient = await AwsUtil.GetOrganizationsService('102625093955', 'OrganizationFormationBuildRole')
 
+        AwsUtil.SetMasterAccountId('102625093955');
+
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-update-organization.yml', masterAccountId: '102625093955'});
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-update-organization.yml', masterAccountId: '102625093955'});
         await sleepForTest(500);

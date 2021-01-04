@@ -2,6 +2,7 @@ import { GetObjectOutput } from 'aws-sdk/clients/s3';
 import { readFileSync } from 'fs';
 import { IPerformTasksCommandArgs, PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { PersistedState } from '~state/persisted-state';
+import { AwsUtil } from '~util/aws-util';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from './base-integration-test';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-detached-perform-tasks/';
@@ -21,6 +22,8 @@ describe('when calling org-formation perform tasks', () => {
         const command : IPerformTasksCommandArgs = {...context.command,
             organizationStateObject: 'state.json', stateObject: 'task-state.json',
             organizationFile: 's3://' + context.command.stateBucketName + '/organization.yml' };
+
+        AwsUtil.SetMasterAccountId('102625093955');
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-tasks.yml', masterAccountId: '102625093955'});
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-tasks.yml', masterAccountId: '102625093955'});
