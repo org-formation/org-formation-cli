@@ -8,7 +8,6 @@ OrganizationFormationBuildRole:
   Type: update-stacks
   Template: ./build-role.yml
   StackName: org-formation-build-role
-  IgnoreDuplicateStackName: true
   TerminationProtection: true
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
