@@ -110,6 +110,7 @@ export class S3StorageProvider implements IStorageProvider {
                 Bucket: this.bucketName,
                 Key: this.objectKey,
                 Body: contents,
+                ACL: 'bucket-owner-full-control',
             };
 
             // create a copy of `putObjectRequest` to ensure no circular references

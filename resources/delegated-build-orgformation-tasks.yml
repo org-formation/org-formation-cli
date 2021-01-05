@@ -38,7 +38,7 @@ MasterOrganizationFormationRole:
 
 OrganizationFormationRole:
   Type: update-stacks
-  DependsOn: OrganizationBuildPipeline
+  DependsOn: MasterOrganizationFormationRole
   Template: ./org-formation-role.yml
   StackName: XXX-roleStackName
   StackDescription: Organization Formation Build Infrastructure (IAM Role for cross account access by build process)

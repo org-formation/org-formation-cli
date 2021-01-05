@@ -111,6 +111,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         const s3client = await AwsUtil.GetS3Service(target.accountId, target.region, task.taskRoleName);
         const request: PutObjectRequest = {
             ...CopyToS3TaskPlugin.getBucketAndKey(task),
+            ACL: 'bucket-owner-full-control',
         };
         request.Body = await this.createBody(task);
 
