@@ -113,7 +113,7 @@ export class AwsUtil {
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string, credentials: CredentialsOptions = undefined): Promise<void> {
-        const s3client = new S3({credentials});
+        const s3client = new S3({ credentials });
         await s3client.deleteObject({ Bucket: bucketName, Key: objectKey }).promise();
     }
 
@@ -240,6 +240,7 @@ export class CfnUtil {
             const bucketName = `organization-formation-${binding.accountId}-large-templates`;
             try {
                 await s3Service.createBucket({ Bucket: bucketName }).promise();
+                await s3Service.putBucketOwnershipControls({ Bucket: bucketName, OwnershipControls: { Rules: [{ ObjectOwnership: 'BucketOwnerPreferred' }] } }).promise();
                 await s3Service.putPublicAccessBlock({
                     Bucket: bucketName,
                     PublicAccessBlockConfiguration: {
