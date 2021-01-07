@@ -38,7 +38,7 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
             return;
         }
 
-        const binder = await this.getOrganizationBinder(template, state, command.taskRoleName);
+        const binder = await this.getOrganizationBinder(template, state);
 
         const tasks = binder.enumBuildTasks();
         const createTasks = tasks.filter(x=>x.action === 'Create');

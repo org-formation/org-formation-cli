@@ -147,9 +147,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
     }
 
-    protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState, roleInMasterAccount?: string): Promise<OrganizationBinder> {
-        if (roleInMasterAccount && roleInMasterAccount.includes(':role/')) {
-            throw new Error(`roleInMasterAccount must be role name, not arn. found: ${roleInMasterAccount}`);
+    protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState): Promise<OrganizationBinder> {
+        let roleInMasterAccount: string;
+        if (template.organizationSection.masterAccount) {
+            roleInMasterAccount = template.organizationSection.masterAccount.buildAccessRoleName;
         }
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);

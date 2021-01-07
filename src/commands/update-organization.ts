@@ -49,7 +49,7 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
             return;
         }
 
-        const binder = await this.getOrganizationBinder(template, state, command.taskRoleName);
+        const binder = await this.getOrganizationBinder(template, state);
         const tasks = binder.enumBuildTasks();
         await UpdateOrganizationCommand.ExecuteTasks(tasks, state, templateHash, template);
     }
