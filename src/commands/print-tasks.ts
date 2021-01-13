@@ -5,6 +5,7 @@ import { IPrintStacksCommandArgs } from './print-stacks';
 import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { Validator } from '~parser/validator';
+import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'print-tasks <tasksFile>';
 const commandDescription = 'Will print out all cloudformation templates that will be deployed by tasksFile';
@@ -30,6 +31,7 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         command.option('--output <output>', 'the serialization format used when printing stacks. Either json or yaml.', 'yaml');
         command.option('--output-path <output-path>', 'path, within the root directory, used to store printed templates', './.printed-stacks/');
         command.option('--output-cross-account-exports <output-path>', 'when set, output well generate cross account exports as part of cfn parameter', false);
+        command.option('--no-print-parameters', 'will not print parameter files when printing stacks');
 
         super.addOptions(command);
     }
@@ -42,8 +44,13 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
 
+        if (command.masterAccountId !== undefined) {
+            AwsUtil.SetMasterAccountId(command.masterAccountId);
+        }
+
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
+        await config.fixateOrganizationFile(command);
 
         const printTasks = config.enumPrintTasks(command);
         await BuildRunner.RunPrintTasks(printTasks, command.verbose === true , command.maxConcurrentTasks, command.failedTasksTolerance);

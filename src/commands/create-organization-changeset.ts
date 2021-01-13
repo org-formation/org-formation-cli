@@ -20,6 +20,7 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
     }
 
     public async performCommand(command: ICreateChangeSetCommandArgs): Promise<void> {
+
         const template = TemplateRoot.create(command.templateFile);
         const state = await this.getState(command);
 
@@ -27,7 +28,7 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
 
         const binder = await this.getOrganizationBinder(template, state);
 
-        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
         const provider = new ChangeSetProvider(stateBucketName);
         const tasks = binder.enumBuildTasks();
 
@@ -39,6 +40,7 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
 }
 
 export interface ICreateChangeSetCommandArgs extends ICommandArgs {
+    masterAccountId?: any;
     templateFile: string;
     changeSetName?: string;
 }

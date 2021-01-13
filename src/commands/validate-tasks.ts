@@ -26,13 +26,14 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
+        command.option('--organization-state-object [organization-state-object]', 'key for object used to load read-only organization state');
+        command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
 
         super.addOptions(command);
     }
 
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
-
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
@@ -42,6 +43,7 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
 
+        await config.fixateOrganizationFile(command);
         const validationTasks = config.enumValidationTasks(command);
         await BuildRunner.RunValidationTasks(validationTasks, command.verbose === true , command.maxConcurrentTasks, command.failedTasksTolerance);
     }

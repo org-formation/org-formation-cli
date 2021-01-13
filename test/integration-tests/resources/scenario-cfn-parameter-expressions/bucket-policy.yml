@@ -80,6 +80,9 @@ Parameters:
   orgStateBucketName:
     Type: String
 
+  refToAccountBinding:
+    Type: String
+
 Resources:
   BucketPolicy:
     Type: AWS::IAM::ManagedPolicy

@@ -1,11 +1,12 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
-import { AwsUtil, passwordPolicyEquals, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util/aws-util';
+import { AwsUtil, passwordPolicyEquals } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsEvents } from './aws-events';
 import { AwsOrganization } from './aws-organization';
+import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
 import {
     AccountResource,
     OrganizationalUnitResource,
@@ -16,7 +17,8 @@ export class AwsOrganizationWriter {
     private organization: AwsOrganization;
     private organizationService: Organizations;
 
-    constructor(organizationService: Organizations, organization: AwsOrganization) {
+    constructor(organizationService: Organizations, organization: AwsOrganization, private readonly crossAccountConfig?: ICrossAccountConfig) {
+
         this.organizationService = organizationService;
         this.organization = organization;
     }
@@ -336,7 +338,8 @@ export class AwsOrganizationWriter {
         }
 
         if (account.Alias !== resource.alias) {
-            const iam = await AwsUtil.GetIamService(accountId, resource.organizationAccessRoleName);
+            const assumeRoleConfig = GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
+            const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
             if (account.Alias) {
                 try {
                     await iam.deleteAccountAlias({ AccountAlias: account.Alias }).promise();
@@ -350,6 +353,10 @@ export class AwsOrganizationWriter {
                 try {
                     await iam.createAccountAlias({ AccountAlias: resource.alias }).promise();
                 } catch (err) {
+                    const current = await iam.listAccountAliases({}).promise();
+                    if (current.AccountAliases.find(x => x === resource.alias)) {
+                        return;
+                    }
                     if (err && err.code === 'EntityAlreadyExists') {
                         throw new OrgFormationError(`The account alias ${resource.alias} already exists. Most likely someone else already registered this alias to some other account.`);
                     }
@@ -371,7 +378,9 @@ export class AwsOrganizationWriter {
                     throw new OrgFormationError(`account ${resource.logicalId} specifies support level ${resource.supportLevel}, expected is support level ${masterAccountSupportLevel}, based on the support subscription for the organization master account.`);
                 } else {
                     try{
-                        const support = await AwsUtil.GetSupportService(this.organization.masterAccount.Id, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
+                        const targetAccountId = this.organization.masterAccount.Id;
+                        const assumeRoleConfig = GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, targetAccountId);
+                        const support = await AwsUtil.GetSupportService(targetAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
                         const createCaseRequest: CreateCaseRequest = {
                             subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
                             communicationBody: `Hi AWS,
@@ -396,7 +405,8 @@ export class AwsOrganizationWriter {
         }
 
         if (!passwordPolicyEquals(account.PasswordPolicy, resource.passwordPolicy)) {
-            const iam = await AwsUtil.GetIamService(accountId, resource.organizationAccessRoleName);
+            const assumeRoleConfig = GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
+            const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
             if (account.PasswordPolicy) {
                 try {
                     await iam.deleteAccountPasswordPolicy().promise();

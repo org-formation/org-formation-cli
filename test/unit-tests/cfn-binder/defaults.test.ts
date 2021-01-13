@@ -9,7 +9,7 @@ describe('when loading template with default-bindings', () => {
     let cloudformationBinder: CloudFormationBinder;
     let bindings: ICfnBinding[];
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/defaults/default-binding.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -20,7 +20,7 @@ describe('when loading template with default-bindings', () => {
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('default-binding', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
     });
 
     test('2 bindings are created', () => {
@@ -50,7 +50,7 @@ describe('when loading template with default-regions', () => {
     let cloudformationBinder: CloudFormationBinder;
     let bindings: ICfnBinding[];
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/defaults/default-regions.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -61,7 +61,7 @@ describe('when loading template with default-regions', () => {
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('default-regions', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
     });
 
     test('3 bindings are created', () => {

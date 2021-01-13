@@ -61,4 +61,5 @@ interface IDeleteStackCommandArgs extends ICommandArgs {
     stackName: string;
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
+    masterAccountId?: any;
 }

@@ -1,4 +1,4 @@
-import { PerformTasksCommand, RemoveCommand } from "~commands/index";
+import { PerformTasksCommand, RemoveCommand, ValidateTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { GetObjectOutput } from "aws-sdk/clients/s3";
 import { PersistedState } from "~state/persisted-state";
@@ -13,6 +13,7 @@ describe('when cleaning up stacks', () => {
     let stateAfterPerformTask1Includes: GetObjectOutput;
     let stateAfterRemove: GetObjectOutput;
     let performRemoveSpy: jest.SpyInstance;
+    let errorValidateIncludeMissingParameter: Error;
 
     beforeAll(async () => {
         try{
@@ -32,6 +33,12 @@ describe('when cleaning up stacks', () => {
             await RemoveCommand.Perform({...command, type: 'copy-to-s3', namespace: 'Include2', name: 'CopyS3File' });
             await sleepForTest(500);
             stateAfterRemove = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+
+            try{
+                await ValidateTasksCommand.Perform({...command,  tasksFile: basePathForScenario + '1-organization-tasks-missing-param.yml', performCleanup: false});
+            }catch(err) {
+                errorValidateIncludeMissingParameter = err;
+            }
         }
         catch(err) {
             expect(err.message).toBe('');
@@ -72,16 +79,6 @@ describe('when cleaning up stacks', () => {
         expect(state.getTrackedTasks('default').find(x=>x.physicalIdForCleanup === 'include2-my-stack-name')).toBeUndefined();
     });
 
-    test('after removing include contained plugins have last committed hash set to deleted', () => {
-        const str = stateAfterPerformTask1Includes.Body.toString();
-        const obj = JSON.parse(str);
-        const copyToS3 = obj.targets['copy-to-s3']['default'];
-        expect(Object.keys(copyToS3).length).toBe(2);
-        expect(copyToS3.Include1).toBeDefined();
-        expect(copyToS3.Include2).toBeDefined();
-        expect(copyToS3.Include2.CopyS3File['102625093955']['eu-central-1'].lastCommittedHash).toBe('deleted');
-    });
-
     test('after removing previously deleted plugin task performDelete was called', () => {
         expect(performRemoveSpy).toBeCalledTimes(1);
     });
@@ -92,6 +89,11 @@ describe('when cleaning up stacks', () => {
         const copyToS3 = obj.targets['copy-to-s3']['default'];
         expect(Object.keys(copyToS3).length).toBe(1);
         expect(copyToS3.Include2).toBeUndefined();
+    });
+
+    test('include with missing parameter throws error', () => {
+        expect(errorValidateIncludeMissingParameter).toBeDefined();
+        expect(errorValidateIncludeMissingParameter.message).toContain('bucketName');
     });
 
     afterAll(async () => {

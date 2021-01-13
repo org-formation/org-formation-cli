@@ -1,14 +1,22 @@
+import { readFileSync } from 'fs';
 import { Command } from 'commander';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { UpdateOrganizationCommand } from './update-organization';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
-import { ITrackedTask } from '~state/persisted-state';
+import { ITrackedTask, PersistedState } from '~state/persisted-state';
 import { Validator } from '~parser/validator';
 import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { ConsoleUtil } from '~util/console-util';
+import { S3StorageProvider } from '~state/storage-provider';
+import { AwsEvents } from '~aws-provider/aws-events';
+import { yamlParse } from '~yaml-cfn/index';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
+
+const DEFAULT_ORGANIZATION_OBJECT = 'organization.yml';
+
 
 export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs> {
     static async Perform(command: IPerformTasksCommandArgs): Promise<void> {
@@ -29,6 +37,9 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks (within a task) after which execution stops', 0);
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
+        command.option('--organization-state-object [organization-state-object]', 'key for object used to load read-only organization state');
+        command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
+
         super.addOptions(command);
     }
 
@@ -40,25 +51,49 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
         this.storeCommand(command);
-
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
+
         const state = await this.getState(command);
+        await config.fixateOrganizationFile(command);
         const tasks = config.enumBuildTasks(command);
         ConsoleUtil.state = state;
 
         state.performUpdateToVersion2IfNeeded();
+        UpdateOrganizationCommand.ResetHasRan();
 
         await BuildRunner.RunTasks(tasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
         const tracked = state.getTrackedTasks(command.logicalName);
         const cleanupTasks = BuildTaskProvider.enumTasksForCleanup(tracked, tasks, command);
         if (cleanupTasks.length > 0) {
-            await BuildRunner.RunTasks(cleanupTasks, command.verbose === true, 1, 0);
+            await BuildRunner.RunTasks(cleanupTasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
         }
         const tasksToTrack = BuildTaskProvider.recursivelyFilter(tasks, x=> x.physicalIdForCleanup !== undefined);
         const trackedTasks: ITrackedTask[] = tasksToTrack.map(x=> { return {physicalIdForCleanup: x.physicalIdForCleanup, logicalName: x.name, type: x.type  }; });
         state.setTrackedTasks(command.logicalName, trackedTasks);
-        state.save();
+
+        if (UpdateOrganizationCommand.HasRan === true) {
+            await PerformTasksCommand.PublishChangedOrganizationFileIfChanged(command, state);
+        }
+
+        await state.save();
+
+    }
+
+    public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {
+        if (command.organizationFile.startsWith('s3://')) {return;}
+        if (command.organizationFileHash !== state.getTemplateHashLastPublished()) {
+            const contents = readFileSync(command.organizationFile).toString();
+            const object = yamlParse(contents);
+            const objectKey = command.organizationObject || DEFAULT_ORGANIZATION_OBJECT;
+            const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
+            const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+
+            await storageProvider.putObject(object);
+            state.putTemplateHashLastPublished(command.organizationFileHash);
+            await AwsEvents.putOrganizationChangedEvent(stateBucketName, objectKey);
+        }
+
     }
 }
 
@@ -71,9 +106,11 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     maxConcurrentStacks: number;
     failedStacksTolerance: number;
     organizationFile?: string;
+    organizationFileContents?: string;
     organizationFileHash?: string;
-    parameters?: string;
+    parameters?: string | {};
     parsedParameters?: Record<string, string>;
     logicalNamePrefix?: string;
     forceDeploy?: boolean;
+    organizationObject?: any;
 }

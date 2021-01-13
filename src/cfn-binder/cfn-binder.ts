@@ -3,14 +3,15 @@ import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { CfnTaskProvider, ICfnTask } from './cfn-task-provider';
 import { CfnTemplate } from './cfn-template';
+import { CfnParameters } from './cfn-parameters';
 import { IResourceTarget } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
 import { ICfnTarget, PersistedState } from '~state/persisted-state';
 import { ICfnCopyValue, ICfnExpression } from '~core/cfn-expression';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class CloudFormationBinder {
-    private readonly masterAccount: string;
-    private readonly invocationHash: string;
+    private readonly masterAccount: string;;
 
     constructor(private readonly stackName: string,
                 private readonly template: TemplateRoot,
@@ -22,45 +23,27 @@ export class CloudFormationBinder {
                 private readonly terminationProtection = false,
                 private readonly stackPolicy: {} = undefined,
                 private readonly customRoleName?: string,
-                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state, logVerbose)) {
+                private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state, logVerbose),
+                private readonly taskViaRoleArn: string = undefined) {
 
         this.masterAccount = template.organizationSection.masterAccount.accountId;
 
         if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
             throw new OrgFormationError('state and template do not belong to the same organization');
         }
-
-        const invocation: any = {
-            stackName,
-            templateHash: template.hash,
-            parameters,
-            terminationProtection,
-        };
-
-        if (this.stackPolicy) {
-            invocation.stackPolicy = this.stackPolicy;
-        }
-
-        if (this.customRoleName) {
-            invocation.cloudFormationRoleName = this.customRoleName;
-        }
-
-        if (this.taskRoleName) {
-            invocation.taskRoleName = this.taskRoleName;
-        }
-
-        this.invocationHash = md5(JSON.stringify(invocation));
     }
 
-    public enumBindings(): ICfnBinding[] {
+    public async enumBindings(): Promise<ICfnBinding[]> {
         const result: ICfnBinding[] = [];
         const targetsInTemplate = [];
+
         const targets = this.template.resourcesSection.enumTemplateTargets();
         if (this.template.resourcesSection.resources.length > 0 && targets.length === 0) {
             ConsoleUtil.LogWarning('Template does not contain any resource with binding. Remember: bindings need both Account(s) and Region(s)');
         }
 
         for (const target of targets) {
+
             const accountBinding = this.state.getAccountBinding(target.accountLogicalId);
             if (!accountBinding) {
                 throw new OrgFormationError(`Expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
@@ -69,10 +52,26 @@ export class CloudFormationBinder {
             const region = target.region;
             const stackName = this.stackName;
             const key = {accountId, region, stackName};
+
+            const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.accountLogicalId, accountId, target.region, this.taskRoleName, this.taskViaRoleArn, this.template.organizationSection, this.state, false);
+
             targetsInTemplate.push(key);
 
             const stored = this.state.getTarget(stackName, accountId, region);
             const cfnTemplate = new CfnTemplate(target, this.template, this.state);
+            const resolvedParameters = await CfnParameters.resolveParameters(this.parameters, expressionResolver);
+            const template = await cfnTemplate.createTemplateBodyAndResolve(expressionResolver);
+
+            let foundResolveExpression = (template.match(/{{resolve:/) !== null);
+            for(const value of Object.values(resolvedParameters)) {
+                if (foundResolveExpression) {
+                    break;
+                }
+                if (!value) {continue;}
+                foundResolveExpression = value.startsWith('{{resolve:');
+            }
+
+            const invocationHash = this.calculateHash(template, resolvedParameters);
 
             const binding: ICfnBinding = {
                 ...key,
@@ -80,10 +79,12 @@ export class CloudFormationBinder {
                 action: 'None',
                 target,
                 parameters: this.parameters,
-                templateHash: this.invocationHash,
+                resolvedParameters,
+                templateHash: invocationHash,
                 terminationProtection: this.terminationProtection,
                 stackPolicy: this.stackPolicy,
                 customRoleName: this.taskRoleName,
+                customViaRoleArn: this.taskViaRoleArn,
                 cloudFormationRoleName: this.customRoleName,
                 state: stored,
                 template: cfnTemplate,
@@ -118,13 +119,16 @@ export class CloudFormationBinder {
             }
             /* end move elsewhere */
 
-            if (this.forceDeploy === true) {
+            if (foundResolveExpression) {
+                binding.action = 'UpdateOrCreate';
+                ConsoleUtil.LogInfo(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - a cloudformation resolve expression was found in either template or parameters.`);
+            } else if (this.forceDeploy === true) {
                 binding.action = 'UpdateOrCreate';
                 ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - update was forced.`, this.logVerbose);
             } else if (!stored) {
                 binding.action = 'UpdateOrCreate';
                 ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - no existing target was found in state.`, this.logVerbose);
-            } else if (stored.lastCommittedHash !== this.invocationHash) {
+            } else if (stored.lastCommittedHash !== invocationHash) {
                 binding.action = 'UpdateOrCreate';
                 ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to ${binding.action} - hash from state did not match.`, this.logVerbose);
             } else {
@@ -154,9 +158,10 @@ export class CloudFormationBinder {
                     accountId,
                     region,
                     stackName,
+                    customViaRoleArn: storedTarget.customViaRoleArn,
                     customRoleName: storedTarget.customRoleName,
                     cloudFormationRoleName: storedTarget.cloudFormationRoleName,
-                    templateHash: this.invocationHash,
+                    templateHash: 'deleted',
                     action: 'Delete',
                     state: storedTarget,
                     dependencies: [],
@@ -173,7 +178,8 @@ export class CloudFormationBinder {
 
     public async enumTasks(): Promise<ICfnTask[]> {
         const result: ICfnTask[] = [];
-        for (const binding of this.enumBindings()) {
+        const bindings = await this.enumBindings();
+        for (const binding of bindings) {
             if (binding.action === 'UpdateOrCreate') {
                 const task = await this.taskProvider.createUpdateTemplateTask(binding);
                 task.isDependency = (other: ICfnTask): boolean => {
@@ -188,6 +194,23 @@ export class CloudFormationBinder {
             }
         }
         return result;
+    }
+
+    private calculateHash(template: string, parameters: Record<string, string>): string {
+
+        const invocation: any = {
+            stackName: this.stackName,
+            terminationProtection: this.terminationProtection,
+            stackPolicy: this.stackPolicy,
+            cloudFormationRoleName: this.customRoleName,
+            taskRoleName: this.taskRoleName,
+            taskViaRoleName: this.taskViaRoleArn,
+            parameters,
+            templateHash: md5(template),
+        };
+
+
+        return md5(JSON.stringify(invocation));
     }
 }
 
@@ -206,8 +229,10 @@ export interface ICfnBinding {
     accountDependencies: string[];
     regionDependencies: string[];
     parameters?: Record<string, ICfnExpression>;
+    resolvedParameters?: Record<string, string>;
     terminationProtection?: boolean;
     customRoleName?: string;
+    customViaRoleArn?: string;
     cloudFormationRoleName?: string;
     stackPolicy?: {};
 }

@@ -86,6 +86,7 @@ describe('when writing template for organization', () => {
             expect(root.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName).toBe('OrganizationAccountAccessRole');
         });
 
+
         test('generated template contains overridden CrossAccountRoleName', async () => {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = 'xyz';
             const defaultTemplate = await templateWriter.generateDefaultTemplate();
@@ -94,6 +95,17 @@ describe('when writing template for organization', () => {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = 'OrganizationAccountAccessRole';
         });
 
+        test('generated template does not contains BuildAccessRoleName', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.organizationRoot?.defaultBuildAccessRoleName).toBeUndefined();
+        });
+        test('generated template does contains overriden BuildAccessRoleName', async () => {
+            templateWriter.DefaultBuildProcessAccessRoleName = 'OneTwoThree'
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.organizationRoot?.defaultBuildAccessRoleName).toBe('OneTwoThree');
+        });
         test('generated template contains organizational unit', async () => {
             const defaultTemplate = await templateWriter.generateDefaultTemplate();
             const root = TemplateRoot.createFromContents(defaultTemplate.template);

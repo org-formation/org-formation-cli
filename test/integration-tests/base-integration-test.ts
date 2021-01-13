@@ -7,10 +7,12 @@ import { readFileSync } from "fs";
 
 export const profileForIntegrationTests = 'org-formation-test-v2'
 
-export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
+export const baseBeforeAll = async (profileName: string = profileForIntegrationTests, environmentCredentials: string = 'TST_AWS'): Promise<IIntegrationTestContext> => {
     jest.setTimeout(99999999);
 
-    ConsoleUtil.verbose = true;
+    AwsUtil.SetMasterAccountId(undefined);
+
+    ConsoleUtil.verbose = false;
     ConsoleUtil.printStacktraces = true;
     process.on('unhandledRejection', error => {
         // Will print "unhandledRejection err is not defined"
@@ -22,9 +24,10 @@ export const baseBeforeAll = async (): Promise<IIntegrationTestContext> => {
     const logWarningMock = jest.spyOn(ConsoleUtil, 'LogWarning').mockImplementation();
 
     await AwsUtil.Initialize([
-        () => new EnvironmentCredentials('TST_AWS'),
-        () => new SharedIniFileCredentials({ profile: profileForIntegrationTests }),
+        () => new EnvironmentCredentials(environmentCredentials),
+        () => new SharedIniFileCredentials({ profile: profileName }),
     ]);
+
 
     const stateBucketName = `${v4()}`;
     const stackName = `a${Math.floor(Math.random() * 10000)}`;

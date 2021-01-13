@@ -6,8 +6,6 @@ import { TestTemplates } from "../../test-templates";
 import { S3 } from "aws-sdk";
 import { on } from '@jurijzahn8019/aws-promise-jest-mock';
 import { AwsUtil } from "~util/aws-util";
-import * as fs from 'fs';
-import { ICfnSubExpression } from "~core/cfn-expression";
 
 jest.mock('aws-sdk');
 

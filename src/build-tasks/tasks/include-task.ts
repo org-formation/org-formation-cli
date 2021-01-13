@@ -69,7 +69,7 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
             name: config.LogicalName,
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks,
-            isDependency: (): boolean => false,
+            isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => await BuildRunner.RunValidationTasks(childTasks, commandForInclude.verbose === true, config.MaxConcurrentTasks, config.FailedTaskTolerance),
         };
     }
@@ -104,7 +104,6 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
     createTaskForCleanup(): IBuildTask | undefined {
         return undefined;
     }
-
 
     createLogicalNamePrefix(logicalNamePrefixOfParent: string | undefined, logicalNameOfParent: string): string {
         return `${logicalNamePrefixOfParent === undefined ? '' : logicalNamePrefixOfParent + '-'}${logicalNameOfParent}`;

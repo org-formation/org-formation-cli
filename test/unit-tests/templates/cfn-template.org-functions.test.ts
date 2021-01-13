@@ -115,12 +115,16 @@ describe('when using GetAtt on account', () => {
                             MasterAccountName: { 'Fn::GetAtt' : [masterAccountLogicalId, 'AccountName'] },
                             MasterAccountId: { 'Fn::GetAtt' : [masterAccountLogicalId, 'AccountId'] },
                             MasterRootEmail: { 'Fn::GetAtt' : [masterAccountLogicalId, 'RootEmail'] },
+                            MasterOrgAccessRole: { 'Fn::GetAtt' : [masterAccountLogicalId, 'OrganizationAccessRoleName'] },
+                            MasterBuildAccessRole: { 'Fn::GetAtt' : [masterAccountLogicalId, 'BuildAccessRoleName'] },
                             MasterTag: { 'Fn::GetAtt' : [masterAccountLogicalId, 'Tags.key'] },
                             OtherAccountName: { 'Fn::GetAtt' : [otherAccountLogicalId, 'AccountName'] },
                             OtherAccountId: { 'Fn::GetAtt' : [otherAccountLogicalId, 'AccountId'] },
                             OtherRootEmail: { 'Fn::GetAtt' : [otherAccountLogicalId, 'RootEmail'] },
                             OtherAlias: { 'Fn::GetAtt' : [otherAccountLogicalId, 'Alias'] },
                             OtherTag: { 'Fn::GetAtt' : [otherAccountLogicalId, 'Tags.key'] },
+                            CurrentOrgAccessRole: { 'Fn::GetAtt' : ['AWSAccount', 'OrganizationAccessRoleName'] },
+                            CurrentBuildAccessRole: { 'Fn::GetAtt' : ['AWSAccount', 'BuildAccessRoleName'] },
                         },
                     }),
             ],
@@ -150,9 +154,30 @@ describe('when using GetAtt on account', () => {
         expect(templateResource.Properties.CurrentTag).toBe(targetAccount.tags.key);
     });
 
+    test('GetAtt can resolve org access role of current account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.CurrentOrgAccessRole).toBe(targetAccount.organizationAccessRoleName);
+    });
+
+    test('GetAtt can resolve build access role of current account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.CurrentBuildAccessRole).toBe(targetAccount.buildAccessRoleName);
+    });
+
+
     test('GetAtt can resolve account name of master account', () => {
         expect(templateResource).toBeDefined();
         expect(templateResource.Properties.MasterAccountName).toBe(masterAccount.accountName);
+    });
+
+    test('GetAtt can resolve org access role of master account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.MasterOrgAccessRole).toBe(masterAccount.organizationAccessRoleName);
+    });
+
+    test('GetAtt can resolve build access role of master account', () => {
+        expect(templateResource).toBeDefined();
+        expect(templateResource.Properties.MasterBuildAccessRole).toBe(masterAccount.buildAccessRoleName);
     });
 
     test('GetAtt can resolve account id of master account', () => {

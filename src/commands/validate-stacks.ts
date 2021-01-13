@@ -35,6 +35,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
             return;
         }
 
+
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validateBoolean(command.terminationProtection, 'terminationProtection');
@@ -46,9 +47,11 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         ConsoleUtil.state = state;
         const parameters = this.parseCfnParameters(command.parameters);
         const stackPolicy = command.stackPolicy;
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, false, command.verbose === true, command.taskRoleName, false, stackPolicy);
+        const cloudFormationRoleName = command.cloudFormationRoleName;
+        const taskViaRoleArn = command.taskViaRoleArn;
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, false, command.verbose === true, command.taskRoleName, false, stackPolicy, cloudFormationRoleName, undefined, taskViaRoleArn);
 
-        const bindings = cfnBinder.enumBindings();
+        const bindings = await cfnBinder.enumBindings();
 
         const validationTaskProvider = new CfnValidateTaskProvider(template, state, command.verbose === true);
         const tasks = await validationTaskProvider.enumTasks(bindings);

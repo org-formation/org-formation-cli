@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { S3 } from 'aws-sdk';
+import AWS, { S3 } from 'aws-sdk';
 import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
+import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../util/console-util';
 
@@ -12,14 +13,15 @@ export interface IStorageProvider {
 
 export class S3StorageProvider implements IStorageProvider {
 
-    public static Create(bucketName: string, objectKey: string): S3StorageProvider {
-        return new S3StorageProvider(bucketName, objectKey);
+    public static Create(bucketName: string, objectKey: string, credentials?: CredentialsOptions): S3StorageProvider {
+        return new S3StorageProvider(bucketName, objectKey, credentials);
     }
 
     public readonly bucketName: string;
     public readonly objectKey: string;
 
-    private constructor(stateBucketName: string, stateObject: string) {
+
+    private constructor(stateBucketName: string, stateObject: string, private readonly credentials: CredentialsOptions = AWS.config.credentials) {
         if (!stateBucketName || stateBucketName === '') {
             throw new OrgFormationError('statebucketName cannot be undefined or empty');
         }
@@ -30,14 +32,15 @@ export class S3StorageProvider implements IStorageProvider {
         this.objectKey = stateObject;
     }
 
-    public async create(region: string): Promise<void> {
+    public async create(region: string, throwOnAccessDenied = false): Promise<void> {
         const request: CreateBucketRequest = {
             Bucket: this.bucketName,
         };
         if (!region) {
             region = 'us-east-1';
         }
-        const s3client = new S3({ region });
+
+        const s3client = new S3({ region, credentials: this.credentials });
         try {
             await s3client.createBucket(request).promise();
             await s3client.putPublicAccessBlock({
@@ -60,6 +63,9 @@ export class S3StorageProvider implements IStorageProvider {
             if (err && err.code === 'BucketAlreadyOwnedByYou') {
                 return;
             }
+            if (err && !throwOnAccessDenied && err.code === 'AccessDenied') {
+                return; // assume bucket has been set up properly
+            }
             throw err;
         }
     }
@@ -74,7 +80,7 @@ export class S3StorageProvider implements IStorageProvider {
 
     public async get(): Promise<string | undefined> {
 
-        const s3client = new S3();
+        const s3client = new S3({ credentials: this.credentials });
         const request: GetObjectRequest = {
             Bucket: this.bucketName,
             Key: this.objectKey,
@@ -98,20 +104,26 @@ export class S3StorageProvider implements IStorageProvider {
     }
 
     public async put(contents: string): Promise<void> {
-        const s3client = new S3();
-        const putObjectRequest: PutObjectRequest = {
-            Bucket: this.bucketName,
-            Key: this.objectKey,
-            Body: contents,
-        };
+        try {
+            const s3client = new S3({ credentials: this.credentials });
+            const putObjectRequest: PutObjectRequest = {
+                Bucket: this.bucketName,
+                Key: this.objectKey,
+                Body: contents,
+                ACL: 'bucket-owner-full-control',
+            };
 
-        // create a copy of `putObjectRequest` to ensure no circular references
-        ConsoleUtil.LogDebug(`putting object to S3: \n${JSON.stringify({
-            Bucket: putObjectRequest.Bucket,
-            Key: putObjectRequest.Key,
-        }, undefined, 2)}`);
+            // create a copy of `putObjectRequest` to ensure no circular references
+            ConsoleUtil.LogDebug(`putting object to S3: \n${JSON.stringify({
+                Bucket: putObjectRequest.Bucket,
+                Key: putObjectRequest.Key,
+            }, undefined, 2)}`);
 
-        await s3client.putObject(putObjectRequest).promise();
+            await s3client.putObject(putObjectRequest).promise();
+        } catch (err) {
+            ConsoleUtil.LogError(`unable to put object to s3 (bucket: ${this.bucketName}, key: ${this.objectKey})`, err);
+            throw err;
+        }
     }
 }
 

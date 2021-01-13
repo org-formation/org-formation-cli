@@ -49,4 +49,7 @@ describe('when calling org-formation perform tasks', () => {
         expect(permissionSetWithInlinePolicy2.Stacks[0].StackStatus).toBe('CREATE_COMPLETE');
     });
 
+    afterAll(async () => {
+        await baseAfterAll(context);
+    });
 });

@@ -15,6 +15,7 @@ import { PasswordPolicyResource, Reference } from '~parser/model';
 import { ICfnBinding } from '~cfn-binder/cfn-binder';
 
 
+export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 
 
@@ -34,7 +35,7 @@ export class AwsUtil {
             return this.organization.Organization.Id;
         }
 
-        const organizationService = new Organizations({region: 'us-east-1'});
+        const organizationService = new Organizations({ region: 'us-east-1' });
         this.organization = await organizationService.describeOrganization().promise();
         return this.organization.Organization.Id;
 
@@ -45,7 +46,7 @@ export class AwsUtil {
         if (profile) {
             await this.Initialize([
                 (): AWS.Credentials => new CustomMFACredentials(profile),
-                (): AWS.Credentials => new AWS.SharedIniFileCredentials({profile}),
+                (): AWS.Credentials => new AWS.SharedIniFileCredentials({ profile }),
             ]);
         } else {
             await this.Initialize(CredentialProviderChain.defaultProviders);
@@ -58,18 +59,41 @@ export class AwsUtil {
         AWS.config.credentials = await chainProvider.resolvePromise();
     }
 
+    public static SetMasterAccountId(masterAccountId: string): void {
+        AwsUtil.masterAccountId = masterAccountId;
+    }
+
+    static SetBuildAccountId(buildAccountId: string): void {
+        AwsUtil.buildProcessAccountId = buildAccountId;
+    }
+
     public static async GetMasterAccountId(): Promise<string> {
         if (AwsUtil.masterAccountId !== undefined) {
             return AwsUtil.masterAccountId;
         }
-        const stsClient = new STS();
+        const stsClient = new STS(); // if not set, assume build process runs in master
         const caller = await stsClient.getCallerIdentity().promise();
         AwsUtil.masterAccountId = caller.Account;
         return AwsUtil.masterAccountId;
     }
 
-    public static async GetSupportService(accountId: string, roleInTargetAccount: string): Promise<Support> {
-        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, accountId, { region: 'us-east-1' }, roleInTargetAccount);
+    public static async GetBuildProcessAccountId(): Promise<string> {
+        if (AwsUtil.buildProcessAccountId !== undefined) {
+            return AwsUtil.buildProcessAccountId;
+        }
+        const stsClient = new STS();
+        const caller = await stsClient.getCallerIdentity().promise();
+        AwsUtil.buildProcessAccountId = caller.Account;
+        return AwsUtil.buildProcessAccountId;
+    }
+
+
+    public static async GetOrganizationsService(accountId: string, roleInTargetAccount: string): Promise<Organizations> {
+        return await AwsUtil.GetOrCreateService<Organizations>(Organizations, AwsUtil.OrganizationsServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, { region: 'us-east-1' }, roleInTargetAccount);
+    }
+
+    public static async GetSupportService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string): Promise<Support> {
+        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}`, { region: 'us-east-1' }, roleInTargetAccount, viaRoleArn);
     }
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
@@ -77,37 +101,38 @@ export class AwsUtil {
     }
 
     public static async GetS3Service(accountId: string, region: string, roleInTargetAccount?: string): Promise<S3> {
-        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, accountId, { region }, roleInTargetAccount);
+        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
     }
 
-    public static async GetIamService(accountId: string, roleInTargetAccount?: string): Promise<IAM> {
-        return await AwsUtil.GetOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, accountId, {}, roleInTargetAccount);
+    public static async GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string): Promise<IAM> {
+        return await AwsUtil.GetOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}`, {}, roleInTargetAccount, viaRoleArn);
     }
 
-    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string): Promise<CloudFormation> {
-        return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId,  `${accountId}/${region}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
+    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string): Promise<CloudFormation> {
+        return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId, `${accountId}/${region}/${roleInTargetAccount}/${roleInTargetAccount}/${viaRoleArn}`, { region }, roleInTargetAccount, viaRoleArn);
     }
 
-    public static async DeleteObject(bucketName: string, objectKey: string): Promise<void> {
-        const s3client = new S3();
-        await s3client.deleteObject({Bucket: bucketName, Key: objectKey}).promise();
+    public static async DeleteObject(bucketName: string, objectKey: string, credentials: CredentialsOptions = undefined): Promise<void> {
+        const s3client = new S3({ credentials });
+        await s3client.deleteObject({ Bucket: bucketName, Key: objectKey }).promise();
     }
 
-    private static async GetOrCreateService<TService>(ctr: new(args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string): Promise<TService> {
+    private static async GetOrCreateService<TService>(ctr: new (args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string, viaRoleArn?: string): Promise<TService> {
         const cachedService = cache[cacheKey];
         if (cachedService) {
             return cachedService;
         }
 
         const config = clientConfig;
-        const masterAccountId = await AwsUtil.GetMasterAccountId();
-        if (accountId !== masterAccountId) {
+        const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
+        if (accountId !== buildAccountId) {
             if (typeof roleInTargetAccount !== 'string') {
                 roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
             }
-            const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
+            const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn);
             config.credentials = credentialOptions;
         }
+
 
         const service = new ctr(config);
 
@@ -115,9 +140,17 @@ export class AwsUtil {
         return service;
     }
 
-    public static async GetCredentials(accountId: string, roleInTargetAccount: string): Promise<CredentialsOptions> {
-        const sts = new STS();
+    public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string): Promise<CredentialsOptions> {
         const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
+        const config: STS.ClientConfiguration = {};
+        if (viaRoleArn !== undefined) {
+            config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
+        }
+        return await AwsUtil.GetCredentialsForRole(roleArn, config);
+    }
+
+    private static async GetCredentialsForRole(roleArn: string, config: STS.ClientConfiguration): Promise<CredentialsOptions> {
+        const sts = new STS(config);
         const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
         const credentialOptions: CredentialsOptions = {
             accessKeyId: response.Credentials.AccessKeyId,
@@ -125,10 +158,11 @@ export class AwsUtil {
             sessionToken: response.Credentials.SessionToken,
         };
         return credentialOptions;
+
     }
 
-    public static async GetCloudFormationExport(exportName: string, accountId: string, region: string, customRoleName: string): Promise<string | undefined> {
-        const cfnRetrieveExport = await AwsUtil.GetCloudFormation(accountId, region, customRoleName);
+    public static async GetCloudFormationExport(exportName: string, accountId: string, region: string, customRoleName: string, customViaRoleArn?: string): Promise<string | undefined> {
+        const cfnRetrieveExport = await AwsUtil.GetCloudFormation(accountId, region, customRoleName, customViaRoleArn);
         const listExportsRequest: ListExportsInput = {};
         do {
             const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
@@ -142,8 +176,10 @@ export class AwsUtil {
     }
 
     private static masterAccountId: string | PromiseLike<string>;
+    private static buildProcessAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAM> = {};
     private static SupportServiceCache: Record<string, Support> = {};
+    private static OrganizationsServiceCache: Record<string, Organizations> = {};
     private static CfnServiceCache: Record<string, CloudFormation> = {};
     private static S3ServiceCache: Record<string, S3> = {};
 }
@@ -204,6 +240,7 @@ export class CfnUtil {
             const bucketName = `organization-formation-${binding.accountId}-large-templates`;
             try {
                 await s3Service.createBucket({ Bucket: bucketName }).promise();
+                await s3Service.putBucketOwnershipControls({ Bucket: bucketName, OwnershipControls: { Rules: [{ ObjectOwnership: 'BucketOwnerPreferred' }] } }).promise();
                 await s3Service.putPublicAccessBlock({
                     Bucket: bucketName,
                     PublicAccessBlockConfiguration: {
@@ -224,7 +261,7 @@ export class CfnUtil {
                 }
             }
 
-            const putObjetRequest: PutObjectRequest = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody };
+            const putObjetRequest: PutObjectRequest = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
             await s3Service.putObject(putObjetRequest).promise();
             stackInput.TemplateURL = `https://${bucketName}.s3.amazonaws.com/${putObjetRequest.Key}`;
             delete stackInput.TemplateBody;
@@ -234,30 +271,56 @@ export class CfnUtil {
 
     public static async UpdateOrCreateStack(cfn: CloudFormation, updateStackInput: UpdateStackInput): Promise<DescribeStacksOutput> {
         let describeStack: DescribeStacksOutput;
-        try {
-            await cfn.updateStack(updateStackInput).promise();
-            describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-        } catch (err) {
-            if (err && err.code === 'ValidationError' && err.message) {
-                const message = err.message as string;
-                if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
-                    await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
-                    await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                    await cfn.createStack(updateStackInput).promise();
-                    describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                } else if (-1 !== message.indexOf('does not exist')) {
-                    await cfn.createStack(updateStackInput).promise();
-                    describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                } else if (-1 !== message.indexOf('No updates are to be performed.')) {
-                    describeStack = await cfn.describeStacks({StackName: updateStackInput.StackName}).promise();
-                    // ignore;
+        let retryStackIsBeingUpdated = false;
+        let retryStackIsBeingUpdatedCount = 0;
+        let retryAccountIsBeingInitialized = false;
+        let retryAccountIsBeingInitializedCount = 0;
+
+        do {
+            retryStackIsBeingUpdated = false;
+            retryAccountIsBeingInitialized = false;
+            try {
+                await cfn.updateStack(updateStackInput).promise();
+                describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+            } catch (err) {
+                if (err && (err.code === 'OptInRequired' || err.code === 'InvalidClientTokenId')) {
+                    if (retryAccountIsBeingInitializedCount >= 20) { // 20 * 30 sec = 10 minutes
+                        throw new OrgFormationError('Account seems stuck initializing.');
+                    }
+                    retryAccountIsBeingInitializedCount += 1;
+                    await sleep(30);
+                    retryAccountIsBeingInitialized = true;
+                } else if (err && err.code === 'ValidationError' && err.message) {
+                    const message = err.message as string;
+                    if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
+                        await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
+                        await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        await cfn.createStack(updateStackInput).promise();
+                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    } else if (-1 !== message.indexOf('does not exist')) {
+                        await cfn.createStack(updateStackInput).promise();
+                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    } else if (-1 !== message.indexOf('No updates are to be performed.')) {
+                        describeStack = await cfn.describeStacks({ StackName: updateStackInput.StackName }).promise();
+                        // ignore;
+                    } else if ((-1 !== message.indexOf('is in UPDATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) || (-1 !== message.indexOf('is in UPDATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) || (-1 !== message.indexOf('is in UPDATE_IN_PROGRESS state and can not be updated.'))) {
+                        if (retryStackIsBeingUpdatedCount >= 20) { // 20 * 30 sec = 10 minutes
+                            throw new OrgFormationError(`Stack ${updateStackInput.StackName} seems stuck in UPDATE_IN_PROGRESS (or similar) state.`);
+                        }
+
+                        ConsoleUtil.LogInfo(`Stack ${updateStackInput.StackName} is already being updated. waiting.... `);
+                        retryStackIsBeingUpdatedCount += 1;
+                        await sleep(30);
+                        retryStackIsBeingUpdated = true;
+
+                    } else {
+                        throw err;
+                    }
                 } else {
                     throw err;
                 }
-            } else {
-                throw err;
             }
-        }
+        } while (retryStackIsBeingUpdated || retryAccountIsBeingInitialized);
         return describeStack;
     }
 }
@@ -323,3 +386,7 @@ class CustomMFACredentials extends AWS.Credentials {
     }
 
 }
+
+const sleep = (seconds: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, 1000 * seconds));
+};

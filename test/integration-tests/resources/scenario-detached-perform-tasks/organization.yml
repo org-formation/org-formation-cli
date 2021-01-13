@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: default template generated for organization with master account 102625093955
+
+Organization:
+
+  OrganizationRoot:
+    Type: OC::ORG::OrganizationRoot
+    Properties:
+      DefaultBuildAccessRoleName: OrganizationFormationBuildRole
+
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: Organizational Master Account
+      AccountId: '102625093955'
+
+  OrganizationBuildAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Account A
+      AccountId: '340381375986'
+      RootEmail: account+a@olafconijn.awsapps.com
+
+  AccountB:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Account B
+      AccountId: '362239514602'
+      RootEmail: account+b@olafconijn.awsapps.com
+      OrganizationAccessRoleName: CustomCrossAccountRole
+
+  AccountC:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Account C
+      AccountId: '673026687213'
+      RootEmail: account+c@olafconijn.awsapps.com
+      OrganizationAccessRoleName: AnotherCustomRole
+
+  AnotherAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Users Account
+      AccountId: '549476213961'
+      RootEmail: account+users@olafconijn.awsapps.com

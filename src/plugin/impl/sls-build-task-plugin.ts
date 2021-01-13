@@ -18,6 +18,12 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
     type = 'serverless.com';
     typeForTask = 'update-serverless.com';
 
+
+    getPhysicalIdForCleanup(): string {
+        return undefined;
+    }
+
+
     convertToCommandArgs(config: IServerlessComTaskConfig, command: IPerformTasksCommandArgs): ISlsCommandArgs {
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName,...CommonTaskAttributeNames, 'Path',
@@ -135,7 +141,15 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<ISlsTask>, resolver: CfnExpressionResolver): Promise<void> {
-        const { task, target } = binding;
+        const {task, target, previousBindingLocalHash } = binding;
+        if (task.forceDeploy !== true &&
+            task.taskLocalHash !== undefined &&
+            task.taskLocalHash === previousBindingLocalHash) {
+
+            ConsoleUtil.LogInfo(`Workload (${this.typeForTask}) ${task.name} in ${target.accountId}/${target.region} skipped, task itself did not change. Use ForceTask to force deployment.`);
+            return;
+        }
+
         let command: string;
 
         if (task.customDeployCommand) {

@@ -16,6 +16,7 @@ export interface IAccountProperties {
     Tags?: Record<string, string>;
     SupportLevel?: string;
     OrganizationAccessRoleName?: string;
+    BuildAccessRoleName?: string;
 }
 
 export class AccountResource extends Resource {
@@ -29,6 +30,7 @@ export class AccountResource extends Resource {
     public organizationalUnitName?: string;
     public supportLevel?: string;
     public organizationAccessRoleName?: string;
+    public buildAccessRoleName?: string;
     private props?: IAccountProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
@@ -51,6 +53,7 @@ export class AccountResource extends Resource {
         this.accountId = this.props.AccountId;
         this.supportLevel = this.props.SupportLevel;
         this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
+        this.buildAccessRoleName = this.props.BuildAccessRoleName;
 
         if (this.supportLevel !== undefined) {
             if (!['basic', 'developer', 'business', 'enterprise'].includes(this.supportLevel)) {
@@ -69,7 +72,7 @@ export class AccountResource extends Resource {
         this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName');
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName', 'BuildAccessRoleName');
     }
 
     public calculateHash(): string {
@@ -95,6 +98,13 @@ export class AccountResource extends Resource {
             this.organizationAccessRoleName = this.root.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName;
             if (this.organizationAccessRoleName === undefined) {
                 this.organizationAccessRoleName = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName;
+            }
+        }
+
+        if (this.buildAccessRoleName === undefined) {
+            this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultBuildAccessRoleName;
+            if (this.buildAccessRoleName === undefined) {
+                this.buildAccessRoleName = this.organizationAccessRoleName;
             }
         }
     }

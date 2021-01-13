@@ -2,7 +2,7 @@ import { IAM, Organizations } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
-import { GlobalState } from '~util/global-state';
+import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
@@ -57,6 +57,7 @@ const GetPoliciesForTarget = (list: AWSPolicy[], targetId: string, targetType: T
 
 export class AwsOrganizationReader {
 
+
     private static async getOrganization(that: AwsOrganizationReader): Promise<Organization> {
         that.organizationService.listTagsForResource();
         const resp = await that.organizationService.describeOrganization().promise();
@@ -64,150 +65,180 @@ export class AwsOrganizationReader {
     }
 
     private static async listPolicies(that: AwsOrganizationReader): Promise<AWSPolicy[]> {
-        const result: AWSPolicy[] = [];
-        const req: ListPoliciesRequest = {
-            Filter: 'SERVICE_CONTROL_POLICY',
-        };
-        let resp: ListPoliciesResponse;
-        do {
-            resp = await that.organizationService.listPolicies(req).promise();
-            for (const policy of resp.Policies) {
+        try {
+            const result: AWSPolicy[] = [];
+            const req: ListPoliciesRequest = {
+                Filter: 'SERVICE_CONTROL_POLICY',
+            };
+            let resp: ListPoliciesResponse;
+            do {
+                resp = await that.organizationService.listPolicies(req).promise();
+                for (const policy of resp.Policies) {
 
-                const describedPolicy = await that.organizationService.describePolicy({ PolicyId: policy.Id }).promise();
+                    const describedPolicy = await that.organizationService.describePolicy({ PolicyId: policy.Id }).promise();
 
-                const awsPolicy = {
-                    ...describedPolicy.Policy,
-                    Type: 'Policy',
-                    Name: policy.Name,
-                    Id: policy.Id,
-                    Targets: [] as PolicyTargetSummary[],
-                };
+                    const awsPolicy = {
+                        ...describedPolicy.Policy,
+                        Type: 'Policy',
+                        Name: policy.Name,
+                        Id: policy.Id,
+                        Targets: [] as PolicyTargetSummary[],
+                    };
 
-                result.push(awsPolicy);
+                    result.push(awsPolicy);
 
-                const listTargetsReq: ListTargetsForPolicyRequest = {
-                    PolicyId: policy.Id,
-                };
-                let listTargetsResp: ListTargetsForPolicyResponse;
-                do {
-                    listTargetsResp = await that.organizationService.listTargetsForPolicy(listTargetsReq).promise();
-                    awsPolicy.Targets.push(...listTargetsResp.Targets);
-                    listTargetsReq.NextToken = listTargetsResp.NextToken;
-                } while (listTargetsReq.NextToken);
-            }
-            req.NextToken = resp.NextToken;
-        } while (resp.NextToken);
+                    const listTargetsReq: ListTargetsForPolicyRequest = {
+                        PolicyId: policy.Id,
+                    };
+                    let listTargetsResp: ListTargetsForPolicyResponse;
+                    do {
+                        listTargetsResp = await that.organizationService.listTargetsForPolicy(listTargetsReq).promise();
+                        awsPolicy.Targets.push(...listTargetsResp.Targets);
+                        listTargetsReq.NextToken = listTargetsResp.NextToken;
+                    } while (listTargetsReq.NextToken);
+                }
+                req.NextToken = resp.NextToken;
+            } while (resp.NextToken);
 
-        return result;
+            return result;
+        } catch (err) {
+            ConsoleUtil.LogError('unable to list policies', err);
+            throw err;
+        }
     }
 
     private static async listRoots(that: AwsOrganizationReader): Promise<AWSRoot[]> {
-        const result: AWSRoot[] = [];
-        const policies = await that.policies.getValue();
-        let resp: ListRootsResponse;
-        const req: ListRootsRequest = {};
-        do {
-            resp = await that.organizationService.listRoots(req).promise();
-            req.NextToken = resp.NextToken;
-            for (const root of resp.Roots) {
-                const item: AWSRoot = {
-                    ...root,
-                    Policies: GetPoliciesForTarget(policies, root.Id, 'ROOT'),
-                    OrganizationalUnits: [],
-                };
-                result.push(item);
-            }
-        } while (resp.NextToken);
+        try {
+            const result: AWSRoot[] = [];
+            const policies = await that.policies.getValue();
+            let resp: ListRootsResponse;
+            const req: ListRootsRequest = {};
+            do {
+                resp = await that.organizationService.listRoots(req).promise();
+                req.NextToken = resp.NextToken;
+                for (const root of resp.Roots) {
+                    const item: AWSRoot = {
+                        ...root,
+                        Policies: GetPoliciesForTarget(policies, root.Id, 'ROOT'),
+                        OrganizationalUnits: [],
+                    };
+                    result.push(item);
+                }
+            } while (resp.NextToken);
 
-        return result;
+            return result;
+        } catch (err) {
+            ConsoleUtil.LogError('unable to list roots', err);
+            throw err;
+        }
     }
 
     private static async listOrganizationalUnits(that: AwsOrganizationReader): Promise<AWSOrganizationalUnit[]> {
-        const rootsIds: string[] = [];
-        const result: AWSOrganizationalUnit[] = [];
+        try {
+            const rootsIds: string[] = [];
+            const result: AWSOrganizationalUnit[] = [];
 
-        const policies = await that.policies.getValue();
-        const roots = await that.roots.getValue();
-        rootsIds.push(...roots.map(x => x.Id!));
+            const policies = await that.policies.getValue();
+            const roots = await that.roots.getValue();
+            rootsIds.push(...roots.map(x => x.Id!));
 
-        do {
-            const req: ListOrganizationalUnitsForParentRequest = {
-                ParentId: rootsIds.pop(),
-            };
-            let resp: ListOrganizationalUnitsForParentResponse;
             do {
-                resp = await that.organizationService.listOrganizationalUnitsForParent(req).promise();
-                req.NextToken = resp.NextToken;
-                if (!resp.OrganizationalUnits) { continue; }
+                const req: ListOrganizationalUnitsForParentRequest = {
+                    ParentId: rootsIds.pop(),
+                };
+                let resp: ListOrganizationalUnitsForParentResponse;
+                do {
+                    resp = await that.organizationService.listOrganizationalUnitsForParent(req).promise();
+                    req.NextToken = resp.NextToken;
+                    if (!resp.OrganizationalUnits) { continue; }
 
-                for (const ou of resp.OrganizationalUnits) {
-                    if (ou.Id === req.ParentId) { continue; }
-                    const organization: AWSOrganizationalUnit = {
-                        ...ou,
-                        Type: 'OrganizationalUnit',
-                        Name: ou.Name,
-                        Id: ou.Id!,
-                        ParentId: req.ParentId,
-                        Accounts: [] as AWSAccount[],
-                        Policies: GetPoliciesForTarget(policies, ou.Id, 'ORGANIZATIONAL_UNIT'),
-                        OrganizationalUnits: [],
-                    };
+                    for (const ou of resp.OrganizationalUnits) {
+                        if (ou.Id === req.ParentId) { continue; }
+                        const organization: AWSOrganizationalUnit = {
+                            ...ou,
+                            Type: 'OrganizationalUnit',
+                            Name: ou.Name,
+                            Id: ou.Id!,
+                            ParentId: req.ParentId,
+                            Accounts: [] as AWSAccount[],
+                            Policies: GetPoliciesForTarget(policies, ou.Id, 'ORGANIZATIONAL_UNIT'),
+                            OrganizationalUnits: [],
+                        };
 
-                    result.push(organization);
-                    // Only add unique values to avoid infinite loop
-                    if (rootsIds.indexOf(organization.Id) === -1) {
-                        rootsIds.push(organization.Id);
+                        result.push(organization);
+                        // Only add unique values to avoid infinite loop
+                        if (rootsIds.indexOf(organization.Id) === -1) {
+                            rootsIds.push(organization.Id);
+                        }
                     }
+
+                } while (resp.NextToken);
+            } while (rootsIds.length > 0);
+
+            for (const ou of result) {
+                let parentToOU: IObjectWitOrganizationalUnits = roots.find(x => x.Id === ou.ParentId);
+                if (parentToOU === undefined) {
+                    parentToOU = result.find(x => x.Id === ou.ParentId);
                 }
-
-            } while (resp.NextToken);
-        } while (rootsIds.length > 0);
-
-        for (const ou of result) {
-            let parentToOU: IObjectWitOrganizationalUnits = roots.find(x => x.Id === ou.ParentId);
-            if (parentToOU === undefined) {
-                parentToOU = result.find(x => x.Id === ou.ParentId);
+                if (parentToOU === undefined) {
+                    ConsoleUtil.LogWarning(`found organizational unit of which parent could not be found: ${ou.Name} (parent: ${ou.ParentId})`);
+                    continue;
+                }
+                parentToOU.OrganizationalUnits.push(ou);
             }
-            if (parentToOU === undefined) {
-                ConsoleUtil.LogWarning(`found organizational unit of which parent could not be found: ${ou.Name} (parent: ${ou.ParentId})`);
-                continue;
-            }
-            parentToOU.OrganizationalUnits.push(ou);
+
+            return result;
+        } catch (err) {
+            ConsoleUtil.LogError('unable to list organizational units', err);
+            throw err;
         }
-
-        return result;
     }
 
     private static async listAccounts(that: AwsOrganizationReader): Promise<AWSAccount[]> {
-        const result: AWSAccount[] = [];
-        const organizationalUnits = await that.organizationalUnits.getValue();
-        const policies = await that.policies.getValue();
-        const roots = await that.roots.getValue();
-        const parentIds = organizationalUnits.map(x => x.Id);
-        const rootIds = roots.map(x => x.Id);
-        parentIds.push(...rootIds);
+        try {
+            const result: AWSAccount[] = [];
+            const organizationalUnits = await that.organizationalUnits.getValue();
+            const policies = await that.policies.getValue();
+            const roots = await that.roots.getValue();
+            const parentIds = organizationalUnits.map(x => x.Id);
+            const rootIds = roots.map(x => x.Id);
+            parentIds.push(...rootIds);
 
-        do {
-            const req: ListAccountsForParentRequest = {
-                ParentId: parentIds.pop(),
-            };
-            let resp: ListAccountsForParentResponse;
             do {
-                resp = await that.organizationService.listAccountsForParent(req).promise();
-                req.NextToken = resp.NextToken;
+                const req: ListAccountsForParentRequest = {
+                    ParentId: parentIds.pop(),
+                };
+                let resp: ListAccountsForParentResponse;
+                do {
+                    resp = await that.organizationService.listAccountsForParent(req).promise();
+                    req.NextToken = resp.NextToken;
 
-                for (const acc of resp.Accounts) {
-                    if (acc.Status === 'SUSPENDED') {
-                        continue;
-                    }
+                    for (const acc of resp.Accounts) {
+                        if (acc.Status === 'SUSPENDED') {
+                            continue;
+                        }
 
-                    try {
-                        const [tags, alias, passwordPolicy, supportLevel] = await Promise.all([
-                            AwsOrganizationReader.getTagsForAccount(that, acc.Id),
-                            AwsOrganizationReader.getIamAliasForAccount(that, acc.Id),
-                            AwsOrganizationReader.getIamPasswordPolicyForAccount(that, acc.Id),
-                            AwsOrganizationReader.getSupportLevelForAccount(that, acc.Id),
-                        ]);
+                        let tags: IAWSTags = {};
+                        let alias: string;
+                        let passwordPolicy: IAM.PasswordPolicy;
+                        let supportLevel = 'basic';
+
+                        try {
+                            [tags, alias, passwordPolicy, supportLevel] = await Promise.all([
+                                AwsOrganizationReader.getTagsForAccount(that, acc.Id),
+                                AwsOrganizationReader.getIamAliasForAccount(that, acc.Id),
+                                AwsOrganizationReader.getIamPasswordPolicyForAccount(that, acc.Id),
+                                AwsOrganizationReader.getSupportLevelForAccount(that, acc.Id),
+                            ]);
+
+                        } catch (err) {
+                            if (err.code === 'AccessDenied') {
+                                ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot:`
+                                    + '\nhttps://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md');
+                            } else {
+                                throw err;
+                            }
+                        }
 
                         const account = {
                             ...acc,
@@ -227,27 +258,24 @@ export class AwsOrganizationReader {
                             parentOU.Accounts.push(account);
                         }
                         result.push(account);
-                    } catch (err) {
-                        if (err.code === 'AccessDenied') {
-                            ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot:`
-                                + '\nhttps://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md');
-                        } else {
-                            throw err;
-                        }
                     }
-                }
 
-            } while (resp.NextToken);
+                } while (resp.NextToken);
 
-        } while (parentIds.length > 0);
+            } while (parentIds.length > 0);
 
-        return result;
+            return result;
+        } catch (err) {
+            ConsoleUtil.LogError('unable to list accounts', err);
+            throw err;
+        }
     }
 
     private static async getSupportLevelForAccount(that: AwsOrganizationReader, accountId: string): Promise<SupportLevel> {
         await that.organization.getValue();
         try {
-            const supportService = await AwsUtil.GetSupportService(accountId, GlobalState.GetCrossAccountRoleName(accountId));
+            const targetRoleConfig = GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const supportService = await AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
             const severityLevels = await supportService.describeSeverityLevels().promise();
             const critical = severityLevels.severityLevels.find(x => x.code === 'critical');
             if (critical !== undefined) {
@@ -267,40 +295,57 @@ export class AwsOrganizationReader {
     }
 
     private static async getIamAliasForAccount(that: AwsOrganizationReader, accountId: string): Promise<string> {
-        await that.organization.getValue();
-        const iamService = await AwsUtil.GetIamService(accountId, GlobalState.GetCrossAccountRoleName(accountId));
-        const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
-        if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
-            return response.AccountAliases[0];
-        } else {
-            return undefined;
+        try {
+            await that.organization.getValue();
+            const targetRoleConfig = GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const iamService = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
+            const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
+            if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
+                return response.AccountAliases[0];
+            } else {
+                return undefined;
+            }
+        } catch (err) {
+            ConsoleUtil.LogDebug(`unable to get iam alias for account ${accountId}\nerr: ${err}`);
+            throw err;
         }
     }
 
     private static async getIamPasswordPolicyForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAM.PasswordPolicy> {
-        await that.organization.getValue();
-        const iamService = await AwsUtil.GetIamService(accountId, GlobalState.GetCrossAccountRoleName(accountId));
         try {
-            const response = await iamService.getAccountPasswordPolicy().promise();
-            return response.PasswordPolicy;
-        } catch (err) {
-            if (err && err.code === 'NoSuchEntity') {
-                return undefined;
+            await that.organization.getValue();
+            const targetRoleConfig = GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const iamService = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
+            try {
+                const response = await iamService.getAccountPasswordPolicy().promise();
+                return response.PasswordPolicy;
+            } catch (err) {
+                if (err && err.code === 'NoSuchEntity') {
+                    return undefined;
+                }
+                throw err;
             }
+        } catch (err) {
+            ConsoleUtil.LogDebug(`unable to get password policy for account ${accountId}\nerr: ${err}`);
             throw err;
         }
     }
 
     private static async getTagsForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAWSTags> {
-        const request: ListTagsForResourceRequest = {
-            ResourceId: accountId,
-        };
-        const response = await that.organizationService.listTagsForResource(request).promise();
-        const tags: IAWSTags = {};
-        for (const tag of response.Tags) {
-            tags[tag.Key] = tag.Value;
+        try {
+            const request: ListTagsForResourceRequest = {
+                ResourceId: accountId,
+            };
+            const response = await that.organizationService.listTagsForResource(request).promise();
+            const tags: IAWSTags = {};
+            for (const tag of response.Tags) {
+                tags[tag.Key] = tag.Value;
+            }
+            return tags;
+        } catch (err) {
+            ConsoleUtil.LogError('unable to list tags for account ' + accountId, err);
+            throw err;
         }
-        return tags;
     }
 
     public readonly policies: Lazy<AWSPolicy[]>;
@@ -310,7 +355,8 @@ export class AwsOrganizationReader {
     public readonly roots: Lazy<AWSRoot[]>;
     private readonly organizationService: Organizations;
 
-    constructor(organizationService: Organizations) {
+    constructor(organizationService: Organizations, private readonly crossAccountConfig?: ICrossAccountConfig) {
+
         this.organizationService = organizationService;
         this.policies = new Lazy(this, AwsOrganizationReader.listPolicies);
         this.organizationalUnits = new Lazy(this, AwsOrganizationReader.listOrganizationalUnits);

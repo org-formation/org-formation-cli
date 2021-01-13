@@ -15,7 +15,7 @@ describe('when loading hostedzone-per-account template', () => {
     let account2Binding: ICfnBinding;
     let account2CfnTemplate: ICfnTemplate;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/hostedzone-per-account/hostedzone-per-account.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -26,7 +26,7 @@ describe('when loading hostedzone-per-account template', () => {
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('hostedzone-per-account', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         masterBinding = bindings.find((x) => x.accountId === '000000000000');
         masterCfnTemplate = JSON.parse(masterBinding.template.createTemplateBody()) as ICfnTemplate;
         account1Binding = bindings.find((x) => x.accountId === '111111111111');

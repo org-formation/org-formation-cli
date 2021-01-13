@@ -2,6 +2,7 @@ import path from 'path';
 import { Organizations } from 'aws-sdk';
 import { Command } from 'commander';
 import RC from 'rc';
+import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -41,7 +42,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 additionalArgs += `--profile ${profile} `;
             }
 
-            const defaultStateBucketName = await BaseCliCommand.GetStateBucketName({} as ICommandArgs);
+            const defaultStateBucketName = await BaseCliCommand.GetStateBucketName(undefined);
 
             if (stateBucketName !== undefined && stateBucketName !== defaultStateBucketName) {
                 additionalArgs += `--state-bucket-name ${stateBucketName} `;
@@ -77,12 +78,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
     }
 
-    public async generateDefaultTemplate(): Promise<DefaultTemplate> {
-
+    public async generateDefaultTemplate(defaultBuildAccessRoleName?: string): Promise<DefaultTemplate> {
         const organizations = new Organizations({ region: 'us-east-1' });
         const awsReader = new AwsOrganizationReader(organizations);
         const awsOrganization = new AwsOrganization(awsReader);
         const writer = new DefaultTemplateWriter(awsOrganization);
+        writer.DefaultBuildProcessAccessRoleName = defaultBuildAccessRoleName;
         const template = await writer.generateDefaultTemplate();
         template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
         const parsedTemplate = TemplateRoot.createFromContents(template.template, './');
@@ -94,12 +95,17 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (command.state) {
             return command.state;
         }
-        const storageProvider = await this.getStateBucket(command);
+        const storageProvider = await this.getStateStorageProvider(command);
         BaseCliCommand.StateBucketName = storageProvider.bucketName;
         const accountId = await AwsUtil.GetMasterAccountId();
 
         try {
             const state = await PersistedState.Load(storageProvider, accountId);
+            if (command.organizationStateObject !== undefined) {
+                const orgStorageProvider = await this.getOrganizationStateStorageProvider(command);
+                const orgState = await PersistedState.Load(orgStorageProvider, accountId);
+                state.setReadonlyOrganizationState(orgState);
+            }
             command.state = state;
             return state;
         } catch (err) {
@@ -129,7 +135,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             process.exitCode = 1;
         }
     }
-    protected abstract async performCommand(command: T): Promise<void>;
+    protected abstract performCommand(command: T): Promise<void>;
 
     protected addOptions(command: Command): void {
         command.option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}');
@@ -138,21 +144,29 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--print-stack', 'will print stack traces for errors');
         command.option('--verbose', 'will enable debug logging');
         command.option('--no-color', 'will disable colorization of console logs');
+        command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
     }
 
     protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState): Promise<OrganizationBinder> {
-        const organizations = new Organizations({ region: 'us-east-1' });
-        const awsReader = new AwsOrganizationReader(organizations);
+        let roleInMasterAccount: string;
+        if (template.organizationSection.masterAccount) {
+            roleInMasterAccount = template.organizationSection.masterAccount.buildAccessRoleName;
+        }
+        const masterAccountId = await AwsUtil.GetMasterAccountId();
+        const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
+        const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount};
+
+        const awsReader = new AwsOrganizationReader(organizations, crossAccountConfig);
         const awsOrganization = new AwsOrganization(awsReader);
         await awsOrganization.initialize();
-        const awsWriter = new AwsOrganizationWriter(organizations, awsOrganization);
+        const awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig);
         const taskProvider = new TaskProvider(template, state, awsWriter);
         const binder = new OrganizationBinder(template, state, taskProvider);
         return binder;
     }
 
-    protected async createOrGetStateBucket(command: ICommandArgs, region: string): Promise<S3StorageProvider> {
-        const storageProvider = await this.getStateBucket(command);
+    protected async createOrGetStateBucket(command: ICommandArgs, region: string, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
+        const storageProvider = await this.getStateStorageProvider(command, accountId, credentials);
         try {
             await storageProvider.create(region);
         } catch (err) {
@@ -164,17 +178,33 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return storageProvider;
     }
 
-    protected async getStateBucket(command: ICommandArgs): Promise<S3StorageProvider> {
+    protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
-        const stateBucketName = await BaseCliCommand.GetStateBucketName(command);
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName, accountId);
+        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, credentials);
+        return storageProvider;
+    }
+
+    protected async getOrganizationStateStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
+        const objectKey = command.organizationStateObject;
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.organizationStateBucketName || command.stateBucketName);
         const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 
-    protected static async GetStateBucketName(command: ICommandArgs): Promise<string> {
-        const bucketName = command.stateBucketName || 'organization-formation-${AWS::AccountId}';
+    protected async getOrganizationFileStorageProvider(command: IPerformTasksCommandArgs): Promise<S3StorageProvider> {
+        const objectKey = command.organizationObject;
+        const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
+        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+        return storageProvider;
+    }
+
+    protected static async GetStateBucketName(stateBucketName: string, accountId?: string): Promise<string> {
+        const bucketName = stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
-            const accountId = await AwsUtil.GetMasterAccountId();
+            if (accountId === undefined){
+                accountId = await AwsUtil.GetBuildProcessAccountId();
+            }
             return bucketName.replace('${AWS::AccountId}', accountId);
         }
         return bucketName;
@@ -219,6 +249,11 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         await AwsUtil.InitializeWithProfile(command.profile);
 
+
+        if (command.masterAccountId !== undefined) {
+            AwsUtil.SetMasterAccountId(command.masterAccountId);
+        }
+
         command.initialized = true;
     }
 
@@ -226,7 +261,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         const rc = RC('org-formation', {}, {}) as IRCObject;
         if (rc.configs !== undefined){
 
-            if (rc.organizationFile && rc.config) {
+            if (rc.organizationFile && rc.config && !rc.organizationFile.startsWith('s3://')) {
                 const dir = path.dirname(rc.config);
                 const absolutePath = path.join(dir, rc.organizationFile);
                 if (absolutePath !== rc.organizationFile) {
@@ -266,14 +301,29 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             if (process.argv.indexOf('--output-path') === -1 && rc.printStacksOutputPath !== undefined) {
                 (command as IPrintTasksCommandArgs).outputPath = rc.printStacksOutputPath;
             }
+
+            if (process.argv.indexOf('--master-account-id') === -1 && rc.masterAccountId !== undefined) {
+                (command as IPerformTasksCommandArgs).masterAccountId = rc.masterAccountId;
+            }
+
+            if (process.argv.indexOf('--organization-state-object') === -1 && rc.organizationStateObject !== undefined) {
+                (command as IPerformTasksCommandArgs).organizationStateObject = rc.organizationStateObject;
+            }
+
+            if (process.argv.indexOf('--organization-state-bucket-name') === -1 && rc.organizationStateBucketName !== undefined) {
+                (command as IPerformTasksCommandArgs).organizationStateBucketName = rc.organizationStateBucketName;
+            }
         }
 
     }
 }
 
 export interface ICommandArgs {
+    masterAccountId?: string;
     stateBucketName: string;
     stateObject: string;
+    organizationStateObject?: string;
+    organizationStateBucketName?: string;
     profile?: string;
     state?: PersistedState;
     initialized?: boolean;
@@ -285,8 +335,11 @@ export interface ICommandArgs {
 export interface IRCObject {
     printStacksOutputPath?: string;
     organizationFile?: string;
+    masterAccountId?: string;
     stateBucketName?: string;
     stateObject?: string;
+    organizationStateObject?: string;
+    organizationStateBucketName?: string;
     profile?: string;
     configs: string[];
     config: string;

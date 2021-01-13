@@ -14,11 +14,11 @@ describe('when filtering out depends on', () => {
     let account2Binding: ICfnBinding;
     let account2CfnTemplate: ICfnTemplate;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/depends-on/depends-on.yml');
         const persistedState = TestTemplates.createState(template);
         cloudformationBinder = new CloudFormationBinder('budget-alarms', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
         account1CfnTemplate = JSON.parse(account1Binding.template.createTemplateBody()) as ICfnTemplate;
         account2Binding = bindings.find((x) => x.accountId === '222222222222');

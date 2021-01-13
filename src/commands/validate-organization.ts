@@ -23,6 +23,7 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
     }
 
     protected async performCommand(command: IUpdateOrganizationCommandArgs): Promise<void> {
+
         const template = TemplateRoot.create(command.templateFile);
         const state = await this.getState(command);
         const templateHash = template.hash;
@@ -38,6 +39,7 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
         }
 
         const binder = await this.getOrganizationBinder(template, state);
+
         const tasks = binder.enumBuildTasks();
         const createTasks = tasks.filter(x=>x.action === 'Create');
         if (createTasks.length > 0) {

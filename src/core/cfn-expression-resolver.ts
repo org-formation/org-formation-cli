@@ -3,9 +3,8 @@ import { CfnMappingsSection } from './cfn-functions/cfn-find-in-map';
 import { CfnFunctions, ICfnFunctionContext } from './cfn-functions/cfn-functions';
 import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
 import { ResourceUtil } from '~util/resource-util';
-import { AccountResource, Resource } from '~parser/model';
+import { AccountResource, OrganizationSection, Resource } from '~parser/model';
 import { PersistedState } from '~state/persisted-state';
-import { TemplateRoot } from '~parser/parser';
 import { AwsUtil } from '~util/aws-util';
 import { Validator } from '~parser/validator';
 import { BaseCliCommand } from '~commands/base-command';
@@ -67,6 +66,10 @@ export class CfnExpressionResolver {
             return expression;
         }
 
+        if (expression === null) {
+            return undefined;
+        }
+
         const container = {val: expression};
 
         const resolved = await this.resolve(container);
@@ -87,8 +90,17 @@ export class CfnExpressionResolver {
         for(const expression of expressions) {
 
             const paramVal = this.parameters[expression.resource];
-            if (paramVal !== undefined && !expression.path) {
-                expression.resolveToValue(paramVal);
+            if (!expression.path && paramVal !== undefined) {
+                if (typeof paramVal !== 'object' || Array.isArray(paramVal)) {
+                    expression.resolveToValue(paramVal);
+                } else {
+                    const valueAsExpression = ResourceUtil.GetExpression(paramVal);
+                    if (valueAsExpression) {
+                        const resource = valueAsExpression.resource;
+                        const path = valueAsExpression.path;
+                        expression.rewriteExpression(resource, path);
+                    }
+                }
                 continue;
             }
         }
@@ -158,13 +170,13 @@ export class CfnExpressionResolver {
         return container.val;
     }
 
-    static ResolveOrganizationExpressionByLogicalName(logicalName: string, path: string | undefined, template: TemplateRoot, state: PersistedState): string | undefined {
-        const account = template.organizationSection.findAccount(x=>x.logicalId === logicalName);
+    static ResolveOrganizationExpressionByLogicalName(logicalName: string, path: string | undefined, organization: OrganizationSection, state: PersistedState): string | undefined {
+        const account = organization.findAccount(x=>x.logicalId === logicalName);
         if (account !== undefined) {
             return CfnExpressionResolver.ResolveAccountExpression(account, path, state);
         }
 
-        const resource = template.organizationSection.findResource(x=>x.logicalId === logicalName);
+        const resource = organization.findResource(x=>x.logicalId === logicalName);
         if (resource !== undefined) {
             return CfnExpressionResolver.ResolveResourceRef(resource, state);
         }
@@ -195,6 +207,10 @@ export class CfnExpressionResolver {
         } else if (path === 'RootEmail') {
             if (!account.rootEmail) { return ''; }
             return account.rootEmail;
+        } else if (path === 'OrganizationAccessRoleName') {
+            return account.organizationAccessRoleName;
+        } else if (path === 'BuildAccessRoleName') {
+            return account.buildAccessRoleName;
         }
         if (!path.startsWith('Resources.')) {
             throw new OrgFormationError(`unable to resolve account attribute ${account.logicalId}.${path}`);
@@ -210,7 +226,9 @@ export class CfnExpressionResolver {
         return binding.physicalId;
     }
 
-    private static async ResolveCopyValueFunctions<T>(resolver: CfnExpressionResolver, targetAccount: string, targetRegion: string, taskRoleName: string,  obj: T): Promise<T> {
+    public static ValueUsedForUnresolvedCopyValueExpression = 'value-used-for-unresolved-copy-value-on-validation';
+
+    private static async ResolveCopyValueFunctions<T>(resolver: CfnExpressionResolver, targetAccount: string, targetRegion: string, taskRoleName: string, viaRoleArn: string,  obj: T, finalPerform: boolean): Promise<T> {
         const functions = ResourceUtil.EnumFunctionsForResource(obj);
 
         for(const fn of functions) {
@@ -218,9 +236,13 @@ export class CfnExpressionResolver {
             const exportName = processed.exportName;
             const accountId = processed.accountId ?? targetAccount;
             const region = processed.region ?? targetRegion;
-            const val = await AwsUtil.GetCloudFormationExport(exportName, accountId, region, taskRoleName);
+            let val = await AwsUtil.GetCloudFormationExport(exportName, accountId, region, taskRoleName);
             if (val === undefined) {
-                throw new OrgFormationError(`unable to find export ${exportName} in account ${accountId}/${region}.`);
+                if (finalPerform) {
+                    throw new OrgFormationError(`unable to find export ${exportName} in account ${accountId}/${region}.`);
+                } else {
+                    val = CfnExpressionResolver.ValueUsedForUnresolvedCopyValueExpression;
+                }
             }
             fn.resolveToValue(val);
         }
@@ -228,21 +250,21 @@ export class CfnExpressionResolver {
         return obj;
     }
 
-    public static CreateDefaultResolver(logicalAccountName: string, accountId: string, region: string, taskRoleName: string, template: TemplateRoot, state: PersistedState): CfnExpressionResolver {
+    public static CreateDefaultResolver(logicalAccountName: string, accountId: string, region: string, taskRoleName: string, viaRoleArn: string, organizationSection: OrganizationSection, state: PersistedState, finalPerform: boolean): CfnExpressionResolver {
         const resolver = new CfnExpressionResolver();
         resolver.addParameter('AWS::AccountId', accountId);
         resolver.addParameter('AWS::Region', region);
         resolver.addParameter('ORG::StateBucketName', BaseCliCommand.StateBucketName);
 
         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        const currentAccountResolverFn = (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(logicalAccountName, resourcePath, template, state);
+        const currentAccountResolverFn = (that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(logicalAccountName, resourcePath, organizationSection, state);
 
         resolver.addResourceWithResolverFn('CurrentAccount', currentAccountResolverFn);
         resolver.addResourceWithResolverFn('AWSAccount', currentAccountResolverFn);
         resolver.addResourceWithResolverFn('ORG::PrincipalOrgID', () => AwsUtil.GetPrincipalOrgId());
-        resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(resource, resourcePath, template, state));
+        resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(resource, resourcePath, organizationSection, state));
 
-        resolver.addTreeResolver((that: CfnExpressionResolver, obj) => CfnExpressionResolver.ResolveCopyValueFunctions(that, accountId, region, taskRoleName, obj));
+        resolver.addTreeResolver((that: CfnExpressionResolver, obj) => CfnExpressionResolver.ResolveCopyValueFunctions(that, accountId, region, taskRoleName, viaRoleArn, obj, finalPerform));
 
         return resolver;
     }

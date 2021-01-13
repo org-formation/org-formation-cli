@@ -18,6 +18,13 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         await x.performCommand(command);
     }
 
+    static HasRan: boolean;
+
+    static ResetHasRan(): void {
+        this.HasRan = false;
+    }
+
+
     constructor(command?: Command) {
         super(command, commandName, commandDescription, 'templateFile');
     }
@@ -51,13 +58,13 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         try {
             if (tasks.length === 0) {
                 ConsoleUtil.LogInfo('organization up to date, no work to be done.');
-            }
-            else {
+            } else {
                 await TaskRunner.RunTasks(tasks);
                 ConsoleUtil.LogInfo('done');
             }
             state.putTemplateHash(templateHash);
             state.setPreviousTemplate(template.source);
+            this.HasRan = true;
         }
         finally {
             await state.save();
@@ -68,4 +75,5 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
 export interface IUpdateOrganizationCommandArgs extends ICommandArgs {
     templateFile: string;
     forceDeploy?: boolean;
+    taskRoleName?: string;
 }

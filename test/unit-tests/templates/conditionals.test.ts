@@ -14,14 +14,14 @@ describe('when creating a cross account depedency on a resource that has a condi
     let account2Binding: ICfnBinding;
     let account2CfnTemplate: ICfnTemplate;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/conditionals/conditionals.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('conditionals', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
         account1CfnTemplate = JSON.parse(account1Binding.template.createTemplateBody()) as ICfnTemplate;
         account2Binding = bindings.find((x) => x.accountId === '222222222222');

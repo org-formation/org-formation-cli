@@ -9,6 +9,7 @@ import { ICfnTask } from '~cfn-binder/cfn-task-provider';
 import { ConsoleUtil } from '~util/console-util';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { IUpdateStacksBuildTask } from '~build-tasks/tasks/update-stacks-task';
+import { config } from 'aws-sdk';
 
 describe('when loading task file configuration', () => {
     let buildconfig: BuildConfiguration;
@@ -62,23 +63,10 @@ describe('when enumerating build tasks', () => {
 
 describe('when getting build tasks for task file without update-organization', () => {
 
-    test('then error is thrown', () => {
+    test('then error is thrown', async () => {
         try {
             const config = new BuildConfiguration('./test/resources/tasks/build-tasks-empty.yml');
-            config.enumBuildTasks({} as IPerformTasksCommandArgs);
-            throw new Error('expected error to have been thrown');
-        } catch (err) {
-            expect(err.message).toEqual(expect.stringContaining('update-organization'));
-        }
-    });
-});
-
-describe('when getting validation tasks for task file without update-organization', () => {
-
-    test('then error is thrown', () => {
-        try {
-            const config = new BuildConfiguration('./test/resources/tasks/build-tasks-empty.yml');
-            config.enumValidationTasks({} as IPerformTasksCommandArgs);
+            await config.fixateOrganizationFile({} as IPerformTasksCommandArgs);
             throw new Error('expected error to have been thrown');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('update-organization'));
@@ -202,9 +190,11 @@ describe('when referencing account on parameter', () => {
     let runTask: Sinon.SinonStub;
     const sandbox = Sinon.createSandbox();
 
-    beforeEach(() => {
+    beforeEach(async () => {
         buildconfig = new BuildConfiguration('./test/resources/tasks/build-tasks-param-account-ref.yml');
-        tasks = buildconfig.enumBuildTasks({maxConcurrentStacks: 1, failedStacksTolerance: 0, maxConcurrentTasks: 1, failedTasksTolerance: 0 } as any);
+        const command = {maxConcurrentStacks: 1, failedStacksTolerance: 0, maxConcurrentTasks: 1, failedTasksTolerance: 0 } as IPerformTasksCommandArgs;
+        tasks = buildconfig.enumBuildTasks(command);
+        await buildconfig.fixateOrganizationFile(command);
         const getState = sandbox.stub(BaseCliCommand.prototype, 'getState');
         const state = PersistedState.CreateEmpty('000000000000');
         state.setBinding({
@@ -245,4 +235,31 @@ describe('when referencing account on parameter', () => {
         expect(taskRan.find(x=>x.accountId = '111111111111')).toBeDefined();
         expect(taskRan.find(x=>x.accountId = '222222222222')).toBeDefined();
     });
+});
+
+describe('when referencing non-existing task using DependsOns', () => {
+    let buildconfig: BuildConfiguration;
+    const sandbox = Sinon.createSandbox();
+    let stub: Sinon.SinonStub;
+    beforeEach(() => {
+        stub = sandbox.stub(ConsoleUtil, 'LogWarning');
+        buildconfig = new BuildConfiguration('./test/resources/tasks/task-depends-on-non-existing.yml');
+    });
+
+    test('file is loaded without errors', () => {
+        const tasks = buildconfig.enumBuildTasks({} as any);
+        expect(tasks).toBeDefined();
+        expect(tasks.length).toBe(2);
+        const updateStacks = tasks.filter((x) => x.type === 'update-stacks');
+        expect(updateStacks.length).toBe(1);
+    });
+
+    test('warning is logged', () => {
+        const tasks = buildconfig.enumBuildTasks({} as any);
+        expect(stub.callCount).toBe(1);
+    })
+
+    afterEach(() => {
+        sandbox.restore();
+    })
 });

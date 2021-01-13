@@ -29,6 +29,10 @@ export class OrganizationBindingsSection {
     public getBinding(logicalName: string): IOrganizationBinding {
         const result = this.bindings[logicalName];
         if (result === undefined) {throw new OrgFormationError(`unable to find binding with name ${logicalName}`); }
+
+        if (result === null) {
+            return {IncludeMasterAccount: false}; // null binding converts to empty
+        }
         return result;
     }
 }

@@ -1,4 +1,4 @@
-import fs, { readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import path from 'path';
 import md5 from 'md5';
 import { OrgFormationError } from '../org-formation-error';
@@ -6,9 +6,11 @@ import { BuildTaskProvider } from './build-task-provider';
 import { IUpdateOrganizationTaskConfiguration } from './tasks/organization-task';
 import { IUpdateStacksBuildTask } from './tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
-import { yamlParse } from '~yaml-cfn/index';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
+import { yamlParseWithIncludes } from '~yaml-cfn/yaml-parse-includes';
+import { ConsoleUtil } from '~util/console-util';
+import { AwsUtil } from '~util/aws-util';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -22,7 +24,6 @@ export class BuildConfiguration {
     }
 
     public enumValidationTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
-        this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
         for (const taskConfig of this.tasks) {
             const task = BuildTaskProvider.createValidationTask(taskConfig, command);
@@ -37,7 +38,6 @@ export class BuildConfiguration {
     }
 
     public enumPrintTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
-        this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
         for (const taskConfig of this.tasks) {
             const task = BuildTaskProvider.createPrintTask(taskConfig, command);
@@ -50,7 +50,6 @@ export class BuildConfiguration {
     }
 
     public enumBuildTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
-        this.fixateOrganizationFile(command);
         const result: IBuildTask[] = [];
 
         for (const taskConfig of this.tasks) {
@@ -74,12 +73,12 @@ export class BuildConfiguration {
         }
     }
 
-    private fixateOrganizationFile(command: IPerformTasksCommandArgs): void{
+    public async fixateOrganizationFile(command: IPerformTasksCommandArgs): Promise<void> {
 
         if (command.organizationFile === undefined) {
             const updateOrgTasks = this.tasks.filter(x => x.Type === 'update-organization');
             if (updateOrgTasks.length === 0) {
-                throw new OrgFormationError('tasks file does not contain a task with type update-organization');
+                throw new OrgFormationError('tasks file does not contain a task with type update-organization and no --organization-file was provided on the cli.');
             }
             if (updateOrgTasks.length > 1) {
                 throw new OrgFormationError('tasks file has multiple tasks with type update-organization');
@@ -88,13 +87,32 @@ export class BuildConfiguration {
             if (updateOrgTask.Template === undefined) {
                 throw new OrgFormationError('update-organization task does not contain required Template attribute');
             }
+
             const dir = path.dirname(this.file);
             command.organizationFile = path.resolve(dir, updateOrgTask.Template);
         }
 
         if (command.organizationFileHash === undefined) {
-            const organizationTemplateContent = readFileSync(command.organizationFile);
-            command.organizationFileHash = md5(organizationTemplateContent);
+            command.organizationFileContents = await this.readOrganizationFileContents(command.organizationFile);
+            command.organizationFileHash = md5(command.organizationFileContents);
+        }
+    }
+
+    private async readOrganizationFileContents(organizationFileLocation: string): Promise<string> {
+        try {
+            if (organizationFileLocation.startsWith('s3://')) {
+                const buildProcessAccountId = await AwsUtil.GetBuildProcessAccountId();
+                const s3client = await AwsUtil.GetS3Service(buildProcessAccountId, undefined);
+                const bucketAndKey = organizationFileLocation.substring(5);
+                const bucketAndKeySplit = bucketAndKey.split('/');
+                const response = await s3client.getObject({ Bucket: bucketAndKeySplit[0], Key: bucketAndKeySplit[1] }).promise();
+                return response.Body.toString();
+            } else {
+                return readFileSync(organizationFileLocation).toString();
+            }
+        } catch (err) {
+            ConsoleUtil.LogError(`unable to load organization file from ${organizationFileLocation}.`, err);
+            throw err;
         }
     }
 
@@ -107,10 +125,8 @@ export class BuildConfiguration {
     }
 
     public loadBuildFile(filePath: string): IBuildFile {
-        const buffer = fs.readFileSync(filePath);
-        const contents = buffer.toString('utf-8');
 
-        const buildFile = yamlParse(contents) as IBuildFile;
+        const buildFile = yamlParseWithIncludes(filePath) as IBuildFile;
         if (buildFile === undefined) {
             return {};
         }
@@ -123,15 +139,17 @@ export class BuildConfiguration {
         delete buildFile.Mappings;
 
         const expressionResolver = new CfnExpressionResolver();
-        for(const paramName in this.parameters) {
-            const param = this.parameters[paramName];
+        const parametersSection = expressionResolver.resolveFirstPass(this.parameters);
+
+        for (const paramName in parametersSection) {
+            const param = parametersSection[paramName];
             const paramType = param.Type;
 
             if (paramType === undefined) {
                 throw new OrgFormationError(`expected Type on parameter ${paramName} declared in tasks file ${filePath}`);
             }
 
-            const supportedParamTypes = ['String', 'Number', 'Boolean'];
+            const supportedParamTypes = ['String', 'Number', 'Boolean', 'List<String>'];
             if (!supportedParamTypes.includes(paramType)) {
                 throw new OrgFormationError(`unsupported Type on parameter ${paramName} expected one of ${supportedParamTypes.join(', ')}, found: ${paramType}`);
             }
@@ -146,7 +164,7 @@ export class BuildConfiguration {
             }
 
             if (paramType === 'Boolean') {
-                if (value === 'true' || value === 1 || value === true){
+                if (value === 'true' || value === 1 || value === true) {
                     value = true;
                 } else if (value === 'false' || value === 0 || value === false) {
                     value = false;
@@ -168,8 +186,29 @@ export class BuildConfiguration {
         const result: IBuildTaskConfiguration[] = [];
         for (const name in resolvedContents) {
             const config = resolvedContents[name] as IBuildTaskConfiguration;
-            result.push({...config, LogicalName: name, FilePath: filePath});
+            result.push({ ...config, LogicalName: name, FilePath: filePath });
         }
+
+        for (const task of result) {
+            if (task.DependsOn === undefined) { continue; }
+
+            let dependencies = task.DependsOn;
+            if (!Array.isArray(dependencies)) {
+                dependencies = [dependencies];
+            }
+
+            for (const dependency of dependencies) {
+                if (typeof dependency !== 'string') {
+                    ConsoleUtil.LogWarning(`Task ${task.LogicalName} declares DependsOn that is not a string. you must use the name of the task, not !Ref to the task.`);
+                } else {
+                    const found = result.find(x => x.LogicalName === dependency);
+                    if (found === undefined) {
+                        ConsoleUtil.LogWarning(`Task ${task.LogicalName} depends on task ${dependency} which was not found.`);
+                    }
+                }
+            }
+        }
+
         return result;
 
     }
@@ -193,6 +232,7 @@ export interface IBuildTaskConfiguration {
     FilePath?: string;
     Skip?: boolean;
     TaskRoleName?: string;
+    TaskViaRoleArn?: string;
     ForceDeploy?: boolean;
     LogVerbose?: boolean;
 }
@@ -208,7 +248,7 @@ export interface IBuildTask {
     physicalIdForCleanup?: string;
 }
 
-export interface IBuildFile extends Record<string, IBuildTaskConfiguration | {}>{
+export interface IBuildFile extends Record<string, IBuildTaskConfiguration | {}> {
     Parameters?: Record<string, IBuildFileParameter>;
     Mappings?: CfnMappingsSection;
 }

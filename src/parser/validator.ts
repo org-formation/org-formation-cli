@@ -17,15 +17,22 @@ export class Validator {
         delete clone.config;
 
         Validator.ThrowForUnknownAttribute(clone, `runtime configuration file (${rc.configs.join(', ')})`,
-            'organizationFile', 'stateBucketName', 'stateObject', 'profile', 'printStacksOutputPath');
+            'organizationFile', 'stateBucketName', 'stateObject', 'profile', 'printStacksOutputPath',
+            'masterAccountId', 'organizationStateObject', 'organizationStateBucketName');
 
     }
 
     static throwForUnresolvedExpressions(mustNotContainExpression: any, attributeName: string): void {
-      const type = typeof mustNotContainExpression;
-      if (type === 'object') {
-        throw new OrgFormationError(`unable to parse expression on attribute ${attributeName}. Is there an error in the expression? ${JSON.stringify(mustNotContainExpression)}`);
-      }
+        if (Array.isArray(mustNotContainExpression)) {
+            for (const elm of mustNotContainExpression) {
+                Validator.throwForUnresolvedExpressions(elm, attributeName);
+            }
+        } else {
+            const type = typeof mustNotContainExpression;
+            if (type === 'object') {
+                throw new OrgFormationError(`unable to parse expression on attribute ${attributeName}. Is there an error in the expression? ${JSON.stringify(mustNotContainExpression)}`);
+            }
+        }
     }
 
     public static ValidateUpdateStacksTask(config: IUpdateStackTaskConfiguration, taskName: string): void {
@@ -52,8 +59,7 @@ export class Validator {
             'Type', 'DependsOn', 'Skip', 'Template', 'StackName', 'StackDescription', 'Parameters', 'StackPolicy',
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
             'OrganizationBindings', 'TerminationProtection', 'UpdateProtection', 'CloudFormationRoleName', 'TaskRoleName',
-            'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance', 'LogVerbose', 'ForceDeploy' );
-
+            'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance', 'LogVerbose', 'ForceDeploy', 'TaskViaRoleArn');
     }
 
     public static ValidateTemplateRoot(root: ITemplate): void {
@@ -87,7 +93,7 @@ export class Validator {
 
         Validator.ThrowForUnknownAttribute(root, 'template root',
             'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'DefaultOrganizationBinding', 'OrganizationBindings', 'DefaultOrganizationBindingRegion', 'OrganizationBindingRegion',
-            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs');
+            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs', 'Transform');
 
     }
 
@@ -202,7 +208,7 @@ export class Validator {
                 if (elm.match(/\d{12}/)) {
                     throw new OrgFormationError(`Invalid organizational unit binding ${elm} on ${id}. Expected literal '*' or !Ref logicalId.`);
                 }
-            } else if (typeof elm === 'object')  {
+            } else if (typeof elm === 'object') {
                 Validator.ThrowForUnknownAttribute(elm, `organizational unit binding ${id}`, 'Ref');
             } else {
                 throw new OrgFormationError(`Unexpected type ${typeof elm} found on organizational unit binding ${id}. expected either string or object`);

@@ -36,7 +36,7 @@ export class CfnValidateTaskProvider {
             descriptionsOfBoundParameters.push(param.Description);
         }
 
-        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName,  binding.customViaRoleArn, this.template.organizationSection, this.state, false);
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {
@@ -47,9 +47,10 @@ export class CfnValidateTaskProvider {
             action: 'Validate',
             perform: async (): Promise<void> => {
                 const customRoleName = await expressionResolver.resolveSingleExpression(binding.customRoleName, 'CustomRoleName');
+                const customViaRoleArn = await expressionResolver.resolveSingleExpression(binding.customViaRoleArn, 'CustomViaRoleArn');
 
-                const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
-                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName);
+                const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver, true);
+                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
                 const validateInput: ValidateTemplateInput =  {
                     TemplateBody: templateBody,

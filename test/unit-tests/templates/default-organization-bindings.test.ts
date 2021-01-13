@@ -2,7 +2,7 @@ import { CloudFormationBinder, ICfnBinding } from '~cfn-binder/cfn-binder';
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
-import { ICfnGetAttValue, ICfnJoinValue, ICfnRefValue, ICfnTemplate } from '../cfn-types';
+import { ICfnTemplate } from '../cfn-types';
 
 describe('when loading default-organization-bindings template', () => {
     let template: TemplateRoot;
@@ -15,7 +15,7 @@ describe('when loading default-organization-bindings template', () => {
     let account3Binding: ICfnBinding;
     let account3CfnTemplate: ICfnTemplate;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         template = TemplateRoot.create('./test/resources/defaults/default-organization-bindings.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
@@ -26,7 +26,7 @@ describe('when loading default-organization-bindings template', () => {
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
 
         cloudformationBinder = new CloudFormationBinder('default-organization-bindings', template, persistedState);
-        bindings = cloudformationBinder.enumBindings();
+        bindings = await cloudformationBinder.enumBindings();
         account1Binding = bindings.find((x) => x.accountId === '111111111111');
         account1CfnTemplate = JSON.parse(account1Binding.template.createTemplateBody()) as ICfnTemplate;
         account2Binding = bindings.find((x) => x.accountId === '222222222222');

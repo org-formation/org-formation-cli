@@ -16,6 +16,7 @@ import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig, ICdkCommandArgs, ICdkTask> {
+
     type = 'cdk';
     typeForTask = 'update-cdk';
 
@@ -109,7 +110,16 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<ICdkTask>, resolver: CfnExpressionResolver): Promise<void> {
-        const { task, target } = binding;
+
+        const {task, target, previousBindingLocalHash } = binding;
+        if (task.forceDeploy !== true &&
+            task.taskLocalHash !== undefined &&
+            task.taskLocalHash === previousBindingLocalHash) {
+
+            ConsoleUtil.LogInfo(`Workload (${this.typeForTask}) ${task.name} in ${target.accountId}/${target.region} skipped, task itself did not change. Use ForceTask to force deployment.`);
+            return;
+        }
+
         let command: string;
 
         if (task.customDeployCommand) {
@@ -178,6 +188,10 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             CDK_DEPLOY_REGION: target.region,
             CDK_DEPLOY_ACCOUNT: target.accountId,
         };
+    }
+
+    getPhysicalIdForCleanup(): string {
+        return undefined;
     }
 
     static GetParametersAsArgument(parameters: Record<string, any>): string {

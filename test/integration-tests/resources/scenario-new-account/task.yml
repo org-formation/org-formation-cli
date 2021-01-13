@@ -1,0 +1,21 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: false
+  Template: ./organization.yml
+
+Task:
+  Type: update-stacks
+  StackName: test-with-very-large-stack
+  Template: ./buckets.yml
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    Account: "*"
+
+CopyToS3WithNewAccount:
+  Type: copy-to-s3
+  RemotePath: !Sub 's3://asdasd/${NewAccount}/file2.txt'
+  LocalPath: ./task.yml
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1

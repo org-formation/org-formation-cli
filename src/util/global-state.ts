@@ -1,4 +1,4 @@
-import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from './aws-util';
+import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS, DEFAULT_ROLE_FOR_ORG_ACCESS } from './aws-util';
 import { PersistedState } from '~state/persisted-state';
 import { TemplateRoot } from '~parser/parser';
 
@@ -21,9 +21,29 @@ export class GlobalState {
         if (account === undefined) {
             account = this.OrganizationTemplate.organizationSection.findAccount(x=>x.accountId === accountId);
             if (account === undefined) {
-                const organizationRootDefaultRole = this.OrganizationTemplate.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName;
+                const organizationRootDefaultRole = this.OrganizationTemplate.organizationSection.organizationRoot?.defaultBuildAccessRoleName;
                 if (!organizationRootDefaultRole) {
                     return DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName;
+                }
+                return organizationRootDefaultRole;
+            }
+        }
+        return account.buildAccessRoleName;
+    }
+
+    public static GetOrganizationAccessRoleName(accountId: string): string {
+        if (this.State === undefined || this.OrganizationTemplate === undefined) {
+            return DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName;
+        }
+
+        const logicalId = this.State.getLogicalIdForPhysicalId(accountId);
+        let account = this.OrganizationTemplate.organizationSection.findAccount(x=>x.logicalId === logicalId);
+        if (account === undefined) {
+            account = this.OrganizationTemplate.organizationSection.findAccount(x=>x.accountId === accountId);
+            if (account === undefined) {
+                const organizationRootDefaultRole = this.OrganizationTemplate.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName;
+                if (!organizationRootDefaultRole) {
+                    return DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName;
                 }
                 return organizationRootDefaultRole;
             }

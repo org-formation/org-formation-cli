@@ -40,7 +40,7 @@ export class CfnTaskProvider {
             parameters[paramName] = paramValue;
         }
 
-        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, binding.customViaRoleArn, this.template.organizationSection, this.state, true);
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {
@@ -53,9 +53,10 @@ export class CfnTaskProvider {
 
                 const customRoleName = await expressionResolver.resolveSingleExpression(binding.customRoleName, 'CustomRoleName');
                 const cloudFormationRoleName = await expressionResolver.resolveSingleExpression(binding.cloudFormationRoleName, 'CloudFormationRoleName');
+                const customViaRoleArn = await expressionResolver.resolveSingleExpression(binding.customViaRoleArn, 'CustomViaRoleArn');
 
                 const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
-                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName);
+                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
                 const clientToken = uuid();
 
                 let roleArn: string;
@@ -65,7 +66,7 @@ export class CfnTaskProvider {
                 const stackInput: CreateStackInput | UpdateStackInput = {
                     StackName: stackName,
                     TemplateBody: templateBody,
-                    Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
+                    Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM', 'CAPABILITY_AUTO_EXPAND'],
                     ClientRequestToken: clientToken,
                     RoleARN: roleArn,
                     Parameters: [],
@@ -80,7 +81,7 @@ export class CfnTaskProvider {
 
                 for (const dependency of dependencies) {
 
-                    const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, customRoleName);
+                    const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, customRoleName, customViaRoleArn);
 
                     if (foundExport !== undefined) {
                         stackInput.Parameters.push( {
@@ -187,7 +188,7 @@ export class CfnTaskProvider {
     public async createDeleteTemplateTask(binding: ICfnBinding): Promise<ICfnTask> {
         const that = this;
 
-        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, this.template, this.state);
+        const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, binding.customViaRoleArn, this.template.organizationSection, this.state, true);
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {
@@ -199,10 +200,11 @@ export class CfnTaskProvider {
             perform: async (): Promise<void> => {
 
                 const customRoleName = await expressionResolver.resolveSingleExpression(binding.customRoleName, 'CustomRoleName');
+                const customViaRoleArn = await expressionResolver.resolveSingleExpression(binding.customViaRoleArn, 'CustomViaRoleArn');
                 const cloudFormationRoleName = await expressionResolver.resolveSingleExpression(binding.cloudFormationRoleName, 'CloudFormationRoleName');
 
                 try {
-                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName);
+                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
                     let roleArn: string;
                     if (cloudFormationRoleName) {

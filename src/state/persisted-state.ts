@@ -1,6 +1,6 @@
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../util/console-util';
-import { IStorageProvider } from './storage-provider';
+import { IStorageProvider, S3StorageProvider } from './storage-provider';
 import { OrgResourceTypes } from '~parser/model';
 
 export class PersistedState {
@@ -27,6 +27,9 @@ export class PersistedState {
             if (err instanceof SyntaxError) {
                 throw new OrgFormationError(`unable to parse state file ${err}`);
             }
+            if (provider instanceof S3StorageProvider) {
+                throw new OrgFormationError(`unable to load state, bucket: ${provider.bucketName}, key: ${provider.objectKey}. Err: ${err}`);
+            }
             throw err;
         }
     }
@@ -49,22 +52,48 @@ export class PersistedState {
     private provider?: IStorageProvider;
     private state: IState;
     private dirty = false;
+    private organizationState: PersistedState;
+    private readonly = false;
+    private organizationLevelState = true;
 
     constructor(state: IState, provider?: IStorageProvider) {
         this.provider = provider;
         this.state = state;
         this.masterAccount = state.masterAccountId;
+        this.organizationState = this;
+    }
+
+
+    public setReadonlyOrganizationState(organizationState: PersistedState): void {
+        this.organizationState = organizationState;
+        this.organizationState.readonly = true;
+        this.organizationState.organizationLevelState = true;
+
+        this.organizationLevelState = false;
     }
 
     public putTemplateHash(val: string): void {
-        this.putValue('organization.template.hash', val);
+        if (!this.organizationLevelState) {return;}
+       this.putValue('organization.template.hash', val);
     }
 
     public getTemplateHash(): string {
-        return this.getValue('organization.template.hash');
+        return this.organizationState.getValue('organization.template.hash');
+    }
+
+    public putTemplateHashLastPublished(val: string): void {
+        if (!this.organizationLevelState) {return;}
+        this.organizationState.putValue('organization.template-last-published.hash', val);
+    }
+
+    public getTemplateHashLastPublished(): string {
+        return this.organizationState.getValue('organization.template-last-published.hash');
     }
 
     public putValue(key: string, val: string): void {
+        if (this.readonly) {
+            throw new OrgFormationError('attempt to modify to read-only organization level state');
+        }
         if (this.state.values === undefined) {
             this.state.values = {};
         }
@@ -299,6 +328,9 @@ export class PersistedState {
     }
 
     public getAccountBinding(logicalId: string): IBinding | undefined {
+        if (this.organizationLevelState === false) {
+            return this.organizationState.getAccountBinding(logicalId);
+        }
         const typeDict = this.state.bindings?.[OrgResourceTypes.MasterAccount];
         if (!typeDict) {
             return this.getBinding(OrgResourceTypes.Account, logicalId);
@@ -312,6 +344,10 @@ export class PersistedState {
     }
 
     public getBinding(type: string, logicalId: string): IBinding | undefined {
+        if (this.organizationLevelState === false) {
+            return this.organizationState.getBinding(type, logicalId);
+        }
+
         const typeDict = this.state.bindings?.[type];
         if (!typeDict) { return undefined; }
 
@@ -323,6 +359,9 @@ export class PersistedState {
     }
 
     public enumBindings(type: string): IBinding[] {
+        if (this.organizationLevelState === false) {
+            return this.organizationState.enumBindings(type);
+        }
         if (this.state.bindings === undefined) {
             return [];
         }
@@ -337,6 +376,9 @@ export class PersistedState {
     }
 
     getLogicalIdForPhysicalId(physicalId: string): string | undefined {
+        if (this.organizationLevelState === false) {
+            return this.organizationState.getLogicalIdForPhysicalId(physicalId);
+        }
         if (this.masterAccount === physicalId) {
             const binding = this.enumBindings(OrgResourceTypes.MasterAccount);
             if (binding && binding.length > 0) {
@@ -353,9 +395,10 @@ export class PersistedState {
         return undefined;
     }
 
-
     public enumGenericTargets<ITaskDefinition>(type: string, organizationName: string, namespace = 'default', name: string): IGenericTarget<ITaskDefinition>[] {
-
+        if (this.organizationLevelState === false) {
+            return this.organizationState.enumGenericTargets(type, organizationName, namespace, name);
+        }
         if (this.state.targets === undefined) {
             return [];
         }
@@ -386,6 +429,14 @@ export class PersistedState {
     }
 
     public setUniqueBindingForType(binding: IBinding): void {
+        if (this.organizationLevelState === false) {
+            this.organizationState.setUniqueBindingForType(binding);
+            return;
+        }
+        if (this.readonly) {
+            throw new OrgFormationError('attempt to modify to read-only organization level state');
+        }
+
         if (this.state.bindings === undefined) {
             this.state.bindings = {};
         }
@@ -397,6 +448,13 @@ export class PersistedState {
     }
 
     public setBinding(binding: IBinding): void {
+        if (this.organizationLevelState === false) {
+            this.organizationState.setBinding(binding);
+            return;
+        }
+        if (this.readonly) {
+            throw new OrgFormationError('attempt to modify to read-only organization level state');
+        }
         if (this.state.bindings === undefined) {
             this.state.bindings = {};
         }
@@ -410,6 +468,13 @@ export class PersistedState {
     }
 
     public setBindingHash(type: string, logicalId: string, lastCommittedHash: string): void {
+        if (this.organizationLevelState === false) {
+            this.organizationState.setBindingHash(type, logicalId, lastCommittedHash);
+            return;
+        }
+        if (this.readonly) {
+            throw new OrgFormationError('attempt to modify to read-only organization level state');
+        }
         if (this.state.bindings === undefined) {
             this.state.bindings = {};
         }
@@ -428,6 +493,13 @@ export class PersistedState {
     }
 
     public setBindingPhysicalId(type: string, logicalId: string, physicalId: string): void {
+        if (this.organizationLevelState === false) {
+            this.organizationState.setBindingHash(type, logicalId, physicalId);
+            return;
+        }
+        if (this.readonly) {
+            throw new OrgFormationError('attempt to modify to read-only organization level state');
+        }
         let typeDict: Record<string, IBinding> = this.state.bindings[type];
         if (!typeDict) {
             typeDict = this.state.bindings[type] = {};
@@ -443,6 +515,13 @@ export class PersistedState {
     }
 
     public removeBinding(binding: IBinding): void {
+        if (this.organizationLevelState === false) {
+            this.organizationState.removeBinding(binding);
+            return;
+        }
+        if (this.readonly) {
+            throw new OrgFormationError('attempt to modify to read-only organization level state');
+        }
         let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
         if (!typeDict) {
             typeDict = this.state.bindings[binding.type] = {};
@@ -453,11 +532,21 @@ export class PersistedState {
     }
 
     public setPreviousTemplate(template: string): void {
+        if (this.organizationLevelState === false) {
+            this.organizationState.setPreviousTemplate(template);
+            return;
+        }
+        if (this.readonly) {
+            throw new OrgFormationError('attempt to modify to read-only organization level state');
+        }
         this.state.previousTemplate = template;
         this.dirty = true;
     }
 
     public getPreviousTemplate(): string {
+        if (this.organizationLevelState === false) {
+            return this.organizationState.getPreviousTemplate();
+        }
         return this.state.previousTemplate;
     }
 
@@ -473,6 +562,9 @@ export class PersistedState {
 
 
     performUpdateToVersion2IfNeeded(): void {
+        if (this.organizationLevelState === false) {
+            return;
+        }
         const storedVersion = this.getValue('state-version');
         if (storedVersion === undefined) {
             this.state.trackedTasks = {};
@@ -524,6 +616,7 @@ export interface ICfnTarget {
     accountId: string;
     stackName: string;
     customRoleName?: string;
+    customViaRoleArn?: string;
     cloudFormationRoleName?: string;
     terminationProtection?: boolean;
     lastCommittedHash: string;
