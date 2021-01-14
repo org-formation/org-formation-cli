@@ -146,6 +146,9 @@ Will print out CloudFormation templates generated based on *templateFile*.
 |<nobr>--stack-name</nobr> | 'print' | The stack name used to deploy CloudFormation resources (used in e.g. generated names for output)|
 |<nobr>--parameters</nobr> | none | parameters that need to be passed to the CloudFormation template.|
 |<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
+|<nobr>--no-print-parameters</nobr>| print-parameters | do not print parameter values in parameter file |
+
+
 
 
 ### ``org-formation describe-stacks``

@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.9.14**
+- Support for moving the org-formation build process out of the master/management account in AWS
+- Support for splitting up the CI/CD process (perform-tasks) into multiple
+- Organization.yml file gets published to S3 and EventBridge after change (and successful perform-tasks).
+- Support for centrally stored parameters using `!Include`.
+- Optimized buildtime on organization.yml file changes.
+- Added `CAPABILITY_AUTO_EXPAND` to support deploying SAM.
+- Templates with CloudFormation resolve expressions will get redeployed (as the outcome will be evaluated by Cfn).
+- Numerous bugfixes and small improvements.
+
 **version 0.9.13**
 - Added a new command: `print-tasks`, which will generate all cloudformation templates and write to disk.
 - Added `zip-before-put` support to `copy-to-s3` task.
