@@ -1,7 +1,12 @@
 
 # ``org-formation`` cli reference
 
-In general: ``org-formation`` needs to be ran in the context of the organization master account. The IAM account needs to be broadly provisioned (happy to specify what in more detail)
+In general: `org-formation init` (or `org-formation init-pipeline`) needs to be ran in the context of the organization master account. The IAM account needs to be broadly provisioned (happy to specify what in more detail).
+
+If you choose to pass a `build-account-id` option, you will need to have created this account on beforehand and run the `org-formation` command from within this account. Otherwise you will are expected to run the `org-formation` command in the master account.
+
+![init](./img/org-formation-init.png)
+
 
 Typing ``help`` after any command in the commandline will print documentation.
 
@@ -55,7 +60,10 @@ Creates an organization as done using the init command as well as default CodeCo
 |<nobr>--resource-prefix</nobr> |``orgformation-``| A prefix used for the CodeBuild and CodePipeline resources.|
 |<nobr>--repository-name</nobr> |``organization-formation``| Name of the CodeCommit resource that will host the org-formation files.|
 |<nobr>--cross-account-role-name</nobr> |``OrganizationAccountAccessRole``| Name of the cross account IAM Role that should be used for cross account access.
+|<nobr>--build-account-id</nobr> |none| Account Id of an existing AWS Account within your organization that should be used to manage the organization.
+|<nobr>--role-stack-name</nobr> |`organization-formation-role`| stack name used to create cross account roles for org-formation access. only used when --build-account-id is passed.
 
+**note**: if you specify `--build-account-id` when initializing org-formation, should must always pass the account id of the master account in any subsequent call. you can put this value in [runtime configurations](#runtime-configuration-org-formationrc) file.
 
 ### ``org-formation update``
 
@@ -221,7 +229,7 @@ PolicyDocument:
     - Effect: Allow
       Action:
         - sts:AssumeRole
-      Resource: 'arn:aws:iam::*:role/OrganizationAccountAccessRole' # you can restrict to certain accounts 
+      Resource: 'arn:aws:iam::*:role/OrganizationAccountAccessRole' # you can restrict to certain accounts
 ```
 
 ## Global options
@@ -234,6 +242,7 @@ PolicyDocument:
 |<nobr>--no-color</nobr> |  | the `--no-color` option will toggle off colorization of log files.|
 |<nobr>--print-stack</nobr> |   | the `--print-stack` option will log stack traces for errors that occur.|
 |<nobr>--verbose</nobr> |   | the `--verbose` option will log debug level information.|
+|<nobr>--master-account-id</nobr> |   | the `--master-account-id` option must be specified when the org-formation command is ran from a non-master account |
 
 ## Runtime configuration (.org-formationrc)
 
@@ -246,6 +255,8 @@ Values are ignored if passed as command line argument directly.
 |<nobr>organizationFile</nobr> | Will be used as default for ``--organization-file`` option |
 |<nobr>stateBucketName</nobr> | Will be used as default for ``--state-bucket-name`` option |
 |<nobr>stateObject</nobr> | Will be used as default for ``--state-object`` option |
+|<nobr>masterAccountId</nobr> | Will be used as default for ``--master-account-id`` option |
+
 
 example:
 ```
