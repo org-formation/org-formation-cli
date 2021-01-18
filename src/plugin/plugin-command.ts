@@ -3,8 +3,8 @@ import { DefaultTaskRunner } from '../core/default-task-runner';
 import { PluginBinder, IPluginTask } from './plugin-binder';
 import { BaseCliCommand } from '~commands/index';
 import { IBuildTaskPlugin, IBuildTaskPluginCommandArgs } from '~plugin/plugin';
-import { TemplateRoot } from '~parser/parser';
 import { ConsoleUtil } from '~util/console-util';
+import { GlobalState } from '~util/global-state';
 
 export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> extends BaseCliCommand<TCommandArgs> {
 
@@ -20,7 +20,7 @@ export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, 
         const task = this.plugin.convertToTask(command, hash);
         task.taskLocalHash = this.createHash(command, false);
         const state = await this.getState(command);
-        const template = TemplateRoot.create(command.organizationFile, {}, command.organizationFileHash);
+        const template = GlobalState.OrganizationTemplate;
         const binder = new PluginBinder<TTask>(task, command.logicalName, command.logicalNamePrefix, state, template, command.organizationBinding, this.plugin);
         const tasks = binder.enumTasks();
 

@@ -11,6 +11,7 @@ import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
 import { yamlParseWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 import { ConsoleUtil } from '~util/console-util';
 import { AwsUtil } from '~util/aws-util';
+import { TemplateRoot } from '~parser/parser';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -73,7 +74,7 @@ export class BuildConfiguration {
         }
     }
 
-    public async fixateOrganizationFile(command: IPerformTasksCommandArgs): Promise<void> {
+    public async fixateOrganizationFile(command: IPerformTasksCommandArgs): Promise<TemplateRoot> {
 
         if (command.organizationFile === undefined) {
             const updateOrgTasks = this.tasks.filter(x => x.Type === 'update-organization');
@@ -96,6 +97,10 @@ export class BuildConfiguration {
             command.organizationFileContents = await this.readOrganizationFileContents(command.organizationFile);
             command.organizationFileHash = md5(command.organizationFileContents);
         }
+
+        const pathDirname = path.dirname(command.organizationFile);
+        const pathFile = path.basename(command.organizationFile);
+        return TemplateRoot.createFromContents(command.organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
     }
 
     private async readOrganizationFileContents(organizationFileLocation: string): Promise<string> {

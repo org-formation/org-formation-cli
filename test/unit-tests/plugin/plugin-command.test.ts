@@ -8,6 +8,7 @@ import { DefaultTaskRunner } from "~core/default-task-runner";
 import { TemplateRoot } from "~parser/parser";
 import { MasterAccountResource, OrgResourceTypes } from "~parser/model";
 import { ConsoleUtil } from "~util/console-util";
+import { GlobalState } from "~util/global-state";
 
 describe('when executing plugin command', () => {
     let command: PluginCliCommand<any, any>;
@@ -51,6 +52,7 @@ describe('when executing plugin command', () => {
         consoleInfoStub = jest.spyOn(ConsoleUtil, 'LogInfo').mockImplementation();
 
         const template = TemplateRoot.createEmpty();
+        GlobalState.Init(state, template);
         template.organizationSection.masterAccount = new MasterAccountResource(template, 'master', {Type: OrgResourceTypes.MasterAccount, Properties: { AccountId: '123123123123', AccountName: 'hi there' }});
 
         createTemplateStub = jest.spyOn(TemplateRoot, 'create').
@@ -68,6 +70,7 @@ describe('when executing plugin command', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        GlobalState.Init(undefined, undefined);
     });
 
     test('arguments are validated by plugin ', async () => {
