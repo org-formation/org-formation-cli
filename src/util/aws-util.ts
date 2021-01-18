@@ -124,7 +124,6 @@ export class AwsUtil {
         }
 
         const config = clientConfig;
-        const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
 
         if (typeof roleInTargetAccount !== 'string') {
             roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
