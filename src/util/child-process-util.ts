@@ -13,6 +13,7 @@ export class ChildProcessUtility {
         if (roleInTargetAccount === undefined){
             roleInTargetAccount = GlobalState.GetCrossAccountRoleName(roleInTargetAccount);
         }
+
         try {
             const credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
 
@@ -23,16 +24,18 @@ export class ChildProcessUtility {
             };
 
             if (credentials) {
+
                 options.env = {
                     ...options.env,
                     AWS_ACCESS_KEY_ID: credentials.accessKeyId,
                     AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
                 };
+
+                if (credentials.sessionToken) {
+                    options.env.AWS_SESSION_TOKEN = credentials.sessionToken;
+                }
             }
 
-            if (credentials.sessionToken) {
-                options.env.AWS_SESSION_TOKEN = credentials.sessionToken;
-            }
 
             return await this.SpawnProcess(command, options, logVerbose);
         } catch (err) {

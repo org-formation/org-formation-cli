@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'fs';
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
-import { AssumeRoleRequest, tagListType } from 'aws-sdk/clients/sts';
+import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
 import AWS from 'aws-sdk';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
@@ -128,6 +128,7 @@ export class AwsUtil {
         if (typeof roleInTargetAccount !== 'string') {
             roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
         }
+
         const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn);
         config.credentials = credentialOptions;
 
@@ -137,7 +138,14 @@ export class AwsUtil {
         return service;
     }
 
-    public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string): Promise<CredentialsOptions> {
+    public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string): Promise<CredentialsOptions | undefined> {
+
+        const masterAccountId = await AwsUtil.GetMasterAccountId();
+        const useCurrentPrincipal = (masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId));
+        if (useCurrentPrincipal) {
+            return undefined;
+        }
+
         const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
         const config: STS.ClientConfiguration = {};
         if (viaRoleArn !== undefined) {
@@ -148,8 +156,8 @@ export class AwsUtil {
 
     private static async GetCredentialsForRole(roleArn: string, config: STS.ClientConfiguration): Promise<CredentialsOptions> {
         const sts = new STS(config);
-        const tags: tagListType = [{Key: 'OrgFormation', Value: 'True'}];
-        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild', Tags: tags}).promise();
+        // const tags: tagListType = [{Key: 'OrgFormation', Value: 'True'}];
+        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' /* Tags: tags*/}).promise();
         const credentialOptions: CredentialsOptions = {
             accessKeyId: response.Credentials.AccessKeyId,
             secretAccessKey: response.Credentials.SecretAccessKey,
