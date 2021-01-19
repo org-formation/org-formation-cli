@@ -13,7 +13,6 @@ OrganizationFormationBuildRole:
   DefaultOrganizationBinding:
     IncludeMasterAccount: false # OrganizationFormationBuildRole must have been manually added to the build account in order to bootstrap
     ExcludeAccount:
-    - !Ref OrganizationBuildAccount
     - !Ref AccountC
     Account: '*'
   Parameters:

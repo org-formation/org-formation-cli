@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 import md5 from 'md5';
+import { S3 } from 'aws-sdk';
 import { OrgFormationError } from '../org-formation-error';
 import { BuildTaskProvider } from './build-task-provider';
 import { IUpdateOrganizationTaskConfiguration } from './tasks/organization-task';
@@ -10,7 +11,6 @@ import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
 import { yamlParseWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 import { ConsoleUtil } from '~util/console-util';
-import { AwsUtil } from '~util/aws-util';
 import { TemplateRoot } from '~parser/parser';
 
 export class BuildConfiguration {
@@ -106,8 +106,7 @@ export class BuildConfiguration {
     private async readOrganizationFileContents(organizationFileLocation: string): Promise<string> {
         try {
             if (organizationFileLocation.startsWith('s3://')) {
-                const buildProcessAccountId = await AwsUtil.GetBuildProcessAccountId();
-                const s3client = await AwsUtil.GetS3Service(buildProcessAccountId, undefined);
+                const s3client = new S3(); // we don't know which role to assume yet....
                 const bucketAndKey = organizationFileLocation.substring(5);
                 const bucketAndKeySplit = bucketAndKey.split('/');
                 const response = await s3client.getObject({ Bucket: bucketAndKeySplit[0], Key: bucketAndKeySplit[1] }).promise();
