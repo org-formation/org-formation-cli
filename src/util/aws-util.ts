@@ -130,7 +130,9 @@ export class AwsUtil {
         }
 
         const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn);
-        config.credentials = credentialOptions;
+        if (credentialOptions !== undefined) {
+            config.credentials = credentialOptions;
+        }
 
         const service = new ctr(config);
 
