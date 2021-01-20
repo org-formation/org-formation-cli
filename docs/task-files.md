@@ -6,6 +6,14 @@
 - [Parameters](#parameters)
 - [Functions](#functions)
   - [!CopyValue](#copyvalue)
+  - [!ReadFile](#readfile)
+  - [!MD5](#md5)
+  - [!JsonString](#jsonstring)
+  - [!Join](#join)
+  - [!Sub](#sub)
+  - [!Select](#select)
+  - [!FindInMap](#FindInMap)
+  - [!Include](#include)
 - [Task types](#task-types)
   - [update-organization](#update-organization)
   - [update-stacks](#update-stacks)
@@ -148,6 +156,47 @@ CopyFileWithHashInKey:
 ### !JsonString
 
 The `!JsonString` function will take 1 or 2 arguments. The first argument will be converted to a JSON string representation. If the second argument is the literal 'pretty-print', the result will contain whitespace, otherwise the result will not contain whitespace. If the first argument is a string, the string will be first converted to an object (assuming the string as json) prior to returning the string representation (therefore minifying the input string).
+
+### !Join
+
+The function `!Join` appends a set of values into a single value, separated by the specified delimiter.
+If a delimiter is the empty string, the set of values are concatenated with no delimiter.
+
+The following example returns: "a:b:c"
+```yaml
+!Join [ ":", [ a, b, c ] ]
+```
+
+### !Sub
+
+The function `!Sub` substitutes variables in an input string with values that you specify.
+In your templates, you can use this function to construct commands or outputs that include
+values that aren't available until you create or update a stack.
+
+The following example uses `!Sub` to create a string containing values from resourcePrefix
+and AWSAccount alias parameters.
+```yaml
+!Sub "${resourcePrefix}-budget-${AWSAccount.Alias}"
+```
+
+### !Select
+
+The function `!Select` returns a single object from a list of objects by index.
+
+The following example returns: "grapes"
+```yaml
+{ "Fn::Select" : [ "1", [ "apples", "grapes", "oranges", "mangoes" ] ] }
+```
+
+### !FindInMap
+
+The function `!FindInMap` returns the value corresponding to keys in a two-level map that is
+declared in a map.
+
+### !Include
+
+The function `!Include` can be be used in a tasks file to include part of the model (it includes before parsing).
+This can be useful when storing parameters in a central location and reference them from multiple files.
 
 
 ## Task types
