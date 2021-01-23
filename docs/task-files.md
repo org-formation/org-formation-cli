@@ -130,8 +130,12 @@ PolicyTemplate:
 
 ### !ReadFile
 
-The `!ReadFile` function will take 1 string argument, a file path, and return the contents of the file as a string.
+The `!ReadFile` function will take 1 string argument, a file path or a
+URL reference to a file and return the contents of the file as a string.
 
+```yaml
+Template: !ReadFile https://raw.githubusercontent.com/org-formation/org-formation-cli/master/LICENSE
+```
 
 ### !MD5
 
