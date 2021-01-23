@@ -48,6 +48,7 @@
     "node-fetch": "^2.6.1",
     "rc": "^1.2.8",
     "uuid": "^3.3.3",
+    "yaml-cfn": "^0.2.3",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
