@@ -2,7 +2,6 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { ICfnFunctionContext } from './cfn-functions';
 import { OrgFormationError } from '~org-formation-error';
-const fs = require('fs')
 const url = require('url');
 const { schema } = require('yaml-cfn');
 const fetch = require('node-fetch');
@@ -18,10 +17,11 @@ async function fetchAndDecode(urlRef: string) {
         const urlPath = url.parse(urlRef, true).pathname;
         const fileExt = path.extname(urlPath);
         if (fileExt === '.json') {
-            content = await response.json();
+            let resObj = await response.json();
+            content = JSON.stringify(resObj);
         } else if (fileExt === '.yaml' || fileExt === '.yml') {
-            let resText = await response.text();
-            content = yaml.load(resText, { schema: schema })
+            let resObj = await response.text();
+            content = yaml.dump(resObj, { schema: schema })
         } else {
             content = await response.text();
         }
