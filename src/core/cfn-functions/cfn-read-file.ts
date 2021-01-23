@@ -20,8 +20,8 @@ async function fetchAndDecode(urlRef: string) {
         if (fileExt === '.json') {
             content = await response.json();
         } else if (fileExt === '.yaml' || fileExt === '.yml') {
-            let reeText = await response.text();
-            content = yaml.load(reeText, { schema: schema })
+            let resText = await response.text();
+            content = yaml.load(resText, { schema: schema })
         } else {
             content = await response.text();
         }
