@@ -41,7 +41,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         Validator.validateBoolean(command.terminationProtection, 'terminationProtection');
         Validator.validateBoolean(command.updateProtection, 'updateProtection');
 
-        const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
+        const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);
         GlobalState.Init(state, template);
         ConsoleUtil.state = state;

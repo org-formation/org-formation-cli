@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import * as Path from 'path';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
@@ -7,6 +8,7 @@ import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/parser';
 import { Validator } from '~parser/validator';
 import { GlobalState } from '~util/global-state';
+import { FileUtil } from '~util/file-util';
 
 const commandName = 'update-stacks <templateFile>';
 const commandDescription = 'update CloudFormation resources in accounts';
@@ -18,7 +20,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         await x.performCommand(command);
     }
 
-    public static createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string): TemplateRoot {
+    public static async createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string): Promise<TemplateRoot> {
         const templateOverrides: ITemplateOverrides = {};
 
         if (command.stackDescription) {
@@ -121,7 +123,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
                  },
             };
         }
-        const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
+        const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseCfnParameters(command.parameters);
         const state = await this.getState(command);
         GlobalState.Init(state, template);

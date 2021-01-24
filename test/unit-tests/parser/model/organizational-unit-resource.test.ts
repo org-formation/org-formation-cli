@@ -8,8 +8,8 @@ describe('when creating organizational unit resource', () => {
     let resource: IResource;
     let properties: IOrganizationalUnitProperties;
 
-    beforeEach(() => {
-        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+    beforeEach(async () => {
+        template = await TemplateRoot.create('./test/resources/valid-basic.yml');
 
         properties = {
             OrganizationalUnitName: 'ou1',
@@ -48,8 +48,8 @@ describe('when creating organizational unit resource with child ou as name', () 
     let resource: IResource;
     let properties: IOrganizationalUnitProperties;
 
-    beforeEach(() => {
-        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+    beforeEach(async () => {
+        template = await TemplateRoot.create('./test/resources/valid-basic.yml');
 
         properties = {
             OrganizationalUnitName: 'ou1',
@@ -77,8 +77,8 @@ describe('when creating organizational unit resource with account as accountId',
     let resource: IResource;
     let properties: IOrganizationalUnitProperties;
 
-    beforeEach(() => {
-        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+    beforeEach(async () => {
+        template = await TemplateRoot.create('./test/resources/valid-basic.yml');
 
         properties = {
             OrganizationalUnitName: 'ou1',

@@ -1,0 +1,19 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+CopyToS3:
+  Type: copy-to-s3
+  RemotePath: s3://org-formation-integration-test/xyz/buckets.yml
+  LocalPath: ./buckets.yml
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: eu-central-1
+
+MyRoles:
+  DependsOn: CopyToS3
+  Type: update-stacks
+  StackName: buckets-from-remote-template
+  Template: s3://org-formation-integration-test/xyz/buckets.yml #todo: support !Sub

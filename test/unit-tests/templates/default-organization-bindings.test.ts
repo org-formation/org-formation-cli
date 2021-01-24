@@ -16,7 +16,7 @@ describe('when loading default-organization-bindings template', () => {
     let account3CfnTemplate: ICfnTemplate;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/defaults/default-organization-bindings.yml');
+        template = await TemplateRoot.create('./test/resources/defaults/default-organization-bindings.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});

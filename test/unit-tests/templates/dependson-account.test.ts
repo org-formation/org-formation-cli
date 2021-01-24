@@ -9,7 +9,7 @@ describe('when loading template with resources that depend on account or region'
     let account1Binding: ICfnBinding;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/depends-on-account/depends-on-account.yml');
+        template = await TemplateRoot.create('./test/resources/depends-on-account/depends-on-account.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
@@ -44,7 +44,7 @@ describe('when loading template with resources that depend on account or region'
     let account1Binding: ICfnBinding;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/depends-on-account/depends-on-account-multiple.yml');
+        template = await TemplateRoot.create('./test/resources/depends-on-account/depends-on-account-multiple.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
@@ -79,7 +79,7 @@ describe('when loading template with resource that depends on master account', (
     let account1Binding: ICfnBinding;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/depends-on-account/depends-on-master-account.yml');
+        template = await TemplateRoot.create('./test/resources/depends-on-account/depends-on-master-account.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
@@ -105,9 +105,9 @@ describe('when loading template with resource that depends on master account', (
 
 describe('when loading template with resources that depend on account that cannot be found', () => {
 
-    test('creating template throws an exception', () => {
+    test('creating template throws an exception', async () => {
         try {
-            TemplateRoot.create('./test/resources/depends-on-account/depends-on-unknown-account.yml');
+            await TemplateRoot.create('./test/resources/depends-on-account/depends-on-unknown-account.yml');
             throw new Error('expected exception');
         } catch (err) {
             expect(err.message).toEqual(expect.stringContaining('AccountUnknown'));

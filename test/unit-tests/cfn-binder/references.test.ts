@@ -7,7 +7,7 @@ import { ICfnSubExpression } from '~core/cfn-expression';
 
 describe('when loading reference to multiple', () => {
     test('fails with exception', async () => {
-        const template = TemplateRoot.create('./test/resources/references/reference-to-multiple.yml');
+        const template = await TemplateRoot.create('./test/resources/references/reference-to-multiple.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({ type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc' });
@@ -37,7 +37,7 @@ describe('when loading cross account references through sub', () => {
     let masterAccount: ICfnTemplate;
 
     beforeEach(async () => {
-        const template = TemplateRoot.create('./test/resources/references/reference-using-sub.yml');
+        const template = await TemplateRoot.create('./test/resources/references/reference-using-sub.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({ type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc' });
@@ -331,7 +331,7 @@ describe('when loading cross account references through sub', () => {
 
 describe('when loading reference to account in param', () => {
     test('resolved account id', async () => {
-        const template = TemplateRoot.create('./test/resources/references/reference-to-account-in-param.yml');
+        const template = await TemplateRoot.create('./test/resources/references/reference-to-account-in-param.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({ type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc' });

@@ -10,7 +10,7 @@ describe('when loading template with default-bindings', () => {
     let bindings: ICfnBinding[];
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/defaults/default-binding.yml');
+        template = await TemplateRoot.create('./test/resources/defaults/default-binding.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
@@ -51,7 +51,7 @@ describe('when loading template with default-regions', () => {
     let bindings: ICfnBinding[];
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/defaults/default-regions.yml');
+        template = await TemplateRoot.create('./test/resources/defaults/default-regions.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});

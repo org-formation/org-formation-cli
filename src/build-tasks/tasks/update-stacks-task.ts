@@ -93,8 +93,12 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
 
     static createUpdateStacksCommandArgs(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs): IUpdateStacksCommandArgs {
 
-        const dir = path.dirname(config.FilePath);
-        const templatePath = path.join(dir, config.Template);
+        let templatePath = config.Template;
+
+        if (!templatePath.startsWith('s3://')) {
+            const dir = path.dirname(config.FilePath);
+            templatePath = path.join(dir, config.Template);
+        }
 
         const args: IUpdateStacksCommandArgs = {
             ...command,
