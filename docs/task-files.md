@@ -138,7 +138,7 @@ MyBucket:
   Type: update-stacks
   Template: !ReadFile https://raw.githubusercontent.com/acme/shared-cfn/master/templates/S3-bucket.yaml
   StackName: my-bucket
-  Properties:
+  Parameters:
     License: !ReadFile https://raw.githubusercontent.com/acme/shared-cfn/master/licenses/Apache2
 ```
 
