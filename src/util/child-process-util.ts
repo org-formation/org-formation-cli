@@ -1,23 +1,22 @@
 import { exec, ExecException, ExecOptions } from 'child_process';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
-import AWS from 'aws-sdk';
-import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from './aws-util';
+import { AwsUtil } from './aws-util';
 import { ConsoleUtil } from './console-util';
+import { GlobalState } from './global-state';
 import { ErrorCode, OrgFormationError } from '~org-formation-error';
 
 
 export class ChildProcessUtility {
 
-    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount: string = DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName, env: Record<string, string> = {}, logVerbose: boolean | undefined = undefined): Promise<void> {
+    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount?: string, env: Record<string, string> = {}, logVerbose: boolean | undefined = undefined): Promise<void> {
         ConsoleUtil.LogInfo(`Executing command: ${command} in account ${accountId}`);
 
+        if (roleInTargetAccount === undefined){
+            roleInTargetAccount = GlobalState.GetCrossAccountRoleName(roleInTargetAccount);
+        }
+
         try {
-            let credentials: CredentialsOptions = AWS.config.credentials;
-            if (accountId !== await AwsUtil.GetMasterAccountId()) {
-                credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
-            } else if (roleInTargetAccount !== DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName) {
-                credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
-            }
+            const credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
+
             const options: ExecOptions = {
                 cwd,
                 env: { ...process.env, ...env },
@@ -25,16 +24,18 @@ export class ChildProcessUtility {
             };
 
             if (credentials) {
+
                 options.env = {
                     ...options.env,
                     AWS_ACCESS_KEY_ID: credentials.accessKeyId,
                     AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
                 };
+
+                if (credentials.sessionToken) {
+                    options.env.AWS_SESSION_TOKEN = credentials.sessionToken;
+                }
             }
 
-            if (credentials.sessionToken) {
-                options.env.AWS_SESSION_TOKEN = credentials.sessionToken;
-            }
 
             return await this.SpawnProcess(command, options, logVerbose);
         } catch (err) {

@@ -124,15 +124,15 @@ export class AwsUtil {
         }
 
         const config = clientConfig;
-        const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
-        if (accountId !== buildAccountId) {
-            if (typeof roleInTargetAccount !== 'string') {
-                roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
-            }
-            const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn);
-            config.credentials = credentialOptions;
+
+        if (typeof roleInTargetAccount !== 'string') {
+            roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
         }
 
+        const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn);
+        if (credentialOptions !== undefined) {
+            config.credentials = credentialOptions;
+        }
 
         const service = new ctr(config);
 
@@ -140,18 +140,40 @@ export class AwsUtil {
         return service;
     }
 
-    public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string): Promise<CredentialsOptions> {
-        const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
-        const config: STS.ClientConfiguration = {};
-        if (viaRoleArn !== undefined) {
-            config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
+
+    public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string): Promise<CredentialsOptions | undefined> {
+
+        const masterAccountId = await AwsUtil.GetMasterAccountId();
+        const useCurrentPrincipal = (masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId));
+        if (useCurrentPrincipal) {
+            return undefined;
         }
-        return await AwsUtil.GetCredentialsForRole(roleArn, config);
+
+        try {
+            const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
+            const config: STS.ClientConfiguration = {};
+            if (viaRoleArn !== undefined) {
+                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
+            }
+            return await AwsUtil.GetCredentialsForRole(roleArn, config);
+        } catch (err) {
+            const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
+            if (accountId === buildAccountId) {
+                ConsoleUtil.LogWarning('hi there!');
+                ConsoleUtil.LogWarning(`you just ran into an error when assuming the role ${roleInTargetAccount} in account ${buildAccountId}.`);
+                ConsoleUtil.LogWarning('possibly, this is due a breaking change in org-formation v0.9.15.');
+                ConsoleUtil.LogWarning('from v0.9.15 onwards the org-formation cli will assume a role in every account it deploys tasks to.');
+                ConsoleUtil.LogWarning('this will make permission management and SCPs to deny / allow org-formation tasks easier.');
+                ConsoleUtil.LogWarning('thanks!');
+            }
+            throw err;
+        }
     }
 
     private static async GetCredentialsForRole(roleArn: string, config: STS.ClientConfiguration): Promise<CredentialsOptions> {
         const sts = new STS(config);
-        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
+        // const tags: tagListType = [{Key: 'OrgFormation', Value: 'True'}];
+        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild'/* , Tags: tags*/}).promise();
         const credentialOptions: CredentialsOptions = {
             accessKeyId: response.Credentials.AccessKeyId,
             secretAccessKey: response.Credentials.SecretAccessKey,

@@ -97,19 +97,6 @@ export class TemplateRoot {
             throw new OrgFormationError(`unable to load file ${path}. \nreason: ${reason}.`);
         }
     }
-    public static createFromS3(contents: string, path: string, overrides: ITemplateOverrides = {}): TemplateRoot {
-        try {
-            const dirname = Path.dirname(path);
-            const filename = 'organization.yml';
-            return TemplateRoot.createFromContents(contents, dirname, filename, overrides);
-        } catch (err) {
-            let reason = 'unknown';
-            if (err && err.message) {
-                reason = err.message;
-            }
-            throw new OrgFormationError(`unable to load file ${path}. \nreason: ${reason}.`);
-        }
-    }
 
     public static createFromContents(contents: string, dirname = './', filename = 'n/a', overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
         if (contents === undefined) { throw new OrgFormationError('contents is undefined'); }

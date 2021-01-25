@@ -124,7 +124,7 @@ describe('when executing perform-tasks command', () => {
 
         buildConfigurationEnumConfigMock = jest.spyOn(BuildConfiguration.prototype, 'enumBuildConfiguration').mockReturnValue(configs);
         buildConfigurationEnumTasksMock = jest.spyOn(BuildConfiguration.prototype, 'enumBuildTasks').mockReturnValue(tasks);
-        buildConfigurationFixateConfigMock = jest.spyOn(BuildConfiguration.prototype, 'fixateOrganizationFile').mockReturnValue(Promise.resolve());
+        buildConfigurationFixateConfigMock = jest.spyOn(BuildConfiguration.prototype, 'fixateOrganizationFile').mockReturnValue(Promise.resolve(undefined));
         performTasksGetStateMock = jest.spyOn(PerformTasksCommand.prototype, 'getState').mockReturnValue(Promise.resolve(state));
         buildRunnerRunTasksMock = jest.spyOn(BuildRunner, 'RunTasks').mockImplementation();
 

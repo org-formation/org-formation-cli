@@ -6,7 +6,6 @@ Organization:
   OrganizationRoot:
     Type: OC::ORG::OrganizationRoot
     Properties:
-      DefaultBuildAccessRoleName: OrganizationFormationBuildRole
 
   MasterAccount:
     Type: OC::ORG::MasterAccount

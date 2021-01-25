@@ -11,6 +11,7 @@ import { ConsoleUtil } from '~util/console-util';
 import { S3StorageProvider } from '~state/storage-provider';
 import { AwsEvents } from '~aws-provider/aws-events';
 import { yamlParse } from '~yaml-cfn/index';
+import { GlobalState } from '~util/global-state';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -54,8 +55,10 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters);
 
-        const state = await this.getState(command);
-        await config.fixateOrganizationFile(command);
+        const [state, template] = await Promise.all([this.getState(command), config.fixateOrganizationFile(command)]);
+
+        GlobalState.Init(state, template);
+
         const tasks = config.enumBuildTasks(command);
         ConsoleUtil.state = state;
 
