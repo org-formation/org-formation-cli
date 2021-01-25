@@ -47,7 +47,6 @@ OrganizationFormationRole:
   DefaultOrganizationBinding:
     IncludeMasterAccount: false
     Account: '*'
-    ExcludeAccount: !Ref XXX-buildAccountLogicalName
   MaxConcurrentStacks: 10
   Parameters:
     assumeRolePrincipal:  !Ref XXX-buildAccountLogicalName # you could tighten this up with: !CopyValue [XXX-stackName-role-id, !Ref XXX-buildAccountLogicalName, !Ref primaryRegion]
