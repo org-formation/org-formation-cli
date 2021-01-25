@@ -1,5 +1,4 @@
 import { Command } from 'commander';
-import * as Path from 'path';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
@@ -8,7 +7,6 @@ import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/parser';
 import { Validator } from '~parser/validator';
 import { GlobalState } from '~util/global-state';
-import { FileUtil } from '~util/file-util';
 
 const commandName = 'update-stacks <templateFile>';
 const commandDescription = 'update CloudFormation resources in accounts';
@@ -47,7 +45,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
                 templateOverrides.ParameterValues[key] = val;
             }
         }
-        const template = TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
+        const template = await TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
         return template;
     }
 

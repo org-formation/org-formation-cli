@@ -1,11 +1,10 @@
-import { S3 } from "aws-sdk";
-import { readFileSync } from "fs";
-import { OrgFormationError } from "~org-formation-error";
+import { readFileSync } from 'fs';
+import { S3 } from 'aws-sdk';
 
 export class FileUtil {
 
     static async GetContents(filePath: string): Promise<string> {
-        if (filePath === undefined) throw new Error(`FileUtil.GetContents filePath is undefined`);
+        if (filePath === undefined) {throw new Error('FileUtil.GetContents filePath is undefined');}
 
         if (filePath.startsWith('s3://')) {
             const s3client = new S3(); // todo: fix this
