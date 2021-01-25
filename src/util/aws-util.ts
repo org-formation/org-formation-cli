@@ -140,6 +140,7 @@ export class AwsUtil {
         return service;
     }
 
+
     public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string): Promise<CredentialsOptions | undefined> {
 
         const masterAccountId = await AwsUtil.GetMasterAccountId();
@@ -148,12 +149,25 @@ export class AwsUtil {
             return undefined;
         }
 
-        const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
-        const config: STS.ClientConfiguration = {};
-        if (viaRoleArn !== undefined) {
-            config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
+        try {
+            const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
+            const config: STS.ClientConfiguration = {};
+            if (viaRoleArn !== undefined) {
+                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
+            }
+            return await AwsUtil.GetCredentialsForRole(roleArn, config);
+        } catch (err) {
+            const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
+            if (accountId === buildAccountId) {
+                ConsoleUtil.LogWarning('hi there!');
+                ConsoleUtil.LogWarning(`you just ran into an error when assuming the role ${roleInTargetAccount} in account ${buildAccountId}.`);
+                ConsoleUtil.LogWarning('possibly, this is due a breaking change in org-formation v0.9.15.');
+                ConsoleUtil.LogWarning('from v0.9.15 onwards the org-formation cli will assume a role in every account it deploys tasks to.');
+                ConsoleUtil.LogWarning('this will make permission management and SCPs to deny / allow org-formation tasks easier.');
+                ConsoleUtil.LogWarning('thanks!');
+            }
+            throw err;
         }
-        return await AwsUtil.GetCredentialsForRole(roleArn, config);
     }
 
     private static async GetCredentialsForRole(roleArn: string, config: STS.ClientConfiguration): Promise<CredentialsOptions> {
