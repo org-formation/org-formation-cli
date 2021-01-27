@@ -41,6 +41,8 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
 
         const templateHash = template.hash;
 
+        UpdateOrganizationCommand.HasRan = true;
+
         const lastHash = state.getTemplateHash();
         if (command.forceDeploy === true) {
             ConsoleUtil.LogInfo('organization update forced.');
@@ -64,7 +66,6 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
             }
             state.putTemplateHash(templateHash);
             state.setPreviousTemplate(template.source);
-            this.HasRan = true;
         }
         finally {
             await state.save();
