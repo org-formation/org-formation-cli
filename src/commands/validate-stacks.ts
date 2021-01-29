@@ -35,11 +35,11 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
             return;
         }
 
+        const maxConcurrentStacks = command.maxConcurrentStacks ?? 1;
+        const failedStacksTolerance = command.failedStacksTolerance ?? 99;
+        Validator.validatePositiveInteger(maxConcurrentStacks, 'maxConcurrentStacks');
+        Validator.validatePositiveInteger(failedStacksTolerance, 'failedStacksTolerance');
 
-        Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
-        Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
-        Validator.validateBoolean(command.terminationProtection, 'terminationProtection');
-        Validator.validateBoolean(command.updateProtection, 'updateProtection');
 
         const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);
@@ -55,6 +55,6 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
 
         const validationTaskProvider = new CfnValidateTaskProvider(template, state, command.verbose === true);
         const tasks = await validationTaskProvider.enumTasks(bindings);
-        await CfnTaskRunner.ValidateTemplates(tasks, command.verbose === true, command.maxConcurrentStacks, command.failedStacksTolerance);
+        await CfnTaskRunner.ValidateTemplates(tasks, command.verbose === true, maxConcurrentStacks, failedStacksTolerance);
     }
 }
