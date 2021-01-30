@@ -1,34 +1,23 @@
 import { readFileSync } from 'fs';
+import path from 'path';
 import { yamlParse } from '.';
-import { CfnInclude } from '~core/cfn-functions/cfn-include';
 
+const include = /!Include\s+('|")?([^'"\s]*)('|")?/g;
+export const yamlParseContentWithIncludes = (contents: string, directory: string): any => {
+    const replacedContents = contents.replace(include, (_, __, includedRelativeFilePath) => {
 
-export const yamlParseWithIncludes = (filePath: string): any => {
+        const resolvedFilePath = path.resolve(directory, includedRelativeFilePath);
+        const included = yamlParseWithIncludes(resolvedFilePath);
+        return JSON.stringify(included);
+    });
 
-    const buffer = readFileSync(filePath);
-    const contents = buffer.toString('utf-8');
-    const parsed = yamlParse(contents);
-    processIncludes(filePath, parsed);
+    const parsed = yamlParse(replacedContents);
     return parsed;
 };
 
-
-const processIncludes = (path: string, resource: any, resourceParent?: any, resourceKey?: string): any => {
-    if (resource !== null && typeof resource === 'object') {
-        const entries = Object.entries(resource);
-
-        for (const [key, val] of entries) {
-            if (val !== null && typeof val === 'object') {
-                processIncludes(path, val, resource, key);
-            }
-        }
-
-        if (entries.length === 1 && resourceParent !== undefined && resourceKey !== undefined) {
-            const [key, val]: [string, unknown] = entries[0];
-            if (key === 'Fn::Include') {
-                CfnInclude.resolve(path, resource, resourceParent, resourceKey, key, val);
-            }
-        }
-    }
+export const yamlParseWithIncludes = (filePath: string): any => {
+    const buffer = readFileSync(filePath);
+    const contents = buffer.toString('utf-8');
+    const dir = path.dirname(filePath);
+    return yamlParseContentWithIncludes(contents, dir);
 };
-
