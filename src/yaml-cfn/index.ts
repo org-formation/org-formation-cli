@@ -114,5 +114,5 @@ export const yamlParse = (input: string): any => {
 
 
 export const yamlDump = (input: any): string => {
-  return yaml.dump(input, { schema: cfnSchema, condenseFlow: true });
+  return yaml.dump(input, { schema: cfnSchema });
 };
