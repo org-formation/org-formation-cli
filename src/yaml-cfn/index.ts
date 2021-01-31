@@ -11,40 +11,40 @@
  *
  * Modified by OC to support other custom tags needed by org-formation.
  */
-"use strict";
+'use strict';
 
-const jsYaml = require('js-yaml');
+import yaml  from 'js-yaml';
 
 /**
  * Split a string on the given separator just once, returning an array of two parts, or null.
  */
-function splitOne(str, sep) {
-  let index = str.indexOf(sep);
+const splitOne =(str: string, sep: string): string[] | null => {
+  const index = str.indexOf(sep);
   return index < 0 ? null : [str.slice(0, index), str.slice(index + sep.length)];
-}
+};
 
 /**
  * Returns true if obj is a representation of a CloudFormation intrinsic, i.e. an object with a
  * single property at key keyName.
  */
-function checkType(obj, keyName) {
+const checkType =(obj: {}, keyName: string): boolean => {
   return obj && typeof obj === 'object' && Object.keys(obj).length === 1 &&
     obj.hasOwnProperty(keyName);
-}
+};
 
 
-const overrides = {
+const overrides: any = {
   // ShortHand notation for !GetAtt accepts Resource.Attribute format while the standard notation
   // is to use an array [Resource, Attribute]. Convert shorthand to standard format.
   GetAtt: {
-    parse: data => typeof data === 'string' ? splitOne(data, '.') : data,
-    dump: data => data.join('.')
-  }
+    parse: (data: any): any => typeof data === 'string' ? splitOne(data, '.') : data,
+    dump: (data: []): string  => data.join('.'),
+  },
 };
 
-function applyOverrides(data, tag, method) {
+const applyOverrides = (data: any, tag: string, method: string): any => {
   return overrides[tag] ? overrides[tag][method](data) : data;
-}
+};
 
 /**
  * Generic tag-creating helper. For the given name of the form 'Fn::Something' (or just
@@ -52,17 +52,17 @@ function applyOverrides(data, tag, method) {
  * for all types of values, for simplicity and because that's how the official Python version
  * works.
  */
-function makeTagTypes(name) {
+const makeTagTypes = (name: string): yaml.Type[] => {
   const parts = splitOne(name, '::');
   const tag = parts ? parts[1] : name;
   // Translate in the same way for all types, to match Python's generic translation.
-  return ['scalar', 'sequence', 'mapping'].map(kind => new jsYaml.Type('!' + tag, {
-    kind: kind,
-    construct: data => ({[name]: applyOverrides(data, tag, 'parse')}),
-    predicate: obj => checkType(obj, name),
-    represent: obj => applyOverrides(obj[name], tag, 'dump'),
+  return ['scalar', 'sequence', 'mapping'].map(kind => new yaml.Type('!' + tag, {
+    kind: kind as any,
+    construct: (data: any): any => ({[name]: applyOverrides(data, tag, 'parse')}),
+    predicate: (obj: any): boolean => checkType(obj, name),
+    represent: (obj: any): any => applyOverrides(obj[name], tag, 'dump'),
   }));
-}
+};
 
 /**
  * This list is from
@@ -95,47 +95,24 @@ const supportedFunctions = [
   'Fn::MD5Dir',
   'Fn::MD5File',
   'Fn::JsonString',
-  'Fn::Include'
+  'Fn::Include',
 ];
 
-let allTagTypes = [];
-for (let name of supportedFunctions) {
+const allTagTypes = [];
+for (const name of supportedFunctions) {
   allTagTypes.push(...makeTagTypes(name));
 }
 
-/**
- * The actual js-yaml schema, extending the DEFAULT_SAFE_SCHEMA.
- */
-const schema = new jsYaml.Schema({
-  include: [ jsYaml.CORE_SCHEMA ],
-  implicit: [],
-  explicit: allTagTypes,
-});
-exports.schema = schema;
+const cfnSchema = yaml.DEFAULT_SCHEMA.extend(allTagTypes);
 
 
+export const schema = cfnSchema;
 
-const tagTypes = exports.schema.explicit;
-tagTypes.push(...makeTagTypes('Fn::CopyValue'));
-exports.schema = new jsYaml.Schema({
-  include: [ jsYaml.CORE_SCHEMA ],
-  implicit: [],
-  explicit: allTagTypes,
-});
-
-/**
- * Convenience function to parse the given yaml input.
- */
-function yamlParse(input) {
-  return jsYaml.safeLoad(input, { schema: schema });
-}
-exports.yamlParse = yamlParse;
+export const yamlParse = (input: string): any => {
+  return yaml.load(input, { schema: cfnSchema });
+};
 
 
-/**
- * Convenience function to serialize the given object to Yaml.
- */
-function yamlDump(input) {
-  return jsYaml.safeDump(input, { schema: schema });
-}
-exports.yamlDump = yamlDump;
+export const yamlDump = (input: any): string => {
+  return yaml.dump(input, { schema: cfnSchema });
+};

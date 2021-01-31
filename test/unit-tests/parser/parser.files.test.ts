@@ -107,3 +107,22 @@ describe('when loading basic organization and regular cloudformation', () => {
         expect(template.contents.Outputs).toBeDefined();
     });
 });
+
+
+describe('when loading organization that contains includes', () => {
+    let template: TemplateRoot;
+    let sandbox = Sinon.createSandbox();
+
+    beforeEach(() => {
+        sandbox.stub(ConsoleUtil, 'LogWarning');
+        template = TemplateRoot.create('./test/resources/merge.yml');
+    });
+
+    test('template contains 9 accounts', () => {
+        expect(template.organizationSection.accounts.length).toBe(9);
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    })
+});

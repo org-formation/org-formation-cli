@@ -12,6 +12,7 @@ import { Validator } from './validator';
 import { OrganizationalUnitResource } from './model/organizational-unit-resource';
 import { yamlParse } from '~yaml-cfn/index';
 import { FileUtil } from '~util/file-util';
+import { yamlParseContentWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 
 type TemplateVersion = '2010-09-09-OC' | '2010-09-09';
 
@@ -117,7 +118,7 @@ export class TemplateRoot {
         delete overrides.OrganizationFile;
         delete overrides.OrganizationFileContents;
 
-        const obj = yamlParse(normalizedContentsForParser) as ITemplate;
+        const obj = yamlParseContentWithIncludes(normalizedContentsForParser, dirname) as ITemplate;
         if (includedOrganization && !obj.Organization) {
             obj.Organization = includedOrganization;
         }

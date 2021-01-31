@@ -87,7 +87,7 @@ describe('when validate stacks command', () => {
         command = new ValidateStacksCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
 
-        commandArgs = {...subCommanderCommand, templateFile: 'abc.yml', failedStacksTolerance: 99, maxConcurrentTasks: 1, maxConcurrentStacks: 1, failedTasksTolerance: 99} as unknown as IUpdateStacksCommandArgs;
+        commandArgs = {...subCommanderCommand, templateFile: 'abc.yml' } as unknown as IUpdateStacksCommandArgs;
 
         sandbox.stub(ConsoleUtil, 'LogInfo');
     });
@@ -110,7 +110,7 @@ describe('when validate stacks command', () => {
         expect(args[0]).toBe('abc.yml');
     });
 
-    test('max concurrent tasks and failure tolerance passed to command', async () => {
+    test('concurrent tasks and failure tolerance have sensible defaults', async () => {
         await command.performCommand(commandArgs);
         expect(runTaksStub.callCount).toBe(1);
 
