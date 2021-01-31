@@ -113,9 +113,9 @@ describe('when loading organization that contains includes', () => {
     let template: TemplateRoot;
     let sandbox = Sinon.createSandbox();
 
-    beforeEach(() => {
+    beforeEach(async () => {
         sandbox.stub(ConsoleUtil, 'LogWarning');
-        template = TemplateRoot.create('./test/resources/merge.yml');
+        template = await TemplateRoot.create('./test/resources/merge.yml');
     });
 
     test('template contains 9 accounts', () => {
