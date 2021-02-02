@@ -3,6 +3,9 @@ import { OrgFormationError } from '~org-formation-error';
 
 export class GenericTaskRunner {
 
+    public static RethrowTaskErrors = false;
+
+
     public static async RunTasks<TTask>(tasks: IGenericTaskInternal<TTask>[], delegate: ITaskRunnerDelegates<TTask>): Promise<void> {
         if (delegate.maxConcurrentTasks === 0) {
             throw new OrgFormationError('Cannot run tasks with 0 concurrent tasks.');
@@ -174,6 +177,10 @@ export class GenericTaskRunner {
                     retryAttemptRateLimited = retryAttemptRateLimited + 1;
                     await sleep(Math.pow(retryAttemptRateLimited, 2) + Math.random());
                     continue;
+                }
+
+                if (GenericTaskRunner.RethrowTaskErrors) {
+                    throw err;
                 }
                 task.done = true;
                 task.failed = true;

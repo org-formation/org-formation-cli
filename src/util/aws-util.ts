@@ -8,6 +8,7 @@ import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
 import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackInput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
+import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
@@ -100,8 +101,14 @@ export class AwsUtil {
         return 'arn:aws:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
-    public static async GetS3Service(accountId: string, region: string, roleInTargetAccount?: string): Promise<S3> {
-        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
+    public static async GetS3Service(accountId: string, region?: string, roleInTargetAccount?: string): Promise<S3> {
+        const config: ServiceConfigurationOptions = {};
+        if (region !== undefined) {
+            config.region = region;
+        }
+
+        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, config, roleInTargetAccount);
+
     }
 
     public static async GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string): Promise<IAM> {
@@ -117,13 +124,14 @@ export class AwsUtil {
         await s3client.deleteObject({ Bucket: bucketName, Key: objectKey }).promise();
     }
 
-    private static async GetOrCreateService<TService>(ctr: new (args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string, viaRoleArn?: string): Promise<TService> {
+    private static async GetOrCreateService<TService>(ctr: new (args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: ServiceConfigurationOptions = {}, roleInTargetAccount: string, viaRoleArn?: string): Promise<TService> {
         const cachedService = cache[cacheKey];
         if (cachedService) {
             return cachedService;
         }
 
         const config = clientConfig;
+
 
         if (typeof roleInTargetAccount !== 'string') {
             roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
@@ -258,7 +266,7 @@ export class CfnUtil {
     public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackInput | UpdateStackInput | ValidateTemplateInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
         if (stackInput.TemplateBody && stackInput.TemplateBody.length > 50000) {
             const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region);
-            const bucketName = `organization-formation-${binding.accountId}-large-templates`;
+            const bucketName = `org-formation-${binding.accountId}-${binding.region}-large-templates`;
             try {
                 await s3Service.createBucket({ Bucket: bucketName }).promise();
                 await s3Service.putBucketOwnershipControls({ Bucket: bucketName, OwnershipControls: { Rules: [{ ObjectOwnership: 'BucketOwnerPreferred' }] } }).promise();

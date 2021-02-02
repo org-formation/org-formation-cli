@@ -107,6 +107,9 @@ export class TemplateRoot {
         let includedOrganization;
         let normalizedContentsForParser = contents;
         if (organizationInclude) {
+            if (FileUtil.IsRemoteFile(dirname)) {
+                throw new Error('Organization: !Include syntax for templates hosted remotely. Please remove the Organization: !Include attribute and have perform-tasks automatically populate the Organization model.');
+            }
             normalizedContentsForParser = normalizedContentsForParser.replace(organizationInclude[0], 'Organization:');
             const includePath = Path.join(dirname, organizationInclude[1]);
             includedOrganization = TemplateRoot.getIncludedOrganization(includePath, templateImportContentMd5);
