@@ -179,6 +179,11 @@ export class CfnTemplate {
             this.resultingTemplate.Mappings = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedMappings, this.accountResource);
         }
 
+        if (this.templateRoot.contents.Globals) {
+            const clonedGlobals = JSON.parse(JSON.stringify(this.templateRoot.contents.Globals));
+            this.resultingTemplate.Globals = this._resolveOrganizationFunctionsAndStructuralFunctions(clonedGlobals, this.accountResource);
+        }
+
         if (this.templateRoot.contents.Transform) {
             this.resultingTemplate.Transform = this.templateRoot.contents.Transform;
         }
