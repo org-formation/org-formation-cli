@@ -14,7 +14,7 @@
   - [!Select](#select)
   - [!FindInMap](#findinmap)
   - [!Include](#include)
-  - [!Cmd](#cmd)
+  - [!Cmd](#Cmd)
 - [Task types](#task-types)
   - [update-organization](#update-organization)
   - [update-stacks](#update-stacks)
@@ -142,9 +142,9 @@ Example:
 
 ```yaml
 Parameters:
-  Note: !cmd 'echo "Deployed by `whoami` on `date`'
-  License: !cmd 'wget -qO-  https://raw.githubusercontent.com/org-formation/org-formation-cli/master/LICENSE'
-  EC2ImageIdUbuntu: !cmd >-
+  Note: !Cmd 'echo "Deployed by `whoami` on `date`'
+  License: !Cmd 'wget -qO-  https://raw.githubusercontent.com/org-formation/org-formation-cli/master/LICENSE'
+  EC2ImageIdUbuntu: !Cmd >-
     aws ssm get-parameters
       --region us-east-1
       --names /aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id
