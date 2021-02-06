@@ -14,6 +14,7 @@
   - [!Select](#select)
   - [!FindInMap](#findinmap)
   - [!Include](#include)
+  - [!Cmd](#cmd)
 - [Task types](#task-types)
   - [update-organization](#update-organization)
   - [update-stacks](#update-stacks)
@@ -131,6 +132,24 @@ PolicyTemplate:
 ### !ReadFile
 
 The `!ReadFile` function will take 1 string argument, a file path, and return the contents of the file as a string.
+
+### !Cmd
+
+The `!Cmd` function will take 1 string argument, a shell command, and return the output from the
+shell command as a string.
+
+Example:
+
+```yaml
+Parameters:
+  Note: !cmd 'echo "Deployed by `whoami` on `date`'
+  License: !cmd 'wget -qO-  https://raw.githubusercontent.com/org-formation/org-formation-cli/master/LICENSE'
+  EC2ImageIdUbuntu: !cmd >-
+    aws ssm get-parameters
+      --region us-east-1
+      --names /aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id
+      --query 'Parameters[0].[Value]' --output text
+```
 
 
 ### !MD5
