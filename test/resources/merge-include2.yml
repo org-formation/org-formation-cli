@@ -1,0 +1,17 @@
+DevelopmentAccount1:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: development1@myorg.com
+    AccountName: Development Account 1
+
+DevelopmentAccount2:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: development2@myorg.com
+    AccountName: Development Account 2
+
+DevelopmentAccount3:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: development3@myorg.com
+    AccountName: Development Account 3

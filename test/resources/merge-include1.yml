@@ -1,0 +1,17 @@
+ProductionAccount1:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: production1@myorg.com
+    AccountName: Production Account 1
+
+ProductionAccount2:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: production2@myorg.com
+    AccountName: Production Account 2
+
+ProductionAccount3:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: production3@myorg.com
+    AccountName: Production Account 3
