@@ -27,7 +27,7 @@ export const GetOrganizationAccessRoleInTargetAccount = (config: ICrossAccountCo
         const result: ICrossAccountAccess = {
             role: GlobalState.GetOrganizationAccessRoleName(targetAccountId),
         };
-        if (config && config.masterAccountRoleName !== undefined) {
+        if (config && config.masterAccountRoleName !== undefined && !AwsUtil.GetBuildRunningOnMasterAccount()) {
             result.viaRole = AwsUtil.GetRoleArn(config.masterAccountId, config.masterAccountRoleName);
         }
         return result;
