@@ -87,6 +87,10 @@ export class AwsUtil {
         return AwsUtil.buildProcessAccountId;
     }
 
+    public static async GetBuildRunningOnMasterAccount(): Promise<boolean> {
+        return (await this.GetMasterAccountId()) === (await this.GetBuildProcessAccountId());
+    }
+
 
     public static async GetOrganizationsService(accountId: string, roleInTargetAccount: string): Promise<Organizations> {
         return await AwsUtil.GetOrCreateService<Organizations>(Organizations, AwsUtil.OrganizationsServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, { region: 'us-east-1' }, roleInTargetAccount);

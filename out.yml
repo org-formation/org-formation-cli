@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: default template generated for organization with master account 102625093955
+
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: Olaf Conijn
+      AccountId: '102625093955'
+      RootEmail: olaf_conijn@hotmail.com
+
+  OrganizationRoot:
+    Type: OC::ORG::OrganizationRoot
+    Properties:
+      DefaultOrganizationAccessRoleName: OrganizationAccountAccessRole
+      ServiceControlPolicies:
+        - !Ref DenyChangeOfOrgRoleSCP
+        - !Ref RestrictUnusedRegionsSCP
+
+  AccountBAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Account B
+      AccountId: '362239514602'
+      Alias: ocorgfo133
+      RootEmail: account+b@olafconijn.awsapps.com
+      OrganizationAccessRoleName: CustomCrossAccountRole
+
+  AccountAAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Account A
+      Alias: ocorgfo4
+      AccountId: '340381375986'
+      RootEmail: account+a@olafconijn.awsapps.com
+
+  UsersAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Users Account
+      Alias: ocorgfo343
+      AccountId: '549476213961'
+      RootEmail: account+users@olafconijn.awsapps.com
+
+  AccountCAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Account C
+      Alias: ocorgfo13333
+      OrganizationAccessRoleName: AnotherCustomRole
+      AccountId: '673026687213'
+      RootEmail: account+c@olafconijn.awsapps.com
+
+  DenyChangeOfOrgRoleSCP:
+    Type: OC::ORG::ServiceControlPolicy
+    Properties:
+      PolicyName: DenyChangeOfOrgRole
+      Description: Deny changing the IAM role used for organization access
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyChangeOfOrgRole
+            Effect: Deny
+            Action:
+              - 'iam:Attach*'
+              - 'iam:Create*'
+              - 'iam:Delete*'
+              - 'iam:Detach*'
+              - 'iam:PutRole*'
+              - 'iam:Update*'
+            Resource:
+              - 'arn:aws:iam::*:role/OrganizationAccountAccessRole'
+
+  RestrictUnusedRegionsSCP:
+    Type: OC::ORG::ServiceControlPolicy
+    Properties:
+      PolicyName: RestrictUnusedRegions
+      Description: Restrict Unused regions
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyUnsupportedRegions
+            Effect: Deny
+            NotAction:
+              - 'cloudfront:*'
+              - 'iam:*'
+              - 'route53:*'
+              - 'support:*'
+              - 'budgets:*'
+            Resource: '*'
+            Condition:
+              StringNotEquals:
+                'aws:RequestedRegion':
+                  - eu-west-1
+                  - eu-west-1
+                  - us-east-1
+                  - eu-central-1
+
+  ProtectCommunityRPsSCP:
+    Type: OC::ORG::ServiceControlPolicy
+    Properties:
+      PolicyName: ProtectCommunityRPs
+      Description: ''
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenySetPublicAccessBlock
+            Effect: Deny
+            Action: 's3:PutAccountPublicAccessBlock'
+            Resource: '*'
+
+
