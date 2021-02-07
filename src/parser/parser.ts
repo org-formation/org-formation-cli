@@ -29,6 +29,7 @@ export interface ITemplate {
     Metadata?: any;
     Parameters?: any;
     Mappings?: any;
+    Globals?: any;
     Conditions?: any;
     Resources?: IResources;
     Outputs?: any;
