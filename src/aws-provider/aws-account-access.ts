@@ -12,7 +12,7 @@ export interface ICrossAccountConfig {
 }
 
 
-export const GetOrganizationAccessRoleInTargetAccount = (config: ICrossAccountConfig, targetAccountId: string): ICrossAccountAccess => {
+export  const GetOrganizationAccessRoleInTargetAccount = async (config: ICrossAccountConfig, targetAccountId: string): Promise<ICrossAccountAccess> => {
     if (config && config.masterAccountId === targetAccountId) {
         if (config.masterAccountRoleName !== undefined) {
             return {
@@ -27,7 +27,7 @@ export const GetOrganizationAccessRoleInTargetAccount = (config: ICrossAccountCo
         const result: ICrossAccountAccess = {
             role: GlobalState.GetOrganizationAccessRoleName(targetAccountId),
         };
-        if (config && config.masterAccountRoleName !== undefined && !AwsUtil.GetBuildRunningOnMasterAccount()) {
+        if (config && config.masterAccountRoleName !== undefined && ! (await AwsUtil.GetBuildRunningOnMasterAccount())) {
             result.viaRole = AwsUtil.GetRoleArn(config.masterAccountId, config.masterAccountRoleName);
         }
         return result;
