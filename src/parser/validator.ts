@@ -93,7 +93,7 @@ export class Validator {
 
         Validator.ThrowForUnknownAttribute(root, 'template root',
             'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'DefaultOrganizationBinding', 'OrganizationBindings', 'DefaultOrganizationBindingRegion', 'OrganizationBindingRegion',
-            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs', 'Transform');
+            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs', 'Transform', 'Globals');
 
     }
 
