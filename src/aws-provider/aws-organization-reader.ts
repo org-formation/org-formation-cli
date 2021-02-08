@@ -274,7 +274,7 @@ export class AwsOrganizationReader {
     private static async getSupportLevelForAccount(that: AwsOrganizationReader, accountId: string): Promise<SupportLevel> {
         await that.organization.getValue();
         try {
-            const targetRoleConfig = GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
             const supportService = await AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
             const severityLevels = await supportService.describeSeverityLevels().promise();
             const critical = severityLevels.severityLevels.find(x => x.code === 'critical');
@@ -297,7 +297,7 @@ export class AwsOrganizationReader {
     private static async getIamAliasForAccount(that: AwsOrganizationReader, accountId: string): Promise<string> {
         try {
             await that.organization.getValue();
-            const targetRoleConfig = GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
             const iamService = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
             const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
             if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
@@ -314,7 +314,7 @@ export class AwsOrganizationReader {
     private static async getIamPasswordPolicyForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAM.PasswordPolicy> {
         try {
             await that.organization.getValue();
-            const targetRoleConfig = GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
             const iamService = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
             try {
                 const response = await iamService.getAccountPasswordPolicy().promise();
