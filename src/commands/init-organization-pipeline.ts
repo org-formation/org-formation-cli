@@ -48,7 +48,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
         await this.checkRunInMasterAccount();
 
-        command.delegateToBuildAccount = command.buildAccountId !== undefined;
+        command.delegateToBuildAccount = (command.buildAccountId !== undefined && this.currentAccountId !== command.buildAccountId);
         if (command.delegateToBuildAccount) {
             command.buildProcessRoleName = 'OrganizationFormationBuildAccessRole';
             this.buildAccountId = command.buildAccountId;
