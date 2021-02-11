@@ -36,7 +36,7 @@ Basic taskfile that contains all examples below: [organization-tasks.yml](organi
 
 ## budget alarms
 
-> Note: This feature needs [Billing Alerts enabled](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/gs_monitor_estimated_charges_with_cloudwatch.html#gs_turning_on_billing_metrics) in the Organizations Root Account.
+> Note: This feature needs [Billing Alerts enabled](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/gs_monitor_estimated_charges_with_cloudwatch.html#gs_turning_on_billing_metrics) and [Access to the Billing and Cost Management console](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/control-access-billing.html#ControllingAccessWebsite-Activate) enabled in the Organizations Root Account. It might need up to 24 hours until these changes are propagated and a deployment of this example is possible.
 
 Basic example on how to create budget alarms based on tags that are defined on the account.
 
