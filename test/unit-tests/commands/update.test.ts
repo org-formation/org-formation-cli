@@ -63,7 +63,7 @@ describe('when executing update command', () => {
     let getTemplateHash: Sinon.SinonStub;
     let templateHash: string;
 
-    beforeEach(() => {
+    beforeEach(async() => {
         consoleOut = sandbox.stub(ConsoleUtil, 'Out');
         consoleInfo = sandbox.stub(ConsoleUtil, 'LogInfo');
         consoleError = sandbox.stub(ConsoleUtil, 'LogError');
@@ -76,7 +76,7 @@ describe('when executing update command', () => {
         sandbox.stub(AwsUtil, 'GetBuildProcessAccountId').returns(Promise.resolve('123456789012'));
 
 
-        const template = TemplateRoot.create('./test/resources/valid-basic.yml');
+        const template = await TemplateRoot.create('./test/resources/valid-basic.yml');
         templateHash = template.hash;
 
         const emptyState = PersistedState.CreateEmpty('123456789012');

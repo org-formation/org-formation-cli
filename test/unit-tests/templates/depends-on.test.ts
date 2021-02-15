@@ -15,7 +15,7 @@ describe('when filtering out depends on', () => {
     let account2CfnTemplate: ICfnTemplate;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/depends-on/depends-on.yml');
+        template = await TemplateRoot.create('./test/resources/depends-on/depends-on.yml');
         const persistedState = TestTemplates.createState(template);
         cloudformationBinder = new CloudFormationBinder('budget-alarms', template, persistedState);
         bindings = await cloudformationBinder.enumBindings();

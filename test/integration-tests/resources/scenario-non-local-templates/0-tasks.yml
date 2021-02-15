@@ -1,0 +1,31 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+CopyToS3:
+  Type: copy-to-s3
+  RemotePath: s3://scenario-non-local-templates/xyz/buckets.yml
+  LocalPath: ./buckets.yml
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: eu-central-1
+
+BucketsFromS3:
+  DependsOn: CopyToS3
+  Type: update-stacks
+  StackName: buckets-from-remote-s3-template
+  Template: s3://scenario-non-local-templates/xyz/buckets.yml #todo: support !Sub
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: eu-central-1
+
+BucketsFromHTTP:
+  DependsOn: CopyToS3
+  Type: update-stacks
+  StackName: buckets-from-remote-https-template
+  Template: https://raw.githubusercontent.com/org-formation/org-formation-cli/master/test/integration-tests/resources/scenario-very-large-stack/buckets.yml
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: eu-central-1

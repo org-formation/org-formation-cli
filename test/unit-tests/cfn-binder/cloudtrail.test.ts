@@ -18,7 +18,7 @@ describe('when loading cloudtrail template', () => {
     const expectedOutputLogicalId = 'cloudtrailDashCloudTrailS3Bucket';
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/cloudtrail/cloudtrail.yml');
+        template = await TemplateRoot.create('./test/resources/cloudtrail/cloudtrail.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});

@@ -16,7 +16,7 @@ describe('when loading hostedzone-per-account template', () => {
     let account2CfnTemplate: ICfnTemplate;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/hostedzone-per-account/hostedzone-per-account.yml');
+        template = await TemplateRoot.create('./test/resources/hostedzone-per-account/hostedzone-per-account.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});

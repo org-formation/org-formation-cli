@@ -10,7 +10,7 @@ describe('when loading template with resource that does Foreach', () => {
     let masterAccountCfnTemplate: ICfnTemplate;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/foreach/foreach.yml');
+        template = await TemplateRoot.create('./test/resources/foreach/foreach.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});

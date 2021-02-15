@@ -24,7 +24,7 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
 
     protected async performCommand(command: IUpdateOrganizationCommandArgs): Promise<void> {
 
-        const template = TemplateRoot.create(command.templateFile);
+        const template = await TemplateRoot.create(command.templateFile);
         const state = await this.getState(command);
         const templateHash = template.hash;
 

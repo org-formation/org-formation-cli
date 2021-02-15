@@ -18,7 +18,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         await x.performCommand(command);
     }
 
-    public static createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string): TemplateRoot {
+    public static async createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string): Promise<TemplateRoot> {
         const templateOverrides: ITemplateOverrides = {};
 
         if (command.stackDescription) {
@@ -45,7 +45,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
                 templateOverrides.ParameterValues[key] = val;
             }
         }
-        const template = TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
+        const template = await TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
         return template;
     }
 
@@ -122,7 +122,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
                  },
             };
         }
-        const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
+        const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseCfnParameters(command.parameters);
         const state = await this.getState(command);
         GlobalState.Init(state, template);

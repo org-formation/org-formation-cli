@@ -11,6 +11,7 @@ import { ResourcesSection } from './model/resources-section';
 import { Validator } from './validator';
 import { OrganizationalUnitResource } from './model/organizational-unit-resource';
 import { yamlParse } from '~yaml-cfn/index';
+import { FileUtil } from '~util/file-util';
 import { yamlParseContentWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 
 type TemplateVersion = '2010-09-09-OC' | '2010-09-09';
@@ -85,9 +86,9 @@ export interface ITemplateOverrides {
 
 export class TemplateRoot {
 
-    public static create(path: string, overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
+    public static async create(path: string, overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): Promise<TemplateRoot> {
         try {
-            const contents = fs.readFileSync(path).toString();
+            const contents = await FileUtil.GetContents(path);
             const dirname = Path.dirname(path);
             const filename = Path.basename(path);
             return TemplateRoot.createFromContents(contents, dirname, filename, overrides, templateImportContentMd5);
@@ -107,6 +108,9 @@ export class TemplateRoot {
         let includedOrganization;
         let normalizedContentsForParser = contents;
         if (organizationInclude) {
+            if (FileUtil.IsRemoteFile(dirname)) {
+                throw new Error('Organization: !Include syntax for templates hosted remotely. Please remove the Organization: !Include attribute and have perform-tasks automatically populate the Organization model.');
+            }
             normalizedContentsForParser = normalizedContentsForParser.replace(organizationInclude[0], 'Organization:');
             const includePath = Path.join(dirname, organizationInclude[1]);
             includedOrganization = TemplateRoot.getIncludedOrganization(includePath, templateImportContentMd5);

@@ -7,8 +7,8 @@ describe('when organization root resource', () => {
     let resource: IResource;
     let properties: IOrganizationRootProperties;
 
-    beforeEach(() => {
-        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+    beforeEach(async() => {
+        template = await TemplateRoot.create('./test/resources/valid-basic.yml');
 
         properties = {
             ServiceControlPolicies: '*',

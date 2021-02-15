@@ -42,7 +42,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         Validator.validatePositiveInteger(failedStacksTolerance, 'failedStacksTolerance');
 
 
-        const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
+        const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);
         GlobalState.Init(state, template);
         ConsoleUtil.state = state;

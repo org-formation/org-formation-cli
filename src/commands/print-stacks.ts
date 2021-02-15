@@ -40,7 +40,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
             throw new OrgFormationError('argument --stack-name is missing');
         }
 
-        const template = UpdateStacksCommand.createTemplateUsingOverrides(command as IUpdateStacksCommandArgs, command.templateFile);
+        const template = await UpdateStacksCommand.createTemplateUsingOverrides(command as IUpdateStacksCommandArgs, command.templateFile);
         const state = await this.getState(command);
         GlobalState.Init(state, template);
         const parameters = this.parseCfnParameters(command.parameters);

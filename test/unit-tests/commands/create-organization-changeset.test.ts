@@ -67,7 +67,7 @@ describe('when executing execute change set command', () => {
     let consoleOut: Sinon.SinonStub;
     let createTemplate: Sinon.SinonStub;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         consoleOut = sandbox.stub(ConsoleUtil, 'Out');
 
         commanderCommand = new Command('root');
@@ -78,7 +78,7 @@ describe('when executing execute change set command', () => {
         sandbox.stub(AwsUtil, 'GetBuildProcessAccountId').returns(Promise.resolve('123456789012'));
 
 
-        const template = TemplateRoot.create('./test/resources/valid-basic.yml');
+        const template = await TemplateRoot.create('./test/resources/valid-basic.yml');
         const emptyState = PersistedState.CreateEmpty('123456789012');
         createTemplate = sandbox.stub(TemplateRoot, 'create');
         createTemplate.returns(template);

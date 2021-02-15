@@ -13,7 +13,7 @@ describe('when specifying !Ref in custom parameter binding', () => {
     let account1CfnTemplate: ICfnTemplate;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/custom-parameter-binding/custom-parameter-binding.yml');
+        template = await TemplateRoot.create('./test/resources/custom-parameter-binding/custom-parameter-binding.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});
@@ -35,7 +35,7 @@ describe('when specifying !Ref in custom parameter binding', () => {
 describe('when specifying !Ref in custom parameter binding to unknown account', () => {
     test('exception is thrown', async () => {
         try {
-            const template = TemplateRoot.create('./test/resources/custom-parameter-binding/custom-parameter-binding-non-existant.yml');
+            const template = await TemplateRoot.create('./test/resources/custom-parameter-binding/custom-parameter-binding-non-existant.yml');
             const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
             persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
             persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '444444444444', logicalId: 'Account4', lastCommittedHash: 'abc'});

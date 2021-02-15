@@ -8,8 +8,8 @@ describe('when creating master account resource', () => {
     let resource: IResource;
     let accountProperties: IAccountProperties;
 
-    beforeEach(() => {
-        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+    beforeEach(async() => {
+        template = await TemplateRoot.create('./test/resources/valid-basic.yml');
 
         accountProperties = {
             RootEmail: 'email@email.com',

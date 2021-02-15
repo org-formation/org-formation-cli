@@ -43,7 +43,7 @@ describe('when calling org-formation init', () => {
     });
 
     test('creates template file ', async () => {
-        const templateRoot = TemplateRoot.create(templatePath);
+        const templateRoot = await TemplateRoot.create(templatePath);
         expect(templateRoot.organizationSection.masterAccount).toBeDefined();
         expect(templateRoot.organizationSection.masterAccount.accountId).toBeDefined();
         expect(templateRoot.organizationSection.masterAccount.rootEmail).toBeDefined();

@@ -1,6 +1,6 @@
 {
   "name": "aws-organization-formation",
-  "version": "0.9.15-beta.8",
+  "version": "0.9.15-beta.9",
   "description": "Infrastructure as code solution for AWS Organizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,6 +34,7 @@
   "author": "Olaf Conijn",
   "license": "MIT",
   "dependencies": {
+    "@types/node-fetch": "^2.5.8",
     "@types/rc": "^1.1.0",
     "archiver": "^3.1.1",
     "aws-sdk": "^2.786.0",
@@ -43,6 +44,7 @@
     "md5": "^2.2.1",
     "md5-file": "^4.0.0",
     "memory-streams": "^0.1.3",
+    "node-fetch": "^2.6.1",
     "rc": "^1.2.8",
     "uuid": "^3.3.3",
     "yamljs": "^0.3.0"

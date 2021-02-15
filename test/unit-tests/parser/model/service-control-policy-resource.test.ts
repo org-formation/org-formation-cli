@@ -8,8 +8,8 @@ describe('when creating service control policy resource', () => {
     let resource: IResource;
     let properties: IServiceControlPolicyProperties;
 
-    beforeEach(() => {
-        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+    beforeEach(async () => {
+        template = await TemplateRoot.create('./test/resources/valid-basic.yml');
 
         properties = {
             PolicyName: 'policy1',

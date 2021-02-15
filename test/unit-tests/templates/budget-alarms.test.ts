@@ -14,7 +14,7 @@ describe('when loading budget alarms template', () => {
     let complianceCfnTemplate: ICfnTemplate;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/budget-alarms/budget-alarms.yml');
+        template = await TemplateRoot.create('./test/resources/budget-alarms/budget-alarms.yml');
         const persistedState = PersistedState.CreateEmpty('000000000000');
 
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});

@@ -1,6 +1,7 @@
 import { PerformTasksCommand, ValidateTasksCommand, UpdateOrganizationCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
 import { ConsoleUtil } from "~util/console-util";
+import { GenericTaskRunner } from "~core/generic-task-runner";
 
 
 const basePathForScenario = './test/integration-tests/resources/scenario-task-that-fails/';
@@ -17,6 +18,7 @@ describe('when task fails', () => {
     beforeAll(async () => {
         consoleErrorSpy = jest.spyOn(ConsoleUtil, 'LogError');
         context = await baseBeforeAll();
+        GenericTaskRunner.RethrowTaskErrors = false;
         await context.prepareStateBucket(basePathForScenario + '../state.json');
         const command = context.command;
 

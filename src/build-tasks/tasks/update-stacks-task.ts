@@ -6,6 +6,7 @@ import { IPerformTasksCommandArgs, DeleteStacksCommand, IUpdateStacksCommandArgs
 import { Validator } from '~parser/validator';
 import { IBuildTaskProvider, BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { IOrganizationBinding } from '~parser/parser';
+import { FileUtil } from '~util/file-util';
 
 
 export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdateStackTaskConfiguration> {
@@ -93,8 +94,12 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
 
     static createUpdateStacksCommandArgs(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs): IUpdateStacksCommandArgs {
 
-        const dir = path.dirname(config.FilePath);
-        const templatePath = path.join(dir, config.Template);
+        let templatePath = config.Template;
+
+        if (!FileUtil.IsRemoteFile(templatePath)) {
+            const dir = path.dirname(config.FilePath);
+            templatePath = path.join(dir, config.Template);
+        }
 
         const args: IUpdateStacksCommandArgs = {
             ...command,
