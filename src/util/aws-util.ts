@@ -1,9 +1,7 @@
-import { existsSync, readFileSync } from 'fs';
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
-import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
-import * as ini from 'ini';
 import AWS from 'aws-sdk';
+import { SingleSignOnCredentials } from 'aws-sdk-sso';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
 import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackInput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
@@ -15,6 +13,7 @@ import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 import { ICfnBinding } from '~cfn-binder/cfn-binder';
 
+type CredentialProviderOptions = ConstructorParameters<typeof AWS.SharedIniFileCredentials>[0];
 
 export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
@@ -42,22 +41,34 @@ export class AwsUtil {
 
     }
 
-    public static async InitializeWithProfile(profile?: string): Promise<void> {
-
+    public static async InitializeWithProfile(profile?: string): Promise<AWS.Credentials> {
         if (profile) {
-            await this.Initialize([
-                (): AWS.Credentials => new CustomMFACredentials(profile),
-                (): AWS.Credentials => new AWS.SharedIniFileCredentials({ profile }),
-            ]);
-        } else {
-            await this.Initialize(CredentialProviderChain.defaultProviders);
-        }
+            process.env.AWS_SDK_LOAD_CONFIG = '1';
+            const params: CredentialProviderOptions = { profile };
+            if (process.env.AWS_SHARED_CREDENTIALS_FILE) {
+                params.filename = process.env.AWS_SHARED_CREDENTIALS_FILE;
+            }
 
+            // Setup a MFA callback to ask the code from user
+            params.tokenCodeFn = async (mfaSerial: string, callback: any): Promise<void> => {
+                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
+                callback(null, token);
+            };
+
+            return await this.Initialize([
+                (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
+                (): AWS.Credentials => new SingleSignOnCredentials(params),
+                (): AWS.Credentials => new AWS.ProcessCredentials(params),
+            ]);
+        }
+        const defaultProviders = CredentialProviderChain.defaultProviders;
+        defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
+        return await this.Initialize(defaultProviders);
     }
 
-    public static async Initialize(providers: provider[]): Promise<void> {
+    public static async Initialize(providers: provider[]): Promise<AWS.Credentials> {
         const chainProvider = new CredentialProviderChain(providers);
-        AWS.config.credentials = await chainProvider.resolvePromise();
+        return AWS.config.credentials = await chainProvider.resolvePromise();
     }
 
     public static SetMasterAccountId(masterAccountId: string): void {
@@ -356,68 +367,6 @@ export class CfnUtil {
         } while (retryStackIsBeingUpdated || retryAccountIsBeingInitialized);
         return describeStack;
     }
-}
-
-class CustomMFACredentials extends AWS.Credentials {
-    profile: string;
-
-    constructor(profile: string) {
-        super(undefined);
-        this.profile = profile;
-    }
-
-    refresh(callback: (err: AWS.AWSError) => void): void {
-        const that = this;
-        this.innerRefresh()
-            .then(creds => {
-                that.accessKeyId = creds.accessKeyId;
-                that.secretAccessKey = creds.secretAccessKey;
-                that.sessionToken = creds.sessionToken;
-                callback(undefined);
-            })
-            .catch(err => { callback(err); });
-    };
-
-    async innerRefresh(): Promise<CredentialsOptions> {
-        const profileName = this.profile ? this.profile : 'default';
-        const homeDir = require('os').homedir();
-        // todo: add support for windows?
-        if (!existsSync(homeDir + '/.aws/config')) {
-            return;
-        }
-        const awsconfig = readFileSync(homeDir + '/.aws/config').toString('utf8');
-        const contents = ini.parse(awsconfig);
-        const profileKey = contents['profile ' + profileName];
-        if (profileKey && profileKey.source_profile) {
-            const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
-            const secrets = ini.parse(awssecrets);
-            const creds = secrets[profileKey.source_profile];
-            const credentialsForSts: CredentialsOptions = { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key };
-            if (creds.aws_session_token !== undefined) {
-                credentialsForSts.sessionToken = creds.aws_session_token;
-            }
-            const sts = new STS({ credentials: credentialsForSts });
-
-            const assumeRoleReq: AssumeRoleRequest = {
-                RoleArn: profileKey.role_arn,
-                RoleSessionName: 'organization-build',
-            };
-
-            if (profileKey.mfa_serial !== undefined) {
-                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profileKey.mfa_serial}`);
-                assumeRoleReq.SerialNumber = profileKey.mfa_serial;
-                assumeRoleReq.TokenCode = token;
-            }
-
-            try {
-                const tokens = await sts.assumeRole(assumeRoleReq).promise();
-                return { accessKeyId: tokens.Credentials.AccessKeyId, secretAccessKey: tokens.Credentials.SecretAccessKey, sessionToken: tokens.Credentials.SessionToken };
-            } catch (err) {
-                throw new OrgFormationError(`unable to assume role, error: \n${err}`);
-            }
-        }
-    }
-
 }
 
 const sleep = (seconds: number): Promise<void> => {
