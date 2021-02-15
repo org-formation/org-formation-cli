@@ -24,7 +24,8 @@
     "resources/*"
   ],
   "bin": {
-    "org-formation": "dist/cli.js"
+    "org-formation": "dist/cli.js",
+    "ofn": "dist/cli.js"
   },
   "repository": {
     "type": "git",

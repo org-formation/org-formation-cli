@@ -62,11 +62,11 @@ export class CfnExpressionResolver {
     }
 
     public async resolveSingleExpression(expression: ICfnExpression, attributeName: string): Promise<string> {
-        if (typeof expression === 'string' || typeof expression === 'undefined') {
+        if (typeof expression === 'string' || typeof expression === 'number' || typeof expression === 'boolean' || typeof expression === 'bigint') {
             return expression;
         }
 
-        if (expression === null) {
+        if (expression === null || typeof expression === 'undefined' ) {
             return undefined;
         }
 
@@ -75,9 +75,13 @@ export class CfnExpressionResolver {
         const resolved = await this.resolve(container);
         const collapsed = await this.collapse(resolved);
 
-        if (typeof collapsed.val === 'string') {
+        if (typeof collapsed.val === 'string'|| typeof collapsed.val === 'number' || typeof collapsed.val === 'boolean' || typeof collapsed.val === 'bigint') {
             return collapsed.val;
         }
+        if (collapsed.val === null || typeof collapsed.val === 'undefined' ) {
+            return undefined;
+        }
+
         Validator.throwForUnresolvedExpressions(collapsed.val, attributeName);
     }
 
