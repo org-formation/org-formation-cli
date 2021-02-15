@@ -23,7 +23,7 @@ describe('when calling org-formation perform tasks', () => {
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-tasks.yml', masterAccountId: '102625093955'});
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-tasks.yml', masterAccountId: '102625093955'});
-        await sleepForTest(500);
+        await sleepForTest(1000);
         stateAfterUpdate = await s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-tasks.yml', masterAccountId: '102625093955'});
