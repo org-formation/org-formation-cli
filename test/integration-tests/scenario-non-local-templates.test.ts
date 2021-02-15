@@ -23,7 +23,7 @@ describe('when calling org-formation perform tasks', () => {
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-tasks.yml', masterAccountId: '102625093955'});
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-tasks.yml', masterAccountId: '102625093955'});
-        await sleepForTest(1000);
+        await sleepForTest(500);
         stateAfterUpdate = await s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-tasks.yml', masterAccountId: '102625093955'});
@@ -43,7 +43,7 @@ describe('when calling org-formation perform tasks', () => {
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
-        const target = state.getTarget('buckets-from-remote-https-template', '102625093955', 'eu-west-1');
+        const target = state.getTarget('buckets-from-remote-https-template', '102625093955', 'eu-central-1');
         expect(target).toBeDefined();
     })
 
