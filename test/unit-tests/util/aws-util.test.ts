@@ -34,15 +34,20 @@ describe('when initializing credentials', () => {
 
     let execSpy: jest.SpyInstance<cp.ChildProcess>;
 
-    beforeAll(async () => {
+    beforeAll(() => {
+        execSpy = jest.spyOn(cp, 'exec');
+    });
+
+    beforeEach(() => {
         process.env.AWS_CONFIG_FILE = path.join(__dirname, 'aws-config-file');
         process.env.AWS_SHARED_CREDENTIALS_FILE = path.join(__dirname, 'aws-shared-credentials-file');
-        execSpy = jest.spyOn(cp, 'exec');
     });
 
     afterEach(() => {
         jest.resetAllMocks();
         jest.restoreAllMocks();
+        process.env.AWS_CONFIG_FILE = undefined;
+        process.env.AWS_SHARED_CREDENTIALS_FILE = undefined;
     });
 
     test('initialize with default profile containing access key and secret', async () => {
