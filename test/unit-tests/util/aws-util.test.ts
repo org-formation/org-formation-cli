@@ -36,9 +36,7 @@ describe('when initializing credentials', () => {
 
     beforeAll(() => {
         execSpy = jest.spyOn(cp, 'exec');
-    });
-
-    beforeEach(() => {
+        process.env.AWS_SDK_LOAD_CONFIG = '1';
         process.env.AWS_CONFIG_FILE = path.join(__dirname, 'aws-config-file');
         process.env.AWS_SHARED_CREDENTIALS_FILE = path.join(__dirname, 'aws-shared-credentials-file');
     });
@@ -46,6 +44,10 @@ describe('when initializing credentials', () => {
     afterEach(() => {
         jest.resetAllMocks();
         jest.restoreAllMocks();
+    });
+
+    afterAll(() => {
+        process.env.AWS_SDK_LOAD_CONFIG = undefined;
         process.env.AWS_CONFIG_FILE = undefined;
         process.env.AWS_SHARED_CREDENTIALS_FILE = undefined;
     });
