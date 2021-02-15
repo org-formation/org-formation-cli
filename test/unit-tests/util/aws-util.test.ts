@@ -1,17 +1,12 @@
-import * as path from 'path';
+import path from 'path';
+import fs from 'fs';
 import cp, { ChildProcess, ExecException } from 'child_process';
 import * as AWSMock from 'aws-sdk-mock';
 import { examples as stsExamples } from 'aws-sdk/apis/sts-2011-06-15.examples.json';
 import { AwsUtil } from '~util/aws-util';
+import { ConsoleUtil } from '~util/console-util';
 
 jest.mock('child_process');
-jest.mock('../../../src/util/console-util', () => {
-    return {
-        ConsoleUtil: {
-            Readline: async() => '123456'
-        }
-    };
-});
 
 const mockResult = (output: any): jest.Mock => {
     return jest.fn().mockResolvedValue(output);
@@ -54,16 +49,17 @@ describe('when initializing credentials', () => {
         const credentials = await AwsUtil.InitializeWithProfile(null);
         expect(credentials).toMatchObject({
             profile: 'default',
-            accessKeyId: 'ID',
+            accessKeyId: 'KEY',
             secretAccessKey: 'SECRET',
             sessionToken: undefined
         });
     });
 
     test('initialize with profile containing mfa', async () => {
+        const readLineSpy = jest.spyOn(ConsoleUtil, 'Readline').mockResolvedValueOnce(Promise.resolve('123456'));
         try {
             const credentials = await AwsUtil.InitializeWithProfile('mfa');
-            // To mock this properly, we would need to setup a network interceptor
+            // TODO: To mock this properly, we would need to setup a network interceptor
             expect(credentials).toMatchObject({
                 profile: 'mfa',
                 accessKeyId: expect.any(String),
@@ -73,11 +69,19 @@ describe('when initializing credentials', () => {
         } catch (err) {
             expect(err.message).toBe('Profile mfa did not include credential process');
         }
+        expect(readLineSpy).toBeCalledTimes(1);
     });
 
     test('initialize with profile containing credential process', async () => {
-        const mockProcess = '{"Version": 1,"Profile": "credential-process","AccessKeyId": "ID","SecretAccessKey": "SECRET","SessionToken": "SESSION","Expiration": ""}';
-        execSpy.mockImplementation(function(
+        const mockProcess = JSON.stringify({
+            Version: 1,
+            Profile: 'credential-process',
+            AccessKeyId: 'KEY',
+            SecretAccessKey: 'SECRET',
+            SessionToken: 'TOKEN',
+            Expiration: ''
+        });
+        execSpy.mockImplementationOnce(function(
             this: ChildProcess,
             _command: string,
             _options: any,
@@ -93,33 +97,50 @@ describe('when initializing credentials', () => {
         expect(execSpy).toBeCalledTimes(1);
         expect(credentials).toMatchObject({
             profile: 'credential-process',
-            accessKeyId: 'ID',
+            accessKeyId: 'KEY',
             secretAccessKey: 'SECRET',
-            sessionToken: 'SESSION'
+            sessionToken: 'TOKEN'
         });
     });
 
     test('initialize with profile containing aws sso config', async () => {
-        const mockProcess = '{"Version": 1,"Profile": "aws-sso","AccessKeyId": "ID","SecretAccessKey": "SECRET","SessionToken": "SESSION","Expiration": ""}';
-        execSpy.mockImplementation(function(
-            this: ChildProcess,
-            _command: string,
-            _options: any,
-            callback?: (error: ExecException | null, stdout: string, stderr: string) => void
-        ): ChildProcess {
-            if (!callback) {
-                callback = _options;
+        const originalExistsSync = fs.existsSync;
+        const existsSyncSpy = jest.spyOn(fs, 'existsSync').mockImplementation(function(path: string): boolean {
+            if (path.match(/[\/\\].aws[\/\\]sso[\/\\]cache/)) {
+                return true;
             }
-            callback(undefined, mockProcess, undefined);
-            return this;
+            return originalExistsSync(path);
         });
+        const originalReadFileSync = fs.readFileSync;
+        const readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(function(path: string, options: any): any {
+            if (path.match(/[\/\\].aws[\/\\]sso[\/\\]cache/)) {
+                return JSON.stringify({
+                    startUrl: 'https://11111111.awsapps.com/start',
+                    region: 'us-east-1',
+                    accessToken: 'eyAAAAA',
+                    expiresAt: '2021-02-11T06:04:07UTC'
+                });
+            }
+            return originalReadFileSync(path, options);
+        });
+        const roleCredentials = {
+            accessKeyId: 'KEY',
+            secretAccessKey: 'SECRET',
+            sessionToken: 'TOKEN',
+            expiration: 2000000000
+        };
+        const getRoleCredentialsMock = (_: any, callback: any): any => {
+            callback(null, { roleCredentials });
+        };
+        AWSMock.mock('SSO', 'getRoleCredentials', getRoleCredentialsMock);
         const credentials = await AwsUtil.InitializeWithProfile('aws-sso');
-        expect(execSpy).toBeCalledTimes(1);
         expect(credentials).toMatchObject({
             profile: 'aws-sso',
-            accessKeyId: expect.any(String),
-            secretAccessKey: expect.any(String),
-            sessionToken: expect.any(String)
+            accessKeyId: roleCredentials.accessKeyId,
+            secretAccessKey: roleCredentials.secretAccessKey,
+            sessionToken: roleCredentials.sessionToken
         });
+        expect(existsSyncSpy).toBeCalled();
+        expect(readFileSyncSpy).toBeCalled();
     });
 });

@@ -1,6 +1,7 @@
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import AWS from 'aws-sdk';
+import { SingleSignOnCredentials } from 'aws-sdk-sso';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
 import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackInput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
@@ -40,26 +41,28 @@ export class AwsUtil {
     }
 
     public static async InitializeWithProfile(profile?: string): Promise<AWS.Credentials> {
-
         if (profile) {
             process.env.AWS_SDK_LOAD_CONFIG = '1';
             const params: CredentialProviderOptions = { profile };
             if (process.env.AWS_SHARED_CREDENTIALS_FILE) {
-              params.filename = process.env.AWS_SHARED_CREDENTIALS_FILE;
+                params.filename = process.env.AWS_SHARED_CREDENTIALS_FILE;
             }
 
             // Setup a MFA callback to ask the code from user
             params.tokenCodeFn = async (mfaSerial: string, callback: any): Promise<void> => {
-              const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
-              callback(null, token);
+                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
+                callback(null, token);
             };
 
             return await this.Initialize([
                 (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
+                (): AWS.Credentials => new SingleSignOnCredentials(params),
                 (): AWS.Credentials => new AWS.ProcessCredentials(params),
             ]);
         }
-        return await this.Initialize(CredentialProviderChain.defaultProviders);
+        const defaultProviders = CredentialProviderChain.defaultProviders;
+        defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
+        return await this.Initialize(defaultProviders);
     }
 
     public static async Initialize(providers: provider[]): Promise<AWS.Credentials> {

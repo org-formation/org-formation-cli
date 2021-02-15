@@ -15,4 +15,3 @@ sso_start_url = https://11111111.awsapps.com/start
 sso_region = us-east-1
 sso_account_id = 123456789012
 sso_role_name = admin
-credential_process = exec-credential-process aws-sso
