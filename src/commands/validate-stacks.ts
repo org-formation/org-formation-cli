@@ -24,6 +24,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
 
     public addOptions(command: Command): void {
         command.option('--parameters [parameters]', 'parameter values passed to CloudFormation when executing stacks');
+        command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in CloudFormation', 'validation');
         super.addOptions(command);
     }

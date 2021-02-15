@@ -58,6 +58,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         command.option('--stack-description [description]', 'description of the stack that will be displayed CloudFormation');
         command.option('--parameters [parameters]', 'parameter values passed to CloudFormation when executing stacks');
         command.option('--termination-protection', 'value that indicates whether stack must have deletion protection');
+        command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--update-protection', 'value that indicates whether stack must have a stack policy that prevents updates');
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks after which execution stops', 0);
