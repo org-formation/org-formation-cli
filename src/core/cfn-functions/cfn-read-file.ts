@@ -5,7 +5,7 @@ import { FileUtil } from '~util/file-util';
 
 export class CfnReadFile {
 
-    static async resolve(context: ICfnFunctionContext, resource: any, resourceParent: any, resourceKey: string, key: string, val: any): Promise<string> {
+    static async resolve(context: ICfnFunctionContext, resource: any, resourceParent: any, resourceKey: string, key: string, val: any): Promise<void> {
         if (key === 'Fn::ReadFile')
         {
             if (typeof val !== 'string') {
