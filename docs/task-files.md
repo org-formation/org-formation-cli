@@ -145,12 +145,13 @@ Parameters:
   Note: !Cmd 'echo "Deployed by `whoami`"'
   License: !Cmd 'wget -qO-  https://raw.githubusercontent.com/org-formation/org-formation-cli/master/LICENSE'
   EC2ImageIdUbuntu: !Cmd >-
-    aws ssm get-parameters
+      aws ssm get-parameters
+      --profile dev
       --region us-east-1
       --names /aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id
-      --query 'Parameters[0].[Value]' --output text
+      --query 'Parameters[0].[Value]'
+      --output text
 ```
-
 
 ### !MD5
 
