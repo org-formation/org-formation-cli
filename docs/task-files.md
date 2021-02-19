@@ -142,7 +142,7 @@ Example:
 
 ```yaml
 Parameters:
-  Note: !Cmd 'echo "Deployed by `whoami`'
+  Note: !Cmd 'echo "Deployed by `whoami`"'
   License: !Cmd 'wget -qO-  https://raw.githubusercontent.com/org-formation/org-formation-cli/master/LICENSE'
   EC2ImageIdUbuntu: !Cmd >-
     aws ssm get-parameters
