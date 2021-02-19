@@ -185,7 +185,7 @@ describe('when importing value from another stack', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'cmd');
-        expect(parameter.ParameterValue).toBe('test echo command');
+        expect(parameter.ParameterValue).toBe('check command');
     })
 
     test('select gets resolved properly', () =>{
