@@ -1,4 +1,4 @@
-import {exec} from 'child_process';
+import { execSync } from 'child_process';
 import { ICfnFunctionContext } from './cfn-functions';
 import { OrgFormationError } from '~org-formation-error';
 
@@ -12,13 +12,13 @@ export class CfnCmd {
                 throw new OrgFormationError(`Fn::Cmd expression expects a string as value. Found ${typeof val}`);
             }
 
-            exec(val, (error, stdout, stderr) => {
-              if (error) {
-                throw new OrgFormationError(`Fn::Cmd expression ${val} failed with error ${error}`);
-              } else {
-                  resourceParent[resourceKey] = `${stdout}`.trimRight();
-              }
-            });
+            try {
+                const process = execSync(val);
+                const stdout = process.toString().trimRight();
+                resourceParent[resourceKey] = stdout;
+            } catch (error) {
+                throw new OrgFormationError(`Fn::Cmd expression failed: ${error}`);
+            }
         }
     }
 }
