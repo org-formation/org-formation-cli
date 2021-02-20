@@ -1,0 +1,15 @@
+Description: Nunjucks Security group template
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: "Open ports for incoming traffic"
+      VpcId: "vpc-1111111111"
+      SecurityGroupIngress:
+{% for port in Data.ports %}
+        - CidrIp: "0.0.0.0/0"
+          FromPort: {{ port }}
+          ToPort: {{ port }}
+          IpProtocol: tcp
+{% endfor %}

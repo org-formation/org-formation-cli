@@ -1,0 +1,13 @@
+
+SecurityGroupExample:
+  Type: update-stacks
+  Template: ./security-group.nj
+  StackName: SecurityGroupExample
+  Parameters:
+  Data:
+    ports:
+      - 22
+      - 80
+  DefaultOrganizationBinding:
+    Account: '*'
+    Region: us-east-1

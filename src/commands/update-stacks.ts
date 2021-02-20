@@ -45,6 +45,12 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
                 templateOverrides.ParameterValues[key] = val;
             }
         }
+        if (command.data) {
+            templateOverrides.DataValues = {};
+            for(const [key, val] of Object.entries(command.data)) {
+                templateOverrides.DataValues[key] = val;
+            }
+        }
         const template = await TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
         return template;
     }
@@ -154,6 +160,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     stackName: string;
     stackDescription?: string;
     parameters?: string | {};
+    data?: string | {};
     terminationProtection?: boolean;
     updateProtection?: boolean;
     forceDeploy?: boolean;
