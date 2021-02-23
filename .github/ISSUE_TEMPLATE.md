@@ -2,8 +2,8 @@
 Describe your issue here.
 
 ### Your environment
-* version of org-foramtion
-* version of node
+* version of org-foramtion (ofn --version)
+* version of node (node --version)
 * which OS/distro
 
 ### Steps to reproduce
