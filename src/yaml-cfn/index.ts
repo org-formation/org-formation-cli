@@ -91,6 +91,7 @@ const supportedFunctions = [
   'Fn::Or',
   'Fn::CopyValue',
   'Fn::ReadFile',
+  'Fn::Cmd',
   'Fn::MD5',
   'Fn::MD5Dir',
   'Fn::MD5File',

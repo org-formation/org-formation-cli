@@ -4,6 +4,7 @@ import { CfnJsonString } from './cfn-json-string';
 import { CfnMD5 } from './cfn-md5';
 import { CfnMerge } from './cfn-merge';
 import { CfnReadFile } from './cfn-read-file';
+import { CfnCmd } from './cfn-cmd';
 import { CfnSelect } from './cfn-select';
 import { CfnSub } from './cfn-sub';
 
@@ -11,6 +12,7 @@ export class CfnFunctions {
 
     static resolveStructuralOrgFormationFunctions(context: ICfnFunctionContext, resource: any, resourceParent: any, resourceKey: string, key: string, val: any): void {
         CfnReadFile.resolve(context, resource, resourceParent, resourceKey, key, val);
+        CfnCmd.resolve(context, resource, resourceParent, resourceKey, key, val);
         CfnMD5.resolve(context, resource, resourceParent, resourceKey, key, val);
         CfnJsonString.resolve(context, resource, resourceParent, resourceKey, key, val);
     }

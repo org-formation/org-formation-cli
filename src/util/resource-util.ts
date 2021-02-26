@@ -196,7 +196,7 @@ interface IResourceExpression {
 }
 
 export interface ICfnFunctionExpression {
-    type: 'Sub' | 'Join' | 'FindInMap' | 'MD5' | 'ReadFile';
+    type: 'Sub' | 'Join' | 'FindInMap' | 'MD5' | 'ReadFile' | 'Cmd';
     target: any;
     resolveToValue(val: string): void;
 }
