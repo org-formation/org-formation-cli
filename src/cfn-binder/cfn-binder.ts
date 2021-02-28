@@ -11,7 +11,7 @@ import { ICfnCopyValue, ICfnExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class CloudFormationBinder {
-    private readonly masterAccount: string;;
+    private readonly masterAccount: string;
 
     constructor(private readonly stackName: string,
                 private readonly template: TemplateRoot,
