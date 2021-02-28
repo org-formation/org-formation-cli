@@ -414,3 +414,4 @@ Special thanks to the following individuals:
 - [Yan Cui](http://theburningmonk.com)
 - [Eduardo Rodrigues](https://github.com/eduardomourar)
 - [Rene Mulder](https://github.com/rene84)
+- [Khai Do](https://github.com/zaro0508)
