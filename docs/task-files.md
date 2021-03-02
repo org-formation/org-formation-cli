@@ -250,6 +250,7 @@ The `update-stacks` task will provision all resources in all accounts specified 
 |OrganizationBindings|Dictionary of String, [OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Set of named OrganizationBindings that can be `!Ref`'d by Resources.<br/><br/> **note**: This value overrides values within the template or resources (value in taskfile is leading).|
 |CloudFormationRoleName|string|Specifies the name of the IAM Role that must be used to pass to the CloudFormation service. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
 |TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
+|MaxConcurrentStacks|number|The number of stacks that should be executed concurrently.<br/><br/> Default = 1|
 
 
 **example**
@@ -304,6 +305,7 @@ The ``update-serverless.com`` task will deploy the [serverless.com](https://serv
 |Skip| `true` or `false` |When `true` task (and dependent tasks) will not be executed.|
 |TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
 |Parameters|any|Specifies parameters that must be passed to the serverless deployment using command arguments.|
+|MaxConcurrentStacks|number|The number of stacks that should be executed concurrently.<br/><br/> Default = 1|
 
 **example**
 ```yaml
@@ -360,6 +362,7 @@ The ``update-cdk`` task will deploy the a CDK workload defined in the directory 
 |Skip| `true` or `false` |When `true` task (and dependent tasks) will not be executed.|
 |TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
 |Parameters|any|Specifies parameters that must be passed to the cdk deployment using `-c` arguments.|
+|MaxConcurrentStacks|number|The number of stacks that should be executed concurrently.<br/><br/> Default = 1|
 
 
 **example**
