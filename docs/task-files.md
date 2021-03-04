@@ -419,7 +419,7 @@ Include:
 
 ## Templating
 Org-formation supports the [nunjucks](https://mozilla.github.io/nunjucks/) template engine to generate cloudformation
-templates from nunjucks based templates.  Only files containing an `.nj` extension will be processed as nunjucks
+templates from nunjucks based templates.  Only files with a `.nj` extension will be processed as nunjucks
 templates.
 
 ### Example:
@@ -434,7 +434,7 @@ Resources:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupDescription: "Open ports for incoming traffic"
-      VpcId: "vpc-1111111111"
+      VpcId: "vpc-1234ABC"
       SecurityGroupIngress:
 {% for port in Data.ports %}
         - CidrIp: "0.0.0.0/0"
@@ -444,13 +444,12 @@ Resources:
 {% endfor %}
 ```
 
-Use the [update-stacks](#update-stacks) type and pass in a `Data` parameter:
+Deploy with [update-stacks](#update-stacks) and pass in port values with `Data`:
 ```
 SecurityGroupExample:
   Type: update-stacks
   Template: ./security-group.nj
   StackName: SecurityGroupExample
-  Parameters:
   Data:
     ports:
       - 22
@@ -460,7 +459,7 @@ SecurityGroupExample:
     Region: us-east-1
 ```
 
-Generated cloudformation template:
+The generated cloudformation template:
 ```
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Security group using nunjucks
