@@ -4,6 +4,8 @@ import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../util/console-util';
+import { AwsUtil } from '~util/aws-util';
+import { BaseCliCommand } from '~commands/base-command';
 
 export interface IStorageProvider {
     get(): Promise<string | undefined>;
@@ -23,7 +25,7 @@ export class S3StorageProvider implements IStorageProvider {
 
     private constructor(stateBucketName: string, stateObject: string, private readonly credentials: CredentialsOptions = AWS.config.credentials) {
         if (!stateBucketName || stateBucketName === '') {
-            throw new OrgFormationError('statebucketName cannot be undefined or empty');
+            throw new OrgFormationError('stateBucketName cannot be undefined or empty');
         }
         if (!stateObject || stateObject === '') {
             throw new OrgFormationError('stateObject cannot be undefined or empty');
@@ -37,7 +39,7 @@ export class S3StorageProvider implements IStorageProvider {
             Bucket: this.bucketName,
         };
         if (!region) {
-            region = 'us-east-1';
+            region = AwsUtil.GetDefaultRegion(BaseCliCommand.CliCommandArgs.profile);
         }
 
         const s3client = new S3({ region, credentials: this.credentials });
@@ -85,6 +87,7 @@ export class S3StorageProvider implements IStorageProvider {
             Bucket: this.bucketName,
             Key: this.objectKey,
         };
+
         try {
             const response = await s3client.getObject(request).promise();
             if (!response.Body) { return undefined; }
@@ -94,8 +97,12 @@ export class S3StorageProvider implements IStorageProvider {
             if (err && err.code === 'NoSuchKey') {
                 return undefined;
             }
+            if (err && err.code === 'NoSuchBucket') {
+                return undefined;
+            }
             throw err;
         }
+
     }
 
     public async putObject<T>(object: T): Promise<void> {
@@ -119,7 +126,22 @@ export class S3StorageProvider implements IStorageProvider {
                 Key: putObjectRequest.Key,
             }, undefined, 2)}`);
 
-            await s3client.putObject(putObjectRequest).promise();
+            let retry = false;
+            let tryCreateBucket = true;
+            do {
+                retry = false;
+                try {
+                    await s3client.putObject(putObjectRequest).promise();
+                } catch (err) {
+                    if (err.code === 'NoSuchBucket' && tryCreateBucket) {
+                        await this.create(s3client.config.region);
+                        tryCreateBucket = false;
+                        retry = true;
+                        continue;
+                    }
+                    throw err;
+                }
+            } while (retry);
         } catch (err) {
             ConsoleUtil.LogError(`unable to put object to s3 (bucket: ${this.bucketName}, key: ${this.objectKey})`, err);
             throw err;

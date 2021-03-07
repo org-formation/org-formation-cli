@@ -10,7 +10,6 @@ import { AwsUtil, CfnUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
-import { Validator } from '~parser/validator';
 
 
 const commandName = 'init-pipeline';
@@ -38,9 +37,6 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     }
 
     public async performCommand(command: IInitPipelineCommandArgs): Promise<void> {
-        if (!command.region) {
-            throw new OrgFormationError('argument --region is missing');
-        }
 
         // in this context currentAccountId is the master account
         this.currentAccountId = await AwsUtil.GetMasterAccountId();
@@ -55,13 +51,11 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             this.s3credentials = await AwsUtil.GetCredentials(command.buildAccountId, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
         }
 
-        Validator.validateRegion(command.region);
-
         if (command.crossAccountRoleName) {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;
         }
 
-        const region = command.region;
+        const region = command.region ?? AwsUtil.GetDefaultRegion(command.profile);
 
         const resourcePrefix = command.resourcePrefix;
         const stackName = command.stackName;

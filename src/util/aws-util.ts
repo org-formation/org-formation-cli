@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import AWS from 'aws-sdk';
@@ -7,6 +8,7 @@ import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackIn
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
+import * as ini from 'ini';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
@@ -217,6 +219,16 @@ export class AwsUtil {
             }
         } while (listExportsRequest.NextToken);
         return undefined;
+    }
+
+    public static GetDefaultRegion(profileName?: string): string {
+        const homeDir = require('os').homedir();
+        const config = readFileSync(homeDir + '/.aws/config').toString('utf8');
+        const contents = ini.parse(config);
+        const profileKey = profileName ?
+                        contents[profileName] ?? contents['profile ' + profileName] :
+                        contents.default;
+        return profileKey.region ?? 'us-east-1';
     }
 
     private static masterAccountId: string | PromiseLike<string>;

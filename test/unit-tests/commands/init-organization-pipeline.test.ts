@@ -257,21 +257,6 @@ describe('when executing init pipeline', () => {
             const state: IState = JSON.parse(contents);
             expect(state.masterAccountId).toBe(masterAccountId);
         });
-
-        test('throws exception if region is undefined', async () => {
-            delete commandArgs.region;
-
-            try {
-                await command.performCommand(commandArgs);
-                throw Error('expected exception');
-            } catch (err) {
-                expect(err.message).toEqual(expect.stringContaining('region'));
-            }
-            expect(storageProviderCreateStub.callCount).toBe(0);
-            expect(writeFileSyncStub.callCount).toBe(0);
-        });
-
-
     });
 
     describe('with build acct id parameter', () => {

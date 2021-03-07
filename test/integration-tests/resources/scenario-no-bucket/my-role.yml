@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Resources:
+
+  MyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MyRole
+      AssumeRolePolicyDocument:
+       Version: 2012-10-17
+       Statement:
+         - Effect: Allow
+           Action: sts:AssumeRole
+           Principal:
+            AWS: !Ref MasterAccount
