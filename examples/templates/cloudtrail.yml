@@ -22,6 +22,15 @@ OrganizationBindings:
     Account: '*'
     IncludeMasterAccount: true
 
+Parameters:
+  resourcePrefix:
+    Type: String
+    Default: my
+
+  logDeletionDays:
+    Type: Number
+    Default: 365
+
 Resources:
 
   CloudTrailS3Bucket:
@@ -29,7 +38,21 @@ Resources:
     DeletionPolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'cloudtrail-${SharedComplianceAccount}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      BucketName: !Sub '${resourcePrefix}-cloudtrail-${SharedComplianceAccount}'
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: !Ref logDeletionDays
+            Id: !Sub '${resourcePrefix}-cloudtrail-bucket-lifecycle-configuration'
+            Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
 
   CloudTrailS3BucketPolicy:
     OrganizationBinding: !Ref CloudTrailBucketBinding
@@ -53,6 +76,14 @@ Resources:
             Condition:
               StringEquals:
                 s3:x-amz-acl: 'bucket-owner-full-control'
+          - Sid: 'AWSCloudTrailForceHttps'
+            Effect: Deny
+            Principal: "*"
+            Action: "*"
+            Resource: !Sub 'arn:aws:s3:::${CloudTrailS3Bucket}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: False
 
   CloudTrailLogGroup:
     OrganizationBinding: !Ref CloudTrailBinding
@@ -65,7 +96,7 @@ Resources:
     OrganizationBinding: !Ref CloudTrailBinding
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: AWSCloudTrailLogGroupRole
+      RoleName: !Sub ${resourcePrefix}-AWSCloudTrailLogGroupRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -94,9 +125,11 @@ Resources:
       - CloudTrailLogGroup
       - CloudTrailLogGroupRole
     Properties:
-      S3BucketName: !Ref CloudTrailS3Bucket
-      IsLogging: true
-      IncludeGlobalServiceEvents: true
-      IsMultiRegionTrail: true
       CloudWatchLogsLogGroupArn: !GetAtt 'CloudTrailLogGroup.Arn'
       CloudWatchLogsRoleArn: !GetAtt 'CloudTrailLogGroupRole.Arn'
+      EnableLogFileValidation: true
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: true
+      S3BucketName: !Ref CloudTrailS3Bucket
+      TrailName: !Sub '${resourcePrefix}-trail'
