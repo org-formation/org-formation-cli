@@ -236,7 +236,7 @@ Resources:
             OutputArtifacts:
             - Name: SourceArtifact
             Configuration:
-              PollForSourceChanges: 'true'
+              PollForSourceChanges: 'false'
               BranchName: main
               RepositoryName: !GetAtt OrgRepo.Name
             RunOrder: 1
@@ -256,6 +256,58 @@ Resources:
             Configuration:
               ProjectName: !Ref OrgBuildProject
             RunOrder: 1
+
+  OrgPipelineEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: !Sub Listens for changes to the ${OrgRepo.Name} repository and runs the pipeline
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - CodeCommit Repository State Change
+        resources:
+          - !GetAtt OrgRepo.Arn
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch
+          referenceName:
+            - main
+      Name: !Sub '${resourcePrefix}-pipeline-event-rule'
+      State: ENABLED
+      Targets:
+        - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${OrgPipeline}
+          RoleArn: !GetAtt OrgPipelineEventRuleRole.Arn
+          Id: OrgPipeline
+
+  OrgPipelineEventRuleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Description: !Sub Used to trigger the pipeline attached to the ${OrgRepo.Name} repository
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${resourcePrefix}-pipeline-event-rule-role-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+            - Effect: Allow
+              Action:
+                - codepipeline:StartPipelineExecution
+              Resource:
+                - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${OrgPipeline}
+      RoleName: !Sub ${resourcePrefix}-pipeline-event-rule-role
 
   OrgBuildProject:
     Type: AWS::CodeBuild::Project
