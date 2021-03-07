@@ -42,7 +42,7 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      BucketName: !Sub '${resourcePrefix}-cloudtrail-${SecurityAccount}'
+      BucketName: !Sub '${resourcePrefix}-cloudtrail-${SharedComplianceAccount}'
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays: !Ref logDeletionDays
