@@ -18,16 +18,18 @@ export class BuildConfiguration {
     public parameters: Record<string, IBuildFileParameter>;
     public mappings: CfnMappingsSection;
     private file: string;
+    private resolver: CfnExpressionResolver;
 
     constructor(input: string, private readonly parameterValues: Record<string, string> = {}) {
         this.file = input;
+        this.resolver = new CfnExpressionResolver();
         this.tasks = this.enumBuildConfiguration(this.file);
     }
 
     public enumValidationTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
         const result: IBuildTask[] = [];
         for (const taskConfig of this.tasks) {
-            const task = BuildTaskProvider.createValidationTask(taskConfig, command);
+            const task = BuildTaskProvider.createValidationTask(taskConfig, command, this.resolver);
             if (task !== undefined) {
                 result.push(task);
             }
@@ -41,7 +43,7 @@ export class BuildConfiguration {
     public enumPrintTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
         const result: IBuildTask[] = [];
         for (const taskConfig of this.tasks) {
-            const task = BuildTaskProvider.createPrintTask(taskConfig, command);
+            const task = BuildTaskProvider.createPrintTask(taskConfig, command, this.resolver);
             if (task !== undefined) {
                 result.push(task);
             }
@@ -54,7 +56,7 @@ export class BuildConfiguration {
         const result: IBuildTask[] = [];
 
         for (const taskConfig of this.tasks) {
-            const task = BuildTaskProvider.createBuildTask(taskConfig, command);
+            const task = BuildTaskProvider.createBuildTask(taskConfig, command, this.resolver);
             result.push(task);
         }
 
@@ -142,8 +144,7 @@ export class BuildConfiguration {
         delete buildFile.Parameters;
         delete buildFile.Mappings;
 
-        const expressionResolver = new CfnExpressionResolver();
-        const parametersSection = expressionResolver.resolveFirstPass(this.parameters);
+        const parametersSection = this.resolver.resolveFirstPass(this.parameters);
 
         for (const paramName in parametersSection) {
             const param = parametersSection[paramName];
@@ -181,11 +182,11 @@ export class BuildConfiguration {
                 value = parseInt(value, 10);
             }
 
-            expressionResolver.addParameter(paramName, value);
+            this.resolver.addParameter(paramName, value);
         }
-        expressionResolver.addMappings(this.mappings);
-        expressionResolver.setFilePath(filePath);
-        const resolvedContents = expressionResolver.resolveFirstPass(buildFile);
+        this.resolver.addMappings(this.mappings);
+        this.resolver.setFilePath(filePath);
+        const resolvedContents = this.resolver.resolveFirstPass(buildFile);
 
         const result: IBuildTaskConfiguration[] = [];
         for (const name in resolvedContents) {

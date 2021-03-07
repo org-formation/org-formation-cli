@@ -6,6 +6,7 @@ import { ConsoleUtil } from '~util/console-util';
 import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { assert } from 'console';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 
 
@@ -159,7 +160,7 @@ describe('when creating build configuration', () => {
             MaxConcurrentStacks: 1,
             FailedStackTolerance: 1,
         };
-        task = BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs);
+        task = BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs, new CfnExpressionResolver());
 
         updateStacksResources = sandbox.stub(UpdateStacksCommand, 'Perform');
         sandbox.stub(ConsoleUtil, 'LogInfo')
@@ -182,7 +183,7 @@ describe('when creating build configuration', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).toBe(true);
-        expect(commandKeys.length).toBe(5);
+        expect(commandKeys.length).toBe(6);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
     });

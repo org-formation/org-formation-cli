@@ -24,8 +24,8 @@ export class CfnExpressionResolver {
     readonly resolvers: Record<string, IResolver> = {};
     readonly globalResolvers: IResolver[] = [];
     readonly treeResolvers: ITreeResolver<any>[] = [];
-    private mapping: CfnMappingsSection;
-    private filePath: string;
+    mapping: CfnMappingsSection;
+    filePath: string;
 
     addResourceWithAttributes(resource: string, attributes: Record<string, string>): void {
         this.resolvers[resource] = { resolve: (resolver: CfnExpressionResolver, resourceName: string, path?: string): string => {
