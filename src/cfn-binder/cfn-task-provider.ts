@@ -14,7 +14,7 @@ export class CfnTaskProvider {
 
     }
 
-    public async createUpdateTemplateTask(binding: ICfnBinding): Promise<ICfnTask> {
+    public async createUpdateTemplateTask(binding: ICfnBinding, parentResolver?: CfnExpressionResolver): Promise<ICfnTask> {
         const that = this;
         const dependencies: ICrossAccountParameterDependency[] = [];
         const boundParameters = binding.template.enumBoundParameters();
@@ -41,6 +41,10 @@ export class CfnTaskProvider {
         }
 
         const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, binding.customViaRoleArn, this.template.organizationSection, this.state, true);
+        if (parentResolver !== undefined) {
+            expressionResolver.mapping = parentResolver.mapping;
+            expressionResolver.filePath = parentResolver.filePath;
+        }
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {
@@ -185,10 +189,14 @@ export class CfnTaskProvider {
         };
     }
 
-    public async createDeleteTemplateTask(binding: ICfnBinding): Promise<ICfnTask> {
+    public async createDeleteTemplateTask(binding: ICfnBinding, parentResolver?: CfnExpressionResolver): Promise<ICfnTask> {
         const that = this;
 
         const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(binding.accountLogicalId, binding.accountId, binding.region, binding.customRoleName, binding.customViaRoleArn, this.template.organizationSection, this.state, true);
+        if (parentResolver !== undefined) {
+            expressionResolver.mapping = parentResolver.mapping;
+            expressionResolver.filePath = parentResolver.filePath;
+        }
         const stackName = await expressionResolver.resolveSingleExpression(binding.stackName, 'StackName');
 
         return {

@@ -1,5 +1,4 @@
 import { BuildConfiguration, IBuildTask } from '~build-tasks/build-configuration';
-import { BaseOrganizationTask } from '~build-tasks/tasks/organization-task';
 import { BaseCliCommand } from '~commands/base-command';
 import Sinon = require('sinon');
 import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
@@ -9,43 +8,42 @@ import { ICfnTask } from '~cfn-binder/cfn-task-provider';
 import { ConsoleUtil } from '~util/console-util';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { IUpdateStacksBuildTask } from '~build-tasks/tasks/update-stacks-task';
-import { config } from 'aws-sdk';
 
 describe('when loading task file configuration', () => {
-    let buildconfig: BuildConfiguration;
+    let buildConfig: BuildConfiguration;
 
     beforeEach(() => {
-        buildconfig = new BuildConfiguration('./test/resources/tasks/build-tasks.yml');
+        buildConfig = new BuildConfiguration('./test/resources/tasks/build-tasks.yml');
     });
 
     test('loads build configuration', () => {
-        expect(buildconfig).toBeDefined();
+        expect(buildConfig).toBeDefined();
     });
 
     test('has configuration per task', () => {
-        expect(buildconfig.tasks.length).toBe(5);
-        expect(buildconfig.tasks.find((x) => x.LogicalName === 'CfnTemplate')).toBeDefined();
-        expect(buildconfig.tasks.find((x) => x.LogicalName === 'OrgTemplate')).toBeDefined();
-        expect(buildconfig.tasks.find((x) => x.LogicalName === 'OrganizationUpdate')).toBeDefined();
-        expect(buildconfig.tasks.find((x) => x.LogicalName === 'Include1')).toBeDefined();
-        expect(buildconfig.tasks.find((x) => x.LogicalName === 'Include2')).toBeDefined();
+        expect(buildConfig.tasks.length).toBe(5);
+        expect(buildConfig.tasks.find((x) => x.LogicalName === 'CfnTemplate')).toBeDefined();
+        expect(buildConfig.tasks.find((x) => x.LogicalName === 'OrgTemplate')).toBeDefined();
+        expect(buildConfig.tasks.find((x) => x.LogicalName === 'OrganizationUpdate')).toBeDefined();
+        expect(buildConfig.tasks.find((x) => x.LogicalName === 'Include1')).toBeDefined();
+        expect(buildConfig.tasks.find((x) => x.LogicalName === 'Include2')).toBeDefined();
     });
 
     test('all tasks have FilePath', () => {
-        const withoutFileName = buildconfig.tasks.find((x) => !x.FilePath);
+        const withoutFileName = buildConfig.tasks.find((x) => !x.FilePath);
         expect(withoutFileName).toBeUndefined();
     });
 });
 
 describe('when enumerating build tasks', () => {
-    let buildconfig: BuildConfiguration;
+    let buildConfig: BuildConfiguration;
 
     beforeEach(() => {
-        buildconfig = new BuildConfiguration('./test/resources/tasks/build-tasks.yml');
+        buildConfig = new BuildConfiguration('./test/resources/tasks/build-tasks.yml');
     });
 
     test('every build config gets a task', () => {
-        const tasks = buildconfig.enumBuildTasks({} as any);
+        const tasks = buildConfig.enumBuildTasks({} as any);
         expect(tasks).toBeDefined();
         expect(tasks.length).toBe(5);
         expect(tasks.filter((x) => x.type === 'include').length).toBe(2);
@@ -54,7 +52,7 @@ describe('when enumerating build tasks', () => {
     });
 
     test('include tasks have child tasks', () => {
-        const tasks = buildconfig.enumBuildTasks({} as any);
+        const tasks = buildConfig.enumBuildTasks({} as any);
         const includes = tasks.filter((x) => x.type === 'include');
         expect(includes[0].childTasks.length).toBe(2);
         expect(includes[1].childTasks.length).toBe(2);

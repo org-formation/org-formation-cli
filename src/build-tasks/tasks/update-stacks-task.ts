@@ -7,12 +7,13 @@ import { Validator } from '~parser/validator';
 import { IBuildTaskProvider, BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { IOrganizationBinding } from '~parser/parser';
 import { FileUtil } from '~util/file-util';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 
 export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdateStackTaskConfiguration> {
     public type = 'update-stacks';
 
-    createTask(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs): IUpdateStacksBuildTask {
+    createTask(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IUpdateStacksBuildTask {
 
         Validator.ValidateUpdateStacksTask(config, config.LogicalName);
 
@@ -26,6 +27,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
+                updateStacksCommand.resolver = resolver;
                 ConsoleUtil.LogInfo(`Executing: ${config.Type} ${updateStacksCommand.templateFile} ${updateStacksCommand.stackName}.`);
                 await UpdateStacksCommand.Perform(updateStacksCommand);
             },
@@ -33,7 +35,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         return task;
     }
 
-    createTaskForValidation(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs): IUpdateStacksBuildTask {
+    createTaskForValidation(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IUpdateStacksBuildTask {
         return {
             type: config.Type,
             name: config.LogicalName,
@@ -43,12 +45,13 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
+                updateStacksCommand.resolver = resolver;
                 await ValidateStacksCommand.Perform(updateStacksCommand);
             },
         };
     }
 
-    createTaskForPrint(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs): IUpdateStacksBuildTask {
+    createTaskForPrint(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IUpdateStacksBuildTask {
         return {
             type: config.Type,
             name: config.LogicalName,
@@ -58,6 +61,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
+                updateStacksCommand.resolver = resolver;
                 await PrintStacksCommand.Perform({...updateStacksCommand, stackName: config.StackName });
             },
         };

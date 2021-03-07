@@ -23,8 +23,10 @@ export class CloudFormationBinder {
                 private readonly terminationProtection = false,
                 private readonly stackPolicy: {} = undefined,
                 private readonly customRoleName?: string,
+                private readonly resolver?: CfnExpressionResolver,
                 private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state, logVerbose),
-                private readonly taskViaRoleArn: string = undefined) {
+                private readonly taskViaRoleArn: string = undefined,
+                ) {
 
         this.masterAccount = template.organizationSection.masterAccount.accountId;
 
@@ -54,6 +56,10 @@ export class CloudFormationBinder {
             const key = {accountId, region, stackName};
 
             const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.accountLogicalId, accountId, target.region, this.taskRoleName, this.taskViaRoleArn, this.template.organizationSection, this.state, false);
+            if (this.resolver) {
+                expressionResolver.mapping = this.resolver.mapping;
+                expressionResolver.filePath = this.resolver.filePath;
+            }
 
             targetsInTemplate.push(key);
 
@@ -181,7 +187,7 @@ export class CloudFormationBinder {
         const bindings = await this.enumBindings();
         for (const binding of bindings) {
             if (binding.action === 'UpdateOrCreate') {
-                const task = await this.taskProvider.createUpdateTemplateTask(binding);
+                const task = await this.taskProvider.createUpdateTemplateTask(binding, this.resolver);
                 task.isDependency = (other: ICfnTask): boolean => {
                     return binding.accountDependencies.includes(other.accountId) ||
                            binding.regionDependencies.includes(other.region) ||
@@ -189,7 +195,7 @@ export class CloudFormationBinder {
                 };
                 result.push(task);
             } else if (binding.action === 'Delete') {
-                const task = await this.taskProvider.createDeleteTemplateTask(binding);
+                const task = await this.taskProvider.createDeleteTemplateTask(binding, this.resolver);
                 result.push(task);
             }
         }

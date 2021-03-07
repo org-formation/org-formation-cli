@@ -188,6 +188,12 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe('check command');
     })
 
+    test('find in map can be used with !Ref CurrentAccount', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'ip');
+        expect(parameter.ParameterValue).toBe('10.201.30');
+    })
     test('select gets resolved properly', () =>{
         expect(describeBucketRoleStack).toBeDefined();
 

@@ -5,6 +5,7 @@ import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-
 import { ConsoleUtil } from '~util/console-util';
 import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 describe('when creating UpdateStacksTask task', () => {
     let task: IBuildTask;
@@ -20,7 +21,7 @@ describe('when creating UpdateStacksTask task', () => {
             MaxConcurrentStacks: 1,
             FailedStackTolerance: 1,
         };
-        task = BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs);
+        task = BuildTaskProvider.createBuildTask(config, {} as IPerformTasksCommandArgs, new CfnExpressionResolver());
 
         updateStacksResources = sandbox.stub(UpdateStacksCommand, 'Perform');
         sandbox.stub(ConsoleUtil, 'LogInfo')
@@ -40,7 +41,7 @@ describe('when creating UpdateStacksTask task', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).toBe(true);
-        expect(commandKeys.length).toBe(5);
+        expect(commandKeys.length).toBe(6);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
     });
@@ -60,7 +61,7 @@ describe('when creating UpdateStacksTask task with command args', () => {
             MaxConcurrentStacks: 1,
             FailedStackTolerance: 1,
         };
-        task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
+        task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any, new CfnExpressionResolver());
         updateStacksResources = sandbox.stub(UpdateStacksCommand, 'Perform');
         sandbox.stub(ConsoleUtil, 'LogInfo');
     });
@@ -79,7 +80,7 @@ describe('when creating UpdateStacksTask task with command args', () => {
             const commandKeys = Object.keys(commandArgs);
 
             expect(fileArg.endsWith('path.yml')).toBe(true);
-            expect(commandKeys.length).toBe(6);
+            expect(commandKeys.length).toBe(7);
             expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
             expect(commandArgs.stackName).toBe('stack');
             expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
@@ -118,7 +119,7 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
             MaxConcurrentStacks: 1,
             FailedStackTolerance: 1,
         };
-        task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
+        task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any, new CfnExpressionResolver());
         updateStacksResources = sandbox.stub(UpdateStacksCommand, 'Perform');
         sandbox.stub(ConsoleUtil, 'LogInfo');
         await task.perform();
@@ -138,7 +139,7 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).toBe(true);
-        expect(commandKeys.length).toBe(10);
+        expect(commandKeys.length).toBe(11);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
         expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
@@ -155,7 +156,7 @@ describe('when creating UpdateStacksTask task with old attribute names', () => {
 describe('when creating UpdateStacksTask task', () => {
     let task: IBuildTask;
     const sandbox = Sinon.createSandbox();
-    let updateStacksResoruces: sinon.SinonStub;
+    let updateStacksResources: sinon.SinonStub;
 
     beforeEach(() => {
         const config: IUpdateStackTaskConfiguration = {
@@ -178,8 +179,8 @@ describe('when creating UpdateStacksTask task', () => {
             MaxConcurrentStacks: 1,
             FailedStackTolerance: 1,
         };
-        task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any);
-        updateStacksResoruces = sandbox.stub(UpdateStacksCommand, 'Perform');
+        task = BuildTaskProvider.createBuildTask(config, { arg: 'Val' } as any, new CfnExpressionResolver());
+        updateStacksResources = sandbox.stub(UpdateStacksCommand, 'Perform');
         sandbox.stub(ConsoleUtil, 'LogInfo');
     });
     afterEach(() => {
@@ -188,12 +189,12 @@ describe('when creating UpdateStacksTask task', () => {
 
     test('all arguments are passed to updateStackResources', async () => {
         await task.perform();
-        const commandArgs = updateStacksResoruces.lastCall.args[0] as IUpdateStacksCommandArgs;
+        const commandArgs = updateStacksResources.lastCall.args[0] as IUpdateStacksCommandArgs;
         const fileArg = commandArgs.templateFile;
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).toBe(true);
-        expect(commandKeys.length).toBe(10);
+        expect(commandKeys.length).toBe(11);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
         expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
