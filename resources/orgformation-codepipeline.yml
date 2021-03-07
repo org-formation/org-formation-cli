@@ -209,6 +209,7 @@ Resources:
       RepositoryName: !Ref repositoryName
       RepositoryDescription: AWS Organization Formation repository
       Code:
+        BranchName: main
         S3:
           Bucket: !Ref stateBucketName
           Key: 'initial-commit.zip'
@@ -231,12 +232,12 @@ Resources:
               Category: Source
               Owner: AWS
               Provider: CodeCommit
-              Version: 1
+              Version: '1'
             OutputArtifacts:
             - Name: SourceArtifact
             Configuration:
               PollForSourceChanges: 'true'
-              BranchName: master
+              BranchName: main
               RepositoryName: !GetAtt OrgRepo.Name
             RunOrder: 1
         - Name: Build
@@ -249,7 +250,7 @@ Resources:
               Category: Build
               Owner: AWS
               Provider: CodeBuild
-              Version: 1
+              Version: '1'
             OutputArtifacts:
             - Name: BuildArtifact
             Configuration:
@@ -277,7 +278,7 @@ Resources:
         CloudWatchLogs:
           GroupName: !Ref OrgBuildLogGroup
           Status: ENABLED
-      SourceVersion: refs/heads/master
+      SourceVersion: refs/heads/main
       TimeoutInMinutes: 180
 
 
