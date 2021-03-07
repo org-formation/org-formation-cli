@@ -246,8 +246,8 @@ The `update-stacks` task will provision all resources in all accounts specified 
 |UpdateProtection|true or false|When set to `true` will create a StackPolicy for the stacks that prevents any resource from being modified through CloudFormation.|
 |StackPolicy|stack policy|When specified will apply stack policy to all stacks created.|
 |DefaultOrganizationBindingRegion|String or list of String|Region or regions that will be used for any binding without Region specified.<br/><br/> **note**:  This value overrides values within the template or resources (value in taskfile is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
-|DefaultOrganizationBinding|[OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Organization binding used for any resource that has no binding specified.<br/><br/> **note**:  This value overrides values within the template or resources (value in taskfile is leading). <br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
-|OrganizationBindings|Dictionary of String, [OrganizationBinding](#organizationbinding-where-to-create-which-resource)| Set of named OrganizationBindings that can be `!Ref`'d by Resources.<br/><br/> **note**: This value overrides values within the template or resources (value in taskfile is leading).|
+|DefaultOrganizationBinding|[OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource)| Organization binding used for any resource that has no binding specified.<br/><br/> **note**:  This value overrides values within the template or resources (value in taskfile is leading). <br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
+|OrganizationBindings|Dictionary of String, [OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource)| Set of named OrganizationBindings that can be `!Ref`'d by Resources.<br/><br/> **note**: This value overrides values within the template or resources (value in taskfile is leading).|
 |CloudFormationRoleName|string|Specifies the name of the IAM Role that must be used to pass to the CloudFormation service. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
 |TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
 
@@ -294,7 +294,7 @@ The ``update-serverless.com`` task will deploy the [serverless.com](https://serv
 |Attribute |Value|Remarks|
 |:---|:---|:---|
 |Path|relative path|This property is required. <br/><br/>Specifies which directory contains the serverless.com workload
-|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the serverless.com workload needs to be deployed to.|
+|OrganizationBinding| [OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the serverless.com workload needs to be deployed to.|
 |Config| relative path |Name of the Serverless.com configuration file that contains information about the payload.<br/><br/>default is **./serverless.yml**|
 |Stage|string|Value used as stage when deploying the serverless.com workload|
 |RunNpmInstall|boolean| When true, `npm ci` will be ran before serverless deployment and removal|
@@ -328,7 +328,7 @@ The ``copy-to-s3`` task will upload a file from `LocalPath` to an S3 `RemotePath
 |:---|:---|:---|
 |LocalPath|relative path|This property is required. <br/><br/>Specifies the file that needs to be uploaded.
 |RemotePath|S3 moniker|This property is required. <br/><br/>Specifies the location in S3 that the file should be uploaded to.
-|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the s3 file needs to be copied to.|
+|OrganizationBinding| [OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the s3 file needs to be copied to.|
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |Skip| `true` or `false` |When `true` task (and dependent tasks) will not be executed.|
 |TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
@@ -351,7 +351,7 @@ The ``update-cdk`` task will deploy the a CDK workload defined in the directory 
 |Attribute |Value|Remarks|
 |:---|:---|:---|
 |Path|relative path|This property is required. <br/><br/>Specifies which directory contains the serverless.com workload
-|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the CDK workload needs to be deployed to.|
+|OrganizationBinding| [OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts the CDK workload needs to be deployed to.|
 |RunNpmInstall|boolean| When true, `npm ci` will be ran before CDK and removal|
 |RunNpmBuild|boolean| When true, `npm run build` will be ran before CDK and removal|
 |CustomDeployCommand| string | When specified will override the default command used when deploying a serverless.com workload. <br/><br/>default command is: `npm ci && npm run build && npx cdk deploy ${CurrentTask.Parameters} `. |
@@ -388,7 +388,7 @@ For more information see: https://docs.aws.amazon.com/cloudformation-cli/latest/
 |:---|:---|:---|
 |ResourceType|Name of type|The typename that can be used in CloudFormation (e.g. Community::MyService::MyResource).|
 |SchemaHandlerPackage|S3 path to implementation|The S3 Path to the implementation (e.g. s3://my-bucket/type-1.0.0.zip).|
-|OrganizationBinding| [OrganizationBinding](#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts/regions the Resource Provider needs to be registered.|
+|OrganizationBinding| [OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource)|This property is required. <br/><br/>Organization binding used to specify which accounts/regions the Resource Provider needs to be registered.|
 |DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |Skip| `true` or `false` |When `true` task (and dependent tasks) will not be executed.|
 |TaskRoleName|string|Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions).|
