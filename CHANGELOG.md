@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to aws organization formation will be documented in this file.
 
+**unreleased**
+- BREAKING CHANGE: when using OrgFormationBuild role, this role will be used and **must be present** in all accounts (also in the build account)
+- feat: support for `<<` (merge operator) in the organization.yml file. this allows for large organization.yml files to be split out (using `<<: Include ./dev-accounts.yml`)
+- feat: better profile support added support for credential process and SSO
+- feat: perform tasks will create a state bucket if bucket doesn't exist
+- feat: added !Cmd function to execute and capture the output of any shell command
+- feat: ofn alias to binary
+- fix: allow `!Ref CurrentAccount` and `!FindInMap` to be used together in a tasks file.
+- fix: have init-pipeline create a pipeline that works with the main branch (as opposed to master)
+- fix: allow for SAM templates with a globals section to deploy
+- fix: set the default buildAccessRoleName for cdk and sls tasks
+
 **version 0.9.14**
 - Support for moving the org-formation build process out of the master/management account in AWS
 - Support for splitting up the CI/CD process (perform-tasks) into multiple
