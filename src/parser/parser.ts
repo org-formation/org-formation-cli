@@ -15,7 +15,6 @@ import { FileUtil } from '~util/file-util';
 import { yamlParseContentWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 import { nunjucksParseContentWithIncludes } from '~yaml-cfn/nunjucks-parse-includes';
 
-const NUNJUCKS_FILE_EXTENSION = '.nj';
 type TemplateVersion = '2010-09-09-OC' | '2010-09-09';
 
 export interface ITemplate {
@@ -84,7 +83,7 @@ export interface ITemplateOverrides {
     DefaultOrganizationBinding?: IOrganizationBinding;
     OrganizationBindings?: Record<string, IOrganizationBinding>;
     ParameterValues?: Record<string, any>;
-    DataValues?: Record<string, any>;
+    TemplatingContext?: Record<string, any>;
 }
 
 export class TemplateRoot {
@@ -126,11 +125,11 @@ export class TemplateRoot {
         delete overrides.OrganizationFileContents;
 
         let obj;
-        if (Path.extname(filename) === NUNJUCKS_FILE_EXTENSION) {
-            const dataValues = overrides.DataValues;
-            delete overrides.DataValues;
-            obj = nunjucksParseContentWithIncludes(normalizedContentsForParser, dirname, filename, dataValues) as ITemplate;
-        } else {
+        if ('TemplatingContext' in overrides) {
+            const templatingContext = overrides.TemplatingContext;
+            delete overrides.TemplatingContext;
+            obj = nunjucksParseContentWithIncludes(normalizedContentsForParser, dirname, filename, templatingContext) as ITemplate;
+        } else{
             obj = yamlParseContentWithIncludes(normalizedContentsForParser, dirname) as ITemplate;
         }
         if (includedOrganization && !obj.Organization) {

@@ -116,10 +116,10 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             args.parameters = undefined;
         }
 
-        if (config.Data) {
-            args.data = config.Data;
+        if (config.TemplatingContext) {
+            args.templatingContext = config.TemplatingContext;
         } else {
-            args.data = undefined;
+            args.templatingContext = undefined;
         }
 
         if (typeof config.ForceDeploy === 'boolean') {
@@ -201,7 +201,7 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     StackName: string;
     StackDescription?: string;
     Parameters?: Record<string, string | object>;
-    Data?: Record<string, string | object>;
+    TemplatingContext?: Record<string, string | object>;
     DeletionProtection?: boolean;
     OrganizationFile?: string;
     OrganizationBinding?: IOrganizationBinding; // old: dont use

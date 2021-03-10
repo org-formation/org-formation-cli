@@ -1,10 +1,10 @@
 
 SecurityGroupExample:
   Type: update-stacks
-  Template: ./security-group.nj
+  Template: ./security-group.njk
   StackName: SecurityGroupExample
   Parameters:
-  Data:
+  TemplatingContext:
     ports:
       - 22
       - 80
