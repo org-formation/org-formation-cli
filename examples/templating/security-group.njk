@@ -7,7 +7,7 @@ Resources:
       GroupDescription: "Open ports for incoming traffic"
       VpcId: "vpc-1111111111"
       SecurityGroupIngress:
-{% for port in Data.ports %}
+{% for port in TemplatingContext.ports %}
         - CidrIp: "0.0.0.0/0"
           FromPort: {{ port }}
           ToPort: {{ port }}

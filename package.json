@@ -17,14 +17,6 @@
     "test:ci": "npm run test:unit -- --ci --collect-coverage",
     "test:integration": "npx jest --runInBand 'integration-test'",
     "start": "npx --quiet ts-node cli.ts",
-    "start:ds": "npx --quiet ts-node cli.ts describe-stacks --profile testitorgmgnt-CiServiceRole",
-    "start:ps": "npx --quiet ts-node cli.ts update-stacks /Users/zaro0508/work-sage/testitorgmgnt-infra/org-formation/900-testing/orgf-noop.yaml --profile testitorgmgnt-CiServiceRole --stack-name orgf-noop --print-stack --verbose",
-    "start:update": "npx --quiet ts-node cli.ts update-stacks /Users/zaro0508/work-sage/testitorgmgnt-infra/org-formation/900-testing/orgf-noop.yaml --profile testitorgmgnt-CiServiceRole --stack-name orgf-noop --print-stack --verbose",
-    "start:perform": "npx --quiet ts-node cli.ts perform-tasks /Users/zaro0508/work-sage/testitorgmgnt-infra/org-formation/organization-tasks.yaml --profile testitorgmgnt-CiServiceRole --print-stack --verbose",
-    "start:performclean": "npx --quiet ts-node cli.ts perform-tasks /Users/zaro0508/work-sage/testitorgmgnt-infra/org-formation/organization-tasks.yaml --profile testitorgmgnt-CiServiceRole --print-stack --verbose --perform-cleanup",
-    "start:print": "npx --quiet ts-node cli.ts print-tasks /Users/zaro0508/work-sage/testitorgmgnt-infra/org-formation/organization-tasks.yaml --profile testitorgmgnt-CiServiceRole --output yaml",
-    "start:validate": "npx --quiet ts-node cli.ts validate-tasks /Users/zaro0508/work-sage/testitorgmgnt-infra/org-formation/organization-tasks.yaml --profile testitorgmgnt-CiServiceRole",
-
     "start:debug": "node --inspect -r ts-node/register cli.ts"
   },
   "files": [
