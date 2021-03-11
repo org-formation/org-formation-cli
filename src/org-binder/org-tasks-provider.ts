@@ -500,6 +500,57 @@ export class TaskProvider {
         };
         return [...tasks, createAccountCommitHashTask];
     }
+
+    public createGovCloudAccountCreateTasks(resource: AccountResource, hash: string): IBuildTask[] {
+        /**
+         * Unsure if this needs its own entire block.
+         */
+        const that = this;
+        const tasks: IBuildTask[] = [];
+        const createGovCloudAccountTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'Create',
+            perform: async (task): Promise<void> => {
+                task.result = await that.writer.createGovCloudAccount(resource);
+            },
+        };
+
+        tasks.push(createGovCloudAccountTask);
+
+        for (const attachedSCP of resource.serviceControlPolicies) {
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createGovCloudAccountTask.result);
+            attachSCPTask.dependentTasks = [createGovCloudAccountTask];
+            tasks.push(attachSCPTask);
+        }
+
+        const createAccountCommitHashTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'CommitHash',
+            dependentTasks: tasks,
+            perform: async (): Promise<void> => {
+                if (resource.type === OrgResourceTypes.MasterAccount) {
+                    that.state.setUniqueBindingForType({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId: createGovCloudAccountTask.result,
+                    });
+                } else {
+                    that.state.setBinding({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId: createGovCloudAccountTask.result.AccountId,
+                        govCloudId: createGovCloudAccountTask.result.GovCloudAccountId,
+                    });
+                }
+            },
+        };
+        return [...tasks, createAccountCommitHashTask];
+    }
+
     public createForgetResourceTasks(binding: IBinding): IBuildTask[] {
         return [{
             type: binding.type,

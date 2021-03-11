@@ -98,7 +98,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (command.state) {
             return command.state;
         }
+
         const storageProvider = await this.getStateStorageProvider(command);
+
         BaseCliCommand.StateBucketName = storageProvider.bucketName;
         const accountId = await AwsUtil.GetMasterAccountId();
 
@@ -141,6 +143,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected abstract performCommand(command: T): Promise<void>;
 
     protected addOptions(command: Command): void {
+        /**
+         * Note the addition of two commands here. The gov-cloud-profile is used to know which profile to grab from your config file.
+         * The gov-cloud boolean is used to denote when you're running org-formation with the primary profile as govcloud. This is used
+         * so that org-formation knows to use resources with a govcloud region, but this might be able to be simplified by just
+         * updating the AWS.config.region.
+         */
         command.option('--state-bucket-name [state-bucket-name]', 'bucket name that contains state file', 'organization-formation-${AWS::AccountId}');
         command.option('--state-object [state-object]', 'key for object used to store state', DEFAULT_STATE_OBJECT);
         command.option('--profile [profile]', 'aws profile to use');
@@ -148,6 +156,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--verbose', 'will enable debug logging');
         command.option('--no-color', 'will disable colorization of console logs');
         command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
+        command.option('--gov-cloud', 'is run on gov cloud');
+        command.option('--gov-cloud-profile [profile]', 'aws govcloud profile to use');
+
     }
 
     protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState): Promise<OrganizationBinder> {
@@ -184,7 +195,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName, accountId);
-        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, credentials);
+        let storageProvider;
+        if (command.govCloud) {
+            storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials, 'us-gov-west-1');
+        } else {
+            storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials);
+        }
         return storageProvider;
     }
 
@@ -261,6 +277,14 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
 
         await AwsUtil.InitializeWithCurrentPartition();
+        if (command.govCloudProfile !== undefined) {
+            AwsUtil.SetGovCloudProfile(command.govCloudProfile);
+            await AwsUtil.SetGovCloudCredentials(command.govCloudProfile);
+        }
+
+        if (command.govCloud) {
+            AwsUtil.SetIsGovCloud(true);
+        }
 
         command.initialized = true;
     }
@@ -311,6 +335,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 command.profile = rc.profile;
             }
 
+            if (process.argv.indexOf('--gov-cloud-profile') === -1 && rc.govCloudProfile !== undefined) {
+                command.govCloudProfile = rc.govCloudProfile;
+            }
+
             if (process.argv.indexOf('--organization-file') === -1 && rc.organizationFile !== undefined) {
                 (command as IPerformTasksCommandArgs).organizationFile = rc.organizationFile;
             }
@@ -350,6 +378,7 @@ export interface ICommandArgs {
     organizationStateObject?: string;
     organizationStateBucketName?: string;
     profile?: string;
+    govCloudProfile?: string;
     state?: PersistedState;
     debugTemplating?: boolean;
     initialized?: boolean;
@@ -357,6 +386,8 @@ export interface ICommandArgs {
     verbose?: boolean;
     color?: boolean;
     resolver?: CfnExpressionResolver;
+    govCloud?: boolean;
+
 }
 
 export interface IRCObject {
@@ -370,6 +401,7 @@ export interface IRCObject {
     organizationStateBucketName?: string;
     debugTemplating?: boolean;
     profile?: string;
+    govCloudProfile?: string;
     configs: string[];
     config: string;
 }
