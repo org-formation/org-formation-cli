@@ -1,11 +1,10 @@
 import Sinon from 'sinon';
-import { IBuildTask, IBuildFile, IBuildTaskConfiguration, BuildConfiguration, IBuildFileParameter } from '~build-tasks/build-configuration';
+import { IBuildTask, IBuildFile, BuildConfiguration, IBuildFileParameter } from '~build-tasks/build-configuration';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { IUpdateStacksCommandArgs, UpdateStacksCommand } from '~commands/update-stacks';
 import { ConsoleUtil } from '~util/console-util';
 import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
-import { assert } from 'console';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 
@@ -183,7 +182,7 @@ describe('when creating build configuration', () => {
         const commandKeys = Object.keys(commandArgs);
 
         expect(fileArg.endsWith('path.yml')).toBe(true);
-        expect(commandKeys.length).toBe(6);
+        expect(commandKeys.length).toBe(7);
         expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
         expect(commandArgs.stackName).toBe('stack');
     });
