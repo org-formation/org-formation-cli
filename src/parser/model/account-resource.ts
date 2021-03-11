@@ -13,17 +13,22 @@ export interface IAccountProperties {
     ServiceControlPolicies?: IResourceRef | IResourceRef[];
     PasswordPolicy?: IResourceRef;
     Alias?: string;
+    GovCloudAlias?: string;
     Tags?: Record<string, string>;
     SupportLevel?: string;
     OrganizationAccessRoleName?: string;
     BuildAccessRoleName?: string;
 }
 
+/**
+ * Added an alias for govcloud here.
+ */
 export class AccountResource extends Resource {
     public accountName?: string;
     public rootEmail?: string;
     public accountId?: string;
     public alias?: string;
+    public govCloudAlias?: string;
     public tags?: Record<string, string>;
     public serviceControlPolicies?: Reference<ServiceControlPolicyResource>[];
     public passwordPolicy?: Reference<PasswordPolicyResource>;
@@ -69,10 +74,11 @@ export class AccountResource extends Resource {
         }
         this.tags = this.props.Tags;
         this.alias = this.props.Alias;
+        this.govCloudAlias = this.props.GovCloudAlias;
         this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName', 'BuildAccessRoleName');
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'GovCloudAlias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName', 'BuildAccessRoleName');
     }
 
     public calculateHash(): string {

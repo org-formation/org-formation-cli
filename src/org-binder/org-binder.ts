@@ -73,7 +73,12 @@ export class OrganizationBinder {
         for (const boundPolicy of org.accounts) {
             switch (boundPolicy.action) {
                 case 'Create':
-                    const t1 = this.taskProvider.createAccountCreateTasks(boundPolicy.template, boundPolicy.templateHash);
+                    let t1;
+                    if (org.organizationRoot.template.mirrorInGovCloud) {
+                        t1 = this.taskProvider.createGovCloudAccountCreateTasks(boundPolicy.template, boundPolicy.templateHash);
+                    } else {
+                        t1 = this.taskProvider.createAccountCreateTasks(boundPolicy.template, boundPolicy.templateHash);
+                    }
                     tasks.push(...t1);
                     break;
                 case 'Update':

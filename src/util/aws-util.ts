@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
 import AWS from 'aws-sdk';
@@ -23,6 +23,9 @@ export class AwsUtil {
 
     public static ClearCache(): void {
         AwsUtil.masterAccountId = undefined;
+        AwsUtil.masterGovCloudAccountId = undefined;
+        AwsUtil.govCloudProfile = undefined;
+        AwsUtil.govCloudCredentials = undefined;
         AwsUtil.CfnServiceCache = {};
         AwsUtil.IamServiceCache = {};
         AwsUtil.SupportServiceCache = {};
@@ -56,11 +59,38 @@ export class AwsUtil {
 
     public static async Initialize(providers: provider[]): Promise<void> {
         const chainProvider = new CredentialProviderChain(providers);
+
         AWS.config.credentials = await chainProvider.resolvePromise();
     }
 
     public static SetMasterAccountId(masterAccountId: string): void {
         AwsUtil.masterAccountId = masterAccountId;
+    }
+
+    public static async GetGovCloudProfile(): Promise<string> {
+        return AwsUtil.govCloudProfile;
+    }
+
+    public static SetGovCloudProfile(govCloudProfile: string): void {
+        AwsUtil.govCloudProfile = govCloudProfile;
+    }
+
+    public static async SetGovCloudCredentials(govCloudProfile: string): Promise<void> {
+        const govCredentialsClass = new CustomMFACredentials(govCloudProfile);
+        const govCredentials = await govCredentialsClass.innerRefresh();
+        AwsUtil.govCloudCredentials = govCredentials;
+    }
+
+    public static async GetGovCloudCredentials(): Promise<CredentialsOptions> {
+        return AwsUtil.govCloudCredentials;
+    }
+
+    public static GetIsGovCloud(): boolean {
+        return AwsUtil.isGovCloud;
+    }
+
+    public static SetIsGovCloud(isGovCloud: boolean): void {
+        AwsUtil.isGovCloud = isGovCloud;
     }
 
     static SetBuildAccountId(buildAccountId: string): void {
@@ -75,6 +105,17 @@ export class AwsUtil {
         const caller = await stsClient.getCallerIdentity().promise();
         AwsUtil.masterAccountId = caller.Account;
         return AwsUtil.masterAccountId;
+    }
+
+    public static async GetGovCloudMasterAccountId(): Promise<string> {
+        if (AwsUtil.masterGovCloudAccountId !== undefined) {
+            return AwsUtil.masterGovCloudAccountId;
+        }
+        const govCloudCredentials = await AwsUtil.GetGovCloudCredentials();
+        const stsClient = new STS({credentials: govCloudCredentials, region: 'us-gov-west-1'}); // if not set, assume build process runs in master
+        const caller = await stsClient.getCallerIdentity().promise();
+        AwsUtil.masterGovCloudAccountId = caller.Account;
+        return AwsUtil.masterGovCloudAccountId;
     }
 
     public static async GetBuildProcessAccountId(): Promise<string> {
@@ -98,6 +139,10 @@ export class AwsUtil {
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
         return 'arn:aws:iam::' + accountId + ':role/' + roleInTargetAccount;
+    }
+
+    public static GetGovCloudRoleArn(accountId: string, roleInTargetAccount: string): string {
+        return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
     public static async GetS3Service(accountId: string, region: string, roleInTargetAccount?: string): Promise<S3> {
@@ -150,8 +195,16 @@ export class AwsUtil {
         }
 
         try {
-            const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
+            let roleArn: string;
             const config: STS.ClientConfiguration = {};
+
+            if (AwsUtil.isGovCloud) {
+                roleArn = AwsUtil.GetGovCloudRoleArn(accountId, roleInTargetAccount);
+                config.region = 'us-gov-west-1';
+            } else {
+                roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
+            }
+
             if (viaRoleArn !== undefined) {
                 config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
             }
@@ -173,7 +226,7 @@ export class AwsUtil {
     private static async GetCredentialsForRole(roleArn: string, config: STS.ClientConfiguration): Promise<CredentialsOptions> {
         const sts = new STS(config);
         // const tags: tagListType = [{Key: 'OrgFormation', Value: 'True'}];
-        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild'/* , Tags: tags*/}).promise();
+        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild'}).promise();
         const credentialOptions: CredentialsOptions = {
             accessKeyId: response.Credentials.AccessKeyId,
             secretAccessKey: response.Credentials.SecretAccessKey,
@@ -198,12 +251,16 @@ export class AwsUtil {
     }
 
     private static masterAccountId: string | PromiseLike<string>;
+    private static masterGovCloudAccountId: string | PromiseLike<string>;
+    private static govCloudProfile: string | PromiseLike<string>;
+    private static govCloudCredentials: CredentialsOptions;
     private static buildProcessAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAM> = {};
     private static SupportServiceCache: Record<string, Support> = {};
     private static OrganizationsServiceCache: Record<string, Organizations> = {};
     private static CfnServiceCache: Record<string, CloudFormation> = {};
     private static S3ServiceCache: Record<string, S3> = {};
+    private static isGovCloud = false;
 }
 
 export const passwordPolicyEquals = (passwordPolicy: IAM.PasswordPolicy, pwdPolicyResource: Reference<PasswordPolicyResource>): boolean => {
@@ -347,7 +404,7 @@ export class CfnUtil {
     }
 }
 
-class CustomMFACredentials extends AWS.Credentials {
+ export class CustomMFACredentials extends AWS.Credentials {
     profile: string;
 
     constructor(profile: string) {
@@ -370,13 +427,16 @@ class CustomMFACredentials extends AWS.Credentials {
     async innerRefresh(): Promise<CredentialsOptions> {
         const profileName = this.profile ? this.profile : 'default';
         const homeDir = require('os').homedir();
+
         // todo: add support for windows?
         if (!existsSync(homeDir + '/.aws/config')) {
             return;
         }
+
         const awsconfig = readFileSync(homeDir + '/.aws/config').toString('utf8');
         const contents = ini.parse(awsconfig);
         const profileKey = contents['profile ' + profileName];
+
         if (profileKey && profileKey.source_profile) {
             const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
             const secrets = ini.parse(awssecrets);
@@ -385,7 +445,7 @@ class CustomMFACredentials extends AWS.Credentials {
             if (creds.aws_session_token !== undefined) {
                 credentialsForSts.sessionToken = creds.aws_session_token;
             }
-            const sts = new STS({ credentials: credentialsForSts });
+            const sts = new STS({ credentials: credentialsForSts, region: 'us-gov-west-1' });
 
             const assumeRoleReq: AssumeRoleRequest = {
                 RoleArn: profileKey.role_arn,
