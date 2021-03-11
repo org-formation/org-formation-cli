@@ -23,6 +23,7 @@
   - [update-cdk](#update-cdk)
   - [register-type](#register-type)
   - [include](#include-1)
+- [Templating](#templating)
 
 <!-- /code_chunk_output -->
 
@@ -241,6 +242,7 @@ The `update-stacks` task will provision all resources in all accounts specified 
 |StackName|string|This property is required.<br/><br/>Specifies the name of the stack that will be created in all accounts/regions.|
 |StackDescription|string|If specified, value will be set as the description of the created stacks<br/><br/> **note**:  This value overrides values within the template or resources (value in taskfile is leading). |
 |Parameters|Dictionary|Specifies parameters that must be used when executing the template.|
+|TemplatingContext|Dictionary|Specifies the data for [templating](#templating).|
 |OrganizationFile|relative path|Organization file used when executing templates.<br/><br/>**note**: This value overrides values within the template or resources (value in taskfile is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation.|
 |TerminationProtection|true or false|When set to `true` termination protection will be enabled on all stacks created for this template.|
 |UpdateProtection|true or false|When set to `true` will create a StackPolicy for the stacks that prevents any resource from being modified through CloudFormation.|
@@ -433,4 +435,69 @@ Include:
   FailedTaskTolerance: 10
   Parameters:
     resourcePrefix: my
+```
+
+## Templating
+Org-formation supports the [nunjucks](https://mozilla.github.io/nunjucks/) template engine to generate cloudformation
+templates from nunjucks based templates.
+
+### Example:
+Assume we want to create one security group that allows access from multiple ingress ports.
+
+security-group.njk:
+```
+Description: Nunjucks Security group template
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: "Open ports for incoming traffic"
+      VpcId: "vpc-1234ABC"
+      SecurityGroupIngress:
+{% for port in ports %}
+        - CidrIp: "0.0.0.0/0"
+          FromPort: {{ port }}
+          ToPort: {{ port }}
+          IpProtocol: tcp
+{% endfor %}
+```
+
+Deploy with [update-stacks](#update-stacks) and pass in port values with `TemplatingContext`:
+```
+SecurityGroupExample:
+  Type: update-stacks
+  Template: ./security-group.njk
+  StackName: SecurityGroupExample
+  TemplatingContext:
+    ports:
+      - 22
+      - 80
+  DefaultOrganizationBinding:
+    Account: '*'
+    Region: us-east-1
+```
+__Note__: If you want templating without passing in any data you must set `TempatingContext: {}` to trigger templating.
+
+The generated cloudformation template:
+```
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Security group using nunjucks
+Parameters: {}
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Open ports for incoming traffic
+      VpcId: vpc-1234ABC
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+        - CidrIp: 0.0.0.0/0
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: tcp
+Outputs: {}
 ```
