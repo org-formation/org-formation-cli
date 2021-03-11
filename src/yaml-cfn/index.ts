@@ -123,8 +123,7 @@ export const yamlParse = (input: string): any => {
 };
 
 export const nunjucksParse = (input: string, filename: string, templatingContext: any): any => {
-  const context = { TemplatingContext: templatingContext };
-  const rendered = nunjucks.renderString(input, context);
+  const rendered = nunjucks.renderString(input, templatingContext);
   return yaml.load(rendered);
 };
 

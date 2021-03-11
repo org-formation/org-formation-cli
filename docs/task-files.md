@@ -435,7 +435,7 @@ Resources:
       GroupDescription: "Open ports for incoming traffic"
       VpcId: "vpc-1234ABC"
       SecurityGroupIngress:
-{% for port in TemplatingContext.ports %}
+{% for port in ports %}
         - CidrIp: "0.0.0.0/0"
           FromPort: {{ port }}
           ToPort: {{ port }}
