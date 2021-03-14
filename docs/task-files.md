@@ -236,7 +236,8 @@ The `update-stacks` task will provision all resources in all accounts specified 
 
 |Attribute |Value|Remarks|
 |:---|:---|:---|
-|Template|relative path, absolute path, s3:// or https:// |This property is required. <br/><br/>Specifies the Organization Formation/ CloudFormation template of which the resources must be updated.<br/><br/> Template can be either a relative or absolute file path, url or s3 file (s3://{bucketName}/path/to/object.yml)|DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
+|Template|relative path, absolute path, s3:// or https:// |This property is required. <br/><br/>Specifies the Organization Formation/ CloudFormation template of which the resources must be updated.<br/><br/> Template can be either a relative or absolute file path, url or s3 file (s3://{bucketName}/path/to/object.yml)
+|DependsOn|Name of task or list of names|The tasks listed in this attribute will be executed before this task.|
 |Skip| `true` or `false` |When `true` task (and dependent tasks) will not be executed.|
 |StackName|string|This property is required.<br/><br/>Specifies the name of the stack that will be created in all accounts/regions.|
 |StackDescription|string|If specified, value will be set as the description of the created stacks<br/><br/> **note**:  This value overrides values within the template or resources (value in taskfile is leading). |
