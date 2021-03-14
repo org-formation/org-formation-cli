@@ -125,7 +125,7 @@ export const yamlParse = (input: string): any => {
 
 export const nunjucksParse = (input: string, filename: string, templatingContext: any): any => {
   const rendered = nunjucks.renderString(input, templatingContext);
-  return yaml.load(rendered);
+  return yaml.load(rendered, { schema: cfnSchema });
 };
 
 export const yamlDump = (input: any): string => {
