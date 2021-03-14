@@ -48,7 +48,7 @@ Resources:
         - Notification:
             NotificationType: FORECASTED
             ComparisonOperator: GREATER_THAN
-            Threshold: 1
+            Threshold: 90
           Subscribers:
             - SubscriptionType: SNS
               Address: !Ref BudgetAlarmTopic
