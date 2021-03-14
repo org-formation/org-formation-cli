@@ -6,6 +6,7 @@ import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { UpdateStacksCommand, IUpdateStacksCommandArgs } from './update-stacks';
+import { ValidateOrganizationCommand } from './validate-organization';
 import { CloudFormationBinder, ICfnBinding } from '~cfn-binder/cfn-binder';
 import { GlobalState } from '~util/global-state';
 
@@ -38,6 +39,10 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
     public async performCommand(command: IPrintStacksCommandArgs): Promise<void> {
         if (!command.stackName) {
             throw new OrgFormationError('argument --stack-name is missing');
+        }
+
+        if (ValidateOrganizationCommand.SkipValidationForTasks) {
+            return;
         }
 
         const template = await UpdateStacksCommand.createTemplateUsingOverrides(command as IUpdateStacksCommandArgs, command.templateFile);

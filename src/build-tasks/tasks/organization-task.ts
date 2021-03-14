@@ -78,8 +78,8 @@ export class UpdateOrganizationTaskProvider implements IBuildTaskProvider<IUpdat
         return new ValidateOrganizationTask(config, command);
     }
 
-    createTaskForPrint(): undefined {
-        return undefined;
+    createTaskForPrint(config: IUpdateOrganizationTaskConfiguration, command: ICommandArgs): IBuildTask {
+        return new ValidateOrganizationTask(config, command);
     }
 
     createTaskForCleanup(): IBuildTask | undefined {
