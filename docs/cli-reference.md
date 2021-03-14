@@ -171,7 +171,7 @@ Lists all stacks deployed to accounts using org-formation
 
 Will delete all stacks of name *stackName* that have been deployed using org-formation.
 
-``> org-formation delete-stacks stackName``
+``> org-formation delete-stacks --stack-name my-stack``
 
 |option|default|description|
 |---|---|---|
