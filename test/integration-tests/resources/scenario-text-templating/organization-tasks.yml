@@ -1,0 +1,39 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+NjkTemplate:
+  Type: update-stacks
+  Template: ./nunjucks-template.njk
+  StackName: nunjucks-template
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    Account: '*'
+    IncludeMasterAccount: true
+  TemplatingContext:
+    roleNames:
+      - "Role1"
+      - "Role2"
+  Parameters:
+    resourcePrefix: "my"
+  MaxConcurrentStacks: 2
+  FailedStackTolerance: 0
+
+NjkTemplateWithInclude:
+  Type: update-stacks
+  Template: ./nunjucks-template-with-include.njk
+  StackName: nunjucks-template2
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+    Account: '*'
+    IncludeMasterAccount: true
+  TemplatingContext:
+    roleNames:
+      - "Role1"
+      - "Role2"
+  Parameters:
+    resourcePrefix: "my2"
+  MaxConcurrentStacks: 2
+  FailedStackTolerance: 0

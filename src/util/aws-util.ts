@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import AWS from 'aws-sdk';
-import { SingleSignOnCredentials } from 'aws-sdk-sso';
+import { SingleSignOnCredentials } from '@mhlabs/aws-sdk-sso';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
 import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackInput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';

@@ -14,6 +14,16 @@
 'use strict';
 
 import yaml  from 'js-yaml';
+import nunjucks from 'nunjucks';
+
+nunjucks.configure(
+    '.',
+    {
+        autoescape: true,
+        trimBlocks: true,
+        lstripBlocks: true,
+        throwOnUndefined: true,
+    });
 
 /**
  * Split a string on the given separator just once, returning an array of two parts, or null.
@@ -113,6 +123,10 @@ export const yamlParse = (input: string): any => {
   return yaml.load(input, { schema: cfnSchema });
 };
 
+export const nunjucksParse = (input: string, filename: string, templatingContext: any): any => {
+  const rendered = nunjucks.renderString(input, templatingContext);
+  return yaml.load(rendered, { schema: cfnSchema });
+};
 
 export const yamlDump = (input: any): string => {
   return yaml.dump(input, { schema: cfnSchema });
