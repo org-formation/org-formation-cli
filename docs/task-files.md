@@ -442,7 +442,7 @@ Assume we want to create one security group that allows access from multiple ing
 
 security-group.njk:
 
-```
+```yaml
 Description: Nunjucks Security group template
 AWSTemplateFormatVersion: 2010-09-09
 Resources:
@@ -462,7 +462,7 @@ Resources:
 
 Deploy with [update-stacks](#update-stacks) and pass in port values with `TemplatingContext`:
 
-```
+```yaml
 SecurityGroupExample:
   Type: update-stacks
   Template: ./security-group.njk
@@ -472,7 +472,7 @@ SecurityGroupExample:
       - 22
       - 80
   DefaultOrganizationBinding:
-    Account: '*'
+    Account: "*"
     Region: us-east-1
 ```
 
@@ -480,8 +480,8 @@ SecurityGroupExample:
 
 The generated cloudformation template:
 
-```
-AWSTemplateFormatVersion: '2010-09-09'
+```yaml
+AWSTemplateFormatVersion: "2010-09-09"
 Description: Security group using nunjucks
 Parameters: {}
 Resources:
