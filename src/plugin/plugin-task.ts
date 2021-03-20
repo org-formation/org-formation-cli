@@ -61,7 +61,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
             name: config.LogicalName,
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
-            isDependency: (): boolean => false,
+            isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const commandArgs = this.plugin.convertToCommandArgs(config, command);
                 this.plugin.validateCommandArgs(commandArgs);
