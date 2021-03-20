@@ -14,7 +14,9 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
         protected readonly state: PersistedState,
         private readonly template: TemplateRoot,
         private readonly organizationBinding: IOrganizationBinding,
-        private readonly plugin: IBuildTaskPlugin<any, any, TTaskDefinition>) {
+        private readonly plugin: IBuildTaskPlugin<any, any, TTaskDefinition>,
+        private readonly resolver?: CfnExpressionResolver){
+
     }
 
     public enumBindings(): IPluginBinding<TTaskDefinition>[] {
@@ -126,6 +128,10 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
         return async (): Promise<void> => {
             const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, task.taskViaRoleArn, this.template.organizationSection, this.state, true);
+            if (this.resolver) {
+                expressionResolver.mapping = this.resolver.mapping;
+                expressionResolver.filePath = this.resolver.filePath;
+            }
             await this.plugin.appendResolvers(expressionResolver, binding);
             let myTask = await expressionResolver.resolve(binding.task);
             myTask = await expressionResolver.collapse(myTask);
@@ -152,6 +158,10 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
         return async (): Promise<void> => {
             const expressionResolver = CfnExpressionResolver.CreateDefaultResolver(target.logicalAccountId, target.accountId, target.region, task.taskRoleName, task.taskViaRoleArn, this.template.organizationSection, this.state, true);
+            if (this.resolver) {
+                expressionResolver.mapping = this.resolver.mapping;
+                expressionResolver.filePath = this.resolver.filePath;
+            }
             await this.plugin.appendResolvers(expressionResolver, binding);
             let myTask = await expressionResolver.resolve(binding.task);
             myTask = await expressionResolver.collapse(myTask);

@@ -58,7 +58,7 @@ export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
 
         const plugin = PluginProvider.GetPlugin(command.type);
 
-        const binder = new PluginBinder<any>(task, command.logicalName, command.namespace, state, templateRoot, undefined, plugin);
+        const binder = new PluginBinder<any>(task, command.logicalName, command.namespace, state, templateRoot, undefined, plugin, command.resolver);
         const tasks = binder.enumTasks();
 
         try {

@@ -19,6 +19,7 @@ import { S3StorageProvider } from '~state/storage-provider';
 import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template-writer';
 import { CfnParameters } from '~core/cfn-parameters';
 import { Validator } from '~parser/validator';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 const DEFAULT_STATE_OBJECT = 'state.json';
 
@@ -330,6 +331,7 @@ export interface ICommandArgs {
     printStack?: boolean;
     verbose?: boolean;
     color?: boolean;
+    resolver?: CfnExpressionResolver;
 }
 
 export interface IRCObject {

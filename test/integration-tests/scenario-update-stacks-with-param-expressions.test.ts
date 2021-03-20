@@ -1,6 +1,7 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { DescribeStacksOutput, ListStacksOutput } from "aws-sdk/clients/cloudformation";
+import { PrintTasksCommand } from "~commands/print-tasks";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cfn-parameter-expressions/';
 
@@ -18,6 +19,7 @@ describe('when importing value from another stack', () => {
             const { command, cfnClient } = context;
 
             await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' })
+            await PrintTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' })
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' });
 
             describedBucketStack = await cfnClient.describeStacks({StackName: 'my-scenario-export-bucket'}).promise();

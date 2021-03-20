@@ -21,7 +21,7 @@ export class PluginCliCommand<TCommandArgs extends IBuildTaskPluginCommandArgs, 
         task.taskLocalHash = this.createHash(command, false);
         const state = await this.getState(command);
         const template = GlobalState.OrganizationTemplate;
-        const binder = new PluginBinder<TTask>(task, command.logicalName, command.logicalNamePrefix, state, template, command.organizationBinding, this.plugin);
+        const binder = new PluginBinder<TTask>(task, command.logicalName, command.logicalNamePrefix, state, template, command.organizationBinding, this.plugin, command.resolver);
         const tasks = binder.enumTasks();
 
         if (tasks.length === 0) {
