@@ -99,12 +99,12 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
             if (updateProtection === true) {
                 stackPolicy = {
                     Statement:
-                     {
+                    {
                         Effect: 'Deny',
                         Action: 'Update:*',
                         Principal: '*',
                         Resource: '*',
-                     },
+                    },
                 };
             } else if (updateProtection === false) {
                 stackPolicy = {
@@ -171,5 +171,4 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     taskRoleName?: string;
     taskViaRoleArn?: string;
     stackPolicy?: {};
-    resolver?: CfnExpressionResolver;
 }

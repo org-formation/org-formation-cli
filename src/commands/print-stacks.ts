@@ -49,7 +49,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         const state = await this.getState(command);
         GlobalState.Init(state, template);
         const parameters = this.parseCfnParameters(command.parameters);
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters);
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, undefined,undefined, undefined, undefined, undefined, undefined, command.resolver);
 
         const bindings = await cfnBinder.enumBindings();
         for (const binding of bindings) {
