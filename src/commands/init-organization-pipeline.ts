@@ -114,7 +114,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         await this.uploadInitialCommit(stateBucketName, path + 'initial-commit/', template.template, buildSpecContents, organizationTasksContents, cloudformationTemplateContents, orgParametersInclude, buildAccessRoleTemplate);
 
         ConsoleUtil.LogInfo('creating codecommit / codebuild and codepipeline resources using CloudFormation...');
-        await this.executePipelineStack(this.buildAccountId, cloudformationTemplateContents, command.region, stateBucketName, resourcePrefix, stackName, repositoryName);
+        await this.executePipelineStack(this.buildAccountId, cloudformationTemplateContents, region, stateBucketName, resourcePrefix, stackName, repositoryName);
 
         await template.state.save(storageProvider);
 
