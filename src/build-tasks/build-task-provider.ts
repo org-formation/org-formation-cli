@@ -99,6 +99,12 @@ export class BuildTaskProvider {
             if (task.type === 'update-organization') {
                 return true;
             }
+            if (task.childTasks && task.childTasks.length > 0) {
+                const updateOrgTasks = this.recursivelyFilter(task.childTasks, t => t.type === 'update-organization');
+                if (updateOrgTasks.length > 0) {
+                    return true;
+                }
+            }
 
             if (typeof buildTaskConfig.DependsOn === 'string') {
                 return task.name === buildTaskConfig.DependsOn;
