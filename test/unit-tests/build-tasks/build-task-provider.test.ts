@@ -74,17 +74,17 @@ describe('when creating UpdateStacksTask task with command args', () => {
         expect(task).toBeDefined();
     });
     test('arguments sent to perform are passed to updateStackResources', async () => {
-            await task.perform();
-            const commandArgs = updateStacksResources.lastCall.args[0] as IUpdateStacksCommandArgs;
-            const fileArg = commandArgs.templateFile;
-            const commandKeys = Object.keys(commandArgs);
+        await task.perform();
+        const commandArgs = updateStacksResources.lastCall.args[0] as IUpdateStacksCommandArgs;
+        const fileArg = commandArgs.templateFile;
+        const commandKeys = Object.keys(commandArgs);
 
-            expect(fileArg.endsWith('path.yml')).toBe(true);
-            expect(commandKeys.length).toBe(8);
-            expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
-            expect(commandArgs.stackName).toBe('stack');
-            expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
-            expect((commandArgs as any).arg).toBe('Val');
+        expect(fileArg.endsWith('path.yml')).toBe(true);
+        expect(commandKeys.length).toBe(8);
+        expect(commandKeys).toEqual(expect.arrayContaining(['stackName']));
+        expect(commandArgs.stackName).toBe('stack');
+        expect(commandKeys).toEqual(expect.arrayContaining(['arg']));
+        expect((commandArgs as any).arg).toBe('Val');
         }
     );
 });
