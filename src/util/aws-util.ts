@@ -64,6 +64,8 @@ export class AwsUtil {
             ]);
         }
         const defaultProviders = CredentialProviderChain.defaultProviders;
+        // We will place SSO credentials provider right after ProcessCredentials in the priority list.
+        // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html
         defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
         return await this.Initialize(defaultProviders);
     }
