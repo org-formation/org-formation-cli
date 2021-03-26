@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: default template generated for organization with master account 102625093955
+
+Organization:
+
+  OrganizationRoot:
+    Type: OC::ORG::OrganizationRoot
+    Properties:
+
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: Organizational Master Account
+      AccountId: '102625093955'
+
+  NewAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: Account New
+      RootEmail: account+new@olafconijn.awsapps.com

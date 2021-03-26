@@ -1,0 +1,8 @@
+
+Include1:
+  Type: include
+  Path: ./include-with-tasks.yml
+
+Include2:
+  Type: include
+  Path: ./include-with-update.yml
