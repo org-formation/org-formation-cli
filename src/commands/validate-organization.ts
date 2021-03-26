@@ -24,7 +24,7 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
 
     protected async performCommand(command: IUpdateOrganizationCommandArgs): Promise<void> {
 
-        const template = TemplateRoot.create(command.templateFile);
+        const template = await TemplateRoot.create(command.templateFile);
         const state = await this.getState(command);
         const templateHash = template.hash;
 
@@ -45,7 +45,7 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
         if (createTasks.length > 0) {
             ConsoleUtil.LogWarning('Accounts where added to the organization model.');
             ConsoleUtil.LogWarning('Tasks might depend on updating the organization.');
-            ConsoleUtil.LogWarning('validation of tasks will be skipped.');
+            ConsoleUtil.LogWarning('validation and printing of tasks will be skipped.');
             ValidateOrganizationCommand.SkipValidationForTasks = true;
         }
     }

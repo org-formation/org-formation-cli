@@ -24,6 +24,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
 
     public addOptions(command: Command): void {
         command.option('--parameters [parameters]', 'parameter values passed to CloudFormation when executing stacks');
+        command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in CloudFormation', 'validation');
         super.addOptions(command);
     }
@@ -41,15 +42,16 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         Validator.validatePositiveInteger(failedStacksTolerance, 'failedStacksTolerance');
 
 
-        const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
+        const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);
         GlobalState.Init(state, template);
         ConsoleUtil.state = state;
         const parameters = this.parseCfnParameters(command.parameters);
         const stackPolicy = command.stackPolicy;
+        const govCloud = command.govCloud === true;
         const cloudFormationRoleName = command.cloudFormationRoleName;
         const taskViaRoleArn = command.taskViaRoleArn;
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, false, command.verbose === true, command.taskRoleName, false, stackPolicy, false, cloudFormationRoleName, undefined, taskViaRoleArn);
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, false, command.verbose === true, command.taskRoleName, false, stackPolicy, govCloud, cloudFormationRoleName, command.resolver, undefined, taskViaRoleArn);
 
         const bindings = await cfnBinder.enumBindings();
 

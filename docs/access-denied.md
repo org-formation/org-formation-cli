@@ -1,24 +1,24 @@
 
 ## Troubleshooting access denied issues
 
-This page is here to troubleshoot access denied issues you run into when using `org-formation`. typically this has to do with a misconfigured or missing `OrganizationAccountAccessRole`.
+This page is here to troubleshoot access denied issues you run into when using `org-formation`. Typically this has to do with a misconfigured or missing cross-account role - by default this is `OrganizationAccountAccessRole`. org-formation also supports non-default role names by using `--cross-account-role-name` as a [command line option](https://github.com/org-formation/org-formation-cli/blob/master/docs/cli-reference.md#org-formation-init) during init or by setting the `DefaultOrganizationAccessRoleName` attribute on your `OC::ORG::OrganizationRoot`. This value can also be overwritten for every account using the `OrganizationAccessRoleName` on your `OC::ORG::Account`s. For further information see the [organization resources page](https://github.com/org-formation/org-formation-cli/blob/master/docs/organization-resources.md).
+
 
 #### I just created the account using org-formation
 
-Please rerun the process: as all things AWS are eventually consistent it could be that the `OrganizationAccountAccessRole` still needs to be created.
+Please rerun the process: as all things AWS are eventually consistent it could be that the cross-account role (default `OrganizationAccountAccessRole`) still needs to be created.
 
 Do let me know in [the issues](https://github.com/OlafConijn/AwsOrganizationFormation/issues) if this problem doesn't resolve on its own or if you run into this a lot!
 
+
 #### I have an account that joined my organization
 
-It could be that the `OrganizationAccountAccessRole` is missing. please log into the account and create the Role manually. There is a CloudFormation template at the bottom of this page.
+It could be that the cross-account role (default `OrganizationAccountAccessRole`) is missing. please log into the account and create the Role manually. There is a CloudFormation template at the bottom of this page.
 
 
 #### I created the account in the AWS Organizations console
 
-It could be that you used a non-default name for the  `OrganizationAccountAccessRole`. Please log into the account and create the Role manually. There is a CloudFormation template at the bottom of this page.
-
-If you feel it is important to support non-default role names for cross account access, let me know in [the issues](https://github.com/OlafConijn/AwsOrganizationFormation/issues).
+Please check the cross-account role is present in the console created account. By default this is `OrganizationAccountAccessRole` but also check your organization configuration to see if a non-default value is being used. If the role is missing, please log into the account and create the Role manually. There is a CloudFormation template at the bottom of this page. You may need to adjust the role name.
 
 
 #### CloudFormation template to create the OrganizationAccountAccessRole

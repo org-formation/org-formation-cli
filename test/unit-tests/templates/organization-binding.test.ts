@@ -8,7 +8,7 @@ describe('when resolving organization binding through parameter', () => {
     let cloudformationBinder: CloudFormationBinder;
     let bindings: ICfnBinding[];
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/organization-binding/organization-binding-through-param.yml');
+        template = await TemplateRoot.create('./test/resources/organization-binding/organization-binding-through-param.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc'});
@@ -36,9 +36,9 @@ describe('when resolving organization binding through parameter', () => {
 });
 
 describe('when trying to resolve organization binding with accountId', () => {
-    test('error is thrown', () => {
+    test('error is thrown', async () => {
         try {
-            TemplateRoot.create('./test/resources/organization-binding/organization-binding-account-id.yml');
+            await TemplateRoot.create('./test/resources/organization-binding/organization-binding-account-id.yml');
             throw new Error('error expected');
         } catch (err) {
             expect(err).toBeDefined();

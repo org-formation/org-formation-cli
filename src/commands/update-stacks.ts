@@ -7,6 +7,7 @@ import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/parser';
 import { Validator } from '~parser/validator';
 import { GlobalState } from '~util/global-state';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 const commandName = 'update-stacks <templateFile>';
 const commandDescription = 'update CloudFormation resources in accounts';
@@ -18,7 +19,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         await x.performCommand(command);
     }
 
-    public static createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string): TemplateRoot {
+    public static async createTemplateUsingOverrides(command: IUpdateStacksCommandArgs, templateFile: string): Promise<TemplateRoot> {
         const templateOverrides: ITemplateOverrides = {};
 
         if (command.stackDescription) {
@@ -41,11 +42,17 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         }
         if (command.parameters) {
             templateOverrides.ParameterValues = {};
-            for(const [key, val] of Object.entries(command.parameters)) {
+            for (const [key, val] of Object.entries(command.parameters)) {
                 templateOverrides.ParameterValues[key] = val;
             }
         }
-        const template = TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
+        if (command.templatingContext) {
+            templateOverrides.TemplatingContext = {};
+            for (const [key, val] of Object.entries(command.templatingContext)) {
+                templateOverrides.TemplatingContext[key] = val;
+            }
+        }
+        const template = await TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
         return template;
     }
 
@@ -58,6 +65,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         command.option('--stack-description [description]', 'description of the stack that will be displayed CloudFormation');
         command.option('--parameters [parameters]', 'parameter values passed to CloudFormation when executing stacks');
         command.option('--termination-protection', 'value that indicates whether stack must have deletion protection');
+        command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--update-protection', 'value that indicates whether stack must have a stack policy that prevents updates');
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks after which execution stops', 0);
@@ -95,42 +103,42 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
             if (updateProtection === true) {
                 stackPolicy = {
                     Statement:
-                     {
+                    {
                         Effect: 'Deny',
                         Action: 'Update:*',
                         Principal: '*',
                         Resource: '*',
-                     },
+                    },
                 };
             } else if (updateProtection === false) {
                 stackPolicy = {
                     Statement:
-                     {
+                    {
                         Effect: 'Allow',
                         Action: 'Update:*',
                         Principal: '*',
                         Resource: '*',
-                     },
+                    },
                 };
             }
         }
         if (stackPolicy === undefined) {
             stackPolicy = {
                 Statement:
-                 {
+                {
                     Effect: 'Allow',
                     Action: 'Update:*',
                     Principal: '*',
                     Resource: '*',
-                 },
+                },
             };
         }
-        const template = UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
+        const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const parameters = this.parseCfnParameters(command.parameters);
         const state = await this.getState(command);
         GlobalState.Init(state, template);
 
-        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, govCloud, cloudFormationRoleName, undefined, taskViaRoleArn);
+        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, govCloud, cloudFormationRoleName, command.resolver, undefined, taskViaRoleArn);
 
         const cfnTasks = await cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
@@ -157,6 +165,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     stackName: string;
     stackDescription?: string;
     parameters?: string | {};
+    templatingContext?: string | {};
     terminationProtection?: boolean;
     updateProtection?: boolean;
     forceDeploy?: boolean;

@@ -8,8 +8,8 @@ describe('when password policy resource', () => {
     let resource: IResource;
     let properties: IPasswordPolicyProperties;
 
-    beforeEach(() => {
-        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+    beforeEach(async () => {
+        template = await TemplateRoot.create('./test/resources/valid-basic.yml');
 
         properties = {
             RequireLowercaseCharacters: true,
@@ -76,8 +76,8 @@ describe('when password policy resource has no reuse prevention', () => {
     let resource: IResource;
     let properties: IPasswordPolicyProperties;
 
-    beforeEach(() => {
-        template = TemplateRoot.create('./test/resources/valid-basic.yml');
+    beforeEach(async () => {
+        template = await TemplateRoot.create('./test/resources/valid-basic.yml');
 
         properties = {
             RequireLowercaseCharacters: true,

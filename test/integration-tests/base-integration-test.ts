@@ -4,6 +4,7 @@ import { AwsUtil } from "~util/aws-util";
 import { ConsoleUtil } from "~util/console-util";
 import { IPerformTasksCommandArgs, IDescribeStackCommandArgs, IUpdateStacksCommandArgs } from "~commands/index";
 import { readFileSync } from "fs";
+import { GenericTaskRunner } from "~core/generic-task-runner";
 
 export const profileForIntegrationTests = 'org-formation-test-v2'
 
@@ -11,7 +12,7 @@ export const baseBeforeAll = async (profileName: string = profileForIntegrationT
     jest.setTimeout(99999999);
 
     AwsUtil.SetMasterAccountId(undefined);
-
+    GenericTaskRunner.RethrowTaskErrors = true;
     ConsoleUtil.verbose = false;
     ConsoleUtil.printStacktraces = true;
     process.on('unhandledRejection', error => {

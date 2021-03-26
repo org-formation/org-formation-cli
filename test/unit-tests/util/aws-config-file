@@ -1,0 +1,17 @@
+[default]
+output = json
+region = us-east-1
+
+[profile mfa]
+source_profile = default
+role_arn = arn:aws:iam::123456789012:role/assumable
+mfa_serial = arn:aws:iam::123456789012:mfa/virtual
+
+[profile credential-process]
+credential_process = exec-credential-process credential-process
+
+[profile aws-sso]
+sso_start_url = https://11111111.awsapps.com/start
+sso_region = us-east-1
+sso_account_id = 123456789012
+sso_role_name = admin

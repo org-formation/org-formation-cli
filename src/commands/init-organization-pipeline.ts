@@ -10,7 +10,6 @@ import { AwsUtil, CfnUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '../util
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
-import { Validator } from '~parser/validator';
 
 
 const commandName = 'init-pipeline';
@@ -38,9 +37,6 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     }
 
     public async performCommand(command: IInitPipelineCommandArgs): Promise<void> {
-        if (!command.region) {
-            throw new OrgFormationError('argument --region is missing');
-        }
 
         // in this context currentAccountId is the master account
         this.currentAccountId = await AwsUtil.GetMasterAccountId();
@@ -48,20 +44,18 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
         await this.checkRunInMasterAccount();
 
-        command.delegateToBuildAccount = command.buildAccountId !== undefined;
+        command.delegateToBuildAccount = (command.buildAccountId !== undefined && this.currentAccountId !== command.buildAccountId);
         if (command.delegateToBuildAccount) {
             command.buildProcessRoleName = 'OrganizationFormationBuildAccessRole';
             this.buildAccountId = command.buildAccountId;
             this.s3credentials = await AwsUtil.GetCredentials(command.buildAccountId, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
         }
 
-        Validator.validateRegion(command.region);
-
         if (command.crossAccountRoleName) {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;
         }
 
-        const region = command.region;
+        const region = command.region ?? AwsUtil.GetDefaultRegion(command.profile);
 
         const resourcePrefix = command.resourcePrefix;
         const stackName = command.stackName;
@@ -120,7 +114,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         await this.uploadInitialCommit(stateBucketName, path + 'initial-commit/', template.template, buildSpecContents, organizationTasksContents, cloudformationTemplateContents, orgParametersInclude, buildAccessRoleTemplate);
 
         ConsoleUtil.LogInfo('creating codecommit / codebuild and codepipeline resources using CloudFormation...');
-        await this.executePipelineStack(this.buildAccountId, cloudformationTemplateContents, command.region, stateBucketName, resourcePrefix, stackName, repositoryName);
+        await this.executePipelineStack(this.buildAccountId, cloudformationTemplateContents, region, stateBucketName, resourcePrefix, stackName, repositoryName);
 
         await template.state.save(storageProvider);
 

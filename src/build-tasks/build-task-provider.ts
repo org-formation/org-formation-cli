@@ -7,6 +7,7 @@ import { IPerformTasksCommandArgs }  from '~commands/index';
 import { ITrackedTask } from '~state/persisted-state';
 import { PluginProvider } from '~plugin/plugin';
 import { PluginBuildTaskProvider } from '~plugin/plugin-task';
+import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 export class BuildTaskProvider {
     private static SingleInstance: BuildTaskProvider;
@@ -35,27 +36,27 @@ export class BuildTaskProvider {
     }
 
 
-    public static createValidationTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
+    public static createValidationTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IBuildTask {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[configuration.Type];
         if (provider === undefined) {throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);}
-        const validationTask = provider.createTaskForValidation(configuration, command);
+        const validationTask = provider.createTaskForValidation(configuration, command, resolver);
         return validationTask;
     }
 
-    static createPrintTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
+    static createPrintTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IBuildTask {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[configuration.Type];
         if (provider === undefined) {throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);}
-        const validationTask = provider.createTaskForPrint(configuration, command);
+        const validationTask = provider.createTaskForPrint(configuration, command, resolver);
         return validationTask;
     }
 
-    public static createBuildTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs): IBuildTask {
+    public static createBuildTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IBuildTask {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[configuration.Type];
         if (provider === undefined) {throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);}
-        const task = provider.createTask(configuration, command);
+        const task = provider.createTask(configuration, command, resolver);
         return task;
     }
 
@@ -98,6 +99,12 @@ export class BuildTaskProvider {
             if (task.type === 'update-organization') {
                 return true;
             }
+            if (task.childTasks && task.childTasks.length > 0) {
+                const updateOrgTasks = this.recursivelyFilter(task.childTasks, t => t.type === 'update-organization');
+                if (updateOrgTasks.length > 0) {
+                    return true;
+                }
+            }
 
             if (typeof buildTaskConfig.DependsOn === 'string') {
                 return task.name === buildTaskConfig.DependsOn;
@@ -110,8 +117,8 @@ export class BuildTaskProvider {
 
 export interface IBuildTaskProvider<TConfig extends IBuildTaskConfiguration> {
     type: string;
-    createTask(config: TConfig, command: IPerformTasksCommandArgs): IBuildTask;
-    createTaskForValidation(config: TConfig, command: IPerformTasksCommandArgs): IBuildTask | undefined;
-    createTaskForPrint(config: TConfig, command: IPerformTasksCommandArgs): IBuildTask | undefined;
-    createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs): IBuildTask | undefined;
+    createTask(config: TConfig, command: IPerformTasksCommandArgs, resolver?: CfnExpressionResolver): IBuildTask;
+    createTaskForValidation(config: TConfig, command: IPerformTasksCommandArgs, resolver?: CfnExpressionResolver): IBuildTask | undefined;
+    createTaskForPrint(config: TConfig, command: IPerformTasksCommandArgs, resolver?: CfnExpressionResolver): IBuildTask | undefined;
+    createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs, resolver?: CfnExpressionResolver): IBuildTask | undefined;
 }

@@ -56,7 +56,7 @@ export class Validator {
         }
 
         Validator.ThrowForUnknownAttribute(config, `task ${taskName}`,
-            'Type', 'DependsOn', 'Skip', 'Template', 'StackName', 'StackDescription', 'Parameters', 'StackPolicy',
+            'Type', 'DependsOn', 'Skip', 'Template', 'StackName', 'StackDescription', 'Parameters', 'TemplatingContext', 'StackPolicy',
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
             'OrganizationBindings', 'TerminationProtection', 'UpdateProtection', 'CloudFormationRoleName', 'TaskRoleName',
             'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance', 'LogVerbose', 'ForceDeploy', 'TaskViaRoleArn');
@@ -93,7 +93,7 @@ export class Validator {
 
         Validator.ThrowForUnknownAttribute(root, 'template root',
             'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'DefaultOrganizationBinding', 'OrganizationBindings', 'DefaultOrganizationBindingRegion', 'OrganizationBindingRegion',
-            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs', 'Transform');
+            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs', 'Transform', 'Globals');
 
     }
 

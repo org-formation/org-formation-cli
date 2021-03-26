@@ -1,6 +1,7 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
 import { DescribeStacksOutput, ListStacksOutput } from "aws-sdk/clients/cloudformation";
+import { PrintTasksCommand } from "~commands/print-tasks";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cfn-parameter-expressions/';
 
@@ -18,6 +19,7 @@ describe('when importing value from another stack', () => {
             const { command, cfnClient } = context;
 
             await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' })
+            await PrintTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' })
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' });
 
             describedBucketStack = await cfnClient.describeStacks({StackName: 'my-scenario-export-bucket'}).promise();
@@ -181,6 +183,19 @@ describe('when importing value from another stack', () => {
         expect(parameter.ParameterValue).toBe('4d06f8349b277ddc4cd33dc192bfccf3');
     })
 
+    test('cmd gets resolved properly', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'cmd');
+        expect(parameter.ParameterValue).toBe('check command');
+    })
+
+    test('find in map can be used with !Ref CurrentAccount', () =>{
+        expect(describeBucketRoleStack).toBeDefined();
+
+        const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x=>x.ParameterKey === 'ip');
+        expect(parameter.ParameterValue).toBe('10.201.30');
+    })
     test('select gets resolved properly', () =>{
         expect(describeBucketRoleStack).toBeDefined();
 

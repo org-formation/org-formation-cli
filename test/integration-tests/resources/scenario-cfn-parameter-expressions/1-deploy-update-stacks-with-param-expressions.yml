@@ -25,6 +25,10 @@ Mappings:
     MyGroup2:
       MyKey: [MyVal2]
       MyKey2: [MyVal22]
+  UsingAccount:
+    IpAddresses:
+      102625093955: 10.201.30
+      340381375986: 10.201.31
 
 
 OrganizationUpdate:
@@ -77,6 +81,8 @@ PolicyTemplate:
     readFile: !ReadFile ./file.txt
     md5readFile: !MD5
       - !ReadFile ./file.txt
+    cmd: !Cmd 'echo "check command"'
+    ip: !FindInMap [UsingAccount, IpAddresses, !Ref CurrentAccount]
     select: !Select [2, ['one', 'two', 'three']]
     selectFindInMap: !Select [0, !FindInMap [MyMapWithArrarys, MyGroup1, MyKey]]
     jsonString1: !JsonString

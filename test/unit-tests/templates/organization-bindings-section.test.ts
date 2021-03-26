@@ -9,7 +9,7 @@ describe('when  using organization bindings section', () => {
     let bindings: ICfnBinding[];
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/organization-bindings-section/organization-bindings-section.yml');
+        template = await TemplateRoot.create('./test/resources/organization-bindings-section/organization-bindings-section.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({ type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc' });

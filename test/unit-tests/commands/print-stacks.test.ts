@@ -99,7 +99,7 @@ describe('when executing print-stacks command', () => {
     let commandArgs: IPrintStacksCommandArgs;
     let consoleOut: Sinon.SinonStub;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         consoleOut = sandbox.stub(ConsoleUtil, 'Out');
 
         commanderCommand = new Command('root');
@@ -109,7 +109,7 @@ describe('when executing print-stacks command', () => {
         sandbox.stub(AwsUtil, 'GetMasterAccountId').returns(Promise.resolve('123456789012'));
         sandbox.stub(AwsUtil, 'GetBuildProcessAccountId').returns(Promise.resolve('123456789012'));
 
-        const template = TemplateRoot.create('./test/resources/cloudformation-template.yml', {
+        const template = await TemplateRoot.create('./test/resources/cloudformation-template.yml', {
             OrganizationFile:  './test/resources/valid-basic.yml',
             DefaultOrganizationBinding: { Account: '*', Region: 'eu-central-1'}
         });

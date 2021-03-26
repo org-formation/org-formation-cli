@@ -178,19 +178,6 @@ describe('when executing init organization command', () => {
         expect(writeFileSyncStub.callCount).toBe(0);
     });
 
-    test('throws exception if region is undefined', async () => {
-        delete commandArgs.region;
-
-        try {
-            await command.performCommand(commandArgs);
-            throw Error('expected exception');
-        } catch (err) {
-            expect(err.message).toEqual(expect.stringContaining('region'));
-        }
-        expect(storageProviderCreateStub.callCount).toBe(0);
-        expect(writeFileSyncStub.callCount).toBe(0);
-    });
-
     test('command prints friendly message', async () => {
         await command.performCommand(commandArgs);
         expect(consoleInfo.callCount).toBeGreaterThan(0);

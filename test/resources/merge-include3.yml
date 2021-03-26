@@ -1,0 +1,17 @@
+SharedAccount1:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: shared1@myorg.com
+    AccountName: Shared Account 1
+
+SharedAccount2:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: shared2@myorg.com
+    AccountName: Shared Account 2
+
+SharedAccount3:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: shared3@myorg.com
+    AccountName: Shared Account 3

@@ -12,6 +12,7 @@ import { S3StorageProvider } from '~state/storage-provider';
 import { AwsEvents } from '~aws-provider/aws-events';
 import { yamlParse } from '~yaml-cfn/index';
 import { GlobalState } from '~util/global-state';
+import { FileUtil } from '~util/file-util';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -84,7 +85,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
     }
 
     public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {
-        if (command.organizationFile.startsWith('s3://')) {return;}
+        if (FileUtil.IsRemoteFile(command.organizationFile)) {return;}
         if (command.organizationFileHash !== state.getTemplateHashLastPublished()) {
             const contents = readFileSync(command.organizationFile).toString();
             const object = yamlParse(contents);

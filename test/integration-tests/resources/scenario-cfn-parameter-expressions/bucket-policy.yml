@@ -82,6 +82,10 @@ Parameters:
 
   refToAccountBinding:
     Type: String
+  ip:
+    Type: String
+  cmd:
+    Type: String
 
 Resources:
   BucketPolicy:

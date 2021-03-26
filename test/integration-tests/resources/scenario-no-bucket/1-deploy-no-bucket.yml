@@ -1,0 +1,10 @@
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+
+MyRoles:
+  Type: update-stacks
+  StackName: integration-test-my-role
+  DefaultOrganizationBindingRegion: us-east-1
+  DefaultOrganizationBinding: { Account: '*' }
+  Template: ./my-role.yml

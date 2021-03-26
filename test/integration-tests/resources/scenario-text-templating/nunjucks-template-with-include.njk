@@ -1,0 +1,16 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+
+  resourcePrefix:
+    Type: String
+
+Resources:
+
+{% for role in roleNames %}
+  Role{{ role }}:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub '${resourcePrefix}-{{ role }}'
+      AssumeRolePolicyDocument: !Include './nunjucks-template-included.njk'
+{% endfor %}

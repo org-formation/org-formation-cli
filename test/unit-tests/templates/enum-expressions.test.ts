@@ -12,7 +12,7 @@ describe('when resolving enum-expressions', () => {
     let masterAccountTemplate: ICfnTemplate;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/enum-expressions/enum-expressions.yml');
+        template = await TemplateRoot.create('./test/resources/enum-expressions/enum-expressions.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
 
         persistedState.setBinding({ type: OrgResourceTypes.MasterAccount, physicalId: '000000000000', logicalId: 'MasterAccount', lastCommittedHash: 'abc' });

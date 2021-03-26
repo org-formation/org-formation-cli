@@ -396,6 +396,7 @@ Really happy to implement this based on someone elses use-case.
 - [Custom Account Creation Workflow](examples/automation/create-account/readme.md)
 - [CLI reference](docs/cli-reference.md)
 - [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## Sponsors & collaborators
 
@@ -413,3 +414,4 @@ Special thanks to the following individuals:
 - [Yan Cui](http://theburningmonk.com)
 - [Eduardo Rodrigues](https://github.com/eduardomourar)
 - [Rene Mulder](https://github.com/rene84)
+- [Khai Do](https://github.com/zaro0508)

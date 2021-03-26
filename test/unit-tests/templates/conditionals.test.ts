@@ -15,7 +15,7 @@ describe('when creating a cross account depedency on a resource that has a condi
     let account2CfnTemplate: ICfnTemplate;
 
     beforeEach(async () => {
-        template = TemplateRoot.create('./test/resources/conditionals/conditionals.yml');
+        template = await TemplateRoot.create('./test/resources/conditionals/conditionals.yml');
         const persistedState = PersistedState.CreateEmpty(template.organizationSection.masterAccount.accountId);
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '111111111111', logicalId: 'Account1', lastCommittedHash: 'abc'});
         persistedState.setBinding({type: OrgResourceTypes.Account, physicalId: '222222222222', logicalId: 'Account2', lastCommittedHash: 'abc'});

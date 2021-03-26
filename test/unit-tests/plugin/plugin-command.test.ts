@@ -56,7 +56,7 @@ describe('when executing plugin command', () => {
         template.organizationSection.masterAccount = new MasterAccountResource(template, 'master', {Type: OrgResourceTypes.MasterAccount, Properties: { AccountId: '123123123123', AccountName: 'hi there' }});
 
         createTemplateStub = jest.spyOn(TemplateRoot, 'create').
-                                mockReturnValue(template);
+                                mockReturnValue(Promise.resolve(template));
 
         commandArgs = {
             ...subCommanderCommand,

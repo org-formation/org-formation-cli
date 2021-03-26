@@ -377,7 +377,7 @@ export class AwsOrganizationWriter {
         }
 
         if (account.Alias !== resource.alias) {
-            const assumeRoleConfig = GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
+            const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
             const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
             if (account.Alias) {
                 try {
@@ -418,7 +418,7 @@ export class AwsOrganizationWriter {
                 } else {
                     try{
                         const targetAccountId = this.organization.masterAccount.Id;
-                        const assumeRoleConfig = GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, targetAccountId);
+                        const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, targetAccountId);
                         const support = await AwsUtil.GetSupportService(targetAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
                         const createCaseRequest: CreateCaseRequest = {
                             subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
@@ -444,7 +444,7 @@ export class AwsOrganizationWriter {
         }
 
         if (!passwordPolicyEquals(account.PasswordPolicy, resource.passwordPolicy)) {
-            const assumeRoleConfig = GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
+            const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
             const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
             if (account.PasswordPolicy) {
                 try {

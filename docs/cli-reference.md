@@ -105,6 +105,7 @@ Will deploy CloudFormation resources specified in *templateFile*.
 |<nobr>--parameters</nobr> | none | parameters that need to be passed to the CloudFormation template.|
 |<nobr>--termination-protection</nobr> | false | If specified the stack will be created with termination protection.|
 |<nobr>--update-protection</nobr> | false | When set to `true` will create a StackPolicy for the stacks that prevents any resource from being modified through CloudFormation. |
+|<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
 |<nobr>--max-concurrent-stacks</nobr> | 1 | Maximum number of stacks to be updated concurrently |
 |<nobr>--failed-stacks-tolerance</nobr> | 0 | The number of failed stacks after which execution stops|
 
@@ -125,6 +126,7 @@ validates the CloudFormation templates that will be generated based on *template
 |option|default|description|
 |---|---|---|
 |<nobr>--stack-name</nobr> | 'validation' | The stack name used to deploy CloudFormation resources (used in e.g. generated names for output)|
+|<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
 |<nobr>--parameters</nobr> | none | parameters that need to be passed to the CloudFormation template.|
 
 
@@ -167,9 +169,9 @@ Lists all stacks deployed to accounts using org-formation
 
 ### ``org-formation delete-stacks``
 
-Will delete all stacks of name *stackName* that have been deployed using org-formation.
+Will delete all stacks of name *my-stack* that have been deployed using org-formation.
 
-``> org-formation delete-stacks stackName``
+``> org-formation delete-stacks --stack-name my-stack``
 
 |option|default|description|
 |---|---|---|

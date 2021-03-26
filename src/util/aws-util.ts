@@ -1,19 +1,22 @@
 import { existsSync, readFileSync } from 'fs';
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
-import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials';
-import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
-import * as ini from 'ini';
+import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import AWS from 'aws-sdk';
+import { SingleSignOnCredentials } from '@mhlabs/aws-sdk-sso';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
 import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackInput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
+import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
+import * as ini from 'ini';
+import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 import { ICfnBinding } from '~cfn-binder/cfn-binder';
 
+type CredentialProviderOptions = ConstructorParameters<typeof AWS.SharedIniFileCredentials>[0];
 
 export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
@@ -44,23 +47,34 @@ export class AwsUtil {
 
     }
 
-    public static async InitializeWithProfile(profile?: string): Promise<void> {
-
+    public static async InitializeWithProfile(profile?: string): Promise<AWS.Credentials> {
         if (profile) {
-            await this.Initialize([
-                (): AWS.Credentials => new CustomMFACredentials(profile),
-                (): AWS.Credentials => new AWS.SharedIniFileCredentials({ profile }),
-            ]);
-        } else {
-            await this.Initialize(CredentialProviderChain.defaultProviders);
-        }
+            process.env.AWS_SDK_LOAD_CONFIG = '1';
+            const params: CredentialProviderOptions = { profile };
+            if (process.env.AWS_SHARED_CREDENTIALS_FILE) {
+                params.filename = process.env.AWS_SHARED_CREDENTIALS_FILE;
+            }
 
+            // Setup a MFA callback to ask the code from user
+            params.tokenCodeFn = async (mfaSerial: string, callback: any): Promise<void> => {
+                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
+                callback(null, token);
+            };
+
+            return await this.Initialize([
+                (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
+                (): AWS.Credentials => new SingleSignOnCredentials(params),
+                (): AWS.Credentials => new AWS.ProcessCredentials(params),
+            ]);
+        }
+        const defaultProviders = CredentialProviderChain.defaultProviders;
+        defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
+        return await this.Initialize(defaultProviders);
     }
 
-    public static async Initialize(providers: provider[]): Promise<void> {
+    public static async Initialize(providers: provider[]): Promise<AWS.Credentials> {
         const chainProvider = new CredentialProviderChain(providers);
-
-        AWS.config.credentials = await chainProvider.resolvePromise();
+        return AWS.config.credentials = await chainProvider.resolvePromise();
     }
 
     public static SetMasterAccountId(masterAccountId: string): void {
@@ -112,7 +126,7 @@ export class AwsUtil {
             return AwsUtil.masterGovCloudAccountId;
         }
         const govCloudCredentials = await AwsUtil.GetGovCloudCredentials();
-        const stsClient = new STS({credentials: govCloudCredentials, region: 'us-gov-west-1'}); // if not set, assume build process runs in master
+        const stsClient = new STS({ credentials: govCloudCredentials, region: 'us-gov-west-1' }); // if not set, assume build process runs in master
         const caller = await stsClient.getCallerIdentity().promise();
         AwsUtil.masterGovCloudAccountId = caller.Account;
         return AwsUtil.masterGovCloudAccountId;
@@ -126,6 +140,10 @@ export class AwsUtil {
         const caller = await stsClient.getCallerIdentity().promise();
         AwsUtil.buildProcessAccountId = caller.Account;
         return AwsUtil.buildProcessAccountId;
+    }
+
+    public static async GetBuildRunningOnMasterAccount(): Promise<boolean> {
+        return (await this.GetMasterAccountId()) === (await this.GetBuildProcessAccountId());
     }
 
 
@@ -145,8 +163,14 @@ export class AwsUtil {
         return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
-    public static async GetS3Service(accountId: string, region: string, roleInTargetAccount?: string): Promise<S3> {
-        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, { region }, roleInTargetAccount);
+    public static async GetS3Service(accountId: string, region?: string, roleInTargetAccount?: string): Promise<S3> {
+        const config: ServiceConfigurationOptions = {};
+        if (region !== undefined) {
+            config.region = region;
+        }
+
+        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, config, roleInTargetAccount);
+
     }
 
     public static async GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string): Promise<IAM> {
@@ -162,13 +186,14 @@ export class AwsUtil {
         await s3client.deleteObject({ Bucket: bucketName, Key: objectKey }).promise();
     }
 
-    private static async GetOrCreateService<TService>(ctr: new (args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: CloudFormation.Types.ClientConfiguration = {}, roleInTargetAccount: string, viaRoleArn?: string): Promise<TService> {
+    private static async GetOrCreateService<TService>(ctr: new (args: CloudFormation.Types.ClientConfiguration) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: ServiceConfigurationOptions = {}, roleInTargetAccount: string, viaRoleArn?: string): Promise<TService> {
         const cachedService = cache[cacheKey];
         if (cachedService) {
             return cachedService;
         }
 
         const config = clientConfig;
+
 
         if (typeof roleInTargetAccount !== 'string') {
             roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
@@ -184,7 +209,6 @@ export class AwsUtil {
         cache[cacheKey] = service;
         return service;
     }
-
 
     public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string): Promise<CredentialsOptions | undefined> {
 
@@ -225,8 +249,8 @@ export class AwsUtil {
 
     private static async GetCredentialsForRole(roleArn: string, config: STS.ClientConfiguration): Promise<CredentialsOptions> {
         const sts = new STS(config);
-        // const tags: tagListType = [{Key: 'OrgFormation', Value: 'True'}];
-        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild'}).promise();
+
+        const response = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }).promise();
         const credentialOptions: CredentialsOptions = {
             accessKeyId: response.Credentials.AccessKeyId,
             secretAccessKey: response.Credentials.SecretAccessKey,
@@ -248,6 +272,16 @@ export class AwsUtil {
             }
         } while (listExportsRequest.NextToken);
         return undefined;
+    }
+
+    public static GetDefaultRegion(profileName?: string): string {
+        const homeDir = require('os').homedir();
+        const config = readFileSync(homeDir + '/.aws/config').toString('utf8');
+        const contents = ini.parse(config);
+        const profileKey = profileName ?
+            contents[profileName] ?? contents['profile ' + profileName] :
+            contents.default;
+        return profileKey.region ?? 'us-east-1';
     }
 
     private static masterAccountId: string | PromiseLike<string>;
@@ -316,7 +350,7 @@ export class CfnUtil {
     public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackInput | UpdateStackInput | ValidateTemplateInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
         if (stackInput.TemplateBody && stackInput.TemplateBody.length > 50000) {
             const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region);
-            const bucketName = `organization-formation-${binding.accountId}-large-templates`;
+            const bucketName = `org-formation-${binding.accountId}-${binding.region}-large-templates`;
             try {
                 await s3Service.createBucket({ Bucket: bucketName }).promise();
                 await s3Service.putBucketOwnershipControls({ Bucket: bucketName, OwnershipControls: { Rules: [{ ObjectOwnership: 'BucketOwnerPreferred' }] } }).promise();
@@ -382,7 +416,13 @@ export class CfnUtil {
                     } else if (-1 !== message.indexOf('No updates are to be performed.')) {
                         describeStack = await cfn.describeStacks({ StackName: updateStackInput.StackName }).promise();
                         // ignore;
-                    } else if ((-1 !== message.indexOf('is in UPDATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) || (-1 !== message.indexOf('is in UPDATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) || (-1 !== message.indexOf('is in UPDATE_IN_PROGRESS state and can not be updated.'))) {
+                    } else if (
+                        (-1 !== message.indexOf('is in UPDATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in UPDATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in UPDATE_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in CREATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in CREATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in CREATE_IN_PROGRESS state and can not be updated.'))) {
                         if (retryStackIsBeingUpdatedCount >= 20) { // 20 * 30 sec = 10 minutes
                             throw new OrgFormationError(`Stack ${updateStackInput.StackName} seems stuck in UPDATE_IN_PROGRESS (or similar) state.`);
                         }
@@ -404,7 +444,7 @@ export class CfnUtil {
     }
 }
 
- export class CustomMFACredentials extends AWS.Credentials {
+export class CustomMFACredentials extends AWS.Credentials {
     profile: string;
 
     constructor(profile: string) {
@@ -468,7 +508,6 @@ export class CfnUtil {
     }
 
 }
-
 const sleep = (seconds: number): Promise<void> => {
     return new Promise(resolve => setTimeout(resolve, 1000 * seconds));
 };
