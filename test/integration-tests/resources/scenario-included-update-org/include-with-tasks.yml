@@ -1,0 +1,26 @@
+
+Task1:
+  Type: update-stacks
+  Template: ./buckets.yml
+  StackName: slack1
+  DefaultOrganizationBinding:
+    Account: "*"
+    Region: eu-central-1
+
+Task2:
+  Type: update-stacks
+  Template: ./buckets.yml
+  StackName: slack2
+  DefaultOrganizationBinding:
+    Account: !Ref NewAccount
+    Region: eu-central-1
+
+Task3:
+  Type: update-stacks
+  Template: ./buckets.yml
+  StackName: slack3
+  DefaultOrganizationBinding:
+    Account:
+      - !Ref NewAccount
+      - !Ref MasterAccount
+    Region: eu-central-1
