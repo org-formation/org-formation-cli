@@ -2,7 +2,7 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
-**unreleased**
+**version 0.9.15**
 
 - BREAKING CHANGE: when using OrgFormationBuild role, this role will be used and **must be present** in all accounts (also in the build account), more info [here](https://github.com/org-formation/org-formation-cli/blob/master/docs/0.9.15-permission-change.md)
 - feat: support for `<<` (merge operator) in the organization.yml file. this allows for large organization.yml files to be split out (using `<<: Include ./dev-accounts.yml`)
