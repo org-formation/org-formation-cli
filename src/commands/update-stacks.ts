@@ -7,7 +7,6 @@ import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/parser';
 import { Validator } from '~parser/validator';
 import { GlobalState } from '~util/global-state';
-import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 const commandName = 'update-stacks <templateFile>';
 const commandDescription = 'update CloudFormation resources in accounts';
@@ -42,13 +41,13 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         }
         if (command.parameters) {
             templateOverrides.ParameterValues = {};
-            for(const [key, val] of Object.entries(command.parameters)) {
+            for (const [key, val] of Object.entries(command.parameters)) {
                 templateOverrides.ParameterValues[key] = val;
             }
         }
         if (command.templatingContext) {
             templateOverrides.TemplatingContext = {};
-            for(const [key, val] of Object.entries(command.templatingContext)) {
+            for (const [key, val] of Object.entries(command.templatingContext)) {
                 templateOverrides.TemplatingContext[key] = val;
             }
         }
@@ -109,24 +108,24 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
             } else if (updateProtection === false) {
                 stackPolicy = {
                     Statement:
-                     {
+                    {
                         Effect: 'Allow',
                         Action: 'Update:*',
                         Principal: '*',
                         Resource: '*',
-                     },
+                    },
                 };
             }
         }
         if (stackPolicy === undefined) {
             stackPolicy = {
                 Statement:
-                 {
+                {
                     Effect: 'Allow',
                     Action: 'Update:*',
                     Principal: '*',
                     Resource: '*',
-                 },
+                },
             };
         }
         const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
