@@ -32,7 +32,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: iam:PassRole
-                Resource: !GetAtt MyCloudFormmationRole.Arn
+                Resource: !GetAtt MyCloudFormationRole.Arn
       RoleName: MyTaskRole
       AssumeRolePolicyDocument:
        Version: 2012-10-17
@@ -42,13 +42,13 @@ Resources:
            Principal:
             AWS: Fn::EnumTargetAccounts AssumeRoleBinding '${account}'
 
-  MyCloudFormmationRole:
+  MyCloudFormationRole:
     OrganizationBinding: !Ref RoleBinding
     Type: AWS::IAM::Role
     Properties:
       ManagedPolicyArns:
       - 'arn:aws:iam::aws:policy/AdministratorAccess'
-      RoleName: MyCloudFormmationRole
+      RoleName: MyCloudFormationRole
       AssumeRolePolicyDocument:
        Version: 2012-10-17
        Statement:
