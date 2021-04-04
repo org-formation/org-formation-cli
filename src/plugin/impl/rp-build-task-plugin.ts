@@ -19,14 +19,14 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     convertToCommandArgs(config: IRpBuildTaskConfig, command: IPerformTasksCommandArgs): IRpCommandArgs {
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'Path',
-           'FailedTaskTolerance', 'MaxConcurrentTasks', 'RoleArn', 'ResourceType', 'SchemaHandlerPackage',
-           'ExecutionRole');
+            'FailedTaskTolerance', 'MaxConcurrentTasks', 'RoleArn', 'ResourceType', 'SchemaHandlerPackage',
+            'ExecutionRole');
 
         if (typeof config.SchemaHandlerPackage !== 'string') {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute SchemaHandlerPackage`);
         }
 
-        return  {
+        return {
             ...command,
             name: config.LogicalName,
             schemaHandlerPackage: config.SchemaHandlerPackage,
@@ -54,7 +54,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     getValuesForEquality(command: IRpCommandArgs): any {
-        return  {
+        return {
             resourceType: command.resourceType,
             schemaHandlerPackage: command.schemaHandlerPackage,
             executionRole: command.executionRole,
@@ -83,19 +83,19 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         const cfn = await AwsUtil.GetCloudFormation(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
         let listVersionsResponse: ListTypeVersionsOutput = {};
         do {
-            listVersionsResponse = await cfn.listTypeVersions({Type: 'RESOURCE', TypeName: binding.task.resourceType, NextToken: listVersionsResponse.NextToken}).promise();
-            for(const version of listVersionsResponse.TypeVersionSummaries) {
+            listVersionsResponse = await cfn.listTypeVersions({ Type: 'RESOURCE', TypeName: binding.task.resourceType, NextToken: listVersionsResponse.NextToken }).promise();
+            for (const version of listVersionsResponse.TypeVersionSummaries) {
                 if (!version.IsDefaultVersion) {
-                    await cfn.deregisterType({Type: 'RESOURCE', TypeName: binding.task.resourceType, VersionId: version.VersionId}).promise();
+                    await cfn.deregisterType({ Type: 'RESOURCE', TypeName: binding.task.resourceType, VersionId: version.VersionId }).promise();
                 }
             }
-        }while(listVersionsResponse.NextToken);
-        await cfn.deregisterType({Type: 'RESOURCE', TypeName: binding.task.resourceType}).promise();
+        } while (listVersionsResponse.NextToken);
+        await cfn.deregisterType({ Type: 'RESOURCE', TypeName: binding.task.resourceType }).promise();
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver */): Promise<void> {
 
-        const {task, target, previousBindingLocalHash } = binding;
+        const { task, target, previousBindingLocalHash } = binding;
         if (task.forceDeploy !== true &&
             task.taskLocalHash !== undefined &&
             task.taskLocalHash === previousBindingLocalHash) {
@@ -123,20 +123,20 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         let registrationStatus: DescribeTypeRegistrationOutput = {};
         do {
             await sleep(3000);
-            registrationStatus = await cfn.describeTypeRegistration({RegistrationToken: response.RegistrationToken}).promise();
-        }while(registrationStatus.ProgressStatus === 'IN_PROGRESS');
+            registrationStatus = await cfn.describeTypeRegistration({ RegistrationToken: response.RegistrationToken }).promise();
+        } while (registrationStatus.ProgressStatus === 'IN_PROGRESS');
 
         if (registrationStatus.ProgressStatus !== 'COMPLETE') {
             throw new OrgFormationError(`Registration of Resource Type ${task.resourceType} failed. ${registrationStatus.Description}`);
         }
 
-        await cfn.setTypeDefaultVersion({Arn: registrationStatus.TypeVersionArn}).promise();
+        await cfn.setTypeDefaultVersion({ Arn: registrationStatus.TypeVersionArn }).promise();
     }
 
     private async ensureExecutionRole(cfn: CloudFormation, handlerPackageUrl: string): Promise<string> {
 
         if (handlerPackageUrl === undefined || !handlerPackageUrl.startsWith(communityResourceProviderCatalogS3Path)) {
-            throw new OrgFormationError('Can only automatically install ExecutionRole for resource providers hosted on community-resource-provider-catalog');
+            throw new OrgFormationError('Can only automatically install ExecutionRole for resource providers hosted on community-resource-provider-catalog. As a workaround, you could just use the native cloudformation resource to actually register the type: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudformation-resourceversion.html');
         }
 
         const { name, version } = this.getResourceRoleName(handlerPackageUrl);
@@ -152,7 +152,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         return output.OutputValue;
     }
 
-    private getResourceRoleName(handlerPackageUrl: string): { name: string; version: string }  {
+    private getResourceRoleName(handlerPackageUrl: string): { name: string; version: string } {
         const packageNameWithVersion = handlerPackageUrl.replace(communityResourceProviderCatalogS3Path, '').replace('.zip', '');
         const packageNameWithVersionParts = packageNameWithVersion.split('-');
         const version = packageNameWithVersionParts[packageNameWithVersionParts.length - 1];
