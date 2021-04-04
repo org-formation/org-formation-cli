@@ -185,12 +185,15 @@ export class AwsUtil {
         } catch (err) {
             const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
             if (accountId === buildAccountId) {
-                ConsoleUtil.LogWarning('hi there!');
-                ConsoleUtil.LogWarning(`you just ran into an error when assuming the role ${roleInTargetAccount} in account ${buildAccountId}.`);
-                ConsoleUtil.LogWarning('possibly, this is due a breaking change in org-formation v0.9.15.');
-                ConsoleUtil.LogWarning('from v0.9.15 onwards the org-formation cli will assume a role in every account it deploys tasks to.');
-                ConsoleUtil.LogWarning('this will make permission management and SCPs to deny / allow org-formation tasks easier.');
-                ConsoleUtil.LogWarning('thanks!');
+                ConsoleUtil.LogWarning('======================================');
+                ConsoleUtil.LogWarning('Hi there!');
+                ConsoleUtil.LogWarning(`You just ran into an error when assuming the role ${roleInTargetAccount} in account ${buildAccountId}.`);
+                ConsoleUtil.LogWarning('Possibly, this is due a breaking change in org-formation v0.9.15.');
+                ConsoleUtil.LogWarning('From v0.9.15 onwards the org-formation cli will assume a role in every account it deploys tasks to.');
+                ConsoleUtil.LogWarning('This will make permission management and SCPs to deny / allow org-formation tasks easier.');
+                ConsoleUtil.LogWarning('More information: https://github.com/org-formation/org-formation-cli/tree/master/docs/0.9.15-permission-change.md');
+                ConsoleUtil.LogWarning('Thanks!');
+                ConsoleUtil.LogWarning('======================================');
             }
             throw err;
         }
@@ -228,8 +231,8 @@ export class AwsUtil {
         const config = readFileSync(homeDir + '/.aws/config').toString('utf8');
         const contents = ini.parse(config);
         const profileKey = profileName ?
-                        contents[profileName] ?? contents['profile ' + profileName] :
-                        contents.default;
+            contents[profileName] ?? contents['profile ' + profileName] :
+            contents.default;
         return profileKey.region ?? 'us-east-1';
     }
 
@@ -362,12 +365,12 @@ export class CfnUtil {
                         describeStack = await cfn.describeStacks({ StackName: updateStackInput.StackName }).promise();
                         // ignore;
                     } else if (
-                            (-1 !== message.indexOf('is in UPDATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) ||
-                            (-1 !== message.indexOf('is in UPDATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) ||
-                            (-1 !== message.indexOf('is in UPDATE_IN_PROGRESS state and can not be updated.')) ||
-                            (-1 !== message.indexOf('is in CREATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) ||
-                            (-1 !== message.indexOf('is in CREATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) ||
-                            (-1 !== message.indexOf('is in CREATE_IN_PROGRESS state and can not be updated.'))) {
+                        (-1 !== message.indexOf('is in UPDATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in UPDATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in UPDATE_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in CREATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in CREATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in CREATE_IN_PROGRESS state and can not be updated.'))) {
                         if (retryStackIsBeingUpdatedCount >= 20) { // 20 * 30 sec = 10 minutes
                             throw new OrgFormationError(`Stack ${updateStackInput.StackName} seems stuck in UPDATE_IN_PROGRESS (or similar) state.`);
                         }
