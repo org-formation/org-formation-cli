@@ -14,5 +14,5 @@ TestCustomRole:
   Type: update-stacks
   StackName: integration-test-custom-role
   Template: ./buckets.yml
-  CloudFormationRoleName: MyCloudFormmationRole
+  CloudFormationRoleName: MyCloudFormationRole
   TaskRoleName: MyTaskRole
