@@ -11,6 +11,7 @@ All notable changes to aws organization formation will be documented in this fil
 - feat: added !Cmd function to execute and capture the output of any shell command
 - feat: ofn alias to binary
 - feat: init & init-pipeline commands use default region from profiles file.
+- feat: support for nunjucks templating on CloudFormation templates
 - fix: allow `!Ref CurrentAccount` and `!FindInMap` to be used together in a tasks file.
 - fix: have init-pipeline create a pipeline that works with the main branch (as opposed to master)
 - fix: allow for SAM templates with a globals section to deploy
