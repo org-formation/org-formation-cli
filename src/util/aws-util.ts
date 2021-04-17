@@ -228,7 +228,7 @@ export class AwsUtil {
 
     public static GetDefaultRegion(profileName?: string): string {
         const regionFromEnv = process.env.AWS_REGION;
-        if (regionFromEnv) return regionFromEnv;
+        if (regionFromEnv) { return regionFromEnv; }
 
         const homeDir = require('os').homedir();
         const config = readFileSync(homeDir + '/.aws/config').toString('utf8');
