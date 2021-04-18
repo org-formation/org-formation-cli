@@ -3,11 +3,10 @@ SecurityGroupExample:
   Type: update-stacks
   Template: ./security-group.njk
   StackName: SecurityGroupExample
-  Parameters:
   TemplatingContext:
     ports:
       - 22
       - 80
   DefaultOrganizationBinding:
-    Account: '*'
+    Account: "*"
     Region: us-east-1
