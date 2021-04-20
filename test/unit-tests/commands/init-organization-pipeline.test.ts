@@ -267,11 +267,11 @@ describe('when executing init pipeline', () => {
             commandArgs.buildAccountId = buildAccountId;
 
             const generatedState = PersistedState.CreateEmpty(masterAccountId);
-            generatedState.setBinding({ physicalId: commandArgs.buildAccountId, type: OrgResourceTypes.Account, logicalId: 'MyBuildAcct', lastCommittedHash: 'zxx'});
+            generatedState.setBinding({ physicalId: commandArgs.buildAccountId, type: OrgResourceTypes.Account, logicalId: 'MyBuildAcct', lastCommittedHash: 'zxx' });
             generateDefaultTemplateStub.returns(new DefaultTemplate('template', generatedState));
 
             getBuildAccCredentials = sandbox.stub(AwsUtil, 'GetCredentials');
-            getBuildAccCredentials.returns( Promise.resolve({ accessKeyId: 'access-key-id', secretAccessKey: 'secret, ssst' } as CredentialsOptions) );
+            getBuildAccCredentials.returns(Promise.resolve({ accessKeyId: 'access-key-id', secretAccessKey: 'secret, ssst' } as CredentialsOptions));
         });
 
         test('build access role name is passed to template writer', async () => {
@@ -302,10 +302,10 @@ describe('when executing init pipeline', () => {
             expect(targetAccountId).toBe(buildAccountId);
         });
 
-        test('executes stack that creates build role', async () => {
+        test('executes stack that creates build role in master', async () => {
             await command.performCommand(commandArgs);
-            expect(executeRoleStackStackStub.callCount).toBe(1);
-            const args = executeRoleStackStackStub.lastCall.args;
+            expect(executeRoleStackStackStub.callCount).toBe(2);
+            const args = executeRoleStackStackStub.firstCall.args;
             const targetAccountId = args[0] as string;
             const buildAcctId = args[1] as string;
             const cfnTemplate = args[2] as string;
@@ -317,6 +317,23 @@ describe('when executing init pipeline', () => {
             expect(region).toBe(commandArgs.region);
             expect(stackName).toBe(commandArgs.roleStackName + '-master');
             expect(targetAccountId).toBe(masterAccountId);
+        });
+
+        test('executes stack that creates build role in build acct', async () => {
+            await command.performCommand(commandArgs);
+            expect(executeRoleStackStackStub.callCount).toBe(2);
+            const args = executeRoleStackStackStub.lastCall.args;
+            const targetAccountId = args[0] as string;
+            const buildAcctId = args[1] as string;
+            const cfnTemplate = args[2] as string;
+            const region = args[3] as string;
+            const stackName = args[4] as string;
+
+            expect(cfnTemplate).toEqual(expect.stringContaining('AWSTemplateFormatVersion: \'2010-09-09\''));
+            expect(buildAcctId).toBe(buildAccountId);
+            expect(region).toBe(commandArgs.region);
+            expect(stackName).toBe(commandArgs.roleStackName);
+            expect(targetAccountId).toBe(buildAccountId);
         });
 
         test('credentials are queried for build acct', async () => {
