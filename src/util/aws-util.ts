@@ -227,13 +227,24 @@ export class AwsUtil {
     }
 
     public static GetDefaultRegion(profileName?: string): string {
+        const defaultRegionFromEnv = process.env.AWS_DEFAULT_REGION;
+        if (defaultRegionFromEnv) { return defaultRegionFromEnv; }
+
         const homeDir = require('os').homedir();
         const config = readFileSync(homeDir + '/.aws/config').toString('utf8');
         const contents = ini.parse(config);
         const profileKey = profileName ?
             contents[profileName] ?? contents['profile ' + profileName] :
             contents.default;
-        return profileKey.region ?? 'us-east-1';
+
+        if (profileKey.region) {
+            return profileKey.region;
+        }
+
+        const regionFromEnv = process.env.AWS_REGION;
+        if (regionFromEnv) { return regionFromEnv; }
+
+        return 'us-east-1';
     }
 
     private static masterAccountId: string | PromiseLike<string>;
