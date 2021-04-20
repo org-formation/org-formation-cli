@@ -2,6 +2,10 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
+**version 0.9.16**
+
+- fix: missing role in build account when running init-pipeline
+
 **version 0.9.15**
 
 - BREAKING CHANGE: when using OrgFormationBuild role, this role will be used and **must be present** in all accounts (also in the build account), more info [here](https://github.com/org-formation/org-formation-cli/blob/master/docs/0.9.15-permission-change.md)
