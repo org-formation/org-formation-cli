@@ -22,7 +22,7 @@ export class BuildConfiguration {
     private file: string;
     private resolver: CfnExpressionResolver;
 
-    constructor(input: string, private readonly parameterValues: Record<string, string> = {}, private templatingContext: {}) {
+    constructor(input: string, private readonly parameterValues: Record<string, string> = {}, private templatingContext: {} = undefined) {
         this.file = input;
         this.resolver = new CfnExpressionResolver();
         this.tasks = this.enumBuildConfiguration(this.file, templatingContext);
