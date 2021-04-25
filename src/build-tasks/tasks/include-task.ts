@@ -20,8 +20,8 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
-        const buildConfig = new BuildConfiguration(taskFilePath, parameters);
+        const parameters: Record<string, any> = { ...command.parsedParameters, ...(config.Parameters ?? {}) };
+        const buildConfig = new BuildConfiguration(taskFilePath, parameters, config.TemplatingContext);
 
         const commandForInclude: IPerformTasksCommandArgs = {
             ...command,
@@ -53,8 +53,8 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
-        const buildConfig = new BuildConfiguration(taskFilePath, parameters);
+        const parameters: Record<string, any> = { ...command.parsedParameters, ...(config.Parameters ?? {}) };
+        const buildConfig = new BuildConfiguration(taskFilePath, parameters, config.TemplatingContext);
 
         const commandForInclude: IPerformTasksCommandArgs = {
             ...command,
@@ -81,8 +81,8 @@ export class IncludeTaskProvider implements IBuildTaskProvider<IIncludeTaskConfi
 
         const dir = path.dirname(config.FilePath);
         const taskFilePath = path.join(dir, config.Path);
-        const parameters: Record<string, any> = {...command.parsedParameters, ...(config.Parameters ?? {})};
-        const buildConfig = new BuildConfiguration(taskFilePath, parameters);
+        const parameters: Record<string, any> = { ...command.parsedParameters, ...(config.Parameters ?? {}) };
+        const buildConfig = new BuildConfiguration(taskFilePath, parameters, config.TemplatingContext);
 
         const commandForInclude: IPrintTasksCommandArgs = {
             ...command,
@@ -116,4 +116,5 @@ export interface IIncludeTaskConfiguration extends IBuildTaskConfiguration {
     FailedTaskTolerance?: number;
     ForceDeploy?: boolean;
     LogVerbose?: boolean;
+    TemplatingContext?: {};
 }

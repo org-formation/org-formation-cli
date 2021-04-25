@@ -12,6 +12,8 @@ import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
 import { yamlParseWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 import { ConsoleUtil } from '~util/console-util';
 import { TemplateRoot } from '~parser/parser';
+import { nunjucksParseWithIncludes } from '~yaml-cfn/nunjucks-parse-includes';
+import { nunjucksRender } from '~yaml-cfn/index';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -20,10 +22,10 @@ export class BuildConfiguration {
     private file: string;
     private resolver: CfnExpressionResolver;
 
-    constructor(input: string, private readonly parameterValues: Record<string, string> = {}) {
+    constructor(input: string, private readonly parameterValues: Record<string, string> = {}, private templatingContext: {}) {
         this.file = input;
         this.resolver = new CfnExpressionResolver();
-        this.tasks = this.enumBuildConfiguration(this.file);
+        this.tasks = this.enumBuildConfiguration(this.file, templatingContext);
     }
 
     public enumValidationTasks(command: IPerformTasksCommandArgs): IBuildTask[] {
@@ -93,28 +95,37 @@ export class BuildConfiguration {
 
             const dir = path.dirname(this.file);
             command.organizationFile = path.resolve(dir, updateOrgTask.Template);
+            command.organizationFileTemplatingContext = updateOrgTask.TemplatingContext;
         }
 
         if (command.organizationFileHash === undefined) {
-            command.organizationFileContents = await this.readOrganizationFileContents(command.organizationFile);
+            command.organizationFileContents = await this.readOrganizationFileContents(command.organizationFile, command.organizationFileTemplatingContext);
             command.organizationFileHash = md5(command.organizationFileContents);
         }
 
         const pathDirname = path.dirname(command.organizationFile);
         const pathFile = path.basename(command.organizationFile);
+
+
         return TemplateRoot.createFromContents(command.organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
     }
 
-    private async readOrganizationFileContents(organizationFileLocation: string): Promise<string> {
+    private async readOrganizationFileContents(organizationFileLocation: string, textTemplatingContext: any): Promise<string> {
         try {
             if (organizationFileLocation.startsWith('s3://')) {
+                if (textTemplatingContext) { throw new Error('Text templating context is not supported on s3 hosted organization files'); }
                 const s3client = new S3(); // we don't know which role to assume yet....
                 const bucketAndKey = organizationFileLocation.substring(5);
                 const bucketAndKeySplit = bucketAndKey.split('/');
                 const response = await s3client.getObject({ Bucket: bucketAndKeySplit[0], Key: bucketAndKeySplit[1] }).promise();
                 return response.Body.toString();
             } else {
-                return readFileSync(organizationFileLocation).toString();
+                const contents = readFileSync(organizationFileLocation).toString();
+                if (textTemplatingContext) {
+                    const filename = path.basename(organizationFileLocation);
+                    return nunjucksRender(contents, filename, textTemplatingContext);
+                }
+                return contents;
             }
         } catch (err) {
             ConsoleUtil.LogError(`unable to load organization file from ${organizationFileLocation}.`, err);
@@ -122,21 +133,21 @@ export class BuildConfiguration {
         }
     }
 
-    public enumBuildConfiguration(filePath: string): IBuildTaskConfiguration[] {
-        const buildFile = this.loadBuildFile(filePath);
+    public enumBuildConfiguration(filePath: string, templatingContext: {}): IBuildTaskConfiguration[] {
+        const buildFile = this.loadBuildFile(filePath, templatingContext);
         if (buildFile.AWSTemplateFormatVersion !== undefined) {
             throw new OrgFormationError(`Error loading tasks file ${filePath}, seems like you are loading a template where a tasks file was expected...`);
         }
         return this.enumBuildConfigurationFromBuildFile(filePath, buildFile);
     }
 
-    public loadBuildFile(filePath: string): IBuildFile {
-
-        const buildFile = yamlParseWithIncludes(filePath) as IBuildFile;
-        if (buildFile === undefined) {
-            return {};
+    public loadBuildFile(filePath: string, templatingContext: {}): IBuildFile {
+        if (templatingContext) {
+            const templatedBuildFile = nunjucksParseWithIncludes(filePath, templatingContext) as IBuildFile;
+            return templatedBuildFile ?? {};
         }
-        return buildFile;
+        const buildFile = yamlParseWithIncludes(filePath) as IBuildFile;
+        return buildFile ?? {};
     }
     public enumBuildConfigurationFromBuildFile(filePath: string, buildFile: IBuildFile): IBuildTaskConfiguration[] {
         this.parameters = buildFile.Parameters;

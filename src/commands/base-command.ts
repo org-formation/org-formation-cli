@@ -20,6 +20,7 @@ import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template
 import { CfnParameters } from '~core/cfn-parameters';
 import { Validator } from '~parser/validator';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
+import { NunjucksDebugSettings } from '~yaml-cfn/index';
 
 const DEFAULT_STATE_OBJECT = 'state.json';
 
@@ -155,7 +156,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
-        const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount};
+        const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount };
 
         const awsReader = new AwsOrganizationReader(organizations, crossAccountConfig);
         const awsOrganization = new AwsOrganization(awsReader);
@@ -203,7 +204,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected static async GetStateBucketName(stateBucketName: string, accountId?: string): Promise<string> {
         const bucketName = stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
-            if (accountId === undefined){
+            if (accountId === undefined) {
                 accountId = await AwsUtil.GetBuildProcessAccountId();
             }
             return bucketName.replace('${AWS::AccountId}', accountId);
@@ -211,7 +212,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return bucketName;
     }
 
-    protected parseCfnParameters(commandParameters?: string | undefined | {}): Record<string, string>  {
+    protected parseCfnParameters(commandParameters?: string | undefined | {}): Record<string, string> {
 
         if (typeof commandParameters === 'object') {
             return commandParameters;
@@ -255,12 +256,16 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             AwsUtil.SetMasterAccountId(command.masterAccountId);
         }
 
+        if (command.debugTextTemplating) {
+            NunjucksDebugSettings.debug = true;
+        }
+
         command.initialized = true;
     }
 
     private loadRuntimeConfiguration(command: ICommandArgs): void {
         const rc = RC('org-formation', {}, {}) as IRCObject;
-        if (rc.configs !== undefined){
+        if (rc.configs !== undefined) {
 
             if (rc.organizationFile && rc.config && !rc.organizationFile.startsWith('s3://')) {
                 const dir = path.dirname(rc.config);
@@ -314,6 +319,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             if (process.argv.indexOf('--organization-state-bucket-name') === -1 && rc.organizationStateBucketName !== undefined) {
                 (command as IPerformTasksCommandArgs).organizationStateBucketName = rc.organizationStateBucketName;
             }
+
+            if (process.argv.indexOf('--debug-templating') === -1 && rc.debugTemplating !== undefined) {
+                (command as IPerformTasksCommandArgs).debugTextTemplating = rc.debugTemplating;
+            }
         }
 
     }
@@ -327,6 +336,7 @@ export interface ICommandArgs {
     organizationStateBucketName?: string;
     profile?: string;
     state?: PersistedState;
+    debugTextTemplating?: boolean;
     initialized?: boolean;
     printStack?: boolean;
     verbose?: boolean;
@@ -342,6 +352,7 @@ export interface IRCObject {
     stateObject?: string;
     organizationStateObject?: string;
     organizationStateBucketName?: string;
+    debugTemplating?: boolean;
     profile?: string;
     configs: string[];
     config: string;

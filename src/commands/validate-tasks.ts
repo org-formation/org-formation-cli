@@ -41,10 +41,10 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
 
         command.parsedParameters = this.parseCfnParameters(command.parameters);
-        const config = new BuildConfiguration(tasksFile, command.parsedParameters);
+        const config = new BuildConfiguration(tasksFile, command.parsedParameters, command.TemplatingContext);
 
         await config.fixateOrganizationFile(command);
         const validationTasks = config.enumValidationTasks(command);
-        await BuildRunner.RunValidationTasks(validationTasks, command.verbose === true , command.maxConcurrentTasks, command.failedTasksTolerance);
+        await BuildRunner.RunValidationTasks(validationTasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
     }
 }

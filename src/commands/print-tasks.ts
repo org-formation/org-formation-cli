@@ -49,11 +49,11 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         }
 
         command.parsedParameters = this.parseCfnParameters(command.parameters);
-        const config = new BuildConfiguration(tasksFile, command.parsedParameters);
+        const config = new BuildConfiguration(tasksFile, command.parsedParameters, undefined);
         await config.fixateOrganizationFile(command);
 
         const printTasks = config.enumPrintTasks(command);
-        await BuildRunner.RunPrintTasks(printTasks, command.verbose === true , command.maxConcurrentTasks, command.failedTasksTolerance);
+        await BuildRunner.RunPrintTasks(printTasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
     }
 }
 

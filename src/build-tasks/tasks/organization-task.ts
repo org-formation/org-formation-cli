@@ -31,7 +31,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         if (typeof config.TaskRoleName !== 'string' && typeof config.TaskRoleName !== 'undefined') {
             throw new OrgFormationError(`update-organization TaskViaRoleName attribute must be string, found: ${typeof config.TaskRoleName}`);
         }
-        if (config.TaskViaRoleArn !== undefined){
+        if (config.TaskViaRoleArn !== undefined) {
             throw new OrgFormationError('update-organization task does not support TaskViaRoleArn attribute');
         }
     }
@@ -89,4 +89,5 @@ export class UpdateOrganizationTaskProvider implements IBuildTaskProvider<IUpdat
 
 export interface IUpdateOrganizationTaskConfiguration extends IBuildTaskConfiguration {
     Template: string;
+    TemplatingContext?: {};
 }
