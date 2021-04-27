@@ -35,7 +35,8 @@ export class CfnTemplate {
         }
 
         if (accountLogicalId) {
-            result.uniqueNameForImport = accountLogicalId + 'DotResourcesDot' + result.uniqueNameForImport;
+            const accountLogicalWithDashes = accountLogicalId.replace(/\-/g, 'Dash');
+            result.uniqueNameForImport = accountLogicalWithDashes + 'DotResourcesDot' + result.uniqueNameForImport;
         }
         return result;
     }
