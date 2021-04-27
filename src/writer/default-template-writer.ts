@@ -69,12 +69,18 @@ export class DefaultTemplateWriter {
         for (const account of this.organizationModel.accounts) {
             const accountResource = this.generateAccount(lines, account);
 
-            bindings.push({
+            const accountBinding: IBinding = {
                 type: accountResource.type,
                 logicalId: accountResource.logicalName,
                 physicalId: account.Id,
                 lastCommittedHash: '',
-            });
+            };
+
+            if (account.GovCloudId) {
+                accountBinding.govCloudId = account.GovCloudId;
+            }
+
+            bindings.push(accountBinding);
         }
         for (const scp of this.organizationModel.policies) {
             if (scp.PolicySummary && scp.PolicySummary.AwsManaged) { continue; }
@@ -174,6 +180,10 @@ export class DefaultTemplateWriter {
         }
         if (account.Alias) {
             lines.push(new Line('Alias', account.Alias, 6));
+        }
+
+        if (account.GovCloudId) {
+            lines.push(new Line('GovCloudId', account.GovCloudId, 6));
         }
         if (account.Tags) {
             const tags = Object.entries(account.Tags);

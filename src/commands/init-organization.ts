@@ -1,8 +1,11 @@
 import { writeFileSync } from 'fs';
 import { Command } from 'commander';
 import { ConsoleUtil } from '../util/console-util';
+import { AwsUtil } from '../util/aws-util';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS, DEFAULT_ROLE_FOR_ORG_ACCESS } from '~util/aws-util';
+import { S3StorageProvider } from '~state/storage-provider';
+
 
 const commandName = 'init <file>';
 const commandDescription = 'generate template & initialize organization';
@@ -30,7 +33,7 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
             DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName = command.crossAccountRoleName;
         }
         this.storeCommand(command);
-
+        let govCloudProvider: S3StorageProvider;
         const filePath = command.file;
         const storageProvider = await this.createOrGetStateBucket(command, command.region);
         const template = await this.generateDefaultTemplate();
@@ -38,6 +41,14 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
         writeFileSync(filePath, templateContents);
 
         await template.state.save(storageProvider);
+
+        const isGovCloud = await AwsUtil.GetGovCloudProfile();
+        if (isGovCloud) {
+            const creds = await AwsUtil.GetGovCloudCredentials();
+            const masterAccountId = await AwsUtil.GetGovCloudMasterAccountId();
+            govCloudProvider = await this.createOrGetStateBucket(command, 'us-gov-west-1', masterAccountId, creds);
+            await template.state.save(govCloudProvider);
+        }
 
         ConsoleUtil.LogInfo(`Your organization template is written to ${command.file}`);
         ConsoleUtil.LogInfo('Hope this will get you started!');
