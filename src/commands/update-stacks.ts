@@ -7,7 +7,6 @@ import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/parser';
 import { Validator } from '~parser/validator';
 import { GlobalState } from '~util/global-state';
-import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
 const commandName = 'update-stacks <templateFile>';
 const commandDescription = 'update CloudFormation resources in accounts';

@@ -1,5 +1,5 @@
 import { IAM, Organizations } from 'aws-sdk/clients/all';
-import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
+import { Account, ListAccountsForParentRequest, ListAccountsResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
@@ -13,8 +13,14 @@ interface IAWSTags {
 interface IAWSAccountWithTags {
     Tags?: IAWSTags;
 }
+
+interface IAWSAccountWithGovCloud {
+    GovCloudId?: string;
+}
+
 interface IAWSAccountWithIAMAttributes {
     Alias?: string;
+    GovCloudAlias?: string;
     PasswordPolicy?: IAM.PasswordPolicy;
 }
 
@@ -47,7 +53,7 @@ interface IPolicyTargets {
 }
 
 export type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
-export type AWSAccount = Account & IAWSAccountWithTags & IAWSAccountWithSupportLevel & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject;
+export type AWSAccount = Account & IAWSAccountWithGovCloud & IAWSAccountWithTags & IAWSAccountWithSupportLevel & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject & IAWSAccountWithGovCloud;
 export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject & IObjectWitOrganizationalUnits;
 export type AWSRoot = Root & IObjectWithPolicies & IObjectWitOrganizationalUnits;
 
@@ -202,20 +208,35 @@ export class AwsOrganizationReader {
             const roots = await that.roots.getValue();
             const parentIds = organizationalUnits.map(x => x.Id);
             const rootIds = roots.map(x => x.Id);
+            const govCloudCreds = await AwsUtil.GetGovCloudCredentials();
             parentIds.push(...rootIds);
 
             do {
                 const req: ListAccountsForParentRequest = {
                     ParentId: parentIds.pop(),
                 };
-                let resp: ListAccountsForParentResponse;
+                let resp: ListAccountsResponse;
                 do {
                     resp = await that.organizationService.listAccountsForParent(req).promise();
+                    let gcResp: ListAccountsResponse;
+                    if (govCloudCreds) {
+                        const gcOrg = new Organizations({region: 'us-gov-west-1', credentials: govCloudCreds});
+                        gcResp = await gcOrg.listAccounts().promise();
+                    }
                     req.NextToken = resp.NextToken;
 
                     for (const acc of resp.Accounts) {
                         if (acc.Status === 'SUSPENDED') {
                             continue;
+                        }
+
+                        let gcAccount: Account = {};
+                        if (gcResp) {
+                            gcResp.Accounts.forEach(gc => {
+                                if (gc.Name === acc.Name) {
+                                    gcAccount = gc;
+                                }
+                            });
                         }
 
                         let tags: IAWSTags = {};
@@ -230,6 +251,7 @@ export class AwsOrganizationReader {
                                 AwsOrganizationReader.getIamPasswordPolicyForAccount(that, acc.Id),
                                 AwsOrganizationReader.getSupportLevelForAccount(that, acc.Id),
                             ]);
+
 
                         } catch (err) {
                             if (err.code === 'AccessDenied') {
@@ -251,6 +273,7 @@ export class AwsOrganizationReader {
                             Alias: alias,
                             PasswordPolicy: passwordPolicy,
                             SupportLevel: supportLevel,
+                            GovCloudId: gcAccount.Id,
                         };
 
                         const parentOU = organizationalUnits.find(x => x.Id === req.ParentId);
@@ -310,6 +333,28 @@ export class AwsOrganizationReader {
             throw err;
         }
     }
+
+    // private static async getIamAliasForGovCloudAccount(that: AwsOrganizationReader, accountId: string): Promise<string> {
+    //     const govCredentials = new Credentials(await AwsUtil.GetGovCloudCredentials());
+    //     if (govCredentials) {
+    //         try {
+
+    //             const iamService = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
+    //             const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
+    //             if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
+    //                 return response.AccountAliases[0];
+    //             } else {
+    //                 return undefined;
+    //             }
+    //         } catch (err) {
+    //             ConsoleUtil.LogDebug(`unable to get iam alias for account ${accountId}\nerr: ${err}`);
+    //             throw err;
+    //         }
+    //     } else {
+    //         return undefined;
+    //     }
+
+    // }
 
     private static async getIamPasswordPolicyForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAM.PasswordPolicy> {
         try {
