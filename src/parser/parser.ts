@@ -18,7 +18,7 @@ import { nunjucksParseContentWithIncludes } from '~yaml-cfn/nunjucks-parse-inclu
 type TemplateVersion = '2010-09-09-OC' | '2010-09-09';
 
 export interface ITemplate {
-    AWSTemplateFormatVersion: TemplateVersion;
+    AWSTemplateFormatVersion?: TemplateVersion;
     Transform?: string;
     StackName?: string;
     Description?: string;
