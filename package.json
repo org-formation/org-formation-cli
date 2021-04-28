@@ -50,6 +50,8 @@
     "node-fetch": "^2.6.1",
     "nunjucks": "^3.2.3",
     "rc": "^1.2.8",
+    "tmp": "^0.2.1",
+    "unzipper": "^0.10.11",
     "uuid": "^3.3.3",
     "yamljs": "^0.3.0"
   },
@@ -63,6 +65,8 @@
     "@types/md5": "^2.1.33",
     "@types/node": "^12.7.4",
     "@types/sinon": "^7.0.13",
+    "@types/tmp": "^0.2.0",
+    "@types/unzipper": "^0.10.3",
     "@types/uuid": "^3.4.5",
     "@types/yamljs": "^0.2.30",
     "@typescript-eslint/eslint-plugin": "^2.19.0",

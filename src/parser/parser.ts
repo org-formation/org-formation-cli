@@ -18,7 +18,7 @@ import { nunjucksParseContentWithIncludes } from '~yaml-cfn/nunjucks-parse-inclu
 type TemplateVersion = '2010-09-09-OC' | '2010-09-09';
 
 export interface ITemplate {
-    AWSTemplateFormatVersion: TemplateVersion;
+    AWSTemplateFormatVersion?: TemplateVersion;
     Transform?: string;
     StackName?: string;
     Description?: string;
@@ -129,7 +129,7 @@ export class TemplateRoot {
             const templatingContext = overrides.TemplatingContext;
             delete overrides.TemplatingContext;
             obj = nunjucksParseContentWithIncludes(normalizedContentsForParser, dirname, filename, templatingContext) as ITemplate;
-        } else{
+        } else {
             obj = yamlParseContentWithIncludes(normalizedContentsForParser, dirname) as ITemplate;
         }
         if (includedOrganization && !obj.Organization) {
