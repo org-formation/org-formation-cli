@@ -59,7 +59,8 @@ export class CfnTemplate {
             result.conditionForExport = resource.Condition;
         }
         if (accountLogicalId) {
-            result.uniqueNameForImport = accountLogicalId + 'DotResourcesDot' + result.uniqueNameForImport;
+            const accountLogicalWithDashes = accountLogicalId.replace(/\-/g, 'Dash');
+            result.uniqueNameForImport = accountLogicalWithDashes + 'DotResourcesDot' + result.uniqueNameForImport;
         }
         if (path && (path.endsWith('NameServers') || path.endsWith('DnsEntries'))) { // todo: add list of other attributes that are not string;
             result.valueType = 'CommaDelimitedList';
