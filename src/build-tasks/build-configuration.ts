@@ -143,6 +143,7 @@ export class BuildConfiguration {
         this.mappings = buildFile.Mappings;
         delete buildFile.Parameters;
         delete buildFile.Mappings;
+        delete buildFile.Definitions;
 
         const parametersSection = this.resolver.resolveFirstPass(this.parameters);
 

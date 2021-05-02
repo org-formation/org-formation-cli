@@ -129,7 +129,7 @@ export class TemplateRoot {
             const templatingContext = overrides.TemplatingContext;
             delete overrides.TemplatingContext;
             obj = nunjucksParseContentWithIncludes(normalizedContentsForParser, dirname, filename, templatingContext) as ITemplate;
-        } else{
+        } else {
             obj = yamlParseContentWithIncludes(normalizedContentsForParser, dirname) as ITemplate;
         }
         if (includedOrganization && !obj.Organization) {
@@ -138,6 +138,7 @@ export class TemplateRoot {
         if (overrides.OrganizationBindings) {
             obj.OrganizationBindings = { ...obj.OrganizationBindings, ...overrides.OrganizationBindings };
         }
+        delete (obj as any).Definitions;
         delete overrides.OrganizationBindings;
 
         const paramValues = overrides.ParameterValues;
