@@ -155,7 +155,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
-        const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount};
+        const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount };
 
         const awsReader = new AwsOrganizationReader(organizations, crossAccountConfig);
         const awsOrganization = new AwsOrganization(awsReader);
@@ -203,7 +203,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected static async GetStateBucketName(stateBucketName: string, accountId?: string): Promise<string> {
         const bucketName = stateBucketName || 'organization-formation-${AWS::AccountId}';
         if (bucketName.indexOf('${AWS::AccountId}') >= 0) {
-            if (accountId === undefined){
+            if (accountId === undefined) {
                 accountId = await AwsUtil.GetBuildProcessAccountId();
             }
             return bucketName.replace('${AWS::AccountId}', accountId);
@@ -211,7 +211,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return bucketName;
     }
 
-    protected parseCfnParameters(commandParameters?: string | undefined | {}): Record<string, string>  {
+    protected parseCfnParameters(commandParameters?: string | undefined | {}): Record<string, string> {
 
         if (typeof commandParameters === 'object') {
             return commandParameters;
@@ -255,12 +255,14 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             AwsUtil.SetMasterAccountId(command.masterAccountId);
         }
 
+        await AwsUtil.InitializeWithCurrentPartition();
+
         command.initialized = true;
     }
 
     private loadRuntimeConfiguration(command: ICommandArgs): void {
         const rc = RC('org-formation', {}, {}) as IRCObject;
-        if (rc.configs !== undefined){
+        if (rc.configs !== undefined) {
 
             if (rc.organizationFile && rc.config && !rc.organizationFile.startsWith('s3://')) {
                 const dir = path.dirname(rc.config);
