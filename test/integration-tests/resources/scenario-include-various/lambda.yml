@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Conditions:
+  ConditionFalse: !Equals [ 'A', 'B' ]
+
+Resources:
+
+  MyFunction:
+    Type: AWS::Lambda::Function
+    Condition: ConditionFalse
+    Properties:
+      <<: !Include ./includes/lambda.yml
+
+Outputs:
+  AccountATag1:
+    Value: !GetAtt AccountA.Tags.tag1
+    Export:
+      Name: !Sub ${AWS::StackName}-AccountATag1
+  AccountATag2:
+    Value: !GetAtt AccountA.Tags.tag2
+    Export:
+      Name: !Sub ${AWS::StackName}-AccountATag2
+  MasterTag1:
+    Value: !GetAtt MasterAccount.Tags.tag1
+    Export:
+      Name: !Sub ${AWS::StackName}-MasterTag1
+  MasterTag2:
+    Value: !GetAtt MasterAccount.Tags.tag2
+    Export:
+      Name: !Sub ${AWS::StackName}-MasterTag2

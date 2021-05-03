@@ -1,0 +1,10 @@
+AccountA:
+  Type: OC::ORG::Account
+  Properties:
+    RootEmail: account+a@olafconijn.awsapps.com
+    AccountName: Account A
+    Tags:
+      <<: !Include ./tags.yml
+      tag1: overrwitten-from-within-include
+
+
