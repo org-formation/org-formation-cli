@@ -251,7 +251,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         await AwsUtil.InitializeWithProfile(command.profile);
 
-
         if (command.masterAccountId !== undefined) {
             AwsUtil.SetMasterAccountId(command.masterAccountId);
         }
@@ -259,6 +258,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (command.debugTextTemplating) {
             NunjucksDebugSettings.debug = true;
         }
+
+        await AwsUtil.InitializeWithCurrentPartition();
 
         command.initialized = true;
     }

@@ -1,9 +1,6 @@
 
 Parameters:
 
-  partition:
-    Type: String
-
   stackPrefix:
     Description:
     Type: String
@@ -23,6 +20,6 @@ BucketTemplate:
   Type: update-stacks
   Template: ./bucket.yml
   StackName: !Sub ${stackPrefix}-scenario-stack-parameters
-  DefaultOrganizationBindingRegion: !FindInMap [ Partition, BindingRegions, !Ref partition ]
+  DefaultOrganizationBindingRegion: !FindInMap [ Partition, BindingRegions, !Ref AWS::Partition ]
   DefaultOrganizationBinding:
     IncludeMasterAccount: !Ref includeMasterAccount

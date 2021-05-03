@@ -10,7 +10,6 @@ import { OrgResourceTypes } from './model/resource-types';
 import { ResourcesSection } from './model/resources-section';
 import { Validator } from './validator';
 import { OrganizationalUnitResource } from './model/organizational-unit-resource';
-import { yamlParse } from '~yaml-cfn/index';
 import { FileUtil } from '~util/file-util';
 import { yamlParseContentWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 import { nunjucksParseContentWithIncludes } from '~yaml-cfn/nunjucks-parse-includes';
@@ -117,7 +116,7 @@ export class TemplateRoot {
             const includePath = Path.join(dirname, organizationInclude[1]);
             includedOrganization = TemplateRoot.getIncludedOrganization(includePath, templateImportContentMd5);
         } else if (overrides.OrganizationFileContents) {
-            includedOrganization = TemplateRoot.getIncludedOrganizationFromContents(overrides.OrganizationFileContents);
+            includedOrganization = TemplateRoot.getIncludedOrganizationFromContents(overrides.OrganizationFileContents, dirname);
         } else if (overrides.OrganizationFile) {
             includedOrganization = TemplateRoot.getIncludedOrganization(overrides.OrganizationFile, templateImportContentMd5);
         }
@@ -129,7 +128,7 @@ export class TemplateRoot {
             const templatingContext = overrides.TemplatingContext;
             delete overrides.TemplatingContext;
             obj = nunjucksParseContentWithIncludes(normalizedContentsForParser, dirname, filename, templatingContext) as ITemplate;
-        } else{
+        } else {
             obj = yamlParseContentWithIncludes(normalizedContentsForParser, dirname) as ITemplate;
         }
         if (includedOrganization && !obj.Organization) {
@@ -157,17 +156,18 @@ export class TemplateRoot {
 
     private static getIncludedOrganization(path: string, templateImportContentMd5?: string): IOrganization {
         const includeContents = fs.readFileSync(path).toString();
+        const dir = Path.dirname(path);
         if (templateImportContentMd5) {
             const md5Content = md5(includeContents);
             if (templateImportContentMd5 !== md5Content) {
                 throw new OrgFormationError(`Organization include file (${path}) must be the same as used elsewhere in tasks.`);
             }
         }
-        return TemplateRoot.getIncludedOrganizationFromContents(includeContents);
+        return TemplateRoot.getIncludedOrganizationFromContents(includeContents, dir);
     }
 
-    private static getIncludedOrganizationFromContents(contents: string): IOrganization {
-        const includedTemplate = yamlParse(contents) as ITemplate;
+    private static getIncludedOrganizationFromContents(contents: string, directory: string): IOrganization {
+        const includedTemplate = yamlParseContentWithIncludes(contents, directory) as ITemplate;
         if (!includedTemplate.Organization) {
             throw new OrgFormationError('Organization include file does not contain top level Organization.');
         }

@@ -12,6 +12,9 @@ Parameters:
     Type: Boolean
     Default: true
 
+  region:
+    Type: String
+    Default: eu-west-1
 
 OrganizationUpdate:
   Type: update-organization
@@ -22,7 +25,7 @@ BucketTemplate:
   Type: update-stacks
   Template: ./bucket.yml
   StackName: !Sub ${stackPrefix}-scenario-stack-parameters
-  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBindingRegion: !Ref region
   DefaultOrganizationBinding:
     IncludeMasterAccount: !Ref includeMasterAccount
 
@@ -32,3 +35,22 @@ includeOther:
   Path: ./included-task-file.yml
   Parameters:
     stackPrefix: something-else
+    partition: aws
+
+# parameter must be supplied by perform-tasks
+includeWithoutPartitionParam:
+  DependsOn: BucketTemplate
+  Type: include
+  Path: ./included-task-file.yml
+  Parameters:
+    stackPrefix: something-different
+
+
+# parameter must be supplied by perform-tasks
+includeWithPseudoParam:
+  DependsOn: BucketTemplate
+  Type: include
+  Path: ./included-task-file-with-pseudo-param.yml
+  Parameters:
+    stackPrefix: something-with-pseudo-param
+

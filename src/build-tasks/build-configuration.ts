@@ -14,6 +14,7 @@ import { ConsoleUtil } from '~util/console-util';
 import { TemplateRoot } from '~parser/parser';
 import { nunjucksParseWithIncludes } from '~yaml-cfn/nunjucks-parse-includes';
 import { nunjucksRender } from '~yaml-cfn/index';
+import { AwsUtil } from '~util/aws-util';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -98,16 +99,17 @@ export class BuildConfiguration {
             command.organizationFileTemplatingContext = updateOrgTask.TemplatingContext;
         }
 
-        if (command.organizationFileHash === undefined) {
-            command.organizationFileContents = await this.readOrganizationFileContents(command.organizationFile, command.organizationFileTemplatingContext);
-            command.organizationFileHash = md5(command.organizationFileContents);
-        }
-
+        const organizationFileContents = await this.readOrganizationFileContents(command.organizationFile, command.organizationFileTemplatingContext);
         const pathDirname = path.dirname(command.organizationFile);
         const pathFile = path.basename(command.organizationFile);
+        const templateRoot = TemplateRoot.createFromContents(organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
 
+        if (templateRoot.source) {
+            command.organizationFileContents = templateRoot.source;
+            command.organizationFileHash = md5(organizationFileContents);
+        }
 
-        return TemplateRoot.createFromContents(command.organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
+        return templateRoot;
     }
 
     private async readOrganizationFileContents(organizationFileLocation: string, textTemplatingContext: any): Promise<string> {
@@ -197,6 +199,7 @@ export class BuildConfiguration {
         }
         this.resolver.addMappings(this.mappings);
         this.resolver.setFilePath(filePath);
+        this.resolver.addParameter('AWS::Partition', AwsUtil.partition);
         const resolvedContents = this.resolver.resolveFirstPass(buildFile);
 
         const result: IBuildTaskConfiguration[] = [];
