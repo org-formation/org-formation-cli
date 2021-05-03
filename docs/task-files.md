@@ -211,6 +211,23 @@ The following example returns: "grapes"
 The function `!FindInMap` returns the value corresponding to keys in a two-level map that is
 declared in a map.
 
+Example:
+
+```yaml
+Mappings:
+  MyMap:
+    IpAddresses:
+      112233112233: 10.201.30
+      112233112234: 10.201.31
+
+MyStack:
+  Type: update-stacks
+  Template: ./template.yml
+  StackName: just-an-example
+  Parameters:
+    ip: !FindInMap [MyMap, IpAddresses, !Ref CurrentAccount]
+```
+
 ### !Include
 
 The function `!Include` can be be used in a tasks file to include part of the model (it includes before parsing).
