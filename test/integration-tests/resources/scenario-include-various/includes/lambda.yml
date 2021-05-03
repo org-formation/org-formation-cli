@@ -1,0 +1,2 @@
+Code:
+  ZipFile: !ReadFile ./includes/lambda.js # !ReadFile gets executed after !Include

@@ -95,14 +95,17 @@ export class BuildConfiguration {
             command.organizationFile = path.resolve(dir, updateOrgTask.Template);
         }
 
-        if (command.organizationFileHash === undefined) {
-            command.organizationFileContents = await this.readOrganizationFileContents(command.organizationFile);
-            command.organizationFileHash = md5(command.organizationFileContents);
-        }
-
+        const organizationFileContents = await this.readOrganizationFileContents(command.organizationFile);
         const pathDirname = path.dirname(command.organizationFile);
         const pathFile = path.basename(command.organizationFile);
-        return TemplateRoot.createFromContents(command.organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
+        const templateRoot = TemplateRoot.createFromContents(organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
+
+        if (templateRoot.source) {
+            command.organizationFileContents = templateRoot.source;
+            command.organizationFileHash = md5(organizationFileContents);
+        }
+
+        return templateRoot;
     }
 
     private async readOrganizationFileContents(organizationFileLocation: string): Promise<string> {
