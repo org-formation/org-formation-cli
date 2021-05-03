@@ -102,7 +102,7 @@ export class BuildConfiguration {
 
         if (templateRoot.source) {
             command.organizationFileContents = templateRoot.source;
-            command.organizationFileHash = md5(templateRoot.source);
+            command.organizationFileHash = md5(organizationFileContents);
         }
 
         return templateRoot;
