@@ -1,6 +1,5 @@
 import { PerformTasksCommand, ValidateTasksCommand } from "~commands/index";
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
-import { GetObjectOutput } from "aws-sdk/clients/s3";
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
 import { PrintTasksCommand } from "~commands/print-tasks";
 import { DescribeStacksOutput } from "aws-sdk/clients/cloudformation";
 
@@ -24,7 +23,7 @@ describe('when cleaning up stacks', () => {
             tetsIncludes = await cfnClient.describeStacks({ StackName: 'test-includes' }).promise();
 
 
-            await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup.yml' });
+            await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup.yml', performCleanup: true });
         }
         catch (err) {
             expect(err.message).toBe('');
