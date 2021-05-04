@@ -150,6 +150,17 @@ export class AwsUtil {
         return AwsUtil.masterGovCloudAccountId;
     }
 
+    public static async InitializeWithCurrentPartition(): Promise<string> {
+        if (AwsUtil.partition) {
+            return AwsUtil.partition;
+        }
+        const stsClient = new STS();
+        const caller = await stsClient.getCallerIdentity().promise();
+        const partition = caller.Arn.match(/arn\:([^:]*)\:/)[1];
+        AwsUtil.partition = partition;
+        return partition;
+    }
+
     public static async GetBuildProcessAccountId(): Promise<string> {
         if (AwsUtil.buildProcessAccountId !== undefined) {
             return AwsUtil.buildProcessAccountId;
