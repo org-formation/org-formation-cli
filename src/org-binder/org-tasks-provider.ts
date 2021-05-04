@@ -455,6 +455,60 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
+    public createGovCloudAccountUpdateTasks(resource: AccountResource, physicalId: string, govCloudId: string, hash: string): IBuildTask[] {
+        const that = this;
+        const tasks: IBuildTask[] = [];
+        let previousResource = [...this.previousTemplate.organizationSection.accounts].find(x => x.logicalId === resource.logicalId);
+        if (!previousResource && resource.type === OrgResourceTypes.MasterAccount) {
+            previousResource = this.previousTemplate.organizationSection.masterAccount;
+        }
+
+        if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.accountName !== resource.accountName || previousResource.supportLevel !== resource.supportLevel || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)
+            || !policiesEqual(previousResource.passwordPolicy, resource.passwordPolicy)) {
+            const updateAccountTask: IBuildTask = {
+                type: resource.type,
+                logicalId: resource.logicalId,
+                action:  'Update',
+                perform: async (task): Promise<void> => {
+                    task.result = {
+                        commercial: await that.writer.updateAccount(resource, physicalId, previousResource),
+                        govCloud: await that.writer.updateGovCloudAccount(resource, govCloudId, previousResource),
+                    };
+                },
+            };
+
+            tasks.push(updateAccountTask);
+        }
+
+        const createAccountCommitHashTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'CommitHash',
+            dependentTasks: tasks,
+            perform: async (): Promise<void> => {
+                if (resource.type === OrgResourceTypes.MasterAccount) {
+                    that.state.setUniqueBindingForType({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId,
+                        govCloudId,
+                    });
+                } else {
+                    that.state.setBinding({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId,
+                        govCloudId,
+                    });
+                }
+            },
+        };
+
+        return [...tasks, createAccountCommitHashTask];
+    }
+
     public createAccountCreateTasks(resource: AccountResource, hash: string): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
@@ -542,8 +596,8 @@ export class TaskProvider {
                         type: resource.type,
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
-                        physicalId: createGovCloudAccountTask.result.AccountId,
-                        govCloudId: createGovCloudAccountTask.result.GovCloudAccountId,
+                        physicalId: createGovCloudAccountTask.result.CommercialId,
+                        govCloudId: createGovCloudAccountTask.result.GovCloudId,
                     });
                 }
             },

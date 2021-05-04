@@ -82,7 +82,12 @@ export class OrganizationBinder {
                     tasks.push(...t1);
                     break;
                 case 'Update':
-                    const t2 = this.taskProvider.createAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.templateHash);
+                    let t2;
+                    if (org.organizationRoot.template.mirrorInGovCloud) {
+                        t2 = this.taskProvider.createGovCloudAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.state.govCloudId, boundPolicy.templateHash);
+                    } else {
+                        t2 = this.taskProvider.createAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.templateHash);
+                    }
                     tasks.push(...t2);
                     break;
                 case 'Delete':

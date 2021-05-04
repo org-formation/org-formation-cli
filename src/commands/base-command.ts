@@ -81,7 +81,13 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     public async generateDefaultTemplate(defaultBuildAccessRoleName?: string): Promise<DefaultTemplate> {
         const organizations = new Organizations({ region: 'us-east-1' });
-        const awsReader = new AwsOrganizationReader(organizations);
+        const govCloudCredentials = await AwsUtil.GetGovCloudCredentials();
+        let awsReader: AwsOrganizationReader;
+        if (govCloudCredentials) {
+            awsReader = new AwsOrganizationReader(organizations, null, govCloudCredentials);
+        } else {
+            awsReader = new AwsOrganizationReader(organizations);
+        }
         const awsOrganization = new AwsOrganization(awsReader);
         const writer = new DefaultTemplateWriter(awsOrganization);
         writer.DefaultBuildProcessAccessRoleName = defaultBuildAccessRoleName;
@@ -166,12 +172,23 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
+        const govCloudCredentials = await AwsUtil.GetGovCloudCredentials();
         const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount };
-
-        const awsReader = new AwsOrganizationReader(organizations, crossAccountConfig);
+        let awsReader: AwsOrganizationReader;
+        if (govCloudCredentials) {
+            awsReader = new AwsOrganizationReader(organizations, crossAccountConfig, govCloudCredentials);
+        } else {
+            awsReader = new AwsOrganizationReader(organizations, crossAccountConfig);
+        }
         const awsOrganization = new AwsOrganization(awsReader);
         await awsOrganization.initialize();
-        const awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig);
+        let awsWriter: AwsOrganizationWriter;
+
+        if (govCloudCredentials) {
+            awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig, govCloudCredentials);
+        } else {
+            awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig);
+        }
         const taskProvider = new TaskProvider(template, state, awsWriter);
         const binder = new OrganizationBinder(template, state, taskProvider);
         return binder;
