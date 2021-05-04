@@ -117,6 +117,10 @@ export class AwsUtil {
         }
         const stsClient = new STS(); // if not set, assume build process runs in master
         const caller = await stsClient.getCallerIdentity().promise();
+        if (caller.Arn) {
+            const partition = caller.Arn.match(/arn\:([^:]*)\:/)[1];
+            AwsUtil.partition = partition;
+        }
         AwsUtil.masterAccountId = caller.Account;
         return AwsUtil.masterAccountId;
     }
@@ -130,6 +134,17 @@ export class AwsUtil {
         const caller = await stsClient.getCallerIdentity().promise();
         AwsUtil.masterGovCloudAccountId = caller.Account;
         return AwsUtil.masterGovCloudAccountId;
+    }
+
+    public static async InitializeWithCurrentPartition(): Promise<string> {
+        if (AwsUtil.partition) {
+            return AwsUtil.partition;
+        }
+        const stsClient = new STS();
+        const caller = await stsClient.getCallerIdentity().promise();
+        const partition = caller.Arn.match(/arn\:([^:]*)\:/)[1];
+        AwsUtil.partition = partition;
+        return partition;
     }
 
     public static async GetBuildProcessAccountId(): Promise<string> {
@@ -284,6 +299,7 @@ export class AwsUtil {
         return profileKey.region ?? 'us-east-1';
     }
 
+    public static partition: string;
     private static masterAccountId: string | PromiseLike<string>;
     private static masterGovCloudAccountId: string | PromiseLike<string>;
     private static govCloudProfile: string | PromiseLike<string>;
