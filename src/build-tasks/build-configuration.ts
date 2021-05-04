@@ -11,7 +11,7 @@ import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
 import { yamlParseWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 import { ConsoleUtil } from '~util/console-util';
-import { TemplateRoot } from '~parser/parser';
+import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
 import { nunjucksParseWithIncludes } from '~yaml-cfn/nunjucks-parse-includes';
 import { nunjucksRender } from '~yaml-cfn/index';
 import { AwsUtil } from '~util/aws-util';
@@ -22,6 +22,7 @@ export class BuildConfiguration {
     public mappings: CfnMappingsSection;
     private file: string;
     private resolver: CfnExpressionResolver;
+    private organizationBindings: Record<string, IOrganizationBinding>;
 
     constructor(input: string, private readonly parameterValues: Record<string, string> = {}, private templatingContext: {} = undefined) {
         this.file = input;
@@ -109,6 +110,8 @@ export class BuildConfiguration {
             command.organizationFileHash = md5(organizationFileContents);
         }
 
+        this.resolver.setTemplateRoot(templateRoot);
+
         return templateRoot;
     }
 
@@ -154,8 +157,11 @@ export class BuildConfiguration {
     public enumBuildConfigurationFromBuildFile(filePath: string, buildFile: IBuildFile): IBuildTaskConfiguration[] {
         this.parameters = buildFile.Parameters;
         this.mappings = buildFile.Mappings;
+        this.organizationBindings = buildFile.OrganizationBindings ?? {};
+
         delete buildFile.Parameters;
         delete buildFile.Mappings;
+        delete buildFile.OrganizationBindings;
 
         const parametersSection = this.resolver.resolveFirstPass(this.parameters);
 
@@ -196,6 +202,12 @@ export class BuildConfiguration {
             }
 
             this.resolver.addParameter(paramName, value);
+        }
+        for (const [key, binding] of Object.entries(this.organizationBindings)) {
+            if (this.parameters[key]) {
+                throw new OrgFormationError(`Cannot declare a parameter and organization binding with the same name ${key}.`);
+            }
+            this.resolver.addBinding(key, binding);
         }
         this.resolver.addMappings(this.mappings);
         this.resolver.setFilePath(filePath);
@@ -270,9 +282,10 @@ export interface IBuildTask {
 export interface IBuildFile extends Record<string, IBuildTaskConfiguration | {}> {
     Parameters?: Record<string, IBuildFileParameter>;
     Mappings?: CfnMappingsSection;
+    OrganizationBindings?: Record<string, IOrganizationBinding>;
 }
 
 export interface IBuildFileParameter {
     Type: string;
-    Default: string;
+    Default: string | IOrganizationBinding;
 }

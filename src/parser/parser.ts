@@ -10,6 +10,7 @@ import { OrgResourceTypes } from './model/resource-types';
 import { ResourcesSection } from './model/resources-section';
 import { Validator } from './validator';
 import { OrganizationalUnitResource } from './model/organizational-unit-resource';
+import { AccountResource } from './model/account-resource';
 import { FileUtil } from '~util/file-util';
 import { yamlParseContentWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 import { nunjucksParseContentWithIncludes } from '~yaml-cfn/nunjucks-parse-includes';
@@ -277,6 +278,10 @@ export class TemplateRoot {
         return [...result];
     }
 
+    public resolveNormalizedAccounts(binding: IOrganizationBinding): AccountResource[] {
+        const logicalAccountIds = this.resolveNormalizedLogicalAccountIds(binding);
+        return logicalAccountIds.map(x => this.organizationSection.findAccount(a => a.logicalId === x));
+    }
     public resolve<T extends Resource>(val: IResourceRef | IResourceRef[] | undefined, list: T[]): Reference<T>[] {
         if (val === undefined) {
             return [];

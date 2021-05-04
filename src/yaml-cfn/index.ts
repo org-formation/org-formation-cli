@@ -18,14 +18,17 @@ import yaml from 'js-yaml';
 import nunjucks from 'nunjucks';
 import { ConsoleUtil } from '~util/console-util';
 
-nunjucks.configure(
+const env = nunjucks.configure(
   '.',
   {
-    autoescape: true,
+    autoescape: false,
     trimBlocks: true,
     lstripBlocks: true,
-    throwOnUndefined: true,
+    throwOnUndefined: false,
   });
+env.addFilter('object', x => {
+  return JSON.stringify(x);
+});
 
 /**
  * Split a string on the given separator just once, returning an array of two parts, or null.
@@ -126,7 +129,7 @@ export const yamlParse = (input: string): any => {
 };
 
 export const nunjucksParse = (input: string, filename: string, templatingContext: any): any => {
-  const rendered = nunjucks.renderString(input, templatingContext);
+  const rendered = env.renderString(input, templatingContext);
   if (NunjucksDebugSettings.debug) {
     debugWriteNunjucksTemplate(filename, input, templatingContext, rendered);
   }
@@ -138,7 +141,7 @@ export const yamlDump = (input: any): string => {
 };
 
 export const nunjucksRender = (input: string, filename: string, templatingContext: any): string => {
-  const rendered = nunjucks.renderString(input, templatingContext);
+  const rendered = env.renderString(input, templatingContext);
   if (NunjucksDebugSettings.debug) {
     debugWriteNunjucksTemplate(filename, input, templatingContext, rendered);
   }
