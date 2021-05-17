@@ -36,12 +36,18 @@ export class DefaultTemplateWriter {
 
         const result = this.generateMasterAccount(lines, this.organizationModel.masterAccount);
 
-        bindings.push({
+        const masterAccountBinding: IBinding = {
             type: result.type,
             logicalId: result.logicalName,
             physicalId: this.organizationModel.masterAccount.Id,
             lastCommittedHash: '',
-        });
+        };
+
+        if (this.organizationModel.masterAccount.GovCloudId) {
+            masterAccountBinding.govCloudId = this.organizationModel.masterAccount.GovCloudId;
+        }
+
+        bindings.push(masterAccountBinding);
 
         for (const root of this.organizationModel.roots) {
             const rootResource = this.generateRoot(lines, root);
@@ -260,6 +266,9 @@ export class DefaultTemplateWriter {
         }
         if (masterAccount.Alias) {
             lines.push(new Line('Alias', masterAccount.Alias, 6));
+        }
+        if (masterAccount.GovCloudId) {
+            lines.push(new Line('GovCloudId', masterAccount.GovCloudId, 6));
         }
         if (masterAccount.Tags) {
             const tags = Object.entries(masterAccount.Tags);
