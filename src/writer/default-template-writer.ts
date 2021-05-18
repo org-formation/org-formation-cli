@@ -50,7 +50,7 @@ export class DefaultTemplateWriter {
         bindings.push(masterAccountBinding);
 
         for (const root of this.organizationModel.roots) {
-            const rootResource = this.generateRoot(lines, root);
+            const rootResource = this.generateRoot(lines, root, this.organizationModel.masterAccount);
 
             if (!root.Id) {
                 throw new OrgFormationError(`organizational root ${root.Name} has no Id`);
@@ -211,7 +211,7 @@ export class DefaultTemplateWriter {
         };
     }
 
-    private generateRoot(lines: YamlLine[], root: AWSRoot): WriterResource {
+    private generateRoot(lines: YamlLine[], root: AWSRoot, masterAccount: AWSAccount): WriterResource {
         const logicalName = 'OrganizationRoot';
         const policiesList = root.Policies.filter(x => !x.PolicySummary!.AwsManaged).map(x => '!Ref ' + this.logicalNames.getName(x));
 
@@ -223,6 +223,9 @@ export class DefaultTemplateWriter {
             lines.push(new Line('DefaultBuildAccessRoleName', this.DefaultBuildProcessAccessRoleName, 6));
         }
         lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
+        if (masterAccount.GovCloudId) {
+            lines.push(new Line('MirrorInGovCloud', 'true', 6));
+        }
         lines.push(new EmptyLine());
 
         return {
