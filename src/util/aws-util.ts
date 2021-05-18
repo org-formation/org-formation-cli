@@ -417,7 +417,12 @@ export class CfnUtil {
 
             const putObjetRequest: PutObjectRequest = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
             await s3Service.putObject(putObjetRequest).promise();
-            stackInput.TemplateURL = `https://${bucketName}.s3.amazonaws.com/${putObjetRequest.Key}`;
+            // S3 URL domains are parition specific - .s3.amazonaws.com vs .s3-us-gov-west-1.amazonaws.com
+            if (binding.region.includes('us-gov')) {
+                stackInput.TemplateURL = `https://${bucketName}.s3-${binding.region}.amazonaws.com/${putObjetRequest.Key}`;
+            } else {
+                stackInput.TemplateURL = `https://${bucketName}.s3.amazonaws.com/${putObjetRequest.Key}`;
+            }
             delete stackInput.TemplateBody;
         }
     }
@@ -556,6 +561,10 @@ export class CustomMFACredentials extends AWS.Credentials {
             } catch (err) {
                 throw new OrgFormationError(`unable to assume role, error: \n${err}`);
             }
+        }
+
+        else if (process.env.GOV_AWS_ACCESS_KEY_ID && process.env.GOV_AWS_SECRET_ACCESS_KEY) {
+            return { accessKeyId: process.env.GOV_AWS_ACCESS_KEY_ID, secretAccessKey: process.env.GOV_AWS_SECRET_ACCESS_KEY };
         }
     }
 
