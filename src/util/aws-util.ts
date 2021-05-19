@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 // import { inspect } from 'util'; // or directly
-import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
+import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations, EnvironmentCredentials } from 'aws-sdk';
 import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
@@ -93,10 +93,19 @@ export class AwsUtil {
         AwsUtil.govCloudProfile = govCloudProfile;
     }
 
-    public static async SetGovCloudCredentials(govCloudProfile: string): Promise<void> {
-        const govCredentialsClass = new CustomMFACredentials(govCloudProfile);
-        const govCredentials = await govCredentialsClass.innerRefresh();
-        AwsUtil.govCloudCredentials = govCredentials;
+    public static async SetGovCloudCredentials(govCloudProfile?: string): Promise<void> {
+        if (govCloudProfile) {
+            const govCredentialsClass = new CustomMFACredentials(govCloudProfile);
+            const govCredentials = await govCredentialsClass.innerRefresh();
+            AwsUtil.govCloudCredentials = govCredentials;
+        } else {
+            const defaultProviders = CredentialProviderChain.defaultProviders;
+            defaultProviders.splice(0, 0, (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'));
+            const chainProvider = new CredentialProviderChain(defaultProviders);
+            const test = await chainProvider.resolvePromise();
+            AwsUtil.govCloudCredentials = test;
+        }
+
     }
 
     public static async GetGovCloudCredentials(): Promise<CredentialsOptions> {
