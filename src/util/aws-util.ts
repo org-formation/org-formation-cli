@@ -73,6 +73,7 @@ export class AwsUtil {
         // We will place SSO credentials provider right after ProcessCredentials in the priority list.
         // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html
         if (govCloud) {
+            AWS.config.region = 'us-gov-west-1';
             defaultProviders.splice(0, 0, (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'));
         }
         defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
