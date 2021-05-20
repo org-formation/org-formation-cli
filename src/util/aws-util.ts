@@ -78,6 +78,15 @@ export class AwsUtil {
 
     public static async Initialize(providers: provider[]): Promise<AWS.Credentials> {
         const chainProvider = new CredentialProviderChain(providers);
+        const govChainProvider = new CredentialProviderChain([(): AWS.Credentials => new EnvironmentCredentials('GOV_AWS')]);
+        try {
+            const govCreds = await govChainProvider.resolvePromise();
+            if (govCreds) {
+                AwsUtil.govCloudCredentials = govCreds;
+            }
+        } catch (error) {
+            console.log(error);
+        }
         return AWS.config.credentials = await chainProvider.resolvePromise();
     }
 
@@ -94,17 +103,9 @@ export class AwsUtil {
     }
 
     public static async SetGovCloudCredentials(govCloudProfile?: string): Promise<void> {
-        if (govCloudProfile) {
-            const govCredentialsClass = new CustomMFACredentials(govCloudProfile);
-            const govCredentials = await govCredentialsClass.innerRefresh();
-            AwsUtil.govCloudCredentials = govCredentials;
-        } else {
-            const defaultProviders = CredentialProviderChain.defaultProviders;
-            defaultProviders.splice(0, 0, (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'));
-            const chainProvider = new CredentialProviderChain(defaultProviders);
-            const test = await chainProvider.resolvePromise();
-            AwsUtil.govCloudCredentials = test;
-        }
+        const govCredentialsClass = new CustomMFACredentials(govCloudProfile);
+        const govCredentials = await govCredentialsClass.innerRefresh();
+        AwsUtil.govCloudCredentials = govCredentials;
 
     }
 

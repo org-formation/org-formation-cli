@@ -301,8 +301,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         if (command.govCloud) {
             AwsUtil.SetIsGovCloud(true);
-            await AwsUtil.SetGovCloudCredentials();
-
         }
         await AwsUtil.InitializeWithCurrentPartition();
 
