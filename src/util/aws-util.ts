@@ -69,6 +69,7 @@ export class AwsUtil {
         }
         const defaultProviders = CredentialProviderChain.defaultProviders;
         if (govCloud) {
+            AWS.config.region = 'us-gov-west-1';
             defaultProviders.splice(0, 0, (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'));
         }
         defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
