@@ -161,6 +161,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--no-color', 'will disable colorization of console logs');
         command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
         command.option('--gov-cloud', 'is run on gov cloud');
+        command.option('--gov-cloud-credentials', 'is running on both partitions');
         command.option('--gov-cloud-profile [profile]', 'aws govcloud profile to use');
 
     }
@@ -281,7 +282,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             ConsoleUtil.colorizeLogs = false;
         }
 
-        await AwsUtil.InitializeWithProfile(command.profile);
+        await AwsUtil.InitializeWithProfile(command.profile, command.govCloud);
 
         if (command.masterAccountId !== undefined) {
             AwsUtil.SetMasterAccountId(command.masterAccountId);
@@ -294,6 +295,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         if (command.govCloud) {
             AwsUtil.SetIsGovCloud(true);
+        }
+
+        if (command.govCloudCredentials) {
+            await AwsUtil.SetGovCloudCredentials();
         }
         await AwsUtil.InitializeWithCurrentPartition();
 
@@ -379,6 +384,7 @@ export interface ICommandArgs {
     verbose?: boolean;
     color?: boolean;
     govCloud?: boolean;
+    govCloudCredentials?: boolean;
     resolver?: CfnExpressionResolver;
 }
 
