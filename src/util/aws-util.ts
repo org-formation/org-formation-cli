@@ -368,8 +368,16 @@ export class CfnUtil {
             retryStackIsBeingUpdated = false;
             retryAccountIsBeingInitialized = false;
             try {
-                await cfn.updateStack(updateStackInput).promise();
-                describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                try {
+                    await cfn.updateStack(updateStackInput).promise();
+                    describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                } catch (innerErr) {
+                    if (innerErr && innerErr.code === 'ValidationError' && innerErr.message && innerErr.message.indexOf('does not exist') !== -1) {
+                        await cfn.createStack(updateStackInput).promise();
+                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    }
+                    throw innerErr;
+                }
             } catch (err) {
                 if (err && (err.code === 'OptInRequired' || err.code === 'InvalidClientTokenId')) {
                     if (retryAccountIsBeingInitializedCount >= 20) { // 20 * 30 sec = 10 minutes
@@ -383,9 +391,6 @@ export class CfnUtil {
                     if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
                         await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
                         await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                        await cfn.createStack(updateStackInput).promise();
-                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                    } else if (-1 !== message.indexOf('does not exist')) {
                         await cfn.createStack(updateStackInput).promise();
                         describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     } else if (-1 !== message.indexOf('No updates are to be performed.')) {
