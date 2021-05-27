@@ -28,7 +28,7 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
         command.option('--organization-state-object [organization-state-object]', 'key for object used to load read-only organization state');
         command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
-        command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on fisk', false);
+        command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
 
         super.addOptions(command);
     }
