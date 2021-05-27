@@ -137,6 +137,7 @@ export class TemplateRoot {
         if (overrides.OrganizationBindings) {
             obj.OrganizationBindings = { ...obj.OrganizationBindings, ...overrides.OrganizationBindings };
         }
+        delete (obj as any).Definitions;
         delete overrides.OrganizationBindings;
 
         const paramValues = overrides.ParameterValues;

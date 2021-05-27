@@ -1,0 +1,19 @@
+
+Definitions:
+  - &skiptrue
+      Skip: true
+  - &defaultbinding
+      DefaultOrganizationBindingRegion: eu-west-1
+      DefaultOrganizationBinding:
+          IncludeMasterAccount: true
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+  <<: *skiptrue
+
+AnchorsAndAliases:
+  Type: update-stacks
+  StackName: anchors-and-aliases
+  Template: ./buckets.yml
+  <<: *defaultbinding
