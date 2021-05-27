@@ -230,8 +230,41 @@ MyStack:
 
 ### !Include
 
-The function `!Include` can be be used in a tasks file to include part of the model (it includes before parsing).
-This can be useful when storing parameters in a central location and reference them from multiple files.
+The function `!Include` can be be used in a task or an organization file to include part of the model
+(it includes before parsing).  This can be useful when storing parameters in a central location and
+reference them from multiple files.
+
+Example:
+
+in default_tags.yml
+```yaml
+Department: Engineering
+Project: Infrastructure
+CloudwatchRetentionPeriod: 90
+```
+
+in organization.yml
+```yaml
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: organizations
+      RootEmail: organizations@acme.org
+      Alias: org-acme-organizations
+      Tags:
+        <<: !Include ./default_tags.yml
+        CloudwatchRetentionPeriod: 365    # override a default tag
+  SandboxAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: sandbox
+      RootEmail: sandbox@acme.org
+      Alias: org-acme-sandbox
+      Tags:
+        <<: !Include ./default_tags.yml
+        Team: developers                  # add an additional tag
+```
 
 ## Task types
 
