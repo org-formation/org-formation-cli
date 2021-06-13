@@ -160,7 +160,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     stackName: string;
     stackDescription?: string;
     parameters?: string | {};
-    templatingContext?: string | {};
+    templatingContext?: {};
     terminationProtection?: boolean;
     updateProtection?: boolean;
     forceDeploy?: boolean;
