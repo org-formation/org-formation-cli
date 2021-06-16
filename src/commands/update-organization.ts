@@ -44,9 +44,8 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
          * These additional providers and such are all over the place, since I added them as I went along.
          * Would be great if we could centralize the govcloud provider stuff.
          */
-        const isGovCloud = await AwsUtil.GetGovCloudProfile();
-        if (isGovCloud) {
-            const creds = await AwsUtil.GetGovCloudCredentials();
+         const creds = await AwsUtil.GetGovCloudCredentials();
+         if (creds) {
             const masterAccountId = await AwsUtil.GetGovCloudMasterAccountId();
             govCloudProvider = await this.createOrGetStateBucket(command, 'us-gov-west-1', masterAccountId, creds);
         }

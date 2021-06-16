@@ -40,12 +40,11 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
 
         await template.state.save(storageProvider);
 
-        const isGovCloud = await AwsUtil.GetGovCloudProfile();
-        if (isGovCloud) {
-            const creds = await AwsUtil.GetGovCloudCredentials();
+        const creds = await AwsUtil.GetGovCloudCredentials();
+        if (creds) {
             const masterAccountId = await AwsUtil.GetGovCloudMasterAccountId();
             govCloudProvider = await this.createOrGetStateBucket(command, 'us-gov-west-1', masterAccountId, creds);
-            await template.state.save(govCloudProvider);
+            await template.state.save(govCloudProvider, true);
         }
 
         ConsoleUtil.LogInfo(`Your organization template is written to ${command.file}`);
