@@ -2,15 +2,20 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
-**unreleased**
+**version 0.9.16**
 
-- BREAKING CHANGE: when using OrgFormationBuild role, this role will be used and **must be present** in all accounts (also in the build account)
+- fix: missing role in build account when running init-pipeline
+
+**version 0.9.15**
+
+- BREAKING CHANGE: when using OrgFormationBuild role, this role will be used and **must be present** in all accounts (also in the build account), more info [here](https://github.com/org-formation/org-formation-cli/blob/master/docs/0.9.15-permission-change.md)
 - feat: support for `<<` (merge operator) in the organization.yml file. this allows for large organization.yml files to be split out (using `<<: Include ./dev-accounts.yml`)
 - feat: better profile support added support for credential process and SSO
 - feat: perform tasks will create a state bucket if bucket doesn't exist
 - feat: added !Cmd function to execute and capture the output of any shell command
 - feat: ofn alias to binary
 - feat: init & init-pipeline commands use default region from profiles file.
+- feat: support for nunjucks templating on CloudFormation templates
 - fix: allow `!Ref CurrentAccount` and `!FindInMap` to be used together in a tasks file.
 - fix: have init-pipeline create a pipeline that works with the main branch (as opposed to master)
 - fix: allow for SAM templates with a globals section to deploy

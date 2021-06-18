@@ -1,0 +1,13 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+TestIncludes:
+  Type: update-stacks
+  StackName: test-includes
+  Template: ./lambda.yml
+  DefaultOrganizationBindingRegion: eu-west-1
+  DefaultOrganizationBinding:
+      IncludeMasterAccount: true

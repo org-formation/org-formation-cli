@@ -3,7 +3,7 @@ import { IBuildTask, IBuildTaskConfiguration } from './build-configuration';
 import { UpdateOrganizationTaskProvider } from './tasks/organization-task';
 import { UpdateStacksBuildTaskProvider } from './tasks/update-stacks-task';
 import { IncludeTaskProvider } from './tasks/include-task';
-import { IPerformTasksCommandArgs }  from '~commands/index';
+import { IPerformTasksCommandArgs } from '~commands/index';
 import { ITrackedTask } from '~state/persisted-state';
 import { PluginProvider } from '~plugin/plugin';
 import { PluginBuildTaskProvider } from '~plugin/plugin-task';
@@ -14,13 +14,13 @@ export class BuildTaskProvider {
     private providers: Record<string, IBuildTaskProvider<any>> = {};
 
     constructor(providers: IBuildTaskProvider<any>[]) {
-        for(const provider of providers) {
+        for (const provider of providers) {
             this.providers[provider.type] = provider;
         }
     }
 
     private static GetBuildTaskProvider(): BuildTaskProvider {
-        if (BuildTaskProvider.SingleInstance) {return BuildTaskProvider.SingleInstance;}
+        if (BuildTaskProvider.SingleInstance) { return BuildTaskProvider.SingleInstance; }
 
         const buildTaskProviders: IBuildTaskProvider<any>[] = [
             new UpdateStacksBuildTaskProvider(),
@@ -28,7 +28,7 @@ export class BuildTaskProvider {
             new IncludeTaskProvider(),
         ];
 
-        for(const plugin of  PluginProvider.GetPlugins()){
+        for (const plugin of PluginProvider.GetPlugins()) {
             buildTaskProviders.push(new PluginBuildTaskProvider<any, any, any>(plugin));
         }
 
@@ -39,7 +39,7 @@ export class BuildTaskProvider {
     public static createValidationTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IBuildTask {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[configuration.Type];
-        if (provider === undefined) {throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);}
+        if (provider === undefined) { throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`); }
         const validationTask = provider.createTaskForValidation(configuration, command, resolver);
         return validationTask;
     }
@@ -47,7 +47,7 @@ export class BuildTaskProvider {
     static createPrintTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IBuildTask {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[configuration.Type];
-        if (provider === undefined) {throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);}
+        if (provider === undefined) { throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`); }
         const validationTask = provider.createTaskForPrint(configuration, command, resolver);
         return validationTask;
     }
@@ -55,7 +55,7 @@ export class BuildTaskProvider {
     public static createBuildTask(configuration: IBuildTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IBuildTask {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[configuration.Type];
-        if (provider === undefined) {throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`);}
+        if (provider === undefined) { throw new OrgFormationError(`unable to load file ${configuration.FilePath}, unknown configuration type ${configuration.Type}`); }
         const task = provider.createTask(configuration, command, resolver);
         return task;
     }
@@ -63,7 +63,7 @@ export class BuildTaskProvider {
     public static createDeleteTask(logicalId: string, type: string, physicalId: string, command: IPerformTasksCommandArgs): IBuildTask | undefined {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[type];
-        if (provider === undefined) {throw new OrgFormationError(`unable to load file, unknown configuration type ${type}`);}
+        if (provider === undefined) { throw new OrgFormationError(`unable to load file, unknown configuration type ${type}`); }
         const task = provider.createTaskForCleanup(logicalId, physicalId, command);
         return task;
     }
@@ -71,8 +71,8 @@ export class BuildTaskProvider {
     public static enumTasksForCleanup(previouslyTracked: ITrackedTask[], tasks: IBuildTask[], command: IPerformTasksCommandArgs): IBuildTask[] {
         const result: IBuildTask[] = [];
         const currentTasks = BuildTaskProvider.recursivelyFilter(tasks, t => t.physicalIdForCleanup !== undefined);
-        const physicalIds = currentTasks.map(x=>x.physicalIdForCleanup);
-        for(const tracked of previouslyTracked) {
+        const physicalIds = currentTasks.map(x => x.physicalIdForCleanup);
+        for (const tracked of previouslyTracked) {
             if (!physicalIds.includes(tracked.physicalIdForCleanup)) {
                 const deleteTask = this.createDeleteTask(tracked.logicalName, tracked.type, tracked.physicalIdForCleanup, command);
                 if (deleteTask !== undefined) {
@@ -86,7 +86,7 @@ export class BuildTaskProvider {
     public static recursivelyFilter(tasks: IBuildTask[], filter: (task: IBuildTask) => boolean): IBuildTask[] {
         const result = tasks.filter(filter);
         const tasksWithChildren = tasks.filter(x => x.childTasks && x.childTasks.length > 0);
-        const childrenFlattened = tasksWithChildren.reduce((acc: IBuildTask[], x: IBuildTask)=> acc.concat(...x.childTasks), []);
+        const childrenFlattened = tasksWithChildren.reduce((acc: IBuildTask[], x: IBuildTask) => acc.concat(...x.childTasks), []);
         if (childrenFlattened.length > 0) {
             const resultFromChildren = BuildTaskProvider.recursivelyFilter(childrenFlattened, filter);
             return result.concat(resultFromChildren);
@@ -94,15 +94,17 @@ export class BuildTaskProvider {
         return result;
     }
 
-    public static  createIsDependency(buildTaskConfig: IBuildTaskConfiguration): (task: IBuildTask) => boolean {
+    public static createIsDependency(buildTaskConfig: IBuildTaskConfiguration): (task: IBuildTask) => boolean {
         return (task: IBuildTask): boolean => {
             if (task.type === 'update-organization') {
                 return true;
             }
             if (task.childTasks && task.childTasks.length > 0) {
-                const updateOrgTasks = this.recursivelyFilter(task.childTasks, t => t.type === 'update-organization');
-                if (updateOrgTasks.length > 0) {
-                    return true;
+                if (buildTaskConfig.Type !== task.type || buildTaskConfig.LogicalName !== task.name) {
+                    const updateOrgTasks = this.recursivelyFilter(task.childTasks, t => t.type === 'update-organization');
+                    if (updateOrgTasks.length > 0) {
+                        return true;
+                    }
                 }
             }
 

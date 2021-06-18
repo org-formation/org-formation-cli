@@ -5,33 +5,29 @@ import { ConsoleUtil } from '~util/console-util';
 describe('when parsing file', () => {
 
     test('it throws for empty file', async () => {
-        await expect(async() => { await TemplateRoot.create('./test/resources/empty-file.yml'); }).rejects.toThrowError(/empty-file/);
-        await expect(async() => { await TemplateRoot.create('./test/resources/empty-file.yml'); }).rejects.toThrowError(/is empty/);
+        await expect(async () => { await TemplateRoot.create('./test/resources/empty-file.yml'); }).rejects.toThrowError(/empty-file/);
+        await expect(async () => { await TemplateRoot.create('./test/resources/empty-file.yml'); }).rejects.toThrowError(/is empty/);
     });
 
     test('it throws for invalid version', async () => {
-        await expect(async() => { await TemplateRoot.create('./test/resources/invalid-version.yml'); }).rejects.toThrowError(/Unexpected AWSTemplateFormatVersion version/);
+        await expect(async () => { await TemplateRoot.create('./test/resources/invalid-version.yml'); }).rejects.toThrowError(/Unexpected AWSTemplateFormatVersion version/);
     });
 
     test('it throws for invalid yaml', async () => {
-        await expect(async() => { await TemplateRoot.create('./test/resources/invalid-yml.yml'); }).rejects.toThrowError(/AWSTemplateFormatVersion is missing/);
-    });
-
-    test('it throws for missing version', async () => {
-        await expect(async() => { await TemplateRoot.create('./test/resources/missing-version.yml'); }).rejects.toThrowError(/AWSTemplateFormatVersion is missing/);
+        await expect(async () => { await TemplateRoot.create('./test/resources/invalid-yml.yml'); }).rejects.toThrowError(/unable to load file/);
     });
 
     test('it throws for missing organization attribute', async () => {
-        await expect(async() => { await TemplateRoot.create('./test/resources/missing-organization.yml'); }).rejects.toThrowError(/Organization attribute is missing/);
+        await expect(async () => { await TemplateRoot.create('./test/resources/missing-organization.yml'); }).rejects.toThrowError(/Organization attribute is missing/);
     });
 
     test('it throws for invalid include (not found)', async () => {
-        await expect(async() => { await TemplateRoot.create('./test/resources/invalid-include-notfound.yml'); }).rejects.toThrowError(/no such file or directory/);
-        await expect(async() => { await TemplateRoot.create('./test/resources/invalid-include-notfound.yml'); }).rejects.toThrowError(/\/not-found.yml/);
+        await expect(async () => { await TemplateRoot.create('./test/resources/invalid-include-notfound.yml'); }).rejects.toThrowError(/no such file or directory/);
+        await expect(async () => { await TemplateRoot.create('./test/resources/invalid-include-notfound.yml'); }).rejects.toThrowError(/\/not-found.yml/);
     });
 
     test('it throws for invalid include (invalid yml)', async () => {
-        await expect(async() => { await TemplateRoot.create('./test/resources/invalid-include-invalid-yml.yml'); }).rejects.toThrowError();
+        await expect(async () => { await TemplateRoot.create('./test/resources/invalid-include-invalid-yml.yml'); }).rejects.toThrowError();
     });
 });
 
@@ -87,7 +83,7 @@ describe('when loading basic organization and regular cloudformation', () => {
     let template: TemplateRoot;
     let sandbox = Sinon.createSandbox();
 
-    beforeEach(async() => {
+    beforeEach(async () => {
         sandbox.stub(ConsoleUtil, 'LogWarning');
         template = await TemplateRoot.create('./test/resources/valid-regular-cloudformation.yml');
     });

@@ -62,6 +62,10 @@ export class CfnTemplate {
         if (resource.Condition !== undefined) {
             result.conditionForExport = resource.Condition;
         }
+        if (accountLogicalId) {
+            const accountLogicalWithDashes = accountLogicalId.replace(/\-/g, 'Dash');
+            result.uniqueNameForImport = accountLogicalWithDashes + 'DotResourcesDot' + result.uniqueNameForImport;
+        }
         if (path && (path.endsWith('NameServers') || path.endsWith('DnsEntries'))) { // todo: add list of other attributes that are not string;
             result.valueType = 'CommaDelimitedList';
             result.expressionForExport = { 'Fn::Join': [', ', { 'Fn::GetAtt': [resourceLogicalId, path] }] };
@@ -242,7 +246,7 @@ export class CfnTemplate {
         return parameters;
     }
 
-    public createTemplateBody(options: ITemplateGenerationOptions = {output: 'json',  outputCrossAccountExports: true}): string {
+    public createTemplateBody(options: ITemplateGenerationOptions = { output: 'json', outputCrossAccountExports: true }): string {
         const replacer = (k: string, val: any): any => {
             if (k === 'ExportAccountId' || k === 'ExportName' || k === 'ExportRegion') {
                 return undefined;
@@ -261,13 +265,13 @@ export class CfnTemplate {
     public async createTemplateBodyAndResolve(expressionResolver: CfnExpressionResolver, addBogusTransform = false): Promise<string> {
         const template = { ... this.resultingTemplate } as ITemplate;
         template.Description = await expressionResolver.resolveSingleExpression(template.Description, 'Description');
-        if (addBogusTransform  && template.Transform === undefined) {
+        if (addBogusTransform && template.Transform === undefined) {
             template.Transform = 'bogus-transform-to-allow-custom-types-to-pass-validation';
         }
         return JSON.stringify(template, null, 2);
     }
 
-    private _removeCrossAccountDependsOn(resource: any, resourceIdsForTarget: string[], allResourceIds: string[]): void{
+    private _removeCrossAccountDependsOn(resource: any, resourceIdsForTarget: string[], allResourceIds: string[]): void {
 
         if (resource !== null && typeof resource === 'object') {
             const dependsOnType = typeof resource.DependsOn;
@@ -306,12 +310,12 @@ export class CfnTemplate {
                     const allParts = remoteExpression.split('.');
                     remotePath = allParts.splice(1).join('.');
                     remoteResource = allParts[0];
-                } else  {
+                } else {
                     remoteResource = remoteExpression;
                 }
 
                 const bindingForResource = this.resolveBindingForResourceSpecificAccount(otherAccount, remoteResource, others);
-                if (bindingForResource === undefined) {throw new OrgFormationError(`unable to find resource ${remoteResource} on account ${otherAccount}`); }
+                if (bindingForResource === undefined) { throw new OrgFormationError(`unable to find resource ${remoteResource} on account ${otherAccount}`); }
 
                 const reference = remotePath ?
                     CfnTemplate.CreateCrossAccountReferenceForGetAtt(bindingForResource, remoteResource, remotePath, otherAccount.logicalId) :
@@ -378,7 +382,7 @@ export class CfnTemplate {
                         expression.rewriteExpression(allParts[0], path);
                         continue;
                     }
-                } else  {
+                } else {
                     if (this.resourceIdsForTarget.includes(localExpression)) {
                         expression.rewriteExpression(localExpression);
                         continue;
@@ -420,10 +424,10 @@ export class CfnTemplate {
                     } else if (val.startsWith('Fn:TargetCount')) {
                         ConsoleUtil.LogWarning('expression references Fn::TargetCount with 1 colon (:) instead of two.');
                         resource[key] = this.resolveCountExpression(val);
-                     } else if (val.startsWith('Fn::TargetCount')) {
+                    } else if (val.startsWith('Fn::TargetCount')) {
                         resource[key] = this.resolveCountExpression(val);
 
-                     }
+                    }
                 }
             }
         }

@@ -108,6 +108,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
         if (command.delegateToBuildAccount) {
             await this.executeOrgFormationRoleStack(this.currentAccountId, this.buildAccountId, buildAccessRoleTemplate, region, command.roleStackName + '-master');
+            await this.executeOrgFormationRoleStack(this.buildAccountId, this.buildAccountId, buildAccessRoleTemplate, region, command.roleStackName);
         }
 
         ConsoleUtil.LogInfo(`uploading initial commit to S3 ${stateBucketName}/initial-commit.zip...`);
@@ -213,7 +214,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         let contents = readFileSync(filePath).toString('utf-8');
 
         const entries = Object.entries(replacements);
-        const sorted = entries.sort((x, y)=> y[0].length - x[0].length);
+        const sorted = entries.sort((x, y) => y[0].length - x[0].length);
         for (const [key, val] of sorted) {
             contents = contents.replace(new RegExp(key, 'g'), val);
         }

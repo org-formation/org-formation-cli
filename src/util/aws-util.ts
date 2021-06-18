@@ -72,6 +72,8 @@ export class AwsUtil {
             AWS.config.region = 'us-gov-west-1';
             defaultProviders.splice(0, 0, (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'));
         }
+        // We will place SSO credentials provider right after ProcessCredentials in the priority list.
+        // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html
         defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
         return await this.Initialize(defaultProviders);
     }
@@ -263,12 +265,15 @@ export class AwsUtil {
         } catch (err) {
             const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
             if (accountId === buildAccountId) {
-                ConsoleUtil.LogWarning('hi there!');
-                ConsoleUtil.LogWarning(`you just ran into an error when assuming the role ${roleInTargetAccount} in account ${buildAccountId}.`);
-                ConsoleUtil.LogWarning('possibly, this is due a breaking change in org-formation v0.9.15.');
-                ConsoleUtil.LogWarning('from v0.9.15 onwards the org-formation cli will assume a role in every account it deploys tasks to.');
-                ConsoleUtil.LogWarning('this will make permission management and SCPs to deny / allow org-formation tasks easier.');
-                ConsoleUtil.LogWarning('thanks!');
+                ConsoleUtil.LogWarning('======================================');
+                ConsoleUtil.LogWarning('Hi there!');
+                ConsoleUtil.LogWarning(`You just ran into an error when assuming the role ${roleInTargetAccount} in account ${buildAccountId}.`);
+                ConsoleUtil.LogWarning('Possibly, this is due a breaking change in org-formation v0.9.15.');
+                ConsoleUtil.LogWarning('From v0.9.15 onwards the org-formation cli will assume a role in every account it deploys tasks to.');
+                ConsoleUtil.LogWarning('This will make permission management and SCPs to deny / allow org-formation tasks easier.');
+                ConsoleUtil.LogWarning('More information: https://github.com/org-formation/org-formation-cli/tree/master/docs/0.9.15-permission-change.md');
+                ConsoleUtil.LogWarning('Thanks!');
+                ConsoleUtil.LogWarning('======================================');
             }
             throw err;
         }
@@ -302,13 +307,24 @@ export class AwsUtil {
     }
 
     public static GetDefaultRegion(profileName?: string): string {
+        const defaultRegionFromEnv = process.env.AWS_DEFAULT_REGION;
+        if (defaultRegionFromEnv) { return defaultRegionFromEnv; }
+
         const homeDir = require('os').homedir();
         const config = readFileSync(homeDir + '/.aws/config').toString('utf8');
         const contents = ini.parse(config);
         const profileKey = profileName ?
             contents[profileName] ?? contents['profile ' + profileName] :
             contents.default;
-        return profileKey.region ?? 'us-east-1';
+
+        if (profileKey.region) {
+            return profileKey.region;
+        }
+
+        const regionFromEnv = process.env.AWS_REGION;
+        if (regionFromEnv) { return regionFromEnv; }
+
+        return 'us-east-1';
     }
 
     public static partition: string;
@@ -426,8 +442,17 @@ export class CfnUtil {
             retryStackIsBeingUpdated = false;
             retryAccountIsBeingInitialized = false;
             try {
-                await cfn.updateStack(updateStackInput).promise();
-                describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                try {
+                    await cfn.updateStack(updateStackInput).promise();
+                    describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                } catch (innerErr) {
+                    if (innerErr && innerErr.code === 'ValidationError' && innerErr.message && innerErr.message.indexOf('does not exist') !== -1) {
+                        await cfn.createStack(updateStackInput).promise();
+                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    } else {
+                        throw innerErr;
+                    }
+                }
             } catch (err) {
                 if (err && (err.code === 'OptInRequired' || err.code === 'InvalidClientTokenId')) {
                     if (retryAccountIsBeingInitializedCount >= 20) { // 20 * 30 sec = 10 minutes
@@ -441,9 +466,6 @@ export class CfnUtil {
                     if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
                         await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
                         await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                        await cfn.createStack(updateStackInput).promise();
-                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
-                    } else if (-1 !== message.indexOf('does not exist')) {
                         await cfn.createStack(updateStackInput).promise();
                         describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     } else if (-1 !== message.indexOf('No updates are to be performed.')) {

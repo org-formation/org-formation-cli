@@ -10,6 +10,6 @@
   "license": "MIT",
   "devDependencies": {
     "aws-sdk": "^2.614.0",
-    "serverless-step-functions": "^2.17.1"
+    "serverless-step-functions": "^2.29.0"
   }
 }
