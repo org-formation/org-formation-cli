@@ -158,7 +158,7 @@ export const debugWriteNunjucksTemplate = (filename: string, input: string, temp
     writeFileSync(path.join(outputPath, 'templating-context.json'), JSON.stringify(templatingContext, undefined, 2));
 
   } catch (err) {
-    ConsoleUtil.LogError('error writing text templating debug info to disk', err);
+    ConsoleUtil.LogError('error writing text templating debug info to disk: ' + filename, err);
   }
 };
 

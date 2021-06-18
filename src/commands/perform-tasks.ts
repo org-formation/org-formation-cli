@@ -113,7 +113,6 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     organizationFile?: string;
     organizationFileContents?: string;
     organizationFileHash?: string;
-    organizationFileTemplatingContext?: {};
     TemplatingContext?: {};
     parameters?: string | {};
     parsedParameters?: Record<string, string>;

@@ -18,7 +18,7 @@ export class Validator {
 
         Validator.ThrowForUnknownAttribute(clone, `runtime configuration file (${rc.configs.join(', ')})`,
             'organizationFile', 'stateBucketName', 'stateObject', 'profile', 'printStacksOutputPath',
-            'masterAccountId', 'organizationStateObject', 'organizationStateBucketName');
+            'masterAccountId', 'organizationStateObject', 'organizationStateBucketName', 'templatingContext');
 
     }
 

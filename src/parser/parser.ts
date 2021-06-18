@@ -125,7 +125,7 @@ export class TemplateRoot {
         delete overrides.OrganizationFileContents;
 
         let obj;
-        if ('TemplatingContext' in overrides) {
+        if (overrides.TemplatingContext) {
             const templatingContext = overrides.TemplatingContext;
             delete overrides.TemplatingContext;
             obj = nunjucksParseContentWithIncludes(normalizedContentsForParser, dirname, filename, templatingContext) as ITemplate;

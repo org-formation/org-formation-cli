@@ -376,10 +376,13 @@ export class CfnUtil {
                         await cfn.createStack(updateStackInput).promise();
                         describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     } else {
+                        const describedStacks = await cfn.describeStacks({ StackName: updateStackInput.StackName });
+                        ConsoleUtil.LogInfo(`ADDITIONAL ${updateStackInput.StackName} inner stack not create complete ${JSON.stringify(describedStacks)}`);
                         throw innerErr;
                     }
                 }
             } catch (err) {
+                ConsoleUtil.LogError(`ADDITIONAL ${updateStackInput.StackName}`, err);
                 if (err && (err.code === 'OptInRequired' || err.code === 'InvalidClientTokenId')) {
                     if (retryAccountIsBeingInitializedCount >= 20) { // 20 * 30 sec = 10 minutes
                         throw new OrgFormationError('Account seems stuck initializing.');
