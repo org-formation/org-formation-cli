@@ -187,6 +187,9 @@ export class DefaultTemplateWriter {
         if (account.Alias) {
             lines.push(new Line('Alias', account.Alias, 6));
         }
+        if (account.GovCloudAlias) {
+            lines.push(new Line('GovCloudAlias', account.GovCloudAlias, 6));
+        }
 
         if (account.GovCloudId) {
             lines.push(new Line('GovCloudId', account.GovCloudId, 6));
