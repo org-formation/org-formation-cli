@@ -1,5 +1,4 @@
 import { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
-import uuid = require('uuid');
 import { AwsUtil, CfnUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../../src/org-formation-error';

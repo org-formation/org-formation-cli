@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { inspect } from 'util'; // or directly
+// import { inspect } from 'util'; // or directly
 import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import AWS from 'aws-sdk';
@@ -15,7 +15,6 @@ import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 import { ICfnBinding } from '~cfn-binder/cfn-binder';
-import uuid from 'uuid';
 
 type CredentialProviderOptions = ConstructorParameters<typeof AWS.SharedIniFileCredentials>[0];
 
