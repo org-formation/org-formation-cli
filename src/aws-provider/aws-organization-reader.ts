@@ -1,5 +1,5 @@
 import { IAM, Organizations, STS } from 'aws-sdk/clients/all';
-import { Account, ListAccountsForParentRequest, ListAccountsResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
+import { Account, Accounts, ListAccountsForParentRequest, ListAccountsRequest, ListAccountsResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest, ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse, Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
@@ -224,9 +224,17 @@ export class AwsOrganizationReader {
                     resp = await performAndRetryIfNeeded(() => that.organizationService.listAccountsForParent(req).promise());
 
                     let gcResp: ListAccountsResponse;
+                    let govAccList: Accounts = [];
+
                     if (govCloudCreds) {
                         const gcOrg = new Organizations({ region: 'us-gov-west-1', credentials: govCloudCreds });
-                        gcResp = await gcOrg.listAccounts().promise();
+                        const govReq: ListAccountsRequest = {};
+                        do {
+                            gcResp = await gcOrg.listAccounts(govReq).promise();
+                            govAccList = govAccList.concat(gcResp.Accounts);
+                            govReq.NextToken = gcResp.NextToken;
+                        } while (gcResp.NextToken);
+
                     }
                     req.NextToken = resp.NextToken;
 
@@ -236,8 +244,8 @@ export class AwsOrganizationReader {
                         }
 
                         let gcAccount: Account = {};
-                        if (gcResp) {
-                            gcResp.Accounts.forEach(gc => {
+                        if (govAccList) {
+                            govAccList.forEach(gc => {
                                 if (gc.Name === acc.Name) {
                                     gcAccount = gc;
                                 }
@@ -428,8 +436,8 @@ export class AwsOrganizationReader {
         this.organization = new Lazy(this, AwsOrganizationReader.getOrganization);
         this.roots = new Lazy(this, AwsOrganizationReader.listRoots);
         if (govCloudCredentials) {
-            this.govOrgService = new Organizations({credentials: govCloudCredentials, region: 'us-gov-west-1'});
-            this.govOrgSTS = new STS({credentials: govCloudCredentials, region: 'us-gov-west-1'});
+            this.govOrgService = new Organizations({ credentials: govCloudCredentials, region: 'us-gov-west-1' });
+            this.govOrgSTS = new STS({ credentials: govCloudCredentials, region: 'us-gov-west-1' });
         }
     }
 }
