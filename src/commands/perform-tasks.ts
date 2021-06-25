@@ -88,7 +88,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
     public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {
         if (FileUtil.IsRemoteFile(command.organizationFile)) { return; }
         if (command.organizationFileHash !== state.getTemplateHashLastPublished()) {
-            const contents = readFileSync(command.organizationFile).toString();
+            const contents = command.organizationFileContents ?? readFileSync(command.organizationFile).toString();
             const object = yamlParse(contents);
             const objectKey = command.organizationObject || DEFAULT_ORGANIZATION_OBJECT;
             const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);

@@ -35,8 +35,8 @@ export class CfnTaskProvider {
             delete param.ExportRegion;
         }
 
-        const parameters: Record<string,ICfnExpression> = {};
-        for(const [paramName, paramValue] of Object.entries(binding.parameters)) {
+        const parameters: Record<string, ICfnExpression> = {};
+        for (const [paramName, paramValue] of Object.entries(binding.parameters)) {
             parameters[paramName] = paramValue;
         }
 
@@ -61,7 +61,6 @@ export class CfnTaskProvider {
 
                 const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
                 const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
-                const clientToken = uuid();
 
                 let roleArn: string;
                 if (cloudFormationRoleName) {
@@ -71,7 +70,6 @@ export class CfnTaskProvider {
                     StackName: stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM', 'CAPABILITY_AUTO_EXPAND'],
-                    ClientRequestToken: clientToken,
                     RoleARN: roleArn,
                     Parameters: [],
 
@@ -88,7 +86,7 @@ export class CfnTaskProvider {
                     const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, customRoleName, customViaRoleArn);
 
                     if (foundExport !== undefined) {
-                        stackInput.Parameters.push( {
+                        stackInput.Parameters.push({
                             ParameterKey: dependency.ParameterKey,
                             ParameterValue: foundExport,
                         });
@@ -98,7 +96,7 @@ export class CfnTaskProvider {
                         // the generated export has a condition
                         // the parameter used in the template of dependent cannot have a condition.
                         //  so we use an empty value instead :(
-                        stackInput.Parameters.push( {
+                        stackInput.Parameters.push({
                             ParameterKey: dependency.ParameterKey,
                             ParameterValue: '',
                         });
@@ -125,7 +123,7 @@ export class CfnTaskProvider {
                             paramValue = '';
                         }
 
-                        stackInput.Parameters.push( {
+                        stackInput.Parameters.push({
                             ParameterKey: key,
                             ParameterValue: '' + paramValue as string,
                         });
@@ -133,20 +131,19 @@ export class CfnTaskProvider {
                 }
                 try {
                     await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
-
                     if (binding.state === undefined && binding.terminationProtection === true) {
                         ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
-                        await cfn.updateTerminationProtection({StackName: stackName, EnableTerminationProtection: true}).promise();
+                        await cfn.updateTerminationProtection({ StackName: stackName, EnableTerminationProtection: true }).promise();
                     } else if (binding.state !== undefined) {
                         if (binding.terminationProtection) {
                             if (!binding.state.terminationProtection) {
                                 ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
-                                await cfn.updateTerminationProtection({StackName: stackName, EnableTerminationProtection: true}).promise();
+                                await cfn.updateTerminationProtection({ StackName: stackName, EnableTerminationProtection: true }).promise();
                             }
                         } else {
                             if (binding.state.terminationProtection) {
                                 ConsoleUtil.LogDebug(`Disabling termination protection for stack ${stackName}`, this.logVerbose);
-                                await cfn.updateTerminationProtection({StackName: stackName, EnableTerminationProtection: false}).promise();
+                                await cfn.updateTerminationProtection({ StackName: stackName, EnableTerminationProtection: false }).promise();
                             }
                         }
                     }
@@ -167,7 +164,7 @@ export class CfnTaskProvider {
                         const stackEvents = await cfn.describeStackEvents({ StackName: stackName }).promise();
                         for (const event of stackEvents.StackEvents) {
                             const failureStates = ['CREATE_FAILED', 'DELETE_FAILED', 'UPDATE_FAILED'];
-                            if (event.ClientRequestToken === clientToken) {
+                            if (event.ClientRequestToken === stackInput.ClientRequestToken) {
                                 if (failureStates.indexOf(event.ResourceStatus) >= 0) {
                                     ConsoleUtil.LogError(`Resource ${event.LogicalResourceId} failed because ${event.ResourceStatusReason}.`);
 
