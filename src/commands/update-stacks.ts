@@ -91,6 +91,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const stackName = command.stackName;
         const templateFile = command.templateFile;
         let stackPolicy = command.stackPolicy;
+        const tags = command.tags;
         if (updateProtection !== undefined) {
             if (stackPolicy !== undefined) {
                 throw new OrgFormationError('Cannot specify value for both stackPolicy as well as updateProtection.');
@@ -133,7 +134,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const state = await this.getState(command);
         GlobalState.Init(state, template);
 
-        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, cloudFormationRoleName, command.resolver, undefined, taskViaRoleArn);
+        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, tags, cloudFormationRoleName, command.resolver, undefined, taskViaRoleArn);
 
         const cfnTasks = await cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
@@ -170,4 +171,5 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     taskRoleName?: string;
     taskViaRoleArn?: string;
     stackPolicy?: {};
+    tags?: {};
 }

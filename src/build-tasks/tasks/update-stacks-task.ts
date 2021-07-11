@@ -172,6 +172,10 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             args.stackPolicy = config.StackPolicy;
         }
 
+        if (config.Tags !== undefined) {
+            args.tags = config.Tags;
+        }
+
         if (config.MaxConcurrentStacks) {
             args.maxConcurrentStacks = config.MaxConcurrentStacks;
         }
@@ -217,6 +221,7 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     TerminationProtection?: boolean;
     UpdateProtection?: boolean;
     StackPolicy?: {};
+    Tags?: {};
     MaxConcurrentStacks: number;
     FailedStackTolerance: number;
     CloudFormationRoleName?: string;

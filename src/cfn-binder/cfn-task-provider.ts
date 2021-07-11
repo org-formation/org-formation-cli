@@ -1,4 +1,4 @@
-import { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
+import CloudFormation, { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import { AwsUtil, CfnUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../../src/org-formation-error';
@@ -79,6 +79,9 @@ export class CfnTaskProvider {
                 if (binding.stackPolicy !== undefined) {
                     stackInput.StackPolicyBody = JSON.stringify(binding.stackPolicy);
                 }
+
+                const entries = Object.entries(binding.tags ?? {});
+                stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as CloudFormation.Tag));
 
                 for (const dependency of dependencies) {
 
