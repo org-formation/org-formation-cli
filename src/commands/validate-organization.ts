@@ -43,9 +43,9 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
         const tasks = binder.enumBuildTasks();
         const createTasks = tasks.filter(x=>x.action === 'Create');
         if (createTasks.length > 0) {
-            ConsoleUtil.LogWarning('Accounts where added to the organization model.');
+            ConsoleUtil.LogWarning('Accounts were added to the organization model.');
             ConsoleUtil.LogWarning('Tasks might depend on updating the organization.');
-            ConsoleUtil.LogWarning('validation and printing of tasks will be skipped.');
+            ConsoleUtil.LogWarning('Validation and printing of tasks will be skipped.');
             ValidateOrganizationCommand.SkipValidationForTasks = true;
         }
     }
