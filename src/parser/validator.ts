@@ -18,7 +18,7 @@ export class Validator {
 
         Validator.ThrowForUnknownAttribute(clone, `runtime configuration file (${rc.configs.join(', ')})`,
             'organizationFile', 'stateBucketName', 'stateObject', 'profile', 'printStacksOutputPath',
-            'masterAccountId', 'organizationStateObject', 'organizationStateBucketName');
+            'masterAccountId', 'organizationStateObject', 'organizationStateBucketName', 'templatingContext');
 
     }
 
@@ -89,7 +89,7 @@ export class Validator {
 
         Validator.ThrowForUnknownAttribute(root, 'template root',
             'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'DefaultOrganizationBinding', 'OrganizationBindings', 'DefaultOrganizationBindingRegion', 'OrganizationBindingRegion',
-            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs', 'Transform', 'Globals');
+            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs', 'Transform', 'Globals', 'Definitions');
 
     }
 

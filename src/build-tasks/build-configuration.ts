@@ -97,10 +97,10 @@ export class BuildConfiguration {
 
             const dir = path.dirname(this.file);
             command.organizationFile = path.resolve(dir, updateOrgTask.Template);
-            command.organizationFileTemplatingContext = updateOrgTask.TemplatingContext;
+            command.TemplatingContext = updateOrgTask.TemplatingContext;
         }
 
-        const organizationFileContents = await this.readOrganizationFileContents(command.organizationFile, command.organizationFileTemplatingContext);
+        const organizationFileContents = await this.readOrganizationFileContents(command.organizationFile, command.TemplatingContext);
         const pathDirname = path.dirname(command.organizationFile);
         const pathFile = path.basename(command.organizationFile);
         const templateRoot = TemplateRoot.createFromContents(organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
@@ -115,7 +115,7 @@ export class BuildConfiguration {
         return templateRoot;
     }
 
-    private async readOrganizationFileContents(organizationFileLocation: string, textTemplatingContext: any): Promise<string> {
+    private async readOrganizationFileContents(organizationFileLocation: string, textTemplatingContext?: any): Promise<string> {
         try {
             if (organizationFileLocation.startsWith('s3://')) {
                 if (textTemplatingContext) { throw new Error('Text templating context is not supported on s3 hosted organization files'); }
@@ -126,7 +126,7 @@ export class BuildConfiguration {
                 return response.Body.toString();
             } else {
                 const contents = readFileSync(organizationFileLocation).toString();
-                if (textTemplatingContext) {
+                if (textTemplatingContext !== undefined) {
                     const filename = path.basename(organizationFileLocation);
                     return nunjucksRender(contents, filename, textTemplatingContext);
                 }
@@ -162,6 +162,12 @@ export class BuildConfiguration {
         delete buildFile.Parameters;
         delete buildFile.Mappings;
         delete buildFile.OrganizationBindings;
+
+        if (buildFile.Definitions && (buildFile.Definitions as any).Type) {
+            throw new OrgFormationError('Tasks file should not have a task called `Definitions`. This Definitions attribute is reserved for yaml anchors. Did Definitions somehow declare a Type attribute? use an array within your Definitions to declare yaml anchors.');
+        }
+
+        delete buildFile.Definitions;
 
         const parametersSection = this.resolver.resolveFirstPass(this.parameters);
 

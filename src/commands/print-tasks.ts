@@ -50,7 +50,7 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         }
 
         command.parsedParameters = this.parseCfnParameters(command.parameters);
-        const config = new BuildConfiguration(tasksFile, command.parsedParameters, undefined);
+        const config = new BuildConfiguration(tasksFile, command.parsedParameters, command.TemplatingContext);
         await config.fixateOrganizationFile(command);
 
         const printTasks = config.enumPrintTasks(command);

@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Definitions:
+  - &bucket
+      Type: AWS::S3::Bucket
+
+Resources:
+  Bucket:
+    <<: *bucket
+
+Outputs:
+  BucketName:
+    Value: !GetAtt Bucket.Arn
+    Export:
+      Name: BucketArn

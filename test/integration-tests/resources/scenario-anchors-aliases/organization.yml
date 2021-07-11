@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+Description: default template generated for organization with master account 102625093955
+
+Definitions:
+  - &defaultTags
+      Department: Platform
+      Project: Infrastructure
+      CloudwatchCloudTrailLogRetentionPeriod: 90
+
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: Organizational Master Account
+      AccountId: '102625093955'
+      Tags:
+        <<: *defaultTags
+        Project: Other
+
+
+
+  AccountA:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: account+a@olafconijn.awsapps.com
+      AccountName: Account A
+      Tags:
+        <<: *defaultTags
