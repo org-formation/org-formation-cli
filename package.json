@@ -1,6 +1,6 @@
 {
   "name": "aws-organization-formation",
-  "version": "0.9.17-beta.12",
+  "version": "0.9.17-beta.13",
   "description": "Infrastructure as code solution for AWS Organizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -50,7 +50,7 @@
     "node-fetch": "^2.6.1",
     "nunjucks": "^3.2.3",
     "rc": "^1.2.8",
-    "uuid": "^3.3.3",
+    "uuid": "^8.3.2",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {

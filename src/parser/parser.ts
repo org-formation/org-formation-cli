@@ -127,11 +127,11 @@ export class TemplateRoot {
         let obj;
         if (overrides.TemplatingContext) {
             const templatingContext = overrides.TemplatingContext;
-            delete overrides.TemplatingContext;
             obj = nunjucksParseContentWithIncludes(normalizedContentsForParser, dirname, filename, templatingContext) as ITemplate;
         } else {
             obj = yamlParseContentWithIncludes(normalizedContentsForParser, dirname) as ITemplate;
         }
+        delete overrides.TemplatingContext;
         if (includedOrganization && !obj.Organization) {
             obj.Organization = includedOrganization;
         }
