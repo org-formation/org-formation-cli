@@ -169,6 +169,12 @@ export class BuildConfiguration {
 
         delete buildFile.Definitions;
 
+        if (buildFile.Definitions && (buildFile.Definitions as any).Type) {
+            throw new OrgFormationError('Tasks file should not have a task called `Definitions`. This Definitions attribute is reserved for yaml anchors. Did Definitions somehow declare a Type attribute? use an array within your Definitions to declare yaml anchors.');
+        }
+
+        delete buildFile.Definitions;
+
         const parametersSection = this.resolver.resolveFirstPass(this.parameters);
 
         for (const paramName in parametersSection) {

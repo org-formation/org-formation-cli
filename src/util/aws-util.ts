@@ -380,8 +380,6 @@ export class CfnUtil {
                         await cfn.createStack(updateStackInput).promise();
                         describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     } else {
-                        // const describedStacks = await cfn.describeStacks({ StackName: updateStackInput.StackName }).promise();
-                        // ConsoleUtil.LogInfo(`ADDITIONAL ${updateStackInput.StackName} inner stack not create complete ${inspect(describedStacks)}`);
                         throw innerErr;
                     }
                 }
