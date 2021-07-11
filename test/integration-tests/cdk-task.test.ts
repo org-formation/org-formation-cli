@@ -103,7 +103,7 @@ describe('when calling org-formation perform tasks', () => {
         expect(foundTagValue2).toBe(true);
     });
 
-    test('when updating with no parameter is left unresolved', () => {
+    test('when updating, no parameter is left unresolved', () => {
         const command0 = spawnProcessAfterUpdateWithParameters.calls[0][0];
         const command1 = spawnProcessAfterUpdateWithParameters.calls[1][0];
         expect(command0).toEqual(expect.not.stringContaining('[object object]'));
