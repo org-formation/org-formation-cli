@@ -15,13 +15,13 @@ describe('when calling org-formation perform tasks', () => {
         const command = context.command;
         const { cfnClient } = context;
 
-        await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-very-large-stack.yml' })
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-very-large-stack.yml' });
+        await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-very-large-stack.yml' })
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-very-large-stack.yml' });
 
-        veryLargeStack = await cfnClient.describeStacks({StackName: 'test-with-very-large-stack'}).promise();
+        veryLargeStack = await cfnClient.describeStacks({ StackName: 'test-with-very-large-stack' }).promise();
 
 
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-very-large-stack.yml', performCleanup: true });
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup-very-large-stack.yml', performCleanup: true });
 
     });
 
@@ -31,5 +31,4 @@ describe('when calling org-formation perform tasks', () => {
         expect(veryLargeStack.Stacks[0]).toBeDefined();
         expect(veryLargeStack.Stacks[0].StackStatus).toBe('CREATE_COMPLETE');
     });
-
 });

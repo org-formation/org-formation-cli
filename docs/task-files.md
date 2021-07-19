@@ -211,10 +211,62 @@ The following example returns: "grapes"
 The function `!FindInMap` returns the value corresponding to keys in a two-level map that is
 declared in a map.
 
+Example:
+
+```yaml
+Mappings:
+  MyMap:
+    IpAddresses:
+      112233112233: 10.201.30
+      112233112234: 10.201.31
+
+MyStack:
+  Type: update-stacks
+  Template: ./template.yml
+  StackName: just-an-example
+  Parameters:
+    ip: !FindInMap [MyMap, IpAddresses, !Ref CurrentAccount]
+```
+
 ### !Include
 
-The function `!Include` can be be used in a tasks file to include part of the model (it includes before parsing).
-This can be useful when storing parameters in a central location and reference them from multiple files.
+The function `!Include` can be be used in a task or an organization file to include part of the model
+(it includes before parsing). This can be useful when storing parameters in a central location and
+reference them from multiple files.
+
+Example:
+
+in default_tags.yml
+
+```yaml
+Department: Engineering
+Project: Infrastructure
+CloudwatchRetentionPeriod: 90
+```
+
+in organization.yml
+
+```yaml
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountName: organizations
+      RootEmail: organizations@acme.org
+      Alias: org-acme-organizations
+      Tags:
+        <<: !Include ./default_tags.yml
+        CloudwatchRetentionPeriod: 365 # override a default tag
+  SandboxAccount:
+    Type: OC::ORG::Account
+    Properties:
+      AccountName: sandbox
+      RootEmail: sandbox@acme.org
+      Alias: org-acme-sandbox
+      Tags:
+        <<: !Include ./default_tags.yml
+        Team: developers # add an additional tag
+```
 
 ## Task types
 
@@ -222,10 +274,11 @@ This can be useful when storing parameters in a central location and reference t
 
 The `update-organization` task will update all the organization resources based on the template specified as `Template`.
 
-| Attribute | Value             | Remarks                                                      |
-| :-------- | :---------------- | :----------------------------------------------------------- |
-| Template  | relative path     | This property is required.                                   |
-| Skip      | `true` or `false` | When `true` task (and dependent tasks) will not be executed. |
+| Attribute         | Value             | Remarks                                                      |
+| :---------------- | :---------------- | :----------------------------------------------------------- |
+| Template          | relative path     | This property is required.                                   |
+| Skip              | `true` or `false` | When `true` task (and dependent tasks) will not be executed. |
+| TemplatingContext | Dictionary        | Specifies the data for [templating](#templating).            |
 
 ### update-stacks
 
@@ -244,6 +297,7 @@ The `update-stacks` task will provision all resources in all accounts specified 
 | TerminationProtection            | true or false                                                                                                                                                                                   | When set to `true` termination protection will be enabled on all stacks created for this template.                                                                                                                                                                                  |
 | UpdateProtection                 | true or false                                                                                                                                                                                   | When set to `true` will create a StackPolicy for the stacks that prevents any resource from being modified through CloudFormation.                                                                                                                                                  |
 | StackPolicy                      | stack policy                                                                                                                                                                                    | When specified will apply stack policy to all stacks created.                                                                                                                                                                                                                       |
+| Tags                             | Dictionary (attribute names are keys, attribute values are values)                                                                                                                              | When specified stack tags are created and propagated to resources being managed by stack. created.                                                                                                                                                                                  |
 | DefaultOrganizationBindingRegion | String or list of String                                                                                                                                                                        | Region or regions that will be used for any binding without Region specified.<br/><br/> **note**: This value overrides values within the template or resources (value in taskfile is leading).<br/><br/> **note**: This value can also be used if template is plain CloudFormation. |
 | DefaultOrganizationBinding       | [OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource)                       | Organization binding used for any resource that has no binding specified.<br/><br/> **note**: This value overrides values within the template or resources (value in taskfile is leading). <br/><br/> **note**: This value can also be used if template is plain CloudFormation.    |
 | OrganizationBindings             | Dictionary of String, [OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource) | Set of named OrganizationBindings that can be `!Ref`'d by Resources.<br/><br/> **note**: This value overrides values within the template or resources (value in taskfile is leading).                                                                                               |
@@ -276,6 +330,9 @@ Roles:
   StackDescription: "Developer Role"
   TerminationProtection: false
   UpdateProtection: true
+  Tags:
+    tag: tag-value
+    anotherTag: another-val
   Parameters:
     roleName: DeveloperRole
     rolePolicyArns:
@@ -417,6 +474,7 @@ The `include` include another taskfile with tasks to be executed.
 | MaxConcurrentTasks  | number                        | The number of tasks within the imported file that should be executed concurrently.<br/><br/> Default = 1                                            |
 | FailedTaskTolerance | number                        | The number of failed tasks within the imported file that will cause the tasks to fail.<br/><br/> Default = 0                                        |
 | Parameters          | any                           | Specifies values to parameters declared in the included taskfile. If not specified values passed to the current are passed to the included taskfile |
+| TemplatingContext   | Dictionary                    | Specifies the data for [templating](#templating).                                                                                                   |
 
 **example**
 
@@ -476,7 +534,7 @@ SecurityGroupExample:
     Region: us-east-1
 ```
 
-**Note**: If you want templating without passing in any data you must set `TempatingContext: {}` to trigger templating.
+**Note**: If you want templating without passing in any data you must set `TemplatingContext: {}` to trigger templating.
 
 The generated cloudformation template:
 
@@ -500,4 +558,36 @@ Resources:
           ToPort: 80
           IpProtocol: tcp
 Outputs: {}
+```
+
+it is possible to mix text templating with other functions, e.g.:
+
+```yaml
+Include:
+  Type: include
+  Path: ./included-task.njk
+  TemplatingContext:
+    Teams: !Include ./teams.json
+    Parameters:
+      Switch: !Ref switch
+      Partition: !Ref AWS::Partition
+      Substitute: !Sub "Current Account: ${CurrentAccount}"
+    Accounts: Fn::EnumTargetAccounts MasterAccount
+    Regions: Fn::EnumTargetRegions MasterAccount
+```
+
+if you want to apply text templating to the organization.yml file you can add it to the update-organization
+
+```yaml
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.njk
+  TemplatingContext: !Include ./templating-context.json
+```
+
+note that if you use an .org-formationrc file to specify you organization.yml file, you must also specify the templating context in the .org-formationrc file:
+
+```ini
+organizationFile = ./organization.njk
+templatingContext = ./templating-context.json
 ```

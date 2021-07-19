@@ -18,7 +18,7 @@ export class Validator {
 
         Validator.ThrowForUnknownAttribute(clone, `runtime configuration file (${rc.configs.join(', ')})`,
             'organizationFile', 'stateBucketName', 'stateObject', 'profile', 'printStacksOutputPath',
-            'masterAccountId', 'organizationStateObject', 'organizationStateBucketName');
+            'masterAccountId', 'organizationStateObject', 'organizationStateBucketName', 'templatingContext');
 
     }
 
@@ -56,22 +56,18 @@ export class Validator {
         }
 
         Validator.ThrowForUnknownAttribute(config, `task ${taskName}`,
-            'Type', 'DependsOn', 'Skip', 'Template', 'StackName', 'StackDescription', 'Parameters', 'TemplatingContext', 'StackPolicy',
+            'Type', 'DependsOn', 'Skip', 'Template', 'StackName', 'StackDescription', 'Parameters', 'TemplatingContext', 'StackPolicy', 'Tags',
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
             'OrganizationBindings', 'TerminationProtection', 'UpdateProtection', 'CloudFormationRoleName', 'TaskRoleName',
             'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance', 'LogVerbose', 'ForceDeploy', 'TaskViaRoleArn');
     }
 
     public static ValidateTemplateRoot(root: ITemplate): void {
-
-        if (root.AWSTemplateFormatVersion === undefined) {
-            throw new OrgFormationError('AWSTemplateFormatVersion is missing');
-        }
-        if ((root.AWSTemplateFormatVersion as any) instanceof Date) {
+        if (root.AWSTemplateFormatVersion && (root.AWSTemplateFormatVersion as any) instanceof Date) {
             const templateVersionDate = (root.AWSTemplateFormatVersion as any) as Date;
             (root.AWSTemplateFormatVersion as string) = ResourceUtil.ToVersion(templateVersionDate);
         }
-        if (root.AWSTemplateFormatVersion !== '2010-09-09-OC' && root.AWSTemplateFormatVersion !== '2010-09-09') {
+        if (root.AWSTemplateFormatVersion && root.AWSTemplateFormatVersion !== '2010-09-09-OC' && root.AWSTemplateFormatVersion !== '2010-09-09') {
             throw new OrgFormationError(`Unexpected AWSTemplateFormatVersion version ${root.AWSTemplateFormatVersion}, expected '2010-09-09-OC or 2010-09-09'`);
         }
         if (!root.Organization) {
@@ -93,7 +89,7 @@ export class Validator {
 
         Validator.ThrowForUnknownAttribute(root, 'template root',
             'AWSTemplateFormatVersion', 'Description', 'Organization', 'OrganizationBinding', 'DefaultOrganizationBinding', 'OrganizationBindings', 'DefaultOrganizationBindingRegion', 'OrganizationBindingRegion',
-            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs', 'Transform', 'Globals');
+            'Metadata', 'Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs', 'Transform', 'Globals', 'Definitions');
 
     }
 

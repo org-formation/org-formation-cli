@@ -1,0 +1,25 @@
+
+Parameters:
+
+  stackPrefix:
+    Description:
+    Type: String
+
+  includeMasterAccount:
+    Description:
+    Type: Boolean
+    Default: true
+
+Mappings:
+  Partition:
+    BindingRegions:
+      aws: eu-west-1
+      aws-us-gov: us-gov-west-1
+
+BucketTemplate:
+  Type: update-stacks
+  Template: ./bucket.yml
+  StackName: !Sub ${stackPrefix}-scenario-stack-parameters
+  DefaultOrganizationBindingRegion: !FindInMap [ Partition, BindingRegions, !Ref AWS::Partition ]
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: !Ref includeMasterAccount
