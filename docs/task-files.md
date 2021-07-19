@@ -534,7 +534,7 @@ SecurityGroupExample:
     Region: us-east-1
 ```
 
-**Note**: If you want templating without passing in any data you must set `TempatingContext: {}` to trigger templating.
+**Note**: If you want templating without passing in any data you must set `TemplatingContext: {}` to trigger templating.
 
 The generated cloudformation template:
 
