@@ -23,7 +23,7 @@ export class CloudFormationBinder {
         private readonly terminationProtection = false,
         private readonly stackPolicy: {} = undefined,
         private readonly tags: {} = undefined,
-        private readonly govCloud: boolean = false,
+        private readonly partition: boolean = false,
         private readonly customRoleName?: string,
         private readonly resolver?: CfnExpressionResolver,
         private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state, logVerbose),
@@ -56,8 +56,8 @@ export class CloudFormationBinder {
             /**
              * Currently flagging for this. Might be a better solution.
              */
-            if (this.govCloud && accountBinding.govCloudId) {
-                accountId = accountBinding.govCloudId;
+            if (this.partition && accountBinding.partitionId) {
+                accountId = accountBinding.partitionId;
             } else {
                 accountId = accountBinding.physicalId;
             }

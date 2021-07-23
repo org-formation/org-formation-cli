@@ -43,8 +43,8 @@ export class DefaultTemplateWriter {
             lastCommittedHash: '',
         };
 
-        if (this.organizationModel.masterAccount.GovCloudId) {
-            masterAccountBinding.govCloudId = this.organizationModel.masterAccount.GovCloudId;
+        if (this.organizationModel.masterAccount.PartitionId) {
+            masterAccountBinding.partitionId = this.organizationModel.masterAccount.PartitionId;
         }
 
         bindings.push(masterAccountBinding);
@@ -82,8 +82,8 @@ export class DefaultTemplateWriter {
                 lastCommittedHash: '',
             };
 
-            if (account.GovCloudId) {
-                accountBinding.govCloudId = account.GovCloudId;
+            if (account.PartitionId) {
+                accountBinding.partitionId = account.PartitionId;
             }
 
             bindings.push(accountBinding);
@@ -187,12 +187,12 @@ export class DefaultTemplateWriter {
         if (account.Alias) {
             lines.push(new Line('Alias', account.Alias, 6));
         }
-        if (account.GovCloudAlias) {
-            lines.push(new Line('GovCloudAlias', account.GovCloudAlias, 6));
+        if (account.PartitionAlias) {
+            lines.push(new Line('PartitionAlias', account.PartitionAlias, 6));
         }
 
-        if (account.GovCloudId) {
-            lines.push(new Line('GovCloudId', account.GovCloudId, 6));
+        if (account.PartitionId) {
+            lines.push(new Line('PartitionId', account.PartitionId, 6));
         }
         if (account.Tags) {
             const tags = Object.entries(account.Tags);
@@ -226,8 +226,8 @@ export class DefaultTemplateWriter {
             lines.push(new Line('DefaultBuildAccessRoleName', this.DefaultBuildProcessAccessRoleName, 6));
         }
         lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
-        if (masterAccount.GovCloudId) {
-            lines.push(new Line('MirrorInGovCloud', 'true', 6));
+        if (masterAccount.PartitionId) {
+            lines.push(new Line('MirrorInPartition', 'true', 6));
         }
         lines.push(new EmptyLine());
 
@@ -273,8 +273,8 @@ export class DefaultTemplateWriter {
         if (masterAccount.Alias) {
             lines.push(new Line('Alias', masterAccount.Alias, 6));
         }
-        if (masterAccount.GovCloudId) {
-            lines.push(new Line('GovCloudId', masterAccount.GovCloudId, 6));
+        if (masterAccount.PartitionId) {
+            lines.push(new Line('PartitionId', masterAccount.PartitionId, 6));
         }
         if (masterAccount.Tags) {
             const tags = Object.entries(masterAccount.Tags);

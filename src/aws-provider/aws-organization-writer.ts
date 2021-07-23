@@ -16,25 +16,25 @@ import {
     ServiceControlPolicyResource,
 } from '~parser/model';
 
-export interface GovCloudCreateResponse {
-    CommercialId: string;
-    GovCloudId: string;
+export interface PartitionCreateResponse {
+    AccountId: string;
+    PartitionId: string;
 }
 
 export class AwsOrganizationWriter {
 
     private organization: AwsOrganization;
     private organizationService: Organizations;
-    private govOrgService: Organizations;
-    private govOrgSTS: STS;
+    private partitionOrgService: Organizations;
+    private partitionOrgSTS: STS;
 
-    constructor(organizationService: Organizations, organization: AwsOrganization, private readonly crossAccountConfig?: ICrossAccountConfig, govCloudCredentials?: CredentialsOptions) {
+    constructor(organizationService: Organizations, organization: AwsOrganization, private readonly crossAccountConfig?: ICrossAccountConfig, partitionCredentials?: CredentialsOptions) {
 
         this.organizationService = organizationService;
         this.organization = organization;
-        if (govCloudCredentials) {
-            this.govOrgService = new Organizations({ credentials: govCloudCredentials, region: 'us-gov-west-1' });
-            this.govOrgSTS = new STS({ credentials: govCloudCredentials, region: 'us-gov-west-1' });
+        if (partitionCredentials) {
+            this.partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
+            this.partitionOrgSTS = new STS({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
         }
     }
 
@@ -341,21 +341,21 @@ export class AwsOrganizationWriter {
         return accountId;
     }
 
-    public async createGovCloudAccount(resource: AccountResource): Promise<GovCloudCreateResponse> {
+    public async createPartitionAccount(resource: AccountResource): Promise<PartitionCreateResponse> {
 
-        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === resource.accountId && x.GovCloudId === resource.govCloudId);
+        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === resource.accountId && x.PartitionId === resource.partitionId);
         if (account !== undefined) {
             await this.updateAccount(resource, account.Id);
-            await this.updateGovCloudAccount(resource, account.GovCloudId);
+            await this.updatePartitionAccount(resource, account.PartitionId);
 
             ConsoleUtil.LogDebug(`account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
             return {
-                CommercialId: account.Id,
-                GovCloudId: account.GovCloudId,
+                AccountId: account.Id,
+                PartitionId: account.PartitionId,
             };
         }
 
-        const result = await this._createGovCloudAccount(resource);
+        const result = await this._createPartitionAccount(resource);
 
         let retryCountAccessDenied = 0;
         let shouldRetry = false;
@@ -363,7 +363,7 @@ export class AwsOrganizationWriter {
             shouldRetry = false;
             try {
                 await this.updateAccount(resource, result.AccountId);
-                await this.updateGovCloudAccount(resource, result.GovCloudAccountId);
+                await this.updatePartitionAccount(resource, result.GovCloudAccountId);
             } catch (err) {
                 if (err.code === 'AccessDenied' && retryCountAccessDenied < 3) {
                     shouldRetry = true;
@@ -377,8 +377,8 @@ export class AwsOrganizationWriter {
         // await AwsEvents.putAccountCreatedEvent(accountId);
 
         return {
-            CommercialId: result.AccountId,
-            GovCloudId: result.GovCloudAccountId,
+            AccountId: result.AccountId,
+            PartitionId: result.GovCloudAccountId,
         };
     }
 
@@ -514,8 +514,8 @@ export class AwsOrganizationWriter {
         account.Tags = resource.tags;
     }
 
-    public async updateGovCloudAccount(resource: AccountResource, accountId: string, previousResource?: AccountResource): Promise<void> {
-        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.GovCloudId === accountId);
+    public async updatePartitionAccount(resource: AccountResource, accountId: string, previousResource?: AccountResource): Promise<void> {
+        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.PartitionId === accountId);
 
         if (account.Name !== resource.accountName) {
             ConsoleUtil.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. Instead: login with root on the specified account to change its name`);
@@ -525,13 +525,13 @@ export class AwsOrganizationWriter {
             ConsoleUtil.LogWarning(`when changing the organization access role for ${accountId} (logicalId: ${resource.logicalId}) the tool will not automatically rename roles in the target account. Instead: make sure that the name of the role in the organization model corresponds to a role in the AWS account.`);
         }
 
-        if (account.GovCloudAlias !== resource.govCloudAlias) {
+        if (account.PartitionAlias !== resource.partitionAlias) {
 
             const assumeParams = {
                 RoleArn: `arn:aws-us-gov:iam::${accountId}:role/OrganizationAccountAccessRole`,
                 RoleSessionName: 'AssumeRoleSession',
             };
-            const role = await this.govOrgSTS.assumeRole(assumeParams).promise();
+            const role = await this.partitionOrgSTS.assumeRole(assumeParams).promise();
 
             const iam = new IAM({
                 credentials: {
@@ -539,12 +539,12 @@ export class AwsOrganizationWriter {
                     secretAccessKey: role.Credentials.SecretAccessKey,
                     sessionToken: role.Credentials.SessionToken,
                 },
-                region: 'us-gov-west-1',
+                region: AwsUtil.GetPartitionRegion(),
             });
 
-            if (account.GovCloudAlias) {
+            if (account.PartitionAlias) {
                 try {
-                    await iam.deleteAccountAlias({ AccountAlias: account.GovCloudAlias }).promise();
+                    await iam.deleteAccountAlias({ AccountAlias: account.PartitionAlias }).promise();
                 } catch (err) {
                     if (err && err.code !== 'NoSuchEntity') {
                         throw err;
@@ -552,16 +552,16 @@ export class AwsOrganizationWriter {
                 }
             }
 
-            if (resource.govCloudAlias) {
+            if (resource.partitionAlias) {
                 try {
-                    await iam.createAccountAlias({ AccountAlias: resource.govCloudAlias }).promise();
+                    await iam.createAccountAlias({ AccountAlias: resource.partitionAlias }).promise();
                 } catch (err) {
                     const current = await iam.listAccountAliases({}).promise();
-                    if (current.AccountAliases.find(x => x === resource.govCloudAlias)) {
+                    if (current.AccountAliases.find(x => x === resource.partitionAlias)) {
                         return;
                     }
                     if (err && err.code === 'EntityAlreadyExists') {
-                        throw new OrgFormationError(`The account alias ${resource.govCloudAlias} already exists. Most likely someone else already registered this alias to some other account.`);
+                        throw new OrgFormationError(`The account alias ${resource.partitionAlias} already exists. Most likely someone else already registered this alias to some other account.`);
                     }
                 }
             }
@@ -578,7 +578,7 @@ export class AwsOrganizationWriter {
                 ResourceId: accountId,
                 TagKeys: tagsToRemove,
             };
-            await this.govOrgService.untagResource(request).promise();
+            await this.partitionOrgService.untagResource(request).promise();
         }
 
         if (tagsToUpdate.length > 0) {
@@ -588,7 +588,7 @@ export class AwsOrganizationWriter {
                 ResourceId: accountId,
                 Tags: tags,
             };
-            await this.govOrgService.tagResource(request).promise();
+            await this.partitionOrgService.tagResource(request).promise();
         }
 
         account.Tags = resource.tags;
@@ -660,7 +660,7 @@ export class AwsOrganizationWriter {
         });
     }
 
-    private async _createGovCloudAccount(resource: AccountResource): Promise<CreateAccountStatus> {
+    private async _createPartitionAccount(resource: AccountResource): Promise<CreateAccountStatus> {
 
         return await performAndRetryIfNeeded(async () => {
             const createAccountReq: CreateAccountRequest = {
@@ -687,53 +687,9 @@ export class AwsOrganizationWriter {
                 accountCreationStatus = response.CreateAccountStatus;
             }
 
-            /**
-             * Interim solution for adding aliases to commercial. Aliases are particularly necessary here, since both the commercial
-             * and the govcloud accounts have the same name.
-             */
+            const partitionCredentials = new Credentials(await AwsUtil.GetPartitionCredentials());
 
-            // if (resource.alias) {
-            //     const sts = new STS();
-            //     const assumeParams = {
-            //         RoleArn: `arn:aws:iam::${accountCreationStatus.AccountId}:role/OrganizationAccountAccessRole`,
-            //         RoleSessionName: 'AssumeRoleSession',
-            //     };
-            //     const role = await sts.assumeRole(assumeParams).promise();
-
-            //     const iam = new IAM({
-            //         credentials: {
-            //             accessKeyId: role.Credentials.AccessKeyId,
-            //             secretAccessKey: role.Credentials.SecretAccessKey,
-            //             sessionToken: role.Credentials.SessionToken,
-            //         },
-            //     });
-
-            //     try {
-            //         await iam.createAccountAlias({ AccountAlias: resource.alias }).promise();
-            //     } catch (err) {
-            //         const current = await iam.listAccountAliases({}).promise();
-            //         if (current.AccountAliases.find(x => x === resource.alias)) {
-            //             return;
-            //         }
-            //         if (err && err.code === 'EntityAlreadyExists') {
-            //             throw new OrgFormationError(`The account alias ${resource.alias} already exists. Most likely someone else already registered this alias to some other account.`);
-            //         }
-            //     }
-
-            // }
-
-            /**
-             * In this section I handle the creation of an invitation to the created govcloud account, then assume into that account
-             * and accept the handshake. This should probably get split out into its own function. Should also probably have services
-             * created out of AWSUtil, but as always, balancing govcloud credentials makes things tricky.
-             */
-
-            const govCredentials = new Credentials(await AwsUtil.GetGovCloudCredentials());
-
-            if (govCredentials) {
-
-                // const govOrgService = new Organizations({credentials: govCredentials, region: 'us-gov-west-1'});
-                // const govOrgSTS = new STS({credentials: govCredentials, region: 'us-gov-west-1'});
+            if (partitionCredentials) {
 
                 const inviteParams = {
                     Target: {
@@ -742,59 +698,30 @@ export class AwsOrganizationWriter {
                     },
                 };
 
-                await this.govOrgService.inviteAccountToOrganization(inviteParams).promise();
+                await this.partitionOrgService.inviteAccountToOrganization(inviteParams).promise();
 
                 const assumeParams = {
                     RoleArn: `arn:aws-us-gov:iam::${accountCreationStatus.GovCloudAccountId}:role/OrganizationAccountAccessRole`,
                     RoleSessionName: 'AssumeRoleSession',
                 };
 
-                const role = await this.govOrgSTS.assumeRole(assumeParams).promise();
-                const govAccountOrgService = new Organizations({
+                const role = await this.partitionOrgSTS.assumeRole(assumeParams).promise();
+                const partitionAccountOrgService = new Organizations({
                     credentials: {
                         accessKeyId: role.Credentials.AccessKeyId,
                         secretAccessKey: role.Credentials.SecretAccessKey,
                         sessionToken: role.Credentials.SessionToken,
                     },
-                    region: 'us-gov-west-1',
+                    region: AwsUtil.GetPartitionRegion(),
                 }
                 );
 
-                const handshakeList = await govAccountOrgService.listHandshakesForAccount().promise();
-                await govAccountOrgService.acceptHandshake({ HandshakeId: handshakeList.Handshakes[0].Id }).promise();
+                const handshakeList = await partitionAccountOrgService.listHandshakesForAccount().promise();
+                await partitionAccountOrgService.acceptHandshake({ HandshakeId: handshakeList.Handshakes[0].Id }).promise();
 
-                /**
-                 * Adding the alias to the govcloud account here. Would be great if we could use "Update" for this.
-                 */
-
-                // if (resource.govCloudAlias) {
-                //     const iam = new IAM({
-                //         credentials: {
-                //             accessKeyId: role.Credentials.AccessKeyId,
-                //             secretAccessKey: role.Credentials.SecretAccessKey,
-                //             sessionToken: role.Credentials.SessionToken,
-                //         },
-                //         region: 'us-gov-west-1',
-                //     });
-
-                //     try {
-                //         await iam.createAccountAlias({ AccountAlias: resource.govCloudAlias }).promise();
-                //     } catch (err) {
-                //         const current = await iam.listAccountAliases({}).promise();
-                //         if (current.AccountAliases.find(x => x === resource.alias)) {
-                //             return;
-                //         }
-                //         if (err && err.code === 'EntityAlreadyExists') {
-                //             throw new OrgFormationError(`The account alias ${resource.alias} already exists. Most likely someone else already registered this alias to some other account.`);
-                //         }
-                //     }
-                // }
 
             }
 
-            /**
-             * Needs to be updated for govcloud.
-             */
 
             this.organization.accounts.push({
                 Arn: `arn:aws:organizations::${this.organization.masterAccount.Id}:account/${this.organization.organization.Id}/${accountCreationStatus.AccountId}`,
@@ -806,7 +733,7 @@ export class AwsOrganizationWriter {
                 Type: 'Account',
                 Tags: {},
                 SupportLevel: 'basic',
-                GovCloudId: accountCreationStatus.GovCloudAccountId,
+                PartitionId: accountCreationStatus.GovCloudAccountId,
             });
 
             return accountCreationStatus;

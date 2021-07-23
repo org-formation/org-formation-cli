@@ -35,10 +35,10 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
 
         const changeSet = await provider.createChangeSet(command.changeSetName, template, tasks);
 
-        const isGovCloud = await AwsUtil.GetGovCloudProfile();
-        if (isGovCloud) {
-            const govProvider = new ChangeSetProvider(stateBucketName, true);
-            await govProvider.createChangeSet(command.changeSetName, template, tasks);
+        const isPartition = await AwsUtil.GetPartitionProfile();
+        if (isPartition) {
+            const partitionProvider = new ChangeSetProvider(stateBucketName, true);
+            await partitionProvider.createChangeSet(command.changeSetName, template, tasks);
 
         }
 

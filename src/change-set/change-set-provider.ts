@@ -22,11 +22,11 @@ export class ChangeSetProvider {
         };
     }
     private stateBucketName: string;
-    private isGovCloud: boolean;
+    private isPartition: boolean;
 
-    constructor(stateBucketName: string, isGovCloud?: boolean) {
+    constructor(stateBucketName: string, isPartition?: boolean) {
         this.stateBucketName = stateBucketName;
-        this.isGovCloud = isGovCloud ? isGovCloud : false;
+        this.isPartition = isPartition ? isPartition : false;
     }
 
     public async createChangeSet(changeSetName: string, template: TemplateRoot, tasks: IBuildTask[]): Promise<IOrganizationChangeSet> {
@@ -54,8 +54,8 @@ export class ChangeSetProvider {
 
     private async createStorageProvider(changeSetName: string): Promise<S3StorageProvider> {
         const storageKey = `change-sets/${changeSetName}`;
-        if (this.isGovCloud) {
-            const creds = await AwsUtil.GetGovCloudCredentials();
+        if (this.isPartition) {
+            const creds = await AwsUtil.GetPartitionCredentials();
             return await S3StorageProvider.Create(this.stateBucketName, storageKey, creds);
         }
         return await S3StorageProvider.Create(this.stateBucketName, storageKey);

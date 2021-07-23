@@ -40,16 +40,16 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
 
         const template = await TemplateRoot.create(command.templateFile, { TemplatingContext: command.templatingContext });
         const state = await this.getState(command);
-        let govCloudProvider: S3StorageProvider;
+        let partitionProvider: S3StorageProvider;
 
         /**
          * These additional providers and such are all over the place, since I added them as I went along.
-         * Would be great if we could centralize the govcloud provider stuff.
+         * Would be great if we could centralize the Partition provider stuff.
          */
-         const creds = await AwsUtil.GetGovCloudCredentials();
+         const creds = await AwsUtil.GetPartitionCredentials();
          if (creds) {
-            const masterAccountId = await AwsUtil.GetGovCloudMasterAccountId();
-            govCloudProvider = await this.createOrGetStateBucket(command, 'us-gov-west-1', masterAccountId, creds);
+            const masterAccountId = await AwsUtil.GetPartitionMasterAccountId();
+            partitionProvider = await this.createOrGetStateBucket(command, AwsUtil.GetPartitionRegion(), masterAccountId, creds);
         }
 
         GlobalState.Init(state, template);
@@ -68,10 +68,10 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
 
         const binder = await this.getOrganizationBinder(template, state);
         const tasks = binder.enumBuildTasks();
-        await UpdateOrganizationCommand.ExecuteTasks(tasks, state, templateHash, template, govCloudProvider);
+        await UpdateOrganizationCommand.ExecuteTasks(tasks, state, templateHash, template, partitionProvider);
     }
 
-    public static async ExecuteTasks(tasks: IBuildTask[], state: PersistedState, templateHash: string, template: TemplateRoot, govCloudProvider?: S3StorageProvider): Promise<void> {
+    public static async ExecuteTasks(tasks: IBuildTask[], state: PersistedState, templateHash: string, template: TemplateRoot, partitionProvider?: S3StorageProvider): Promise<void> {
         try {
             if (tasks.length === 0) {
                 ConsoleUtil.LogInfo('organization up to date, no work to be done.');
@@ -85,8 +85,8 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
         finally {
             await state.save();
 
-            if (govCloudProvider !== undefined) {
-                await state.save(govCloudProvider, true);
+            if (partitionProvider !== undefined) {
+                await state.save(partitionProvider, true);
             }
 
         }

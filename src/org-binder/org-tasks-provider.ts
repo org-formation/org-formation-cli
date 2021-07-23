@@ -455,7 +455,7 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
-    public createGovCloudAccountUpdateTasks(resource: AccountResource, physicalId: string, govCloudId: string, hash: string): IBuildTask[] {
+    public createPartitionAccountUpdateTasks(resource: AccountResource, physicalId: string, partitionId: string, hash: string): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
         let previousResource = [...this.previousTemplate.organizationSection.accounts].find(x => x.logicalId === resource.logicalId);
@@ -463,7 +463,7 @@ export class TaskProvider {
             previousResource = this.previousTemplate.organizationSection.masterAccount;
         }
 
-        if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.govCloudAlias !== resource.govCloudAlias || previousResource.accountName !== resource.accountName || previousResource.supportLevel !== resource.supportLevel || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)
+        if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.partitionAlias !== resource.partitionAlias || previousResource.accountName !== resource.accountName || previousResource.supportLevel !== resource.supportLevel || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)
             || !policiesEqual(previousResource.passwordPolicy, resource.passwordPolicy)) {
             const updateAccountTask: IBuildTask = {
                 type: resource.type,
@@ -472,7 +472,7 @@ export class TaskProvider {
                 perform: async (task): Promise<void> => {
                     task.result = {
                         commercial: await that.writer.updateAccount(resource, physicalId, previousResource),
-                        govCloud: await that.writer.updateGovCloudAccount(resource, govCloudId, previousResource),
+                        partition: await that.writer.updatePartitionAccount(resource, partitionId, previousResource),
                     };
                 },
             };
@@ -492,7 +492,7 @@ export class TaskProvider {
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
                         physicalId,
-                        govCloudId,
+                        partitionId,
                     });
                 } else {
                     that.state.setBinding({
@@ -500,7 +500,7 @@ export class TaskProvider {
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
                         physicalId,
-                        govCloudId,
+                        partitionId,
                     });
                 }
             },
@@ -555,26 +555,26 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
-    public createGovCloudAccountCreateTasks(resource: AccountResource, hash: string): IBuildTask[] {
+    public createPartitionAccountCreateTasks(resource: AccountResource, hash: string): IBuildTask[] {
         /**
          * Unsure if this needs its own entire block.
          */
         const that = this;
         const tasks: IBuildTask[] = [];
-        const createGovCloudAccountTask: IBuildTask = {
+        const createPartitionAccountTask: IBuildTask = {
             type: resource.type,
             logicalId: resource.logicalId,
             action:  'Create',
             perform: async (task): Promise<void> => {
-                task.result = await that.writer.createGovCloudAccount(resource);
+                task.result = await that.writer.createPartitionAccount(resource);
             },
         };
 
-        tasks.push(createGovCloudAccountTask);
+        tasks.push(createPartitionAccountTask);
 
         for (const attachedSCP of resource.serviceControlPolicies) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createGovCloudAccountTask.result);
-            attachSCPTask.dependentTasks = [createGovCloudAccountTask];
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createPartitionAccountTask.result);
+            attachSCPTask.dependentTasks = [createPartitionAccountTask];
             tasks.push(attachSCPTask);
         }
 
@@ -589,15 +589,15 @@ export class TaskProvider {
                         type: resource.type,
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
-                        physicalId: createGovCloudAccountTask.result,
+                        physicalId: createPartitionAccountTask.result,
                     });
                 } else {
                     that.state.setBinding({
                         type: resource.type,
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
-                        physicalId: createGovCloudAccountTask.result.CommercialId,
-                        govCloudId: createGovCloudAccountTask.result.GovCloudId,
+                        physicalId: createPartitionAccountTask.result.CommercialId,
+                        partitionId: createPartitionAccountTask.result.PartitionId,
                     });
                 }
             },

@@ -81,7 +81,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validateBoolean(command.terminationProtection, 'terminationProtection');
         Validator.validateBoolean(command.updateProtection, 'updateProtection');
-        Validator.validateBoolean(command.govCloud, 'govCloud');
+        Validator.validateBoolean(command.mirrorPartition, 'mirrorPartition');
 
 
         this.storeCommand(command);
@@ -90,7 +90,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const updateProtection = command.updateProtection;
         const cloudFormationRoleName = command.cloudFormationRoleName;
         const taskRoleName = command.taskRoleName;
-        const govCloud = command.govCloud === true;
+        const partition = command.mirrorPartition === true;
         const taskViaRoleArn = command.taskViaRoleArn;
         const stackName = command.stackName;
         const templateFile = command.templateFile;
@@ -138,7 +138,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const state = await this.getState(command);
         GlobalState.Init(state, template);
 
-        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, tags, govCloud, cloudFormationRoleName, command.resolver, undefined, taskViaRoleArn);
+        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, tags, partition, cloudFormationRoleName, command.resolver, undefined, taskViaRoleArn);
 
         const cfnTasks = await cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {

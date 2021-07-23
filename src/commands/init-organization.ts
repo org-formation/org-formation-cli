@@ -33,7 +33,7 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
             DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName = command.crossAccountRoleName;
         }
         this.storeCommand(command);
-        let govCloudProvider: S3StorageProvider;
+        let partitionProvider: S3StorageProvider;
         const filePath = command.file;
         const storageProvider = await this.createOrGetStateBucket(command, command.region);
         const template = await this.generateDefaultTemplate();
@@ -42,11 +42,11 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
 
         await template.state.save(storageProvider);
 
-        const creds = await AwsUtil.GetGovCloudCredentials();
+        const creds = await AwsUtil.GetPartitionCredentials();
         if (creds) {
-            const masterAccountId = await AwsUtil.GetGovCloudMasterAccountId();
-            govCloudProvider = await this.createOrGetStateBucket(command, 'us-gov-west-1', masterAccountId, creds);
-            await template.state.save(govCloudProvider, true);
+            const masterAccountId = await AwsUtil.GetPartitionMasterAccountId();
+            partitionProvider = await this.createOrGetStateBucket(command, AwsUtil.GetPartitionRegion(), masterAccountId, creds);
+            await template.state.save(partitionProvider, true);
         }
 
         ConsoleUtil.LogInfo(`Your organization template is written to ${command.file}`);

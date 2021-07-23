@@ -74,8 +74,8 @@ export class OrganizationBinder {
             switch (boundPolicy.action) {
                 case 'Create':
                     let t1;
-                    if (org?.organizationRoot?.template?.mirrorInGovCloud) {
-                        t1 = this.taskProvider.createGovCloudAccountCreateTasks(boundPolicy.template, boundPolicy.templateHash);
+                    if (org?.organizationRoot?.template?.mirrorInPartition) {
+                        t1 = this.taskProvider.createPartitionAccountCreateTasks(boundPolicy.template, boundPolicy.templateHash);
                     } else {
                         t1 = this.taskProvider.createAccountCreateTasks(boundPolicy.template, boundPolicy.templateHash);
                     }
@@ -83,8 +83,8 @@ export class OrganizationBinder {
                     break;
                 case 'Update':
                     let t2;
-                    if (org?.organizationRoot?.template?.mirrorInGovCloud) {
-                        t2 = this.taskProvider.createGovCloudAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.state.govCloudId, boundPolicy.templateHash);
+                    if (org?.organizationRoot?.template?.mirrorInPartition) {
+                        t2 = this.taskProvider.createPartitionAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.state.partitionId, boundPolicy.templateHash);
                     } else {
                         t2 = this.taskProvider.createAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.templateHash);
                     }

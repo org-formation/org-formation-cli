@@ -21,8 +21,8 @@ export class PersistedState {
                 object.masterAccountId = masterAccountId;
             }
             /**
-             * Obviously this needs to not be commented out, but since the govcloud master is different from the commercial,
-             * it's the only way to run update-stacks in govcloud at the moment.
+             * Obviously this needs to not be commented out, but since the partition master is different from the commercial,
+             * it's the only way to run update-stacks in partition at the moment.
              */
             // else if (object.masterAccountId !== masterAccountId) {
             //     throw new OrgFormationError('state and session do not belong to the same organization');
@@ -555,12 +555,10 @@ export class PersistedState {
         return this.state.previousTemplate;
     }
 
-    public async save(storageProvider: IStorageProvider | undefined = this.provider, isGovCloud: boolean | undefined = false): Promise<void> {
+    public async save(storageProvider: IStorageProvider | undefined = this.provider, isPartition: boolean | undefined = false): Promise<void> {
         if (!storageProvider) { return; }
-        /**
-         * I wasn't able to figure out the concept of "dirty," so unsure if this was the way to handle it.
-         */
-        if (!this.dirty && !isGovCloud) { return; }
+
+        if (!this.dirty && !isPartition) { return; }
         const json = this.toJson();
         await storageProvider.put(json);
 
@@ -615,7 +613,7 @@ export interface IBinding {
     type: string;
     physicalId: string;
     lastCommittedHash: string;
-    govCloudId?: string;
+    partitionId?: string;
 }
 
 export interface ICfnTarget {

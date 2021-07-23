@@ -119,9 +119,7 @@ export class S3StorageProvider implements IStorageProvider {
 
     public async put(contents: string): Promise<void> {
         try {
-            /**
-             * I was getting an ACL error here in govcloud.
-             */
+
             const s3client = new S3({ credentials: this.credentials, region: this.region });
             const putObjectRequest: PutObjectRequest = {
                 Bucket: this.bucketName,

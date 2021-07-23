@@ -28,9 +28,9 @@ export class AwsUtil {
 
     public static ClearCache(): void {
         AwsUtil.masterAccountId = undefined;
-        AwsUtil.masterGovCloudAccountId = undefined;
-        AwsUtil.govCloudProfile = undefined;
-        AwsUtil.govCloudCredentials = undefined;
+        AwsUtil.masterPartitionAccountId = undefined;
+        AwsUtil.partitionProfile = undefined;
+        AwsUtil.partitionCredentials = undefined;
         AwsUtil.CfnServiceCache = {};
         AwsUtil.IamServiceCache = {};
         AwsUtil.SupportServiceCache = {};
@@ -49,7 +49,7 @@ export class AwsUtil {
 
     }
 
-    public static async InitializeWithProfile(profile?: string, govCloud?: boolean): Promise<AWS.Credentials> {
+    public static async InitializeWithProfile(profile?: string, partition?: boolean): Promise<AWS.Credentials> {
         if (profile) {
             process.env.AWS_SDK_LOAD_CONFIG = '1';
             const params: CredentialProviderOptions = { profile };
@@ -70,10 +70,8 @@ export class AwsUtil {
             ]);
         }
         const defaultProviders = CredentialProviderChain.defaultProviders;
-        // We will place SSO credentials provider right after ProcessCredentials in the priority list.
-        // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html
-        if (govCloud) {
-            AWS.config.region = 'us-gov-west-1';
+        if (partition) {
+            AWS.config.region = AwsUtil.GetPartitionRegion();
             defaultProviders.splice(0, 0, (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'));
         }
         defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
@@ -89,38 +87,46 @@ export class AwsUtil {
         AwsUtil.masterAccountId = masterAccountId;
     }
 
-    public static async GetGovCloudProfile(): Promise<string> {
-        return AwsUtil.govCloudProfile;
+    public static async GetPartitionProfile(): Promise<string> {
+        return AwsUtil.partitionProfile;
     }
 
-    public static SetGovCloudProfile(govCloudProfile: string): void {
-        AwsUtil.govCloudProfile = govCloudProfile;
+    public static SetPartitionProfile(partitionProfile: string): void {
+        AwsUtil.partitionProfile = partitionProfile;
     }
 
-    public static async SetGovCloudCredentials(govCloudProfile?: string): Promise<void> {
-        if (govCloudProfile) {
-            const govCredentialsClass = new CustomMFACredentials(govCloudProfile);
-            const govCredentials = await govCredentialsClass.innerRefresh();
-            AwsUtil.govCloudCredentials = govCredentials;
+    public static async SetPartitionCredentials(partitionProfile?: string): Promise<void> {
+        if (partitionProfile) {
+            const partitionCredentialsClass = new CustomMFACredentials(partitionProfile);
+            const partitionCredentials = await partitionCredentialsClass.innerRefresh();
+            AwsUtil.partitionCredentials = partitionCredentials;
         } else {
-            const govChainProvider = new CredentialProviderChain([(): AWS.Credentials => new EnvironmentCredentials('GOV_AWS')]);
-            const govCreds = await govChainProvider.resolvePromise();
-            if (govCreds) {
-                AwsUtil.govCloudCredentials = govCreds;
+            const partitionChainProvider = new CredentialProviderChain([(): AWS.Credentials => new EnvironmentCredentials('GOV_AWS')]);
+            const partitionCreds = await partitionChainProvider.resolvePromise();
+            if (partitionCreds) {
+                AwsUtil.partitionCredentials = partitionCreds;
             }
         }
     }
 
-    public static async GetGovCloudCredentials(): Promise<CredentialsOptions> {
-        return AwsUtil.govCloudCredentials;
+    public static async GetPartitionCredentials(): Promise<CredentialsOptions> {
+        return AwsUtil.partitionCredentials;
     }
 
-    public static GetIsGovCloud(): boolean {
-        return AwsUtil.isGovCloud;
+    public static GetIsPartition(): boolean {
+        return AwsUtil.isPartition;
     }
 
-    public static SetIsGovCloud(isGovCloud: boolean): void {
-        AwsUtil.isGovCloud = isGovCloud;
+    public static SetIsPartition(isPartition: boolean): void {
+        AwsUtil.isPartition = isPartition;
+    }
+
+    public static GetPartitionRegion(): string {
+        return AwsUtil.partitionRegion;
+    }
+
+    public static SetPartitionRegion(partitionRegion: string): void {
+        AwsUtil.partitionRegion = partitionRegion;
     }
 
     static SetBuildAccountId(buildAccountId: string): void {
@@ -151,15 +157,15 @@ export class AwsUtil {
         AwsUtil.partition = partition;
         return partition;
     }
-    public static async GetGovCloudMasterAccountId(): Promise<string> {
-        if (AwsUtil.masterGovCloudAccountId !== undefined) {
-            return AwsUtil.masterGovCloudAccountId;
+    public static async GetPartitionMasterAccountId(): Promise<string> {
+        if (AwsUtil.masterPartitionAccountId !== undefined) {
+            return AwsUtil.masterPartitionAccountId;
         }
-        const govCloudCredentials = await AwsUtil.GetGovCloudCredentials();
-        const stsClient = new STS({ credentials: govCloudCredentials, region: 'us-gov-west-1' }); // if not set, assume build process runs in master
+        const partitionCredentials = await AwsUtil.GetPartitionCredentials();
+        const stsClient = new STS({ credentials: partitionCredentials, region: this.partitionRegion }); // if not set, assume build process runs in master
         const caller = await stsClient.getCallerIdentity().promise();
-        AwsUtil.masterGovCloudAccountId = caller.Account;
-        return AwsUtil.masterGovCloudAccountId;
+        AwsUtil.masterPartitionAccountId = caller.Account;
+        return AwsUtil.masterPartitionAccountId;
     }
 
     public static async InitializeWithCurrentPartition(): Promise<string> {
@@ -198,6 +204,10 @@ export class AwsUtil {
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
         return 'arn:aws:iam::' + accountId + ':role/' + roleInTargetAccount;
+    }
+
+    public static GetPartitionRoleArn(accountId: string, roleInTargetAccount: string): string {
+        return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
     public static async GetS3Service(accountId: string, region?: string, roleInTargetAccount?: string): Promise<S3> {
@@ -261,9 +271,9 @@ export class AwsUtil {
             let roleArn: string;
             const config: STS.ClientConfiguration = {};
 
-            if (AwsUtil.isGovCloud) {
-                roleArn = AwsUtil.GetGovCloudRoleArn(accountId, roleInTargetAccount);
-                config.region = 'us-gov-west-1';
+            if (AwsUtil.isPartition) {
+                roleArn = AwsUtil.GetPartitionRoleArn(accountId, roleInTargetAccount);
+                config.region = this.partitionRegion;
             } else {
                 roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
             }
@@ -337,18 +347,19 @@ export class AwsUtil {
         return 'us-east-1';
     }
 
-    public static partition: string;
+    private static partition = 'us-gov-west-1';
+    private static partitionRegion: string;
     private static masterAccountId: string | PromiseLike<string>;
-    private static masterGovCloudAccountId: string | PromiseLike<string>;
-    private static govCloudProfile: string | PromiseLike<string>;
-    private static govCloudCredentials: CredentialsOptions;
+    private static masterPartitionAccountId: string | PromiseLike<string>;
+    private static partitionProfile: string | PromiseLike<string>;
+    private static partitionCredentials: CredentialsOptions;
     private static buildProcessAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAM> = {};
     private static SupportServiceCache: Record<string, Support> = {};
     private static OrganizationsServiceCache: Record<string, Organizations> = {};
     private static CfnServiceCache: Record<string, CloudFormation> = {};
     private static S3ServiceCache: Record<string, S3> = {};
-    private static isGovCloud = false;
+    private static isPartition = false;
 }
 
 export const passwordPolicyEquals = (pwdPolicyResourceA: Reference<PasswordPolicyResource>, pwdPolicyResourceB: Reference<PasswordPolicyResource>): boolean => {
@@ -429,7 +440,6 @@ export class CfnUtil {
 
             const putObjetRequest: PutObjectRequest = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
             await s3Service.putObject(putObjetRequest).promise();
-            // S3 URL domains are parition specific - .s3.amazonaws.com vs .s3-us-gov-west-1.amazonaws.com
             if (binding.region.includes('us-gov')) {
                 stackInput.TemplateURL = `https://${bucketName}.s3-${binding.region}.amazonaws.com/${putObjetRequest.Key}`;
             } else {
@@ -554,7 +564,7 @@ export class CustomMFACredentials extends AWS.Credentials {
             if (creds.aws_session_token !== undefined) {
                 credentialsForSts.sessionToken = creds.aws_session_token;
             }
-            const sts = new STS({ credentials: credentialsForSts, region: 'us-gov-west-1' });
+            const sts = new STS({ credentials: credentialsForSts, region: AwsUtil.GetPartitionRegion() });
 
             const assumeRoleReq: AssumeRoleRequest = {
                 RoleArn: profileKey.role_arn,
