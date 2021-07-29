@@ -5,6 +5,7 @@ import { TemplateRoot, IOrganizationBinding } from '~parser/parser';
 import { IBuildTaskPlugin } from '~plugin/plugin';
 import { ICfnExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
+import { AwsUtil } from '~util/aws-util';
 
 export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
@@ -20,6 +21,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
     }
 
     public enumBindings(): IPluginBinding<TTaskDefinition>[] {
+        const isGovCloud = AwsUtil.GetIsGovCloud();
         const result: IPluginBinding<TTaskDefinition>[] = [];
         for (const logicalTargetAccountName of this.template.resolveNormalizedLogicalAccountIds(this.organizationBinding)) {
 
@@ -40,7 +42,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                         targetType: this.task.type,
                         logicalAccountId: logicalTargetAccountName,
                         region,
-                        accountId: accountBinding.physicalId,
+                        accountId: isGovCloud ? accountBinding.govCloudId : accountBinding.physicalId,
                         definition: this.task,
                         logicalName: this.task.name,
                         logicalNamePrefix: this.logicalNamePrefix,
