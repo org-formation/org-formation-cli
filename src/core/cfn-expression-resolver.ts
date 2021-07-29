@@ -227,6 +227,15 @@ export class CfnExpressionResolver {
         if (binding === undefined) {
             throw new OrgFormationError(`unable to find ${resource.logicalId} in state. Is your organization up to date?`);
         }
+
+        if (AwsUtil.GetIsGovCloud()) {
+            if (binding.govCloudId) {
+                return binding.govCloudId;
+            }
+
+            throw new OrgFormationError(`unable to find GovCloud Id on ${resource.logicalId} in state. Is your organization up to date?`);
+        }
+
         return binding.physicalId;
     }
 
