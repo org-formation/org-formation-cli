@@ -272,6 +272,7 @@ export interface IBuildTaskConfiguration {
     Type: string;
     DependsOn?: string | string[];
     LogicalName: string;
+    MaxConcurrentTasks?: number;
     FilePath?: string;
     Skip?: boolean;
     TaskRoleName?: string;
@@ -289,6 +290,7 @@ export interface IBuildTask {
     childTasks: IBuildTask[];
     perform(): Promise<void>;
     physicalIdForCleanup?: string;
+    concurrencyForCleanup?: number;
 }
 
 export interface IBuildFile extends Record<string, IBuildTaskConfiguration | {}> {

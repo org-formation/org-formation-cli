@@ -60,11 +60,11 @@ export class BuildTaskProvider {
         return task;
     }
 
-    public static createDeleteTask(logicalId: string, type: string, physicalId: string, command: IPerformTasksCommandArgs): IBuildTask | undefined {
+    public static createDeleteTask(logicalId: string, type: string, physicalId: string, concurrencyForCleanup: number, command: IPerformTasksCommandArgs): IBuildTask | undefined {
         const taskProvider = this.GetBuildTaskProvider();
         const provider = taskProvider.providers[type];
         if (provider === undefined) { throw new OrgFormationError(`unable to load file, unknown configuration type ${type}`); }
-        const task = provider.createTaskForCleanup(logicalId, physicalId, command);
+        const task = provider.createTaskForCleanup(logicalId, physicalId, command, concurrencyForCleanup);
         return task;
     }
 
@@ -74,7 +74,7 @@ export class BuildTaskProvider {
         const physicalIds = currentTasks.map(x => x.physicalIdForCleanup);
         for (const tracked of previouslyTracked) {
             if (!physicalIds.includes(tracked.physicalIdForCleanup)) {
-                const deleteTask = this.createDeleteTask(tracked.logicalName, tracked.type, tracked.physicalIdForCleanup, command);
+                const deleteTask = this.createDeleteTask(tracked.logicalName, tracked.type, tracked.physicalIdForCleanup, tracked.concurrencyForCleanup, command);
                 if (deleteTask !== undefined) {
                     result.push(deleteTask);
                 }
@@ -122,5 +122,5 @@ export interface IBuildTaskProvider<TConfig extends IBuildTaskConfiguration> {
     createTask(config: TConfig, command: IPerformTasksCommandArgs, resolver?: CfnExpressionResolver): IBuildTask;
     createTaskForValidation(config: TConfig, command: IPerformTasksCommandArgs, resolver?: CfnExpressionResolver): IBuildTask | undefined;
     createTaskForPrint(config: TConfig, command: IPerformTasksCommandArgs, resolver?: CfnExpressionResolver): IBuildTask | undefined;
-    createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs, resolver?: CfnExpressionResolver): IBuildTask | undefined;
+    createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs, concurrencyForCleanup: number, resolver?: CfnExpressionResolver): IBuildTask | undefined;
 }

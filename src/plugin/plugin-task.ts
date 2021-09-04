@@ -8,7 +8,7 @@ import { ConsoleUtil } from '~util/console-util';
 
 export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskConfiguration, TCommandArgs extends IBuildTaskPluginCommandArgs, TTask extends IPluginTask> implements IBuildTaskProvider<TBuildTaskConfiguration> {
 
-    constructor(private plugin: IBuildTaskPlugin<TBuildTaskConfiguration, TCommandArgs, TTask> ) {
+    constructor(private plugin: IBuildTaskPlugin<TBuildTaskConfiguration, TCommandArgs, TTask>) {
         this.type = plugin.typeForTask;
     }
 
@@ -21,6 +21,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
             type: config.Type,
             name: config.LogicalName,
             physicalIdForCleanup: this.plugin.getPhysicalIdForCleanup(config),
+            concurrencyForCleanup: config.MaxConcurrentTasks,
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
             isDependency: BuildTaskProvider.createIsDependency(config),
@@ -69,7 +70,7 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
         };
     }
 
-    createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs): IBuildTask {
+    createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs, maxConcurrentTasks: number): IBuildTask {
         return {
             type: 'cleanup-' + this.type,
             name: logicalId,
@@ -96,13 +97,13 @@ export class PluginBuildTaskProvider<TBuildTaskConfiguration extends IBuildTaskC
                     ConsoleUtil.LogWarning('');
                     ConsoleUtil.LogWarning('Did you not remove a task? but are you logically using different files? check out the --logical-name option.');
 
-                    for(const target of command.state.enumGenericTargets(this.plugin.type, command.logicalName, namespace, logicalId)) {
+                    for (const target of command.state.enumGenericTargets(this.plugin.type, command.logicalName, namespace, logicalId)) {
                         target.lastCommittedHash = 'deleted';
                         command.state.setGenericTarget(target);
                     }
                 } else {
                     ConsoleUtil.LogInfo(`executing: ${this.type} ${logicalId}`);
-                    await RemoveCommand.Perform({ ...command,  name: logicalId, type: this.plugin.type, maxConcurrentTasks: 10, failedTasksTolerance: 10 });
+                    await RemoveCommand.Perform({ ...command, name: logicalId, type: this.plugin.type, maxConcurrentTasks, failedTasksTolerance: 10 });
                 }
             },
         };
