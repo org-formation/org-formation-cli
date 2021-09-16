@@ -33,10 +33,10 @@ describe('when reading a organizational unit using reader', () => {
     const assumedRole = stsExamples.AssumeRole[0].output;
     const callerIdentity = stsExamples.GetCallerIdentity[0].output;
     const masterAccount = {
-        Id : '111111111111',
+        Id: '111111111111',
         ParentId: roots.Roots[0].Id,
         Policies: [],
-        Type : 'Account',
+        Type: 'Account',
         Name: 'Organizational Master Account'
     } as AWSAccount;
     (organization.Organization as Organization).MasterAccountId = masterAccount.Id;
@@ -79,7 +79,7 @@ describe('when reading a organizational unit using reader', () => {
         masterAccount.ParentId = ous.OrganizationalUnits[0].Id;
         accounts.Accounts.push(masterAccount as any);
         AWSMock.mock('Organizations', 'listAccountsForParent', mockResult(accounts));
-        AWSMock.mock('Organizations', 'listTagsForResource', mockResult({Tags: []}));
+        AWSMock.mock('Organizations', 'listTagsForResource', mockResult({ Tags: [] }));
         AWSMock.mock('Organizations', 'describeOrganization', mockResult(organization));
         const getIdentity = mockResult(callerIdentity);
         AWSMock.mock('STS', 'getCallerIdentity', getIdentity);
@@ -89,7 +89,7 @@ describe('when reading a organizational unit using reader', () => {
         AWSMock.mock('IAM', 'listAccountAliases', listAliases);
         const getPasswordPolicy = mockResult(passwordPolicy);
         AWSMock.mock('IAM', 'getAccountPasswordPolicy', getPasswordPolicy);
-        const describeSeverity = mockResult({severityLevels: [{code: 'high'}]});
+        const describeSeverity = mockResult({ severityLevels: [{ code: 'high' }] });
         AWSMock.mock('Support', 'describeSeverityLevels', describeSeverity);
 
         const listAccountsSpy = jest.spyOn(organizationService, 'listAccountsForParent');
@@ -99,14 +99,14 @@ describe('when reading a organizational unit using reader', () => {
         // TODO: Remove try and catch when implemented
         try {
             await organizationModel.initialize()
-        } catch(err) {
+        } catch (err) {
             expect(err.message).toContain('Master account outside root organization is not supported yet');
             console.warn('Missing implementation for master account within a organizational unit...');
         }
         expect(listRootsSpy).toHaveBeenCalledTimes(1);
         expect(listOrganizationalUnitsSpy).toHaveBeenCalledTimes(2);
         expect(listAccountsSpy).toHaveBeenCalledTimes(2);
-        expect(listTagsSpy).toHaveBeenCalledTimes(7);
+        expect(listTagsSpy).toHaveBeenCalledTimes(6);
         expect(describeOrganizationSpy).toHaveBeenCalledTimes(1);
         expect(getIdentity).toHaveBeenCalledTimes(3);
         expect(assumeRole).toHaveBeenCalledTimes(9);
