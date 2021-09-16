@@ -7,6 +7,7 @@ import { OrgFormationError } from '../org-formation-error';
 import { AwsEvents } from './aws-events';
 import { AwsOrganization } from './aws-organization';
 import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
+import { performAndRetryIfNeeded, sleep } from './util';
 import {
     AccountResource,
     OrganizationalUnitResource,
@@ -43,7 +44,7 @@ export class AwsOrganizationWriter {
     }
 
     public async createPolicy(resource: ServiceControlPolicyResource): Promise<string> {
-        return await performAndRetryIfNeeded( async () => {
+        return await performAndRetryIfNeeded(async () => {
             try {
                 const createPolicyRequest: CreatePolicyRequest = {
                     Name: resource.policyName,
@@ -70,7 +71,7 @@ export class AwsOrganizationWriter {
     }
 
     public async attachPolicy(targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
-        return await performAndRetryIfNeeded( async () => {
+        return await performAndRetryIfNeeded(async () => {
             const attachPolicyRequest: AttachPolicyRequest = {
                 PolicyId: policyPhysicalId,
                 TargetId: targetPhysicalId,
@@ -377,7 +378,7 @@ export class AwsOrganizationWriter {
                 if (masterAccountSupportLevel !== resource.supportLevel) {
                     throw new OrgFormationError(`account ${resource.logicalId} specifies support level ${resource.supportLevel}, expected is support level ${masterAccountSupportLevel}, based on the support subscription for the organization master account.`);
                 } else {
-                    try{
+                    try {
                         const targetAccountId = this.organization.masterAccount.Id;
                         const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, targetAccountId);
                         const support = await AwsUtil.GetSupportService(targetAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
@@ -397,7 +398,7 @@ export class AwsOrganizationWriter {
                         };
                         const response = await support.createCase(createCaseRequest).promise();
                         ConsoleUtil.LogDebug(`created support ticket, case id: ${response.caseId}`);
-                    }catch(err) {
+                    } catch (err) {
                         ConsoleUtil.LogDebug(`error creating support ticket. code: ${err?.code}, message: ${err?.message}`);
                     }
                 }
@@ -565,29 +566,3 @@ export class AwsOrganizationWriter {
 
     }
 }
-
-const performAndRetryIfNeeded = async <T extends unknown>(fn: () => Promise<T>): Promise<T> => {
-    let shouldRetry = false;
-    let retryCount = 0;
-    do {
-        shouldRetry = false;
-        try {
-            return await fn();
-        } catch (err) {
-            if (err && (err.code === 'ConcurrentModificationException' || err.code === 'TooManyRequestsException') && retryCount < 3) {
-                retryCount = retryCount + 1;
-                shouldRetry = true;
-                const wait = Math.pow(retryCount, 2) + Math.random();
-                ConsoleUtil.LogDebug(`received retryable error ${err.code}. wait ${wait} and retry-count ${retryCount}`);
-                await sleep(wait * 1000);
-                continue;
-            }
-            throw err;
-        }
-    }
-    while (shouldRetry);
-};
-
-const sleep = (time: number): Promise<void> => {
-    return new Promise(resolve => setTimeout(resolve, time));
-};
