@@ -3,6 +3,7 @@ import { Account, ListAccountsForParentRequest, ListAccountsForParentResponse, L
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
+import { performAndRetryIfNeeded } from './util';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
 
@@ -59,8 +60,8 @@ export class AwsOrganizationReader {
 
 
     private static async getOrganization(that: AwsOrganizationReader): Promise<Organization> {
-        that.organizationService.listTagsForResource();
-        const resp = await that.organizationService.describeOrganization().promise();
+
+        const resp = await performAndRetryIfNeeded(() => that.organizationService.describeOrganization().promise());
         return resp.Organization;
     }
 
@@ -72,10 +73,10 @@ export class AwsOrganizationReader {
             };
             let resp: ListPoliciesResponse;
             do {
-                resp = await that.organizationService.listPolicies(req).promise();
+                resp = await performAndRetryIfNeeded(() => that.organizationService.listPolicies(req).promise());
                 for (const policy of resp.Policies) {
 
-                    const describedPolicy = await that.organizationService.describePolicy({ PolicyId: policy.Id }).promise();
+                    const describedPolicy = await performAndRetryIfNeeded(() => that.organizationService.describePolicy({ PolicyId: policy.Id }).promise());
 
                     const awsPolicy = {
                         ...describedPolicy.Policy,
@@ -92,7 +93,7 @@ export class AwsOrganizationReader {
                     };
                     let listTargetsResp: ListTargetsForPolicyResponse;
                     do {
-                        listTargetsResp = await that.organizationService.listTargetsForPolicy(listTargetsReq).promise();
+                        listTargetsResp = await performAndRetryIfNeeded(() => that.organizationService.listTargetsForPolicy(listTargetsReq).promise());
                         awsPolicy.Targets.push(...listTargetsResp.Targets);
                         listTargetsReq.NextToken = listTargetsResp.NextToken;
                     } while (listTargetsReq.NextToken);
@@ -114,7 +115,7 @@ export class AwsOrganizationReader {
             let resp: ListRootsResponse;
             const req: ListRootsRequest = {};
             do {
-                resp = await that.organizationService.listRoots(req).promise();
+                resp = await performAndRetryIfNeeded(() => that.organizationService.listRoots(req).promise());
                 req.NextToken = resp.NextToken;
                 for (const root of resp.Roots) {
                     const item: AWSRoot = {
@@ -148,7 +149,7 @@ export class AwsOrganizationReader {
                 };
                 let resp: ListOrganizationalUnitsForParentResponse;
                 do {
-                    resp = await that.organizationService.listOrganizationalUnitsForParent(req).promise();
+                    resp = await performAndRetryIfNeeded(() => that.organizationService.listOrganizationalUnitsForParent(req).promise());
                     req.NextToken = resp.NextToken;
                     if (!resp.OrganizationalUnits) { continue; }
 
@@ -210,7 +211,7 @@ export class AwsOrganizationReader {
                 };
                 let resp: ListAccountsForParentResponse;
                 do {
-                    resp = await that.organizationService.listAccountsForParent(req).promise();
+                    resp = await performAndRetryIfNeeded(() => that.organizationService.listAccountsForParent(req).promise());
                     req.NextToken = resp.NextToken;
 
                     for (const acc of resp.Accounts) {
@@ -336,7 +337,7 @@ export class AwsOrganizationReader {
             const request: ListTagsForResourceRequest = {
                 ResourceId: accountId,
             };
-            const response = await that.organizationService.listTagsForResource(request).promise();
+            const response = await performAndRetryIfNeeded(() => that.organizationService.listTagsForResource(request).promise());
             const tags: IAWSTags = {};
             for (const tag of response.Tags) {
                 tags[tag.Key] = tag.Value;
