@@ -252,7 +252,7 @@ describe('when executing perform-tasks command', () => {
             test('delete task is created for previously tracked task', async () => {
                 await command.performCommand(commandArgs);
                 expect(buildTaskProviderCreateDeleteTaskMock).toHaveBeenCalledTimes(1);
-                expect(buildTaskProviderCreateDeleteTaskMock).toHaveBeenCalledWith('updateStacks3', 'update-stacks', 'stack-name-3', commandArgs);
+                expect(buildTaskProviderCreateDeleteTaskMock).toHaveBeenCalledWith('updateStacks3', 'update-stacks', 'stack-name-3', undefined, commandArgs);
             });
 
             test('delete task has perform cleanup set to false', async () => {

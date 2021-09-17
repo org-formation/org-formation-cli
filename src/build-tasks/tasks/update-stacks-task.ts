@@ -24,6 +24,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             StackName: config.StackName,
             skip: typeof config.Skip === 'boolean' ? config.Skip : undefined,
             childTasks: [],
+            concurrencyForCleanup: config.MaxConcurrentStacks,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
                 const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
@@ -67,7 +68,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         };
     }
 
-    createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs): IBuildTask {
+    createTaskForCleanup(logicalId: string, physicalId: string, command: IPerformTasksCommandArgs, concurrencyForCleanup: number): IBuildTask {
         return {
             type: 'delete-stacks',
             name: logicalId,
@@ -91,7 +92,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
                     }
                 } else {
                     ConsoleUtil.LogInfo(`Executing: delete-stacks ${physicalId}.`);
-                    await DeleteStacksCommand.Perform({ ...command, stackName: physicalId, maxConcurrentStacks: 1, failedStacksTolerance: 0 });
+                    await DeleteStacksCommand.Perform({ ...command, stackName: physicalId, maxConcurrentStacks: concurrencyForCleanup, failedStacksTolerance: 0 });
                 }
             },
         };

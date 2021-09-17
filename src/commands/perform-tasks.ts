@@ -74,7 +74,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
             await BuildRunner.RunTasks(cleanupTasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
         }
         const tasksToTrack = BuildTaskProvider.recursivelyFilter(tasks, x => x.physicalIdForCleanup !== undefined);
-        const trackedTasks: ITrackedTask[] = tasksToTrack.map(x => { return { physicalIdForCleanup: x.physicalIdForCleanup, logicalName: x.name, type: x.type }; });
+        const trackedTasks: ITrackedTask[] = tasksToTrack.map(x => { return { physicalIdForCleanup: x.physicalIdForCleanup, logicalName: x.name, type: x.type, concurrencyForCleanup: x.concurrencyForCleanup }; });
         state.setTrackedTasks(command.logicalName, trackedTasks);
 
         if (UpdateOrganizationCommand.HasRan === true) {
