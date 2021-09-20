@@ -39,7 +39,7 @@ export class PasswordPolicyResource extends Resource {
             if (this.maxPasswordAge < 1) {
                 throw new OrgFormationError(`MaxPasswordAge for resource ${id} must have value greater than or equal to 1`);
             }
-         }
+        }
         this.minimumPasswordLength = this.props.MinimumPasswordLength;
         if (this.minimumPasswordLength !== undefined) {
             Validator.validatePositiveInteger(this.minimumPasswordLength, 'MinimumPasswordLength');
@@ -56,16 +56,13 @@ export class PasswordPolicyResource extends Resource {
         this.requireUppercaseCharacters = this.props.RequireUppercaseCharacters;
         this.passwordReusePrevention = this.props.PasswordReusePrevention;
         if (this.passwordReusePrevention !== undefined) {
-            Validator.validatePositiveInteger(this.maxPasswordAge, 'PasswordReusePrevention');
+            Validator.validatePositiveInteger(this.passwordReusePrevention, 'PasswordReusePrevention');
             if (this.passwordReusePrevention < 1) {
                 throw new OrgFormationError(`PasswordReusePrevention for resource ${id} must have value greater than or equal to 1`);
             }
             if (this.passwordReusePrevention > 24) {
                 throw new OrgFormationError(`PasswordReusePrevention for resource ${id} must have value smaller than or equal to 24`);
             }
-        }
-        if (this.passwordReusePrevention === undefined) {
-            this.passwordReusePrevention = 0;
         }
         this.allowUsersToChangePassword = this.props.AllowUsersToChangePassword;
 
