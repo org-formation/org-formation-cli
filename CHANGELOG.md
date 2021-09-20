@@ -2,14 +2,14 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
-**unreleased**
+- **version 0.9.17**
 
 - fix: allow templates without version attribute
 - feat: support `!Ref AWS::Partition` in tasks file
 - feat: allow yaml anchors to be declared in top level `Definitions` attribute
 - feat: reduce 'not in update create completed' failures when creating new account (due to rate limiting)
 - feat: TextTemplating support for organization.yml and task files
-- feat: added possibility to mix TextTemplating and bindings/expressions
+- feat: possibility to mix TextTemplating and bindings/expressions
 - feat: stack tags
 - fix: org-formation init to honor `--cross-account-role-name`
 

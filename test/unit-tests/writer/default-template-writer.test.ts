@@ -11,16 +11,16 @@ describe('when writing template for organization', () => {
     beforeEach(() => {
         organization = new AwsOrganization(undefined);
         jest.spyOn(organization, 'initialize').mockImplementation();
-        organization.organization = {MasterAccountId: '111111111111'};
+        organization.organization = { MasterAccountId: '111111111111' };
         organization.roots = [{ Id: 'o-root', Policies: [], OrganizationalUnits: [] }];
-        organization.masterAccount = {Id: '111111111111',  Name: 'Organization Master Account', ParentId: 'o-root', Email: 'email@someplace.com', Policies: [], Type: 'Account', Tags: {key : 'val'}};
+        organization.masterAccount = { Id: '111111111111', Name: 'Organization Master Account', ParentId: 'o-root', Email: 'email@someplace.com', Policies: [], Type: 'Account', Tags: { key: 'val' } };
         organization.organizationalUnits = [];
         organization.accounts = [];
         organization.policies = [];
         templateWriter = new DefaultTemplateWriter(organization);
     })
 
-    afterEach(()=> {
+    afterEach(() => {
         jest.restoreAllMocks();
     })
 
@@ -34,14 +34,16 @@ describe('when writing template for organization', () => {
 
         beforeEach(() => {
             organization.accounts = [
-                { Name: 'acc', Type: 'Account', Id: '123123123123', ParentId: 'o-root', Policies: []},
+                { Name: 'acc', Type: 'Account', Id: '123123123123', ParentId: 'ou-1', Policies: [] },
+                { Name: 'acc-with-dash', Type: 'Account', Id: '123123123124', ParentId: 'o-root', Policies: [] },
+                { Name: 'acc with spaces', Type: 'Account', Id: '123123123125', ParentId: 'o-root', Policies: [] },
             ];
             organization.organizationalUnits = [
-                { Name: 'ou', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: []}
+                { Name: 'ou', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: [] }
             ];
             organization.policies = [
-                { Name: 'scp-aws-managed', Type: 'Policy', Id: 'scp-0', PolicySummary: {AwsManaged: true }, Content: '{}', Targets: [] },
-                { Name: 'scp', Type: 'Policy', Id: 'scp-1', PolicySummary: {AwsManaged: false }, Content: '{}', Targets: [] },
+                { Name: 'scp-aws-managed', Type: 'Policy', Id: 'scp-0', PolicySummary: { AwsManaged: true }, Content: '{}', Targets: [] },
+                { Name: 'scp', Type: 'Policy', Id: 'scp-1', PolicySummary: { AwsManaged: false }, Content: '{}', Targets: [] },
             ];
 
             organization.organizationalUnits[0].Accounts.push(organization.accounts[0]);
@@ -57,7 +59,7 @@ describe('when writing template for organization', () => {
         test('generated template contains accounts', async () => {
             const defaultTemplate = await templateWriter.generateDefaultTemplate();
             const root = TemplateRoot.createFromContents(defaultTemplate.template);
-            expect(root.organizationSection.accounts?.length).toBe(1);
+            expect(root.organizationSection.accounts?.length).toBe(3);
         });
 
         test('generated template contains master account', async () => {
@@ -85,7 +87,6 @@ describe('when writing template for organization', () => {
             const root = TemplateRoot.createFromContents(defaultTemplate.template);
             expect(root.organizationSection.organizationRoot?.defaultOrganizationAccessRoleName).toBe('OrganizationAccountAccessRole');
         });
-
 
         test('generated template contains overridden CrossAccountRoleName', async () => {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = 'xyz';
@@ -128,7 +129,6 @@ describe('when writing template for organization', () => {
             expect(ou.serviceControlPolicies[0].TemplateResource.logicalId).toBe(root.organizationSection.serviceControlPolicies[0].logicalId);
         });
 
-
         test('generated template only contains non AWS managed service control policy', async () => {
             const defaultTemplate = await templateWriter.generateDefaultTemplate();
             const root = TemplateRoot.createFromContents(defaultTemplate.template);
@@ -136,6 +136,21 @@ describe('when writing template for organization', () => {
             expect(root.organizationSection.serviceControlPolicies[0].policyName).toBe('scp');
         });
 
+        test('generated template does not contain dashes in account names', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            const accountWithDashes = root.organizationSection.accounts.find(x => x.accountName === "acc-with-dash");
+            expect(accountWithDashes).toBeDefined();
+            expect(accountWithDashes.logicalId).toBe("AccWithDashAccount")
+        });
+
+        test('generated template does not contain spaces in account names', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate();
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            const accountWithDashes = root.organizationSection.accounts.find(x => x.accountName === "acc with spaces");
+            expect(accountWithDashes).toBeDefined();
+            expect(accountWithDashes.logicalId).toBe("AccWithSpacesAccount")
+        });
     });
 
     describe('and multiple accounts have the same name', () => {
@@ -144,8 +159,8 @@ describe('when writing template for organization', () => {
 
         beforeEach(() => {
             organization.accounts = [
-                {Name: 'abcdef', Id: '123123123123', Type: 'Account', ParentId: 'o-root', Policies: []},
-                {Name: 'abcdef', Id: '234234234234', Type: 'Account', ParentId: 'o-root', Policies: []},
+                { Name: 'abcdef', Id: '123123123123', Type: 'Account', ParentId: 'o-root', Policies: [] },
+                { Name: 'abcdef', Id: '234234234234', Type: 'Account', ParentId: 'o-root', Policies: [] },
             ];
 
             consoleWarnMock = jest.spyOn(ConsoleUtil, 'LogWarning').mockImplementation();
@@ -175,11 +190,11 @@ describe('when writing template for organization', () => {
     describe('and account has same name as organizational unit', () => {
         beforeEach(() => {
             organization.accounts = [
-                {Name: 'abcdef', Id: '123123123123', Type: 'Account', ParentId: 'o-root', Policies: []},
+                { Name: 'abcdef', Id: '123123123123', Type: 'Account', ParentId: 'o-root', Policies: [] },
             ];
 
             organization.organizationalUnits = [
-                {Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: []}
+                { Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: [] }
             ];
         })
 
@@ -209,8 +224,8 @@ describe('when writing template for organization', () => {
         beforeEach(() => {
 
             organization.organizationalUnits = [
-                {Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: []},
-                {Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-2', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: []}
+                { Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: [] },
+                { Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-2', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: [] }
             ];
             organization.organizationalUnits[0].OrganizationalUnits.push(organization.organizationalUnits[1])
         })
@@ -228,7 +243,7 @@ describe('when writing template for organization', () => {
             expect(root.organizationSection.organizationalUnits.length).toBe(2);
             expect(root.organizationSection.organizationalUnits.length).toBe(2);
 
-            const parent = root.organizationSection.organizationalUnits.find(x=>x.organizationalUnits.length > 0);
+            const parent = root.organizationSection.organizationalUnits.find(x => x.organizationalUnits.length > 0);
             expect(parent).toBeDefined();
             expect(parent.organizationalUnits?.length).toBe(1)
         })
@@ -240,8 +255,8 @@ describe('when writing template for organization', () => {
         beforeEach(() => {
 
             organization.organizationalUnits = [
-                {Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: []},
-                {Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-2', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: []}
+                { Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: [] },
+                { Name: 'abcdef', Type: 'OrganizationalUnit', Id: 'ou-2', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: [] }
             ];
             organization.organizationalUnits[0].OrganizationalUnits.push(organization.organizationalUnits[1])
         })
@@ -259,7 +274,7 @@ describe('when writing template for organization', () => {
             expect(root.organizationSection.organizationalUnits.length).toBe(2);
             expect(root.organizationSection.organizationalUnits.length).toBe(2);
 
-            const parent = root.organizationSection.organizationalUnits.find(x=>x.organizationalUnits.length > 0);
+            const parent = root.organizationSection.organizationalUnits.find(x => x.organizationalUnits.length > 0);
             expect(parent).toBeDefined();
             expect(parent.organizationalUnits?.length).toBe(1)
         })
@@ -271,7 +286,7 @@ describe('when writing template for organization', () => {
         beforeEach(() => {
 
             organization.organizationalUnits = [
-                {Name: 'ou', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: []}
+                { Name: 'ou', Type: 'OrganizationalUnit', Id: 'ou-1', ParentId: 'o-root', Policies: [], Accounts: [], OrganizationalUnits: [] }
             ];
             organization.organizationalUnits[0].Accounts.push(organization.masterAccount);
         })

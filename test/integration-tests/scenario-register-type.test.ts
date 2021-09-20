@@ -1,5 +1,5 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest  } from './base-integration-test';
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from './base-integration-test';
 import { ListTypeVersionsOutput, DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
 import { GetObjectOutput } from 'aws-sdk/clients/s3';
 
@@ -7,11 +7,11 @@ const basePathForScenario = './test/integration-tests/resources/scenario-registe
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let typesAfterRegister : ListTypeVersionsOutput;
-    let typesAfterSecondRegister : ListTypeVersionsOutput;
-    let typesAfterThirdRegister : ListTypeVersionsOutput;
-    let typesAfterMoveTypesToInclude : ListTypeVersionsOutput;
-    let typesAfterCleanup : ListTypeVersionsOutput;
+    let typesAfterRegister: ListTypeVersionsOutput;
+    let typesAfterSecondRegister: ListTypeVersionsOutput;
+    let typesAfterThirdRegister: ListTypeVersionsOutput;
+    let typesAfterMoveTypesToInclude: ListTypeVersionsOutput;
+    let typesAfterCleanup: ListTypeVersionsOutput;
     let stateAfterRegister: GetObjectOutput;
     let stateAfterThirdRegister: GetObjectOutput;
     let stateAfterMoveTypesToInclude: GetObjectOutput;
@@ -21,48 +21,48 @@ describe('when calling org-formation perform tasks', () => {
     beforeAll(async () => {
         context = await baseBeforeAll();
 
-        try{
-            await context.cfnClient.deleteStack({StackName: 'community-servicequotas-s3-resource-role'}).promise();
-        }catch{
+        try {
+            await context.cfnClient.deleteStack({ StackName: 'community-servicequotas-s3-resource-role' }).promise();
+        } catch {
 
         }
 
         await context.prepareStateBucket(basePathForScenario + '../state.json');
         const { command, stateBucketName, s3client, cfnClient } = context;
 
-        await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-register-type.yml' });
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-register-type.yml' });
-        typesAfterRegister = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
-        describeStacksOutput = await cfnClient.describeStacks({StackName: 'community-servicequotas-s3-resource-role'}).promise();
+        await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-register-type.yml' });
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-register-type.yml' });
+        typesAfterRegister = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
+        describeStacksOutput = await cfnClient.describeStacks({ StackName: 'community-servicequotas-s3-resource-role' }).promise();
 
 
         await sleepForTest(1000);
-        stateAfterRegister = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+        stateAfterRegister = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
 
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-register-type-changed-org.yml' });
-        typesAfterSecondRegister = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
-
-        await sleepForTest(1000);
-
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-register-type-added-account.yml' });
-        typesAfterThirdRegister = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '2-register-type-changed-org.yml' });
+        typesAfterSecondRegister = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
 
         await sleepForTest(1000);
-        stateAfterThirdRegister = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
 
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '4-move-register-type-to-include.yml', performCleanup: true});
-        typesAfterMoveTypesToInclude = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '3-register-type-added-account.yml' });
+        typesAfterThirdRegister = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
 
         await sleepForTest(1000);
-        stateAfterMoveTypesToInclude = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+        stateAfterThirdRegister = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
 
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup.yml', performCleanup: true});
-        typesAfterCleanup = await cfnClient.listTypeVersions({Type : 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3'}).promise();
-        stateAfterCleanup = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '4-move-register-type-to-include.yml', performCleanup: true });
+        typesAfterMoveTypesToInclude = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
+
+        await sleepForTest(1000);
+        stateAfterMoveTypesToInclude = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup.yml', performCleanup: true });
+        typesAfterCleanup = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
+        stateAfterCleanup = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
     });
 
     test('types after register contains registered type', () => {
-        const foundType = typesAfterRegister.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
+        const foundType = typesAfterRegister.TypeVersionSummaries.find(x => x.TypeName === 'Community::ServiceQuotas::S3');
         expect(foundType).toBeDefined();
     });
 
@@ -86,7 +86,7 @@ describe('when calling org-formation perform tasks', () => {
         expect(describeStacksOutput.Stacks[0]).toBeDefined();
         expect(describeStacksOutput.Stacks[0].StackStatus).toBe('CREATE_COMPLETE');
         expect(describeStacksOutput.Stacks[0].Outputs).toBeDefined();
-        const executionRole = describeStacksOutput.Stacks[0].Outputs.find(x=>x.OutputKey === 'ExecutionRoleArn');
+        const executionRole = describeStacksOutput.Stacks[0].Outputs.find(x => x.OutputKey === 'ExecutionRoleArn');
         expect(executionRole).toBeDefined();
     })
 
@@ -122,16 +122,16 @@ describe('when calling org-formation perform tasks', () => {
     })
 
     test('type doesnt get updated if only org file changed', () => {
-        const foundType1 = typesAfterRegister.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
-        const foundType2 = typesAfterSecondRegister.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
-        const foundType3 = typesAfterSecondRegister.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
+        const foundType1 = typesAfterRegister.TypeVersionSummaries.find(x => x.TypeName === 'Community::ServiceQuotas::S3');
+        const foundType2 = typesAfterSecondRegister.TypeVersionSummaries.find(x => x.TypeName === 'Community::ServiceQuotas::S3');
+        const foundType3 = typesAfterSecondRegister.TypeVersionSummaries.find(x => x.TypeName === 'Community::ServiceQuotas::S3');
         expect(foundType1.VersionId).toBe(foundType2.VersionId);
         expect(foundType1.VersionId).toBe(foundType3.VersionId);
     });
 
 
     test('type continues to be registered after moved to include', () => {
-        const foundType1 = typesAfterMoveTypesToInclude.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
+        const foundType1 = typesAfterMoveTypesToInclude.TypeVersionSummaries.find(x => x.TypeName === 'Community::ServiceQuotas::S3');
         expect(foundType1).toBeDefined();
     });
 
@@ -146,8 +146,17 @@ describe('when calling org-formation perform tasks', () => {
 
         expect(stringifiedTrackedTasksAfterRegister).toBe(stringifiedTrackedTasksAfterMove);
     });
+
+
+    test('concurrency gets recorded in tracked task', () => {
+        const stateAsStringAfterRegister = stateAfterThirdRegister.Body.toString();
+        const stateAfterRegister = JSON.parse(stateAsStringAfterRegister);
+
+        expect(stateAfterRegister.trackedTasks.default[0].concurrencyForCleanup).toBe(5);
+    });
+
     test('types after cleanup does not contain registered type', () => {
-        const foundType = typesAfterCleanup.TypeVersionSummaries.find(x=>x.TypeName === 'Community::ServiceQuotas::S3');
+        const foundType = typesAfterCleanup.TypeVersionSummaries.find(x => x.TypeName === 'Community::ServiceQuotas::S3');
         expect(foundType).toBeUndefined();
     });
 
@@ -161,6 +170,6 @@ describe('when calling org-formation perform tasks', () => {
 
     afterAll(async () => {
         await baseAfterAll(context);
-        await context.cfnClient.deleteStack({StackName: 'community-servicequotas-s3-resource-role'}).promise();
+        await context.cfnClient.deleteStack({ StackName: 'community-servicequotas-s3-resource-role' }).promise();
     });
 });

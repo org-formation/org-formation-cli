@@ -73,8 +73,8 @@ export class PersistedState {
     }
 
     public putTemplateHash(val: string): void {
-        if (!this.organizationLevelState) {return;}
-       this.putValue('organization.template.hash', val);
+        if (!this.organizationLevelState) { return; }
+        this.putValue('organization.template.hash', val);
     }
 
     public getTemplateHash(): string {
@@ -82,7 +82,7 @@ export class PersistedState {
     }
 
     public putTemplateHashLastPublished(val: string): void {
-        if (!this.organizationLevelState) {return;}
+        if (!this.organizationLevelState) { return; }
         this.organizationState.putValue('organization.template-last-published.hash', val);
     }
 
@@ -193,7 +193,7 @@ export class PersistedState {
             region = 'no-region';
         }
 
-        targetsForAccount[region]  = target;
+        targetsForAccount[region] = target;
         this.dirty = true;
     }
 
@@ -280,7 +280,7 @@ export class PersistedState {
             regions = accounts[templateTarget.accountId] = {};
         }
 
-        regions[templateTarget.region]  = templateTarget;
+        regions[templateTarget.region] = templateTarget;
         this.dirty = true;
     }
 
@@ -387,7 +387,7 @@ export class PersistedState {
             return 'master account';
         }
         const bindings = this.enumBindings(OrgResourceTypes.Account);
-        for(const binding of bindings) {
+        for (const binding of bindings) {
             if (binding.physicalId === physicalId) {
                 return binding.logicalId;
             }
@@ -420,8 +420,8 @@ export class PersistedState {
             return [];
         }
         const result: IGenericTarget<ITaskDefinition>[] = [];
-        for(const regionDict of Object.values(accountDict)) {
-            for(const target of Object.values(regionDict)) {
+        for (const regionDict of Object.values(accountDict)) {
+            for (const target of Object.values(regionDict)) {
                 result.push(target as IGenericTarget<ITaskDefinition>);
             }
         }
@@ -443,7 +443,7 @@ export class PersistedState {
         let typeDict: Record<string, IBinding> = this.state.bindings[binding.type];
         typeDict = this.state.bindings[binding.type] = {};
 
-        typeDict[binding.logicalId]  = binding;
+        typeDict[binding.logicalId] = binding;
         this.dirty = true;
     }
 
@@ -463,7 +463,7 @@ export class PersistedState {
             typeDict = this.state.bindings[binding.type] = {};
         }
 
-        typeDict[binding.logicalId]  = binding;
+        typeDict[binding.logicalId] = binding;
         this.dirty = true;
     }
 
@@ -484,7 +484,7 @@ export class PersistedState {
         }
 
         const current = typeDict[logicalId];
-        if (current === undefined){
+        if (current === undefined) {
             typeDict[logicalId] = { lastCommittedHash, logicalId, type } as IBinding;
         } else {
             current.lastCommittedHash = lastCommittedHash;
@@ -506,7 +506,7 @@ export class PersistedState {
         }
 
         const current = typeDict[logicalId];
-        if (current === undefined){
+        if (current === undefined) {
             typeDict[logicalId] = { physicalId, logicalId, type } as IBinding;
         } else {
             current.physicalId = physicalId;
@@ -569,10 +569,10 @@ export class PersistedState {
         if (storedVersion === undefined) {
             this.state.trackedTasks = {};
             if (this.state.targets) {
-                for(const root of Object.entries(this.state.targets)) {
-                    for(const logicalName of Object.entries(root[1])) {
-                        for(const account of Object.entries(logicalName[1])) {
-                            for(const region of Object.entries(account[1])) {
+                for (const root of Object.entries(this.state.targets)) {
+                    for (const logicalName of Object.entries(root[1])) {
+                        for (const account of Object.entries(logicalName[1])) {
+                            for (const region of Object.entries(account[1])) {
                                 if ((region[1] as any).lastCommittedHash) {
                                     delete root[1][logicalName[0]];
                                     break;
@@ -638,5 +638,6 @@ export interface IGenericTarget<TTaskDefinition> {
 export interface ITrackedTask {
     logicalName: string;
     physicalIdForCleanup: string;
+    concurrencyForCleanup?: number;
     type: string;
 }

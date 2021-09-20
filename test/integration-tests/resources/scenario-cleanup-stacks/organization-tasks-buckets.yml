@@ -9,3 +9,4 @@ CfnTemplate:
   Type: update-stacks
   Template: ./templates/buckets.yml
   StackName: scenario-cleanup-buckets
+  MaxConcurrentStacks: 10

@@ -1,6 +1,7 @@
 import { Organizations } from 'aws-sdk/clients/all';
 import { Organization } from 'aws-sdk/clients/organizations';
 import * as Yaml from 'yamljs';
+import { pascalCase } from 'pascal-case';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot, IAWSObject } from '~aws-provider/aws-organization-reader';
@@ -19,7 +20,7 @@ export class DefaultTemplateWriter {
         if (organizationModel) {
             this.organizationModel = organizationModel;
         } else {
-            const org = new Organizations({region: 'us-east-1'});
+            const org = new Organizations({ region: 'us-east-1' });
             const reader = new AwsOrganizationReader(org);
             this.organizationModel = new AwsOrganization(reader);
         }
@@ -77,7 +78,7 @@ export class DefaultTemplateWriter {
         }
         for (const scp of this.organizationModel.policies) {
             if (scp.PolicySummary && scp.PolicySummary.AwsManaged) { continue; }
-            const policyResource = this.generateSCP(lines, scp );
+            const policyResource = this.generateSCP(lines, scp);
 
             bindings.push({
                 type: policyResource.type,
@@ -306,7 +307,8 @@ class LogicalNames {
     private createName(element: IAWSObject): string {
         let name = element.Name;
         let postFix = this.getPostFix(element);
-        name = name.replace(/ /g, '');
+
+        name = pascalCase(name);
         name = name[0].toUpperCase() + name.substring(1);
 
         if (name.endsWith(postFix)) {
@@ -372,7 +374,7 @@ class ObjLine implements YamlLine {
         const line = `${indentation}${this.label}:\n`;
         const value = Yaml.stringify(this.value, 10, 2);
         const formatted = value.split('\n').map(part => `${indentation}  ${part}`).join('\n');
-        return line + formatted ;
+        return line + formatted;
     }
 }
 class Line implements YamlLine {
