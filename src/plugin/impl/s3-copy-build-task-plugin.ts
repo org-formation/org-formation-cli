@@ -1,7 +1,7 @@
 import path from 'path';
 import { existsSync, statSync } from 'fs';
 import * as fs from 'fs';
-import S3, { PutObjectRequest, DeleteObjectRequest } from 'aws-sdk/clients/s3';
+import S3, { PutObjectRequest, DeleteObjectRequest, ServerSideEncryption } from 'aws-sdk/clients/s3';
 import archiver from 'archiver';
 import { WritableStream } from 'memory-streams';
 import { IPluginTask, IPluginBinding } from '../plugin-binder';
@@ -20,7 +20,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
 
     convertToCommandArgs(config: IS3CopyBuildTaskConfig, command: IPerformTasksCommandArgs): IS3CopyCommandArgs {
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'LocalPath', 'RemotePath',
-            'FilePath', 'ZipBeforePut');
+            'FilePath', 'ZipBeforePut', 'ServerSideEncryption');
 
 
         if (!config.LocalPath) {
@@ -40,6 +40,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             maxConcurrent: 1,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
+            serverSideEncryption: config.ServerSideEncryption,
         };
     }
     validateCommandArgs(commandArgs: IS3CopyCommandArgs): void {
@@ -69,6 +70,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             remotePath: commandArgs.remotePath,
             zipBeforePut: commandArgs.zipBeforePut,
             path: hashOfLocalDirectory,
+            serverSideEncryption: commandArgs.serverSideEncryption,
         };
     }
     convertToTask(command: IS3CopyCommandArgs, globalHash: string): IS3CopyTask {
@@ -82,6 +84,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             taskRoleName: command.taskRoleName,
             forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
             logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
+            serverSideEncryption: command.serverSideEncryption,
         };
     }
     getPhysicalIdForCleanup(): string {
@@ -89,7 +92,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
     }
 
     async performRemove(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
-        const {target, task} = binding;
+        const { target, task } = binding;
 
         Validator.throwForUnresolvedExpressions(task.remotePath, 'RemotePath');
         Validator.throwForUnresolvedExpressions(task.localPath, 'LocalPath');
@@ -103,7 +106,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
-        const {target, task} = binding;
+        const { target, task } = binding;
 
         Validator.throwForUnresolvedExpressions(task.remotePath, 'RemotePath');
         Validator.throwForUnresolvedExpressions(task.localPath, 'LocalPath');
@@ -113,6 +116,9 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             ...CopyToS3TaskPlugin.getBucketAndKey(task),
             ACL: 'bucket-owner-full-control',
         };
+        if (task.serverSideEncryption) {
+            request.ServerSideEncryption = task.serverSideEncryption;
+        }
         request.Body = await this.createBody(task);
 
         await s3client.putObject(request).promise();
@@ -173,6 +179,7 @@ export interface IS3CopyBuildTaskConfig extends IBuildTaskConfiguration {
     RemotePath: string;
     ZipBeforePut?: true;
     OrganizationBinding: IOrganizationBinding;
+    ServerSideEncryption?: ServerSideEncryption;
 
 }
 
@@ -180,10 +187,12 @@ export interface IS3CopyCommandArgs extends IBuildTaskPluginCommandArgs {
     localPath: string;
     remotePath: string;
     zipBeforePut: boolean;
+    serverSideEncryption?: ServerSideEncryption;
 }
 
 export interface IS3CopyTask extends IPluginTask {
     localPath: string;
     remotePath: string;
     zipBeforePut: boolean;
+    serverSideEncryption?: ServerSideEncryption;
 }

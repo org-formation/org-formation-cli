@@ -8,11 +8,11 @@ const basePathForScenario = './test/integration-tests/resources/scenario-copy-to
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
 
-     let performCreateOrUpdateMock: jest.SpyInstance;
-     let mockAfterInitialUpload: jest.MockContext<any, any>;
-     let mockAfterAfterUpdateWithoutChanging: jest.MockContext<any, any>;
-     let mockAfterAfterUpdateWithChanging: jest.MockContext<any, any>;
-     let mockAfterAfterUpdateWithForceDeploy: jest.MockContext<any, any>;
+    let performCreateOrUpdateMock: jest.SpyInstance;
+    let mockAfterInitialUpload: jest.MockContext<any, any>;
+    let mockAfterAfterUpdateWithoutChanging: jest.MockContext<any, any>;
+    let mockAfterAfterUpdateWithChanging: jest.MockContext<any, any>;
+    let mockAfterAfterUpdateWithForceDeploy: jest.MockContext<any, any>;
 
     beforeAll(async () => {
         context = await baseBeforeAll();
@@ -21,21 +21,21 @@ describe('when calling org-formation perform tasks', () => {
 
         performCreateOrUpdateMock = jest.spyOn(CopyToS3TaskPlugin.prototype, 'performCreateOrUpdate');
 
-        await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
+        await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
         mockAfterInitialUpload = performCreateOrUpdateMock.mock;
 
         performCreateOrUpdateMock.mockReset();
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
         mockAfterAfterUpdateWithoutChanging = performCreateOrUpdateMock.mock;
 
         performCreateOrUpdateMock.mockReset();
         writeFileSync(basePathForScenario + 'files/file.txt', Math.random());
-        await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
+        await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
         mockAfterAfterUpdateWithChanging = performCreateOrUpdateMock.mock;
 
         performCreateOrUpdateMock.mockReset();
-        await PerformTasksCommand.Perform({...command, forceDeploy: true, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
+        await PerformTasksCommand.Perform({ ...command, forceDeploy: true, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
         mockAfterAfterUpdateWithForceDeploy = performCreateOrUpdateMock.mock;
     });
 
@@ -46,13 +46,13 @@ describe('when calling org-formation perform tasks', () => {
     test('perform create or update is called with the right remotePath', () => {
         expect(mockAfterInitialUpload.calls.length).toBe(3);
         const firstCall: any[] = mockAfterInitialUpload.calls;
-        const callsWithAccountNumberInRemotePath = firstCall.filter(x=>x[0].task.remotePath.includes('102625093955'))
+        const callsWithAccountNumberInRemotePath = firstCall.filter(x => x[0].task.remotePath.includes('102625093955'))
         expect(callsWithAccountNumberInRemotePath.length).toBe(2);
 
-        const callsWithIntegrationTestBucketName = firstCall.filter(x=>x[0].task.remotePath.includes('org-formation-integration-test'))
+        const callsWithIntegrationTestBucketName = firstCall.filter(x => x[0].task.remotePath.includes('org-formation-integration-test'))
         expect(callsWithIntegrationTestBucketName.length).toBe(3);
 
-        const callsWithZipFile = firstCall.filter(x=>x[0].task.remotePath.includes('.zip'))
+        const callsWithZipFile = firstCall.filter(x => x[0].task.remotePath.includes('.zip'))
         expect(callsWithZipFile.length).toBe(1);
     });
 

@@ -20,6 +20,15 @@ CopyToS3:
     Account: !Ref AccountA
     Region: eu-central-1
 
+CopyToS3Encrypted:
+  Type: copy-to-s3
+  RemotePath: !Sub s3://org-formation-integration-test/${MasterAccount}/file-enc.txt
+  LocalPath: ./files/file.txt
+  ServerSideEncryption: AES256
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1
+
 CopyToS3WithCopyValue:
   Type: copy-to-s3
   DependsOn: Template
