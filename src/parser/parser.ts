@@ -68,6 +68,7 @@ export interface IOrganizationBinding {
     Account?: IResourceRef | IResourceRef[];
     ExcludeAccount?: IResourceRef | IResourceRef[];
     OrganizationalUnit?: IResourceRef | IResourceRef[];
+    ExcludeOrganizationalUnit?: IResourceRef | IResourceRef[];
     Region?: string | string[];
     AccountsWithTag?: string;
 }
@@ -250,6 +251,7 @@ export class TemplateRoot {
         const accounts = this.resolve(binding.Account, binding.Account === '*' ? this.organizationSection.accounts : organizationAccountsAndMaster);
         const excludeAccounts = this.resolve(binding.ExcludeAccount, binding.ExcludeAccount === '*' ? this.organizationSection.accounts : organizationAccountsAndMaster);
         const organizationalUnits = this.resolve(binding.OrganizationalUnit, this.organizationSection.organizationalUnits);
+        const excludeOrganizationalUnits = this.resolve(binding.ExcludeOrganizationalUnit, this.organizationSection.organizationalUnits);
 
         const accountLogicalIds = accounts.map(x => x.TemplateResource!.logicalId);
         const result = new Set<string>(accountLogicalIds);
@@ -270,6 +272,10 @@ export class TemplateRoot {
             for (const account of accountsWithTag.map(x => x.logicalId)) {
                 result.add(account);
             }
+        }
+
+        for (const accountsForUnit of this.collectAccountLogicalIdsFromOU(excludeOrganizationalUnits)) {
+            result.delete(accountsForUnit);
         }
 
         for (const account of excludeAccounts.map(x => x.TemplateResource!.logicalId)) {
