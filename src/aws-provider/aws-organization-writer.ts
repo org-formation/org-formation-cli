@@ -338,7 +338,7 @@ export class AwsOrganizationWriter {
             ConsoleUtil.LogWarning(`when changing the organization access role for ${accountId} (logicalId: ${resource.logicalId}) the tool will not automatically rename roles in the target account. Instead: make sure that the name of the role in the organization model corresponds to a role in the AWS account.`);
         }
 
-        if (account.Alias !== resource.alias) {
+        if (previousResource?.alias !== resource.alias) {
             const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
             const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
             if (account.Alias) {
@@ -405,7 +405,7 @@ export class AwsOrganizationWriter {
             }
         }
 
-        if (!passwordPolicyEquals(account.PasswordPolicy, resource.passwordPolicy)) {
+        if (!passwordPolicyEquals(previousResource?.passwordPolicy, resource.passwordPolicy)) {
             const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
             const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
             if (account.PasswordPolicy) {
