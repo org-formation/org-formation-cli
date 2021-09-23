@@ -118,6 +118,9 @@ export class Validator {
         if (binding.OrganizationalUnit !== undefined) {
             Validator.validateReferenceToOU(binding.OrganizationalUnit, id);
         }
+        if (binding.ExcludeOrganizationalUnit !== undefined) {
+            Validator.validateReferenceToOU(binding.OrganizationalUnit, id);
+        }
         if (binding.IncludeMasterAccount !== undefined) {
             if (typeof binding.IncludeMasterAccount !== 'boolean') {
                 throw new OrgFormationError(`expected value for IncludeMasterAccount on ${id} to be boolean (true | false)`);

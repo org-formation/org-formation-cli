@@ -7,30 +7,30 @@ import { ITemplate, TemplateRoot, IOrganizationBinding } from '~parser/parser';
 
 describe('when evaluating bindings', () => {
     let template: TemplateRoot;
-    const contents: ITemplate  = {
+    const contents: ITemplate = {
         AWSTemplateFormatVersion: '2010-09-09-OC',
         Organization: {
             Root: {
                 Type: OrgResourceTypes.OrganizationRoot,
                 Properties: {
-                    ServiceControlPolicies: { Ref: 'Policy'},
+                    ServiceControlPolicies: { Ref: 'Policy' },
                 } as IOrganizationRootProperties,
             },
             OU: {
                 Type: OrgResourceTypes.OrganizationalUnit,
                 Properties: {
                     OrganizationalUnitName: 'ou1',
-                    ServiceControlPolicies: { Ref: 'Policy'},
-                    Accounts: { Ref: 'Account'},
-                    OrganizationalUnits: { Ref: 'OUChild'},
+                    ServiceControlPolicies: { Ref: 'Policy' },
+                    Accounts: { Ref: 'Account' },
+                    OrganizationalUnits: { Ref: 'OUChild' },
                 } as IOrganizationalUnitProperties,
             },
             OUChild: {
                 Type: OrgResourceTypes.OrganizationalUnit,
                 Properties: {
                     OrganizationalUnitName: 'ou-child',
-                    ServiceControlPolicies: [{ Ref: 'Policy'}, { Ref: 'Policy2'}],
-                    Accounts: [{ Ref: 'Account2'}, { Ref: 'Account3'}],
+                    ServiceControlPolicies: [{ Ref: 'Policy' }, { Ref: 'Policy2' }],
+                    Accounts: [{ Ref: 'Account2' }, { Ref: 'Account3' }],
                 } as IOrganizationalUnitProperties,
             },
             MasterAccount: {
@@ -46,7 +46,7 @@ describe('when evaluating bindings', () => {
                 Properties: {
                     AccountName: 'account1',
                     RootEmail: 'email@email.com',
-                    ServiceControlPolicies: { Ref: 'Policy'},
+                    ServiceControlPolicies: { Ref: 'Policy' },
                 } as IAccountProperties,
             },
             Account2: {
@@ -64,14 +64,14 @@ describe('when evaluating bindings', () => {
                 } as IAccountProperties,
             },
             Policy: {
-                Type : OrgResourceTypes.ServiceControlPolicy,
+                Type: OrgResourceTypes.ServiceControlPolicy,
                 Properties: {
                     PolicyName: 'policy1',
                     PolicyDocument: 'policy document',
                 } as IServiceControlPolicyProperties,
             },
             Policy2: {
-                Type : OrgResourceTypes.ServiceControlPolicy,
+                Type: OrgResourceTypes.ServiceControlPolicy,
                 Properties: {
                     PolicyName: 'policy2',
                     PolicyDocument: 'policy document',
@@ -85,9 +85,9 @@ describe('when evaluating bindings', () => {
     });
 
     test('master account can be bound to by name', () => {
-        const binding : IOrganizationBinding = {
-            Account: {Ref: 'MasterAccount'}
-         };
+        const binding: IOrganizationBinding = {
+            Account: { Ref: 'MasterAccount' }
+        };
         const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
         expect(resolvedAccounts).toBeDefined();
         expect(resolvedAccounts.length).toBe(1);
@@ -96,9 +96,9 @@ describe('when evaluating bindings', () => {
 
 
     test('binding on * will not return master account', () => {
-        const binding : IOrganizationBinding = {
+        const binding: IOrganizationBinding = {
             Account: '*'
-         };
+        };
         const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
         expect(resolvedAccounts).toBeDefined();
         expect(resolvedAccounts.length).toBe(3);
@@ -109,9 +109,9 @@ describe('when evaluating bindings', () => {
     })
 
     test('ou without child will return accounts only directly within ou', () => {
-        const binding : IOrganizationBinding = {
-            OrganizationalUnit: { Ref : 'OUChild' }
-         };
+        const binding: IOrganizationBinding = {
+            OrganizationalUnit: { Ref: 'OUChild' }
+        };
         const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
         expect(resolvedAccounts).toBeDefined();
         expect(resolvedAccounts.length).toBe(2);
@@ -120,9 +120,9 @@ describe('when evaluating bindings', () => {
     })
 
     test('ou with child ou will return accounts from child', () => {
-        const binding : IOrganizationBinding = {
-            OrganizationalUnit: { Ref : 'OU' }
-         };
+        const binding: IOrganizationBinding = {
+            OrganizationalUnit: { Ref: 'OU' }
+        };
         const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
         expect(resolvedAccounts).toBeDefined();
         expect(resolvedAccounts.length).toBe(3);
@@ -131,4 +131,34 @@ describe('when evaluating bindings', () => {
         expect(resolvedAccounts.includes('Account3')).toBeTruthy();
     })
 
+    test('ou can be excluded', () => {
+        const binding: IOrganizationBinding = {
+            Account: "*",
+            ExcludeOrganizationalUnit: { Ref: 'OUChild' }
+        };
+        const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
+        expect(resolvedAccounts).toBeDefined();
+        expect(resolvedAccounts.length).toBe(1);
+        expect(resolvedAccounts.includes('Account')).toBeTruthy();
+    })
+    test('ou will exclude child ou', () => {
+        const binding: IOrganizationBinding = {
+            Account: "*",
+            IncludeMasterAccount: true,
+            ExcludeOrganizationalUnit: { Ref: 'OU' }
+        };
+        const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
+        expect(resolvedAccounts).toBeDefined();
+        expect(resolvedAccounts.length).toBe(1);
+        expect(resolvedAccounts.includes('MasterAccount')).toBeTruthy();
+    })
+    test('all accounts can be excluded by ou', () => {
+        const binding: IOrganizationBinding = {
+            Account: "*",
+            ExcludeOrganizationalUnit: { Ref: 'OU' }
+        };
+        const resolvedAccounts = template.resolveNormalizedLogicalAccountIds(binding);
+        expect(resolvedAccounts).toBeDefined();
+        expect(resolvedAccounts.length).toBe(0);
+    })
 });
