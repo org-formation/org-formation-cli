@@ -92,7 +92,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
                     }
                 } else {
                     ConsoleUtil.LogInfo(`Executing: delete-stacks ${physicalId}.`);
-                    await DeleteStacksCommand.Perform({ ...command, stackName: physicalId, maxConcurrentStacks: concurrencyForCleanup, failedStacksTolerance: 0 });
+                    await DeleteStacksCommand.Perform({ ...command, stackName: physicalId, maxConcurrentStacks: concurrencyForCleanup ?? 1, failedStacksTolerance: 0 });
                 }
             },
         };

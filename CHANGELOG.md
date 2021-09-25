@@ -2,6 +2,13 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
+- feat: support ExcludeOrganizationalUnit in binding
+- feat: support ServerSideEncryption in copy-to-s3 task
+- fix: ensure password policy and alias don't get cleared on init/build
+- fix: ensure concurrency settings are re-used when deleting tasks
+- fix: add retry and backoff when reading the organization (e.g. using init)
+- fix: strip dashes from account names when generating the logical names during init
+
 - **version 0.9.17**
 
 - fix: allow templates without version attribute

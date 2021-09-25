@@ -22,7 +22,7 @@ describe('when password policy resource', () => {
             AllowUsersToChangePassword: true
         };
         resource = {
-            Type : OrgResourceTypes.OrganizationRoot,
+            Type: OrgResourceTypes.OrganizationRoot,
             Properties: properties,
         };
     });
@@ -89,13 +89,13 @@ describe('when password policy resource has no reuse prevention', () => {
             AllowUsersToChangePassword: true
         };
         resource = {
-            Type : OrgResourceTypes.OrganizationRoot,
+            Type: OrgResourceTypes.OrganizationRoot,
             Properties: properties,
         };
     });
 
-    test('resulting password prevention is 0', () => {
+    test('resulting password prevention is undefined', () => {
         const x = new PasswordPolicyResource(template, 'logical-id', resource);
-        expect(x.passwordReusePrevention).toBe(0);
+        expect(x.passwordReusePrevention).toBe(undefined);
     });
 });
