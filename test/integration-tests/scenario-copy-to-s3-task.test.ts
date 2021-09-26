@@ -30,7 +30,7 @@ describe('when calling org-formation perform tasks', () => {
         mockAfterAfterUpdateWithoutChanging = performCreateOrUpdateMock.mock;
 
         performCreateOrUpdateMock.mockReset();
-        writeFileSync(basePathForScenario + 'files/file.txt', Math.random());
+        writeFileSync(basePathForScenario + 'files/file.txt', Math.random().toString());
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
         mockAfterAfterUpdateWithChanging = performCreateOrUpdateMock.mock;
 

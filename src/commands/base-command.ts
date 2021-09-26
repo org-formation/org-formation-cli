@@ -17,7 +17,7 @@ import { TaskProvider } from '~org-binder/org-tasks-provider';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
 import { S3StorageProvider } from '~state/storage-provider';
-import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template-writer';
+import { DefaultTemplate, DefaultTemplateWriter, ITemplateGenerationSettings } from '~writer/default-template-writer';
 import { CfnParameters } from '~core/cfn-parameters';
 import { Validator } from '~parser/validator';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
@@ -81,13 +81,13 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
     }
 
-    public async generateDefaultTemplate(defaultBuildAccessRoleName?: string): Promise<DefaultTemplate> {
+    public async generateDefaultTemplate(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
         const organizations = new Organizations({ region: 'us-east-1' });
         const awsReader = new AwsOrganizationReader(organizations);
         const awsOrganization = new AwsOrganization(awsReader);
         const writer = new DefaultTemplateWriter(awsOrganization);
         writer.DefaultBuildProcessAccessRoleName = defaultBuildAccessRoleName;
-        const template = await writer.generateDefaultTemplate();
+        const template = await writer.generateDefaultTemplate(templateGenerationSettings);
         template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
         const parsedTemplate = TemplateRoot.createFromContents(template.template, './');
         template.state.setPreviousTemplate(parsedTemplate.source);

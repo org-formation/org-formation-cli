@@ -5,7 +5,7 @@ import { pascalCase } from 'pascal-case';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot, IAWSObject } from '~aws-provider/aws-organization-reader';
-import { OrgResourceTypes, Resource } from '~parser/model';
+import { IAccountProperties, IOrganizationalUnitProperties, OrgResourceTypes, Resource } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
 import { IBinding, PersistedState } from '~state/persisted-state';
 import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
@@ -27,7 +27,7 @@ export class DefaultTemplateWriter {
         this.logicalNames = new LogicalNames();
     }
 
-    public async generateDefaultTemplate(): Promise<DefaultTemplate> {
+    public async generateDefaultTemplate(templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [] }): Promise<DefaultTemplate> {
         await this.organizationModel.initialize();
         const bindings: IBinding[] = [];
         const state = PersistedState.CreateEmpty(this.organizationModel.masterAccount.Id);
@@ -56,8 +56,22 @@ export class DefaultTemplateWriter {
                 lastCommittedHash: '',
             });
         }
+        for (const predefinedOu of templateGenerationSettings.predefinedOUs) {
+            const ou = this.organizationModel.organizationalUnits.find(x => x.Id === predefinedOu.id);
+            const ouResource = this.generatePredefinedOU(lines, predefinedOu, templateGenerationSettings, ou);
+            bindings.push({
+                type: ouResource.type,
+                logicalId: ouResource.logicalName,
+                physicalId: predefinedOu.id,
+                lastCommittedHash: '',
+            });
+
+        }
         for (const organizationalUnit of this.organizationModel.organizationalUnits) {
             const organizationalUnitResource = this.generateOrganizationalUnit(lines, organizationalUnit);
+            const wasPredefined = templateGenerationSettings.predefinedOUs.some(x => x.id === organizationalUnit.Id);
+            if (wasPredefined) { continue; }
+
 
             bindings.push({
                 type: organizationalUnitResource.type,
@@ -66,7 +80,23 @@ export class DefaultTemplateWriter {
                 lastCommittedHash: '',
             });
         }
+
+        for (const predefinedAccount of templateGenerationSettings.predefinedAccounts) {
+            const acct = this.organizationModel.accounts.find(x => x.Id === predefinedAccount.id);
+            const accountResource = this.generatePredefinedAccount(lines, predefinedAccount, acct);
+
+            bindings.push({
+                type: accountResource.type,
+                logicalId: accountResource.logicalName,
+                physicalId: predefinedAccount.id,
+                lastCommittedHash: '',
+            });
+        }
+
         for (const account of this.organizationModel.accounts) {
+            const wasPredefined = templateGenerationSettings.predefinedAccounts.some(x => x.id === account.Id);
+            if (wasPredefined) { continue; }
+
             const accountResource = this.generateAccount(lines, account);
 
             bindings.push({
@@ -160,6 +190,66 @@ export class DefaultTemplateWriter {
         };
     }
 
+    private generatePredefinedOU(lines: YamlLine[], predefined: IPredefinedOU, overrides: ITemplateGenerationSettings, preExistingOU?: AWSOrganizationalUnit): WriterResource {
+        const logicalName = this.logicalNames.getForPredefined('OrganizationalUnit', predefined.id, predefined.logicalName);
+
+
+        lines.push(new Line(logicalName, '', 2));
+        lines.push(new Line('Type', OrgResourceTypes.OrganizationalUnit, 4));
+        lines.push(new Line('Properties', '', 4));
+        lines.push(new Line('OrganizationalUnitName', preExistingOU?.Name ?? predefined.properties.OrganizationalUnitName, 6));
+        if (preExistingOU) {
+            const policiesList = preExistingOU.Policies.filter(x => !x.PolicySummary!.AwsManaged!).map(x => '!Ref ' + this.logicalNames.getName(x));
+            const accountList = preExistingOU.Accounts.map(x => '!Ref ' + this.logicalNames.getName(x));
+            const childOUList = preExistingOU.OrganizationalUnits.map(x => '!Ref ' + this.logicalNames.getName(x));
+
+            lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
+            lines.push(new ListLine('OrganizationalUnits', childOUList, 6));
+            lines.push(new ListLine('Accounts', accountList, 6));
+        } else {
+            lines.push(new ListLine('Accounts', predefined.properties.Accounts as string[], 6));
+        }
+        lines.push(new EmptyLine());
+
+        return {
+            type: OrgResourceTypes.OrganizationalUnit,
+            logicalName,
+        };
+
+    }
+
+    private generatePredefinedAccount(lines: YamlLine[], predefined: IPredefinedAccount, preExistingAccount?: AWSAccount): WriterResource {
+
+        const logicalName = this.logicalNames.getForPredefined('Account', predefined.id, predefined.logicalName);
+
+        lines.push(new Line(logicalName, '', 2));
+        lines.push(new Line('Type', OrgResourceTypes.Account, 4));
+        lines.push(new Line('Properties', '', 4));
+        lines.push(new Line('AccountName', preExistingAccount ? preExistingAccount.Name : predefined.properties.AccountName, 6));
+        lines.push(new Line('AccountId', predefined.id, 6));
+        const rootEmail = preExistingAccount?.Email ?? predefined.properties.RootEmail;
+        if (rootEmail) {
+            lines.push(new Line('RootEmail', rootEmail, 6));
+        }
+        const alias = preExistingAccount?.Alias ?? predefined.properties.Alias;
+        if (alias) {
+            lines.push(new Line('Alias', alias, 6));
+        }
+        const combinedTags = { ...(predefined.properties.Tags ?? {}), ...(preExistingAccount?.Tags ?? {}) };
+        if (combinedTags) {
+            const tags = Object.entries(combinedTags);
+            if (tags.length > 0) {
+                lines.push(new Line('Tags', '', 6));
+                for (const tag of tags) {
+                    lines.push(new Line(tag[0], tag[1], 8));
+                }
+            }
+        }
+        return {
+            type: OrgResourceTypes.Account,
+            logicalName,
+        };
+    }
     private generateAccount(lines: YamlLine[], account: AWSAccount): WriterResource {
         const logicalName = this.logicalNames.getName(account);
         const policiesList = account.Policies.filter(x => !x.PolicySummary!.AwsManaged).map(x => '!Ref ' + this.logicalNames.getName(x));
@@ -296,6 +386,7 @@ class LogicalNames {
     }
 
     public getName(element: IAWSObject): string {
+
         const key = this.getKey(element);
         let name = this.names[key];
         if (!name) {
@@ -303,7 +394,11 @@ class LogicalNames {
         }
         return name;
     }
-
+    public getForPredefined(type: string, id: string, logicalName: string): string {
+        const key = this.getKey({ Type: type, Id: id });
+        this.names[key] = logicalName;
+        return logicalName;
+    }
     private createName(element: IAWSObject): string {
         let name = element.Name;
         let postFix = this.getPostFix(element);
@@ -427,4 +522,20 @@ class ListLine implements YamlLine {
 interface WriterResource {
     type: string;
     logicalName: string;
+}
+
+export interface ITemplateGenerationSettings {
+    predefinedAccounts: IPredefinedAccount[];
+    predefinedOUs: IPredefinedOU[];
+}
+
+export interface IPredefinedAccount {
+    logicalName: string;
+    id: string;
+    properties: IAccountProperties;
+}
+export interface IPredefinedOU {
+    logicalName: string;
+    id: string;
+    properties: IOrganizationalUnitProperties;
 }
