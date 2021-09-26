@@ -1,5 +1,5 @@
 import { AwsOrganization } from "~aws-provider/aws-organization";
-import { DefaultTemplateWriter, DefaultTemplate } from "~writer/default-template-writer";
+import { DefaultTemplateWriter, DefaultTemplate, ITemplateGenerationSettings } from "~writer/default-template-writer";
 import { ConsoleUtil } from "~util/console-util";
 import { TemplateRoot } from "~parser/parser";
 import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from "~util/aws-util";
@@ -31,7 +31,6 @@ describe('when writing template for organization', () => {
     })
 
     describe('and organization has accounts, ou\'s and scp\'s', () => {
-
         beforeEach(() => {
             organization.accounts = [
                 { Name: 'acc', Type: 'Account', Id: '123123123123', ParentId: 'ou-1', Policies: [] },
@@ -306,5 +305,95 @@ describe('when writing template for organization', () => {
             expect(ou.accounts[0].TemplateResource.logicalId).toBe(root.organizationSection.masterAccount.logicalId);
         });
 
+    });
+
+    describe('and generated is supplied with predefined accounts', () => {
+        const settings: ITemplateGenerationSettings = {
+            predefinedOUs: [],
+            predefinedAccounts:
+                [{
+                    id: "123123123123",
+                    logicalName: "LogicalName",
+                    properties: {
+                        AccountName: "Security Account",
+                        Tags: {
+                            "budget-alarm-threshold": 200 as unknown as string,
+                            "budget-alarm-threshold-email-recipient": "zzzzz"
+                        }
+                    }
+                }]
+        }
+        test('generated template contains predefined account', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate(settings);
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.accounts?.length).toBe(1);
+            expect(root.organizationSection.accounts[0].logicalId).toBe("LogicalName");
+            expect(Object.entries(root.organizationSection.accounts[0].tags).length).toBe(2);
+        });
+    });
+    describe('and predefined account already exists', () => {
+        const settings: ITemplateGenerationSettings = {
+            predefinedOUs: [],
+            predefinedAccounts:
+                [{
+                    id: "123123123123",
+                    logicalName: "LogicalName",
+                    properties: {
+                        AccountName: "Security Account",
+                        Tags: {
+                            "budget-alarm-threshold": 200 as unknown as string,
+                            "budget-alarm-threshold-email-recipient": "zzzzz"
+                        }
+                    }
+                }]
+        }
+        beforeEach(() => {
+            organization.accounts = [
+                { Name: 'abcdef', Id: '123123123123', Type: 'Account', ParentId: 'o-root', Policies: [] },
+            ];
+        })
+
+        test('generated template contains merged account', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate(settings);
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.accounts?.length).toBe(1);
+            expect(root.organizationSection.accounts[0].logicalId).toBe("LogicalName");
+            expect(root.organizationSection.accounts[0].accountName).toBe("abcdef");
+            expect(Object.entries(root.organizationSection.accounts[0].tags).length).toBe(2);
+        });
+    });
+    describe('and generate is supplied with predefined OUs', () => {
+        const settings: ITemplateGenerationSettings = {
+            predefinedOUs: [{
+                logicalName: "SharedOU",
+                id: "o-123",
+                properties:
+                {
+                    OrganizationalUnitName: "shared",
+                    Accounts: ["!Ref LogicalName"]
+                }
+            }],
+            predefinedAccounts:
+                [{
+                    id: "123123123123",
+                    logicalName: "LogicalName",
+                    properties: {
+                        AccountName: "Security Account",
+                        Tags: {
+                            "budget-alarm-threshold": 200 as unknown as string,
+                            "budget-alarm-threshold-email-recipient": "zzzzz"
+                        }
+                    }
+                }]
+        }
+        test('generated template contains predefined ou', async () => {
+            const defaultTemplate = await templateWriter.generateDefaultTemplate(settings);
+            const root = TemplateRoot.createFromContents(defaultTemplate.template);
+            expect(root.organizationSection.organizationalUnits?.length).toBe(1);
+            expect(root.organizationSection.organizationalUnits[0].logicalId).toBe("SharedOU");
+            expect(root.organizationSection.organizationalUnits[0].accounts.length).toBe(1);
+            expect(root.organizationSection.organizationalUnits[0].accounts[0].TemplateResource.accountId).toBe("123123123123");
+            // expect(Object.entries(root.organizationSection.accounts[0].tags).length).toBe(2);
+        });
     });
 });
