@@ -347,7 +347,7 @@ export class AwsUtil {
         return 'us-east-1';
     }
 
-    private static partition = 'us-gov-west-1';
+    public static partition = 'us-gov-west-1';
     private static partitionRegion: string;
     private static masterAccountId: string | PromiseLike<string>;
     private static masterPartitionAccountId: string | PromiseLike<string>;
