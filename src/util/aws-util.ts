@@ -78,6 +78,26 @@ export class AwsUtil {
         return await this.Initialize(defaultProviders);
     }
 
+    public static async InitializeWithGovProfile(profile?: string): Promise<AWS.Credentials> {
+        if (profile) {
+            process.env.AWS_SDK_LOAD_CONFIG = '1';
+            const params: CredentialProviderOptions = { profile };
+
+            params.tokenCodeFn = async (mfaSerial: string, callback: any): Promise<void> => {
+                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
+                callback(null, token);
+            };
+
+            const govCreds = new CredentialProviderChain([
+                (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
+                (): AWS.Credentials => new SingleSignOnCredentials(params),
+                (): AWS.Credentials => new AWS.ProcessCredentials(params),
+            ]);
+
+            return await govCreds.resolvePromise();
+        }
+    }
+
     public static async Initialize(providers: provider[]): Promise<AWS.Credentials> {
         const chainProvider = new CredentialProviderChain(providers);
         return AWS.config.credentials = await chainProvider.resolvePromise();
@@ -97,8 +117,7 @@ export class AwsUtil {
 
     public static async SetPartitionCredentials(partitionProfile?: string): Promise<void> {
         if (partitionProfile) {
-            const partitionCredentialsClass = new CustomMFACredentials(partitionProfile);
-            const partitionCredentials = await partitionCredentialsClass.innerRefresh();
+            const partitionCredentials = await this.InitializeWithGovProfile(partitionProfile);
             AwsUtil.partitionCredentials = partitionCredentials;
         } else {
             const partitionChainProvider = new CredentialProviderChain([(): AWS.Credentials => new EnvironmentCredentials('GOV_AWS')]);
