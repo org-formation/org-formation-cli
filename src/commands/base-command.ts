@@ -156,8 +156,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--verbose', 'will enable debug logging');
         command.option('--no-color', 'will disable colorization of console logs');
         command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
-        command.option('--mirror-partition', 'is run on a partition');
-        command.option('--partition-credentials', 'is to indicate to look for partition env credentials');
+        command.option('--is-partition', 'is run on a partition');
+        command.option('--partition-keys', 'is to indicate to look for partition access keys');
         command.option('--partition-profile [profile]', 'aws partition profile to use');
         command.option('--partition-region [region]', 'aws partition region to use');
 
@@ -209,7 +209,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         const objectKey = command.stateObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName, accountId);
         let storageProvider;
-        if (command.mirrorPartition) {
+        if (command.isPartition) {
             storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials, AwsUtil.GetPartitionRegion());
         } else {
             storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials);
@@ -279,7 +279,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             ConsoleUtil.colorizeLogs = false;
         }
 
-        await AwsUtil.InitializeWithProfile(command.profile, command.mirrorPartition);
+        await AwsUtil.InitializeWithProfile(command.profile, command.isPartition);
 
         if (command.masterAccountId !== undefined) {
             AwsUtil.SetMasterAccountId(command.masterAccountId);
@@ -295,7 +295,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             await AwsUtil.SetPartitionCredentials(command.partitionProfile);
         }
 
-        if (command.mirrorPartition) {
+        if (command.isPartition) {
             AwsUtil.SetIsPartition(true);
         }
 
@@ -303,7 +303,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             AwsUtil.SetPartitionRegion(command.partitionRegion);
         }
 
-        if (command.partitionCredentials) {
+        if (command.partitionKeys) {
             await AwsUtil.SetPartitionCredentials();
         }
         await AwsUtil.InitializeWithCurrentPartition();
@@ -411,8 +411,8 @@ export interface ICommandArgs {
     printStack?: boolean;
     verbose?: boolean;
     color?: boolean;
-    mirrorPartition?: boolean;
-    partitionCredentials?: boolean;
+    isPartition?: boolean;
+    partitionKeys?: boolean;
     resolver?: CfnExpressionResolver;
     partitionRegion?: string;
 }
