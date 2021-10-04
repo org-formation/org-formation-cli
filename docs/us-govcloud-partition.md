@@ -33,20 +33,20 @@ The `PartitionAlias` attribute on the `OC::ORG::Account` resource type indicates
 
 Creates a local organization formation file that contains all organization resources. Running this command will create an S3 Bucket (hence the region) in your account that contains a state file which is used to track differences when updating your resources.
 
-``> org-formation init organization.yml --region us-east-1 --mirror-partition --partition-region us-gov-west-1 --partition-profile myProfile``  
+``> org-formation init organization.yml --region us-east-1 --partition-region us-gov-west-1 --partition-profile myProfile``  
 
 A few new attributes are required for org formation to work properly across partitions:
-   - `--mirror-partition` boolean indicates which partition to mirror the organzation.
    - `--partition-region` string indicating which region to target in the partition.
-   - `--partition-profile` is an optional string argument indicating where org formation can find credentials to access the partition.  If this argument is omitted org formation will look for credentials as environment variables (`GOV_AWS_ACCESS_KEY_ID` and `GOV_AWS_SECRET_ACCESS_KEY`).  
+   - `--partition-profile` is an optional string argument indicating where org formation can find credentials to access the partition.  
+   - `--partition-keys` is an optional boolean argument indicating org formation to look for partition credentials as environment variables (`GOV_AWS_ACCESS_KEY_ID` and `GOV_AWS_SECRET_ACCESS_KEY`).  
    
-> **important**: This command must be executed from a terminal session with active AWS credentials to the commercial management account.
+> **important**: This command must be executed from a terminal session with active AWS credentials to the commercial management account.  One of the `--partition-profile` or `--partition-keys` arguments must be passed.
 
 ### ``org-formation update``
 
 Updates organizational resources specified in templateFile.
 
-``> org-formation update  org-formation update organization.yml --mirror-partition --partition-region us-gov-west-1 --partition-profile myProfile``  
+``> org-formation update  org-formation update organization.yml --partition-region us-gov-west-1 --partition-profile myProfile``  
 
 Again, when running org-formation update partition arguments are required for org formation to have proper access to both the commercial and mirrored partition.  The Update command will "mirror" the organization on both sides of the partition.
 
@@ -57,5 +57,5 @@ Tasks can only be ran on specific partitions (commercial or mirrored partition i
    - To run commercial tasks:  
    `` > org-formation perform-tasks taskfile.yml [--profile my-aws-profile]``  
 
-   - To run gov cloud tasks pass the `--partition` and `--partition-region` arguments:  
-   `` > org-formation perform-tasks gov-cloud-tasks.yml --partition us-gov --partition-region us-gov-west-1``
+   - To run gov cloud tasks pass the `--is-partition` and `--partition-region` arguments:  
+   `` > org-formation perform-tasks gov-cloud-tasks.yml --is-partition us-gov --partition-region us-gov-west-1``
