@@ -569,7 +569,7 @@ export class AwsOrganizationWriter {
 
         const tagsOnResource = Object.entries(resource.tags || {});
         const keysOnResource = tagsOnResource.map(x => x[0]);
-        const tagsOnAccount = Object.entries(account.Tags);
+        const tagsOnAccount = Object.entries(account.Tags || {});
         const tagsToRemove = tagsOnAccount.map(x => x[0]).filter(x => keysOnResource.indexOf(x) === -1);
         const tagsToUpdate = keysOnResource.filter(x => resource.tags[x] !== account.Tags[x]);
 
