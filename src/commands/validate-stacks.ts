@@ -48,7 +48,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         ConsoleUtil.state = state;
         const parameters = this.parseCfnParameters(command.parameters);
         const stackPolicy = command.stackPolicy;
-        const partition = command.mirrorPartition === true;
+        const partition = command.isPartition === true;
         const tags = command.tags;
         const cloudFormationRoleName = command.cloudFormationRoleName;
         const taskViaRoleArn = command.taskViaRoleArn;

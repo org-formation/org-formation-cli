@@ -81,7 +81,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validateBoolean(command.terminationProtection, 'terminationProtection');
         Validator.validateBoolean(command.updateProtection, 'updateProtection');
-        Validator.validateBoolean(command.mirrorPartition, 'mirrorPartition');
+        Validator.validateBoolean(command.isPartition, 'isPartition');
 
 
         this.storeCommand(command);
@@ -90,7 +90,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const updateProtection = command.updateProtection;
         const cloudFormationRoleName = command.cloudFormationRoleName;
         const taskRoleName = command.taskRoleName;
-        const partition = command.mirrorPartition === true;
+        const partition = command.isPartition === true;
         const taskViaRoleArn = command.taskViaRoleArn;
         const stackName = command.stackName;
         const templateFile = command.templateFile;
