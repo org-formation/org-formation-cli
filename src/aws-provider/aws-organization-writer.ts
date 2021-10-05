@@ -511,7 +511,9 @@ export class AwsOrganizationWriter {
             await this.organizationService.tagResource(request).promise();
         }
 
-        account.Tags = resource.tags;
+        if (!this.organization.masterAccount.PartitionId) {
+            account.Tags = resource.tags;
+        }
     }
 
     public async updatePartitionAccount(resource: AccountResource, accountId: string, previousResource?: AccountResource): Promise<void> {
