@@ -70,11 +70,13 @@ export class AwsUtil {
             ]);
         }
         const defaultProviders = CredentialProviderChain.defaultProviders;
+
+        defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
         if (partition) {
             AWS.config.region = AwsUtil.GetPartitionRegion();
             defaultProviders.splice(0, 0, (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'));
         }
-        defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
+
         return await this.Initialize(defaultProviders);
     }
 
@@ -366,8 +368,8 @@ export class AwsUtil {
         return 'us-east-1';
     }
 
-    public static partition = 'us-gov-west-1';
-    private static partitionRegion: string;
+    public static partition = 'aws-us-gov';
+    private static partitionRegion = 'us-gov-west-1';
     private static masterAccountId: string | PromiseLike<string>;
     private static masterPartitionAccountId: string | PromiseLike<string>;
     private static partitionProfile: string | PromiseLike<string>;
