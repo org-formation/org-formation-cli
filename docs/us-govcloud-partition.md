@@ -50,12 +50,15 @@ Updates organizational resources specified in templateFile.
 
 Again, when running org-formation update partition arguments are required for org formation to have proper access to both the commercial and mirrored partition.  The Update command will "mirror" the organization on both sides of the partition.
 
-**note**: There are org formation state files on both sides of the partition.  Meaning when you create an organization an s3 bucket is created in both commercial and gov cloud master accounts.
+> **note**: There are org formation state files on both sides of the partition.  Meaning when you create an organization an s3 bucket is created in both commercial and gov cloud master accounts.
 
 ## Running Tasks
 Tasks can only be ran on specific partitions (commercial or mirrored partition i.e. us-gov).
    - To run commercial tasks:  
-   `` > org-formation perform-tasks taskfile.yml [--profile my-aws-profile]``  
+   `` > org-formation perform-tasks _commercial-tasks.yml [--profile my-aws-profile]``  
 
    - To run gov cloud tasks pass the `--is-partition` and `--partition-region` arguments:  
-   `` > org-formation perform-tasks gov-cloud-tasks.yml --is-partition us-gov --partition-region us-gov-west-1``
+   `` > org-formation perform-tasks _govcloud-tasks.yml --is-partition us-gov --partition-region us-gov-west-1``  
+
+
+> **note**: Currently `update-organization` tasks types are not supported within your task files.
