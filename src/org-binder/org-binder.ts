@@ -84,7 +84,7 @@ export class OrganizationBinder {
                 case 'Update':
                     let t2;
                     if (org?.organizationRoot?.template?.mirrorInPartition) {
-                        t2 = this.taskProvider.createPartitionAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.state.partitionId, boundPolicy.templateHash);
+                        t2 = this.taskProvider.createPartitionAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.state.partitionAccountId, boundPolicy.templateHash);
                     } else {
                         t2 = this.taskProvider.createAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.templateHash);
                     }

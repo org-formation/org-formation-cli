@@ -18,7 +18,7 @@ import {
 
 export interface PartitionCreateResponse {
     AccountId: string;
-    PartitionId: string;
+    PartitionAccountId: string;
 }
 
 export class AwsOrganizationWriter {
@@ -343,15 +343,15 @@ export class AwsOrganizationWriter {
 
     public async createPartitionAccount(resource: AccountResource): Promise<PartitionCreateResponse> {
 
-        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === resource.accountId && x.PartitionId === resource.partitionId);
+        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === resource.accountId && x.PartitionAccountId === resource.partitionAccountId);
         if (account !== undefined) {
             await this.updateAccount(resource, account.Id);
-            await this.updatePartitionAccount(resource, account.PartitionId);
+            await this.updatePartitionAccount(resource, account.PartitionAccountId);
 
             ConsoleUtil.LogDebug(`account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
             return {
                 AccountId: account.Id,
-                PartitionId: account.PartitionId,
+                PartitionAccountId: account.PartitionAccountId,
             };
         }
 
@@ -378,7 +378,7 @@ export class AwsOrganizationWriter {
 
         return {
             AccountId: result.AccountId,
-            PartitionId: result.GovCloudAccountId,
+            PartitionAccountId: result.GovCloudAccountId,
         };
     }
 
@@ -511,13 +511,13 @@ export class AwsOrganizationWriter {
             await this.organizationService.tagResource(request).promise();
         }
 
-        if (!this.organization.masterAccount.PartitionId) {
+        if (!this.organization.masterAccount.PartitionAccountId) {
             account.Tags = resource.tags;
         }
     }
 
     public async updatePartitionAccount(resource: AccountResource, accountId: string, previousResource?: AccountResource): Promise<void> {
-        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.PartitionId === accountId);
+        const account = [...this.organization.accounts, this.organization.masterAccount].find(x => x.PartitionAccountId === accountId);
 
         if (account.Name !== resource.accountName) {
             ConsoleUtil.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. Instead: login with root on the specified account to change its name`);
@@ -735,7 +735,7 @@ export class AwsOrganizationWriter {
                 Type: 'Account',
                 Tags: {},
                 SupportLevel: 'basic',
-                PartitionId: accountCreationStatus.GovCloudAccountId,
+                PartitionAccountId: accountCreationStatus.GovCloudAccountId,
             });
 
             return accountCreationStatus;

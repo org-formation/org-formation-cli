@@ -455,7 +455,7 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
-    public createPartitionAccountUpdateTasks(resource: AccountResource, physicalId: string, partitionId: string, hash: string): IBuildTask[] {
+    public createPartitionAccountUpdateTasks(resource: AccountResource, physicalId: string, partitionAccountId: string, hash: string): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
         let previousResource = [...this.previousTemplate.organizationSection.accounts].find(x => x.logicalId === resource.logicalId);
@@ -472,7 +472,7 @@ export class TaskProvider {
                 perform: async (task): Promise<void> => {
                     task.result = {
                         commercial: await that.writer.updateAccount(resource, physicalId, previousResource),
-                        partition: await that.writer.updatePartitionAccount(resource, partitionId, previousResource),
+                        partition: await that.writer.updatePartitionAccount(resource, partitionAccountId, previousResource),
                     };
                 },
             };
@@ -492,7 +492,7 @@ export class TaskProvider {
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
                         physicalId,
-                        partitionId,
+                        partitionAccountId,
                     });
                 } else {
                     that.state.setBinding({
@@ -500,7 +500,7 @@ export class TaskProvider {
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
                         physicalId,
-                        partitionId,
+                        partitionAccountId,
                     });
                 }
             },
@@ -597,7 +597,7 @@ export class TaskProvider {
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
                         physicalId: createPartitionAccountTask.result.CommercialId,
-                        partitionId: createPartitionAccountTask.result.PartitionId,
+                        partitionAccountId: createPartitionAccountTask.result.PartitionAccountId,
                     });
                 }
             },

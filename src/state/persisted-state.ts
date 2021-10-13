@@ -613,7 +613,7 @@ export interface IBinding {
     type: string;
     physicalId: string;
     lastCommittedHash: string;
-    partitionId?: string;
+    partitionAccountId?: string;
 }
 
 export interface ICfnTarget {

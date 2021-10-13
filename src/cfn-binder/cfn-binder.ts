@@ -30,11 +30,15 @@ export class CloudFormationBinder {
         private readonly taskViaRoleArn: string = undefined,
     ) {
 
-        this.masterAccount = template.organizationSection.masterAccount.accountId;
-
-        if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
-            throw new OrgFormationError('state and template do not belong to the same organization');
+        if (template.organizationSection.masterAccount.partitionAccountId && this.partition) {
+            this.masterAccount = template.organizationSection.masterAccount.partitionAccountId;
+        } else {
+            this.masterAccount = template.organizationSection.masterAccount.accountId;
+            if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
+                throw new OrgFormationError('state and template do not belong to the same organization');
+            }
         }
+
     }
 
     public async enumBindings(): Promise<ICfnBinding[]> {
@@ -56,8 +60,8 @@ export class CloudFormationBinder {
             /**
              * Currently flagging for this. Might be a better solution.
              */
-            if (this.partition && accountBinding.partitionId) {
-                accountId = accountBinding.partitionId;
+            if (this.partition && accountBinding.partitionAccountId) {
+                accountId = accountBinding.partitionAccountId;
             } else {
                 accountId = accountBinding.physicalId;
             }

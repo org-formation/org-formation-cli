@@ -17,7 +17,7 @@ interface IAWSAccountWithTags {
 }
 
 interface IAWSAccountWithPartition {
-    PartitionId?: string;
+    PartitionAccountId?: string;
 }
 
 interface IAWSAccountWithIAMAttributes {
@@ -292,7 +292,7 @@ export class AwsOrganizationReader {
                             PasswordPolicy: passwordPolicy,
                             SupportLevel: supportLevel,
                             PartitionAlias: partitionAlias,
-                            PartitionId: gcAccount.Id,
+                            PartitionAccountId: gcAccount.Id,
                         };
 
                         const parentOU = organizationalUnits.find(x => x.Id === req.ParentId);
