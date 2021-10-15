@@ -46,7 +46,7 @@ A few new attributes are required for org formation to work properly across part
 
 Updates organizational resources specified in templateFile.
 
-``> org-formation update  org-formation update organization.yml --partition-region us-gov-west-1 --partition-profile myProfile``  
+``> org-formation update org-formation update organization.yml --partition-region us-gov-west-1 --partition-profile myProfile``  
 
 Again, when running org-formation update partition arguments are required for org formation to have proper access to both the commercial and mirrored partition.  The Update command will "mirror" the organization on both sides of the partition.
 
@@ -58,7 +58,7 @@ Tasks can only be ran on specific partitions (commercial or mirrored partition i
    `` > org-formation perform-tasks _commercial-tasks.yml [--profile my-aws-profile]``  
 
    - To run gov cloud tasks pass the `--is-partition` and `--partition-region` arguments:  
-   `` > org-formation perform-tasks _govcloud-tasks.yml --is-partition us-gov --partition-region us-gov-west-1``  
+   `` > org-formation perform-tasks _govcloud-tasks.yml --is-partition --partition-region us-gov-west-1``  
 
 
 > **note**: Currently `update-organization` tasks types are not supported within your task files.
