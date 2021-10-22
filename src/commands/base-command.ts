@@ -21,7 +21,7 @@ import { DefaultTemplate, DefaultTemplateWriter } from '~writer/default-template
 import { CfnParameters } from '~core/cfn-parameters';
 import { Validator } from '~parser/validator';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
-
+import { NunjucksDebugSettings } from '~yaml-cfn/index';
 
 const DEFAULT_STATE_OBJECT = 'state.json';
 
