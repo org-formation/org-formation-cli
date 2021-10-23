@@ -328,7 +328,7 @@ export class DefaultTemplateWriter {
 
     private generateMasterAccount(lines: YamlLine[], masterAccount: AWSAccount): WriterResource {
         const policiesList = masterAccount.Policies.map(x => '!Ref ' + this.logicalNames.getName(x));
-        const name = this.logicalNames.setName(masterAccount, 'MasterAccount');
+        const name = this.logicalNames.setName(masterAccount, 'ManagementAccount');
         lines.push(new Line('Organization', '', 0));
         lines.push(new Line(name, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.MasterAccount, 4));
@@ -355,7 +355,7 @@ export class DefaultTemplateWriter {
 
         return {
             type: OrgResourceTypes.MasterAccount,
-            logicalName: 'MasterAccount',
+            logicalName: 'ManagementAccount',
         };
     }
 
