@@ -89,7 +89,8 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
                     if (!command.logicalNameToRootEmailMap || !command.logicalNameToRootEmailMap[acc.logicalName]) {
                         throw new OrgFormationError(`account ${acc.logicalName} not present in logicalNameToRootEmail map`);
                     }
-                    acc.properties.RootEmail = command.logicalNameToIdMap[acc.logicalName];
+                    acc.properties.RootEmail = command.logicalNameToRootEmailMap[acc.logicalName];
+                    acc.id = command.logicalNameToIdMap[acc.logicalName];
                 }
                 for (const ou of templateGenerationSettings.predefinedOUs) {
                     if (!command.logicalNameToIdMap || !command.logicalNameToIdMap[ou.logicalName]) {

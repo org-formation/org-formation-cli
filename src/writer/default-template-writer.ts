@@ -68,11 +68,10 @@ export class DefaultTemplateWriter {
 
         }
         for (const organizationalUnit of this.organizationModel.organizationalUnits) {
-            const organizationalUnitResource = this.generateOrganizationalUnit(lines, organizationalUnit);
             const wasPredefined = templateGenerationSettings.predefinedOUs.some(x => x.id === organizationalUnit.Id);
             if (wasPredefined) { continue; }
 
-
+            const organizationalUnitResource = this.generateOrganizationalUnit(lines, organizationalUnit);
             bindings.push({
                 type: organizationalUnitResource.type,
                 logicalId: organizationalUnitResource.logicalName,
@@ -245,6 +244,7 @@ export class DefaultTemplateWriter {
                 }
             }
         }
+        lines.push(new EmptyLine());
         return {
             type: OrgResourceTypes.Account,
             logicalName,
