@@ -30,7 +30,7 @@ describe('when calling org-formation perform tasks', () => {
         mockAfterAfterUpdateWithoutChanging = performCreateOrUpdateMock.mock;
 
         performCreateOrUpdateMock.mockReset();
-        writeFileSync(basePathForScenario + 'files/file.txt', Math.random());
+        writeFileSync(basePathForScenario + 'files/file.txt', Math.random().toString());
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-copy-to-s3.yml' });
         mockAfterAfterUpdateWithChanging = performCreateOrUpdateMock.mock;
 
@@ -40,17 +40,17 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     test('perform create or update is called after initial upload', () => {
-        expect(mockAfterInitialUpload.calls.length).toBe(3);
+        expect(mockAfterInitialUpload.calls.length).toBe(4);
     });
 
     test('perform create or update is called with the right remotePath', () => {
-        expect(mockAfterInitialUpload.calls.length).toBe(3);
+        expect(mockAfterInitialUpload.calls.length).toBe(4);
         const firstCall: any[] = mockAfterInitialUpload.calls;
         const callsWithAccountNumberInRemotePath = firstCall.filter(x => x[0].task.remotePath.includes('102625093955'))
-        expect(callsWithAccountNumberInRemotePath.length).toBe(2);
+        expect(callsWithAccountNumberInRemotePath.length).toBe(3);
 
         const callsWithIntegrationTestBucketName = firstCall.filter(x => x[0].task.remotePath.includes('org-formation-integration-test'))
-        expect(callsWithIntegrationTestBucketName.length).toBe(3);
+        expect(callsWithIntegrationTestBucketName.length).toBe(4);
 
         const callsWithZipFile = firstCall.filter(x => x[0].task.remotePath.includes('.zip'))
         expect(callsWithZipFile.length).toBe(1);
@@ -61,11 +61,11 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     test('perform create or update is called after file did change', () => {
-        expect(mockAfterAfterUpdateWithChanging.calls.length).toBe(3);
+        expect(mockAfterAfterUpdateWithChanging.calls.length).toBe(4);
     });
 
     test('perform create or update is called when deploy is forced', () => {
-        expect(mockAfterAfterUpdateWithForceDeploy.calls.length).toBe(3);
+        expect(mockAfterAfterUpdateWithForceDeploy.calls.length).toBe(4);
     });
 
     afterAll(async () => {
