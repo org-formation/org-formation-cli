@@ -1,5 +1,5 @@
 # GovCloud (US) Partition
-Certain use cases may require that you run your workloads in a AWS partition other than `aws` also known as the commercial partition.  While it is our intention to support all partitions (US GovCloud, China, Germany) support has started for us-gov. Below you can find examples of how to perform Org Formation commands in the context of the us-gov partition.
+Certain use cases may require that you run your workloads in a AWS partition other than `aws` also known as the commercial partition.  While it is our intention to support all partitions (US GovCloud, China, Secret Region) support has started for us-gov. Below you can find examples of how to perform Org Formation commands in the context of the us-gov partition.
 
 > **important**:  Each GovCloud (US) account is tied to a commercial account for billing.  You cannot have a GovCloud (US) account without a commercial account.  This means that Org Formation is required to managed both partitions simutaneously.  Org Formation does this by "mirroring" these accounts.  The `organization.yml` file looks the same as you would expect, with some slight differences.
 
