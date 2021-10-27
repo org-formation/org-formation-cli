@@ -1,7 +1,9 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 // import { inspect } from 'util'; // or directly
-import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations } from 'aws-sdk';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations, EnvironmentCredentials } from 'aws-sdk';
+import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
+import * as ini from 'ini';
 import AWS from 'aws-sdk';
 import { SingleSignOnCredentials } from '@mhlabs/aws-sdk-sso';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
@@ -9,7 +11,6 @@ import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackIn
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
-import * as ini from 'ini';
 import { v4 as uuid } from 'uuid';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
@@ -27,6 +28,9 @@ export class AwsUtil {
 
     public static ClearCache(): void {
         AwsUtil.masterAccountId = undefined;
+        AwsUtil.masterPartitionAccountId = undefined;
+        AwsUtil.partitionProfile = undefined;
+        AwsUtil.partitionCredentials = undefined;
         AwsUtil.CfnServiceCache = {};
         AwsUtil.IamServiceCache = {};
         AwsUtil.SupportServiceCache = {};
@@ -45,7 +49,7 @@ export class AwsUtil {
 
     }
 
-    public static async InitializeWithProfile(profile?: string): Promise<AWS.Credentials> {
+    public static async InitializeWithProfile(profile?: string, partition?: boolean): Promise<AWS.Credentials> {
         if (profile) {
             process.env.AWS_SDK_LOAD_CONFIG = '1';
             const params: CredentialProviderOptions = { profile };
@@ -66,10 +70,34 @@ export class AwsUtil {
             ]);
         }
         const defaultProviders = CredentialProviderChain.defaultProviders;
-        // We will place SSO credentials provider right after ProcessCredentials in the priority list.
-        // https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html
+
         defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
+        if (partition) {
+            AWS.config.region = AwsUtil.GetPartitionRegion();
+            defaultProviders.splice(0, 0, (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'));
+        }
+
         return await this.Initialize(defaultProviders);
+    }
+
+    public static async InitializeWithGovProfile(profile?: string): Promise<AWS.Credentials> {
+        if (profile) {
+            process.env.AWS_SDK_LOAD_CONFIG = '1';
+            const params: CredentialProviderOptions = { profile };
+
+            params.tokenCodeFn = async (mfaSerial: string, callback: any): Promise<void> => {
+                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
+                callback(null, token);
+            };
+
+            const govCreds = new CredentialProviderChain([
+                (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
+                (): AWS.Credentials => new SingleSignOnCredentials(params),
+                (): AWS.Credentials => new AWS.ProcessCredentials(params),
+            ]);
+
+            return await govCreds.resolvePromise();
+        }
     }
 
     public static async Initialize(providers: provider[]): Promise<AWS.Credentials> {
@@ -79,6 +107,47 @@ export class AwsUtil {
 
     public static SetMasterAccountId(masterAccountId: string): void {
         AwsUtil.masterAccountId = masterAccountId;
+    }
+
+    public static async GetPartitionProfile(): Promise<string> {
+        return AwsUtil.partitionProfile;
+    }
+
+    public static SetPartitionProfile(partitionProfile: string): void {
+        AwsUtil.partitionProfile = partitionProfile;
+    }
+
+    public static async SetPartitionCredentials(partitionProfile?: string): Promise<void> {
+        if (partitionProfile) {
+            const partitionCredentials = await this.InitializeWithGovProfile(partitionProfile);
+            AwsUtil.partitionCredentials = partitionCredentials;
+        } else {
+            const partitionChainProvider = new CredentialProviderChain([(): AWS.Credentials => new EnvironmentCredentials('GOV_AWS')]);
+            const partitionCreds = await partitionChainProvider.resolvePromise();
+            if (partitionCreds) {
+                AwsUtil.partitionCredentials = partitionCreds;
+            }
+        }
+    }
+
+    public static async GetPartitionCredentials(): Promise<CredentialsOptions> {
+        return AwsUtil.partitionCredentials;
+    }
+
+    public static GetIsPartition(): boolean {
+        return AwsUtil.isPartition;
+    }
+
+    public static SetIsPartition(isPartition: boolean): void {
+        AwsUtil.isPartition = isPartition;
+    }
+
+    public static GetPartitionRegion(): string {
+        return AwsUtil.partitionRegion;
+    }
+
+    public static SetPartitionRegion(partitionRegion: string): void {
+        AwsUtil.partitionRegion = partitionRegion;
     }
 
     static SetBuildAccountId(buildAccountId: string): void {
@@ -109,6 +178,16 @@ export class AwsUtil {
         AwsUtil.partition = partition;
         return partition;
     }
+    public static async GetPartitionMasterAccountId(): Promise<string> {
+        if (AwsUtil.masterPartitionAccountId !== undefined) {
+            return AwsUtil.masterPartitionAccountId;
+        }
+        const partitionCredentials = await AwsUtil.GetPartitionCredentials();
+        const stsClient = new STS({ credentials: partitionCredentials, region: this.partitionRegion }); // if not set, assume build process runs in master
+        const caller = await stsClient.getCallerIdentity().promise();
+        AwsUtil.masterPartitionAccountId = caller.Account;
+        return AwsUtil.masterPartitionAccountId;
+    }
 
     public static async GetBuildProcessAccountId(): Promise<string> {
         if (AwsUtil.buildProcessAccountId !== undefined) {
@@ -137,6 +216,10 @@ export class AwsUtil {
         return 'arn:aws:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
+    public static GetPartitionRoleArn(accountId: string, roleInTargetAccount: string): string {
+        return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
+    }
+
     public static async GetS3Service(accountId: string, region?: string, roleInTargetAccount?: string): Promise<S3> {
         const config: ServiceConfigurationOptions = {};
         if (region !== undefined) {
@@ -144,7 +227,9 @@ export class AwsUtil {
         }
 
         return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, config, roleInTargetAccount);
-
+    }
+    public static GetGovCloudRoleArn(accountId: string, roleInTargetAccount: string): string {
+        return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
     public static async GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string): Promise<IAM> {
@@ -193,8 +278,16 @@ export class AwsUtil {
         }
 
         try {
-            const roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
+            let roleArn: string;
             const config: STS.ClientConfiguration = {};
+
+            if (AwsUtil.isPartition) {
+                roleArn = AwsUtil.GetPartitionRoleArn(accountId, roleInTargetAccount);
+                config.region = this.partitionRegion;
+            } else {
+                roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
+            }
+
             if (viaRoleArn !== undefined) {
                 config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
             }
@@ -264,14 +357,19 @@ export class AwsUtil {
         return 'us-east-1';
     }
 
-    public static partition: string;
+    public static partition: string | undefined;
+    private static partitionRegion = 'us-gov-west-1';
     private static masterAccountId: string | PromiseLike<string>;
+    private static masterPartitionAccountId: string | PromiseLike<string>;
+    private static partitionProfile: string | PromiseLike<string>;
+    private static partitionCredentials: CredentialsOptions;
     private static buildProcessAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAM> = {};
     private static SupportServiceCache: Record<string, Support> = {};
     private static OrganizationsServiceCache: Record<string, Organizations> = {};
     private static CfnServiceCache: Record<string, CloudFormation> = {};
     private static S3ServiceCache: Record<string, S3> = {};
+    private static isPartition = false;
 }
 
 export const passwordPolicyEquals = (pwdPolicyResourceA: Reference<PasswordPolicyResource>, pwdPolicyResourceB: Reference<PasswordPolicyResource>): boolean => {
@@ -352,7 +450,11 @@ export class CfnUtil {
 
             const putObjetRequest: PutObjectRequest = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
             await s3Service.putObject(putObjetRequest).promise();
-            stackInput.TemplateURL = `https://${bucketName}.s3.amazonaws.com/${putObjetRequest.Key}`;
+            if (binding.region.includes('us-gov')) {
+                stackInput.TemplateURL = `https://${bucketName}.s3-${binding.region}.amazonaws.com/${putObjetRequest.Key}`;
+            } else {
+                stackInput.TemplateURL = `https://${bucketName}.s3.amazonaws.com/${putObjetRequest.Key}`;
+            }
             delete stackInput.TemplateBody;
         }
     }
@@ -429,6 +531,75 @@ export class CfnUtil {
         } while (retryStackIsBeingUpdated || retryAccountIsBeingInitialized);
         return describeStack;
     }
+}
+
+export class CustomMFACredentials extends AWS.Credentials {
+    profile: string;
+
+    constructor(profile: string) {
+        super(undefined);
+        this.profile = profile;
+    }
+
+    refresh(callback: (err: AWS.AWSError) => void): void {
+        const that = this;
+        this.innerRefresh()
+            .then(creds => {
+                that.accessKeyId = creds.accessKeyId;
+                that.secretAccessKey = creds.secretAccessKey;
+                that.sessionToken = creds.sessionToken;
+                callback(undefined);
+            })
+            .catch(err => { callback(err); });
+    };
+
+    async innerRefresh(): Promise<CredentialsOptions> {
+        const profileName = this.profile ? this.profile : 'default';
+        const homeDir = require('os').homedir();
+
+        // todo: add support for windows?
+        if (!existsSync(homeDir + '/.aws/config')) {
+            return;
+        }
+
+        const awsconfig = readFileSync(homeDir + '/.aws/config').toString('utf8');
+        const contents = ini.parse(awsconfig);
+        const profileKey = contents['profile ' + profileName];
+
+        if (profileKey && profileKey.source_profile) {
+            const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
+            const secrets = ini.parse(awssecrets);
+            const creds = secrets[profileKey.source_profile];
+            const credentialsForSts: CredentialsOptions = { accessKeyId: creds.aws_access_key_id, secretAccessKey: creds.aws_secret_access_key };
+            if (creds.aws_session_token !== undefined) {
+                credentialsForSts.sessionToken = creds.aws_session_token;
+            }
+            const sts = new STS({ credentials: credentialsForSts, region: AwsUtil.GetPartitionRegion() });
+
+            const assumeRoleReq: AssumeRoleRequest = {
+                RoleArn: profileKey.role_arn,
+                RoleSessionName: 'organization-build',
+            };
+
+            if (profileKey.mfa_serial !== undefined) {
+                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profileKey.mfa_serial}`);
+                assumeRoleReq.SerialNumber = profileKey.mfa_serial;
+                assumeRoleReq.TokenCode = token;
+            }
+
+            try {
+                const tokens = await sts.assumeRole(assumeRoleReq).promise();
+                return { accessKeyId: tokens.Credentials.AccessKeyId, secretAccessKey: tokens.Credentials.SecretAccessKey, sessionToken: tokens.Credentials.SessionToken };
+            } catch (err) {
+                throw new OrgFormationError(`unable to assume role, error: \n${err}`);
+            }
+        }
+
+        else if (process.env.GOV_AWS_ACCESS_KEY_ID && process.env.GOV_AWS_SECRET_ACCESS_KEY) {
+            return { accessKeyId: process.env.GOV_AWS_ACCESS_KEY_ID, secretAccessKey: process.env.GOV_AWS_SECRET_ACCESS_KEY };
+        }
+    }
+
 }
 
 const sleep = (seconds: number): Promise<void> => {

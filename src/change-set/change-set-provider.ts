@@ -3,6 +3,7 @@ import { OrgFormationError } from '../org-formation-error';
 import { IBuildTask } from '~org-binder/org-tasks-provider';
 import { ITemplate, TemplateRoot } from '~parser/parser';
 import { S3StorageProvider } from '~state/storage-provider';
+import { AwsUtil } from '~util/aws-util';
 
 
 export class ChangeSetProvider {
@@ -21,8 +22,11 @@ export class ChangeSetProvider {
         };
     }
     private stateBucketName: string;
-    constructor(stateBucketName: string) {
+    private isPartition: boolean;
+
+    constructor(stateBucketName: string, isPartition?: boolean) {
         this.stateBucketName = stateBucketName;
+        this.isPartition = isPartition ? isPartition : false;
     }
 
     public async createChangeSet(changeSetName: string, template: TemplateRoot, tasks: IBuildTask[]): Promise<IOrganizationChangeSet> {
@@ -50,6 +54,10 @@ export class ChangeSetProvider {
 
     private async createStorageProvider(changeSetName: string): Promise<S3StorageProvider> {
         const storageKey = `change-sets/${changeSetName}`;
+        if (this.isPartition) {
+            const creds = await AwsUtil.GetPartitionCredentials();
+            return await S3StorageProvider.Create(this.stateBucketName, storageKey, creds);
+        }
         return await S3StorageProvider.Create(this.stateBucketName, storageKey);
     }
 }

@@ -455,6 +455,60 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
+    public createPartitionAccountUpdateTasks(resource: AccountResource, physicalId: string, partitionAccountId: string, hash: string): IBuildTask[] {
+        const that = this;
+        const tasks: IBuildTask[] = [];
+        let previousResource = [...this.previousTemplate.organizationSection.accounts].find(x => x.logicalId === resource.logicalId);
+        if (!previousResource && resource.type === OrgResourceTypes.MasterAccount) {
+            previousResource = this.previousTemplate.organizationSection.masterAccount;
+        }
+
+        if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.partitionAlias !== resource.partitionAlias || previousResource.accountName !== resource.accountName || previousResource.supportLevel !== resource.supportLevel || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)
+            || !policiesEqual(previousResource.passwordPolicy, resource.passwordPolicy)) {
+            const updateAccountTask: IBuildTask = {
+                type: resource.type,
+                logicalId: resource.logicalId,
+                action:  'Update',
+                perform: async (task): Promise<void> => {
+                    task.result = {
+                        commercial: await that.writer.updateAccount(resource, physicalId, previousResource),
+                        partition: await that.writer.updatePartitionAccount(resource, partitionAccountId, previousResource),
+                    };
+                },
+            };
+
+            tasks.push(updateAccountTask);
+        }
+
+        const createAccountCommitHashTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'CommitHash',
+            dependentTasks: tasks,
+            perform: async (): Promise<void> => {
+                if (resource.type === OrgResourceTypes.MasterAccount) {
+                    that.state.setUniqueBindingForType({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId,
+                        partitionAccountId,
+                    });
+                } else {
+                    that.state.setBinding({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId,
+                        partitionAccountId,
+                    });
+                }
+            },
+        };
+
+        return [...tasks, createAccountCommitHashTask];
+    }
+
     public createAccountCreateTasks(resource: AccountResource, hash: string): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
@@ -500,6 +554,57 @@ export class TaskProvider {
         };
         return [...tasks, createAccountCommitHashTask];
     }
+
+    public createPartitionAccountCreateTasks(resource: AccountResource, hash: string): IBuildTask[] {
+        /**
+         * Unsure if this needs its own entire block.
+         */
+        const that = this;
+        const tasks: IBuildTask[] = [];
+        const createPartitionAccountTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'Create',
+            perform: async (task): Promise<void> => {
+                task.result = await that.writer.createPartitionAccount(resource);
+            },
+        };
+
+        tasks.push(createPartitionAccountTask);
+
+        for (const attachedSCP of resource.serviceControlPolicies) {
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createPartitionAccountTask.result);
+            attachSCPTask.dependentTasks = [createPartitionAccountTask];
+            tasks.push(attachSCPTask);
+        }
+
+        const createAccountCommitHashTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'CommitHash',
+            dependentTasks: tasks,
+            perform: async (): Promise<void> => {
+                if (resource.type === OrgResourceTypes.MasterAccount) {
+                    that.state.setUniqueBindingForType({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId: createPartitionAccountTask.result,
+                    });
+                } else {
+                    that.state.setBinding({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId: createPartitionAccountTask.result.CommercialId,
+                        partitionAccountId: createPartitionAccountTask.result.PartitionAccountId,
+                    });
+                }
+            },
+        };
+        return [...tasks, createAccountCommitHashTask];
+    }
+
     public createForgetResourceTasks(binding: IBinding): IBuildTask[] {
         return [{
             type: binding.type,

@@ -13,8 +13,8 @@ import { yamlParseWithIncludes } from '~yaml-cfn/yaml-parse-includes';
 import { ConsoleUtil } from '~util/console-util';
 import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
 import { nunjucksParseWithIncludes } from '~yaml-cfn/nunjucks-parse-includes';
-import { nunjucksRender } from '~yaml-cfn/index';
 import { AwsUtil } from '~util/aws-util';
+import { nunjucksRender } from '~yaml-cfn/index';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
