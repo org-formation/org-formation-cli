@@ -36,7 +36,7 @@ Creates a local organization formation file that contains all organization resou
 ``> org-formation init organization.yml --region us-east-1 --partition-region us-gov-west-1 --partition-profile myProfile``  
 
 A few new attributes are required for org formation to work properly across partitions:
-   - `--partition-region` string indicating which region to target in the partition.
+   - `--partition-region` string indicating which region to target in the partition. Defaults to `us-gov-west-1`.
    - `--partition-profile` is an optional string argument indicating where org formation can find credentials to access the partition.  
    - `--partition-keys` is an optional boolean argument indicating org formation to look for partition credentials as environment variables (`GOV_AWS_ACCESS_KEY_ID` and `GOV_AWS_SECRET_ACCESS_KEY`).  
    
