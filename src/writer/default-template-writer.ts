@@ -421,6 +421,10 @@ class Line implements YamlLine {
         if ('0987654321'.includes(val[0])) {
             val = '\'' + val + '\'';
         }
+        if (val.includes(': ')) {
+            val = '\'' + val + '\'';
+        }
+
         const indentation = ''.padStart(this.indentation, ' ');
         const line = `${indentation}${this.label}: ${val}`;
         return line.trimRight() + '\n';
