@@ -30,7 +30,7 @@ First step is installing org-formation using npm. This can be done using the fol
 
 In order to start using `org-formation` you will need to create an `organization.yml` file. The `organization.yml` file will contain the definition of your AWS Organizations resources. You don't have to create this file by hand, org-formation allows you to generate a `organization.yml` using the `init` command.
 
-The `init` command can be ran regardless of what tool you have used to create the AWS Organization. It can also be ran at a later point in time to recreate a new organization.yml file if needed.
+The `init` command can be run regardless of what tool you have used to create the AWS Organization. It can also be run at a later point in time to recreate a new organization.yml file if needed.
 
 The following command will generate an organization.yml file for your organization:
 
@@ -40,11 +40,11 @@ The following command will generate an organization.yml file for your organizati
 
 **Note that**
 
-1. The `--region` option is required as the init command will create an S3 bucket and the --region option is used to specify the region the bucket must be created in.
+1. The `--region` option is required as the `init` command will create an S3 bucket and the --region option is used to specify the region the bucket must be created in.
 2. A `--profile` option can optionally be used to reference an AWS profile configured in the aws cli. The AWS credentials used (either the default credential or those associated with the profile specified) must give access to the AWS Account that contains the AWS Organization resources (the 'Master Account') and have sufficient right to interact with the AWS Organization service and assume roles within the accounts contained within the AWS Organization.
 3. By default the S3 bucket used to store state is named `organization-formation-${masterAccountId}`. However, you can change the name of the bucket (using the `--state-bucket-name` option) and the name of the object org-formation uses to store state (`--state-object` option).
 
-If all went well you now have a file that is called organization.yml in your current directory that will contain all the different resources currently contained within AWS Organizations in your master account.
+If all went well, you now have a file that is called organization.yml in your current directory that will contain all the different resources currently contained within AWS Organizations in your master account.
 
 For example:
 
@@ -92,7 +92,7 @@ Organization:
 
 In the example above you can find the following resources:
 
-- **MasterAccount**. This resource is of type `OC::ORG::MasterAccount` and refers to the AWS Account that contains the AWS Organization resources. A MasterAccount resource must be part of your template and it must have an `AccountId` attribute. The value of this attribute will be compared with the `AccountId` stored in the state file and the AWS Account deploying changes to in order to prevent mistakes updating the wrong AWS Account. Apart from these requirement the MasterAccount can have all the attributes any other Account resource has.
+- **MasterAccount**. This resource is of type `OC::ORG::MasterAccount` and refers to the AWS Account that contains the AWS Organization resources. A MasterAccount resource must be part of your template and it must have an `AccountId` attribute. The value of this attribute will be compared with the `AccountId` stored in the state file and the AWS Account deploying changes to in order to prevent mistakes updating the wrong AWS Account. Apart from this requirement the MasterAccount can have all the attributes any other Account resource has.
 - **OrganizationRoot**. This resource, of type `OC::ORG::OrganizationRoot`, is the root object for the hierarchical structure that contains accounts and organizational units. This resource can be used to attach Service Control Policies to all of the accounts within the organization.
 - **ProductionOU** and **DevelopmentOU**: These resources, of type `OC::ORG::OrganizationRoot`, are 2 Organizational Units. In this example these are contained within the OrganizationRoot. Organizational Units can be used to contains AWS Accounts, other Organizational Units and/or apply Service Control Policies to accounts within the Organizational Unit.
 - **ProductionAccount** and **DevelopmentAccount**: These resources, of type `OC::ORG::Account`, are 2 AWS Accounts. In this example contained in respectively the ProductionOU and DevelopmentOU Organizational Units. The relationship is created by adding a `!Ref` to the `Accounts` attribute of the Organizational Unit.
@@ -107,7 +107,7 @@ Any of these resources might have been created by `org-formation` or by another 
 
 If you have an organization.yml file that described your AWS Organization resources you can make changes to these resources and `run org-formation update organization.yml` to apply these changes to the AWS Organization in your master account.
 
-You simply change the file and run the org-formation update command. e.g:
+You simply change the file and run the `org-formation update` command. e.g:
 
 ```bash
 \> org-formation update organization.yml
@@ -116,7 +116,7 @@ You simply change the file and run the org-formation update command. e.g:
 **Note that**
 
 1. The `--region` option is not there as no regional resources will be created (AWS Organizations is only available in`us-east-1`).
-2. The state bucket is expected to have been created by an `init` command perform prior to update. If you provided a `--state-bucket-name` (or `--state-object`) option to the `init` command you need to pass these options to the update command as well.
+2. The state bucket is expected to have been created by an `init` command perform prior to update. If you provided a `--state-bucket-name` (or `--state-object`) option to the `init` command you need to pass these options to the `update` command as well.
 
 Having different state buckets (or state objects) can be a good idea when testing changes to your organization resources locally. Setting up a way to test changes locally (as opposed to a centrally managed CodePipeline) is somewhat more involved than create sepparate S3 buckets but since the state stored in S3 will be updated after every change you make to your organization it can be used too ensure the _main pipeline_ will not skip a task because it was already executed locally.
 
@@ -240,7 +240,7 @@ OrganizationBuild:
 
 ## Automating deployments using task files
 
-New AWS accounts within your organization typically also comes with a basic set of resources created within these accounts. Updating your organization therefore likely is a process with multiple steps. In order to do this org-formation has a command called `perform-tasks`. The perform-tasks command can be ran to execute tasks that you would like to be part of the organization build pipeline.
+New AWS accounts within your organization typically also comes with a basic set of resources created within these accounts. Updating your organization therefore likely is a process with multiple steps. In order to do this org-formation has a command called `perform-tasks`. The `perform-tasks` command can be run to execute tasks that you would like to be part of the organization build pipeline.
 
 The task file needs to contain at least one `update-organization` task that will be executed before all other tasks. If other tasks reference a organization.yml file this file must always be the same file specified in the update-organization task.
 
@@ -303,7 +303,7 @@ Since Annotated CloudFormation templates can have multiple binding there is the 
 An Organization Binding can have the following attributes:
 
 - **Region** used to specify the region (or regions) this binding needs to create targets for.
-- **Account** used to include a specific account (or list of accounts) that this binding needs to create targets for. You can also use '\*' to specify all accounts expect for the master account.
+- **Account** used to include a specific account (or list of accounts) that this binding needs to create targets for. You can also use '\*' to specify all accounts except for the master account.
 - **IncludeMasterAccount** used to include the MasterAccount in the targets (when set to `true`) .
 - **OrganizationalUnit** used to include accounts from an Organizational Unit (or list of Organizational Units).
 - **AccountsWithTag** used to include all accounts that declare a specific tag in the organization file.
