@@ -73,6 +73,8 @@ Resources:
         Comment: Root domain
       Name: !Ref rootHostedZoneName
 
+  # be aware that changing the logicalName for a AWS::Route53::RecordSet resource
+  # might result in an error. workaround is to remove the resource and then add it.
   ParentNsRecord:
     DependsOn: RootHostedZone
     Type: AWS::Route53::RecordSet
