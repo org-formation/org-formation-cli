@@ -1,6 +1,6 @@
 {
   "name": "aws-organization-formation",
-  "version": "0.9.18",
+  "version": "0.9.20-beta.1",
   "description": "Infrastructure as code solution for AWS Organizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -51,6 +51,8 @@
     "nunjucks": "^3.2.3",
     "pascal-case": "^3.1.2",
     "rc": "^1.2.8",
+    "tmp": "^0.2.1",
+    "unzipper": "^0.10.11",
     "uuid": "^8.3.2",
     "yamljs": "^0.3.0"
   },
@@ -64,6 +66,8 @@
     "@types/md5": "^2.1.33",
     "@types/node": "^12.7.4",
     "@types/sinon": "^7.0.13",
+    "@types/tmp": "^0.2.1",
+    "@types/unzipper": "^0.10.3",
     "@types/uuid": "^8.3.1",
     "@types/yamljs": "^0.2.30",
     "@typescript-eslint/eslint-plugin": "^2.19.0",

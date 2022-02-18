@@ -10,6 +10,8 @@ import { AwsUtil, CfnUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS, DEFAULT_ROLE_F
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
+import { DefaultTemplate, ITemplateGenerationSettings } from '~writer/default-template-writer';
+import { ExtractedTemplate, InitialCommitUtil } from '~util/initial-commit-util';
 
 
 const commandName = 'init-pipeline';
@@ -32,6 +34,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         command.option('--cross-account-role-name <cross-account-role-name>', 'name of the role used to perform cross account access', 'OrganizationAccountAccessRole');
         command.option('--build-account-id [build-account-id]', 'account id of the aws account that will host the orgformation build process');
         command.option('--role-stack-name [role-stack-name]', 'stack name used to create cross account roles for org-formation access. only used when --build-account-id is passed', 'organization-formation-role');
+        command.option('--template-package-url [template-package-url]', 'url of a package that could be used as an initial set of templates');
 
         super.addOptions(command);
     }
@@ -50,7 +53,6 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             this.buildAccountId = command.buildAccountId;
             this.s3credentials = await AwsUtil.GetCredentials(command.buildAccountId, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
         }
-
         if (command.crossAccountRoleName) {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;
             DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName = command.crossAccountRoleName;
@@ -71,6 +73,73 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             path = __dirname + '/../../resources/';
         }
 
+        const cloudformationTemplateContents = readFileSync(path + codePipelineTemplateFileName).toString('utf8');
+
+        let templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [] };
+        let extractedTemplate: ExtractedTemplate | undefined;
+        if (command.templatePackageUrl) {
+            extractedTemplate = await InitialCommitUtil.extractTemplate(command.templatePackageUrl);
+            if (extractedTemplate.definition.templateGenerationSettings) {
+                templateGenerationSettings = JSON.parse(JSON.stringify(extractedTemplate.definition.templateGenerationSettings));
+                for (const acc of templateGenerationSettings.predefinedAccounts) {
+                    if (!command.logicalNameToIdMap || !command.logicalNameToIdMap[acc.logicalName]) {
+                        throw new OrgFormationError(`account ${acc.logicalName} not present in logicalNameToId map`);
+                    }
+                    if (!command.logicalNameToRootEmailMap || !command.logicalNameToRootEmailMap[acc.logicalName]) {
+                        throw new OrgFormationError(`account ${acc.logicalName} not present in logicalNameToRootEmail map`);
+                    }
+                    acc.properties.RootEmail = command.logicalNameToRootEmailMap[acc.logicalName];
+                    acc.id = command.logicalNameToIdMap[acc.logicalName];
+                }
+                for (const ou of templateGenerationSettings.predefinedOUs) {
+                    if (!command.logicalNameToIdMap || !command.logicalNameToIdMap[ou.logicalName]) {
+                        throw new OrgFormationError(`ou ${ou.logicalName} not present in logicalNameToId map`);
+                    }
+                    ou.id = command.logicalNameToIdMap[ou.logicalName];
+                }
+            }
+        }
+
+        const template = await this.generateDefaultTemplate(command.buildProcessRoleName, templateGenerationSettings);
+
+        if (extractedTemplate) {
+            await this.createInitialCommitFromUrl(template, command.packageParameters ?? {}, extractedTemplate, region, stateBucketName, resourcePrefix);
+        } else {
+            await this.createInitialCommitFromResources(path, template, resourcePrefix, stateBucketName, stackName, repositoryName, region, command);
+        }
+
+        ConsoleUtil.LogInfo('creating codecommit / codebuild and codepipeline resources using CloudFormation...');
+        await this.executePipelineStack(this.buildAccountId, cloudformationTemplateContents, region, stateBucketName, resourcePrefix, stackName, repositoryName);
+
+        await template.state.save(storageProvider);
+
+        await AwsUtil.DeleteObject(stateBucketName, 'initial-commit.zip', this.s3credentials);
+
+        ConsoleUtil.LogInfo('');
+        ConsoleUtil.LogInfo('Your pipeline and initial commit have been created in AWS.');
+        ConsoleUtil.LogInfo('Hope this will get you started!');
+        ConsoleUtil.LogInfo('');
+        ConsoleUtil.LogInfo('Take your time and browse through the source, there is some additional guidance as comments.');
+        ConsoleUtil.LogInfo('');
+        ConsoleUtil.LogInfo('Have fun!');
+        ConsoleUtil.LogInfo('');
+        ConsoleUtil.LogInfo('--OC');
+    }
+
+    private async createInitialCommitFromUrl(template: DefaultTemplate, additionalParameters: Record<string, string>, templateDefinition: ExtractedTemplate, region: string, stateBucketName: string, resourcePrefix: string): Promise<void> {
+        const parameters: Record<string, string> = {
+            ManagementAcctId: this.currentAccountId,
+            PrimaryAwsRegion: region,
+            StateBucketName: stateBucketName,
+            ResourcePrefix: resourcePrefix,
+            ...additionalParameters,
+        };
+        await InitialCommitUtil.parameterizeAndUpload(templateDefinition, parameters, template, stateBucketName, this.s3credentials);
+
+    }
+    private async createInitialCommitFromResources(path: string, template: DefaultTemplate, resourcePrefix: string, stateBucketName: string, stackName: string, repositoryName: string, region: string, command: IInitPipelineCommandArgs): Promise<void> {
+        const codePipelineTemplateFileName = 'orgformation-codepipeline.yml';
+
         const replacements: Record<string, string> = {};
         replacements['XXX-resourcePrefix'] = resourcePrefix;
         replacements['XXX-stateBucketName'] = stateBucketName;
@@ -81,8 +150,6 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         replacements['XXX-roleStackName-master'] = this.createValuePossiblyWithResourcePrefix(command.roleStackName + '-master', resourcePrefix);
         replacements['XXX-organizationAccountAccessRoleName'] = command.crossAccountRoleName;
         replacements['XXX-roleStackName'] = this.createValuePossiblyWithResourcePrefix(command.roleStackName, resourcePrefix);
-
-        const template = await this.generateDefaultTemplate(command.buildProcessRoleName);
 
         if (command.delegateToBuildAccount) {
             const buildAccountLogicalId = template.state.getLogicalIdForPhysicalId(command.buildAccountId);
@@ -104,7 +171,6 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             ? this.createBuildAccessRoleTemplate(path, command.buildProcessRoleName)
             : undefined;
 
-
         const orgParametersInclude = this.replaceContents(path + 'organization-parameters.yml', replacements);
 
         if (command.delegateToBuildAccount) {
@@ -114,29 +180,12 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
         ConsoleUtil.LogInfo(`uploading initial commit to S3 ${stateBucketName}/initial-commit.zip...`);
         await this.uploadInitialCommit(stateBucketName, path + 'initial-commit/', template.template, buildSpecContents, organizationTasksContents, cloudformationTemplateContents, orgParametersInclude, buildAccessRoleTemplate);
-
-        ConsoleUtil.LogInfo('creating codecommit / codebuild and codepipeline resources using CloudFormation...');
-        await this.executePipelineStack(this.buildAccountId, cloudformationTemplateContents, region, stateBucketName, resourcePrefix, stackName, repositoryName);
-
-        await template.state.save(storageProvider);
-
-        await AwsUtil.DeleteObject(stateBucketName, 'initial-commit.zip', this.s3credentials);
-
-        ConsoleUtil.LogInfo('');
-        ConsoleUtil.LogInfo('Your pipeline and initial commit have been created in AWS.');
-        ConsoleUtil.LogInfo('Hope this will get you started!');
-        ConsoleUtil.LogInfo('');
-        ConsoleUtil.LogInfo('Take your time and browse through the source, there is some additional guidance as comments.');
-        ConsoleUtil.LogInfo('');
-        ConsoleUtil.LogInfo('Have fun!');
-        ConsoleUtil.LogInfo('');
-        ConsoleUtil.LogInfo('--OC');
     }
 
     public uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string, organizationTasksContents: string, cloudformationTemplateContents: string, orgParametersInclude: string, buildAccessRoleTemplateContents: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                const s3client = new S3({ credentials: this.s3credentials });
+                const s3client = new S3({ ...(this.s3credentials ? { credentials: this.s3credentials } : {}) });
                 const output = new WritableStream();
                 const archive = archiver('zip');
 
@@ -278,5 +327,8 @@ export interface IInitPipelineCommandArgs extends ICommandArgs {
     roleStackName: string;
     buildProcessRoleName: string;
     delegateToBuildAccount: boolean;
-
+    templatePackageUrl?: string;
+    logicalNameToIdMap?: Record<string, string>;
+    logicalNameToRootEmailMap?: Record<string, string>;
+    packageParameters?: Record<string, string>;
 }
