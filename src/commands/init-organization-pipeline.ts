@@ -53,7 +53,6 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             this.buildAccountId = command.buildAccountId;
             this.s3credentials = await AwsUtil.GetCredentials(command.buildAccountId, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
         }
-
         if (command.crossAccountRoleName) {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;
             DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName = command.crossAccountRoleName;
@@ -186,7 +185,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     public uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string, organizationTasksContents: string, cloudformationTemplateContents: string, orgParametersInclude: string, buildAccessRoleTemplateContents: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                const s3client = new S3({ credentials: this.s3credentials });
+                const s3client = new S3({ ...(this.s3credentials ? { credentials: this.s3credentials } : {}) });
                 const output = new WritableStream();
                 const archive = archiver('zip');
 

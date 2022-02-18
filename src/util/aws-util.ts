@@ -156,7 +156,7 @@ export class AwsUtil {
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string, credentials: CredentialsOptions = undefined): Promise<void> {
-        const s3client = new S3({ credentials });
+        const s3client = new S3(credentials ? { credentials } : {});
         await s3client.deleteObject({ Bucket: bucketName, Key: objectKey }).promise();
     }
 
