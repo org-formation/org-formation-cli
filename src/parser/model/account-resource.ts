@@ -13,6 +13,8 @@ export interface IAccountProperties {
     ServiceControlPolicies?: IResourceRef | IResourceRef[];
     PasswordPolicy?: IResourceRef;
     Alias?: string;
+    PartitionAccountId?: string;
+    PartitionAlias?: string;
     Tags?: Record<string, string>;
     SupportLevel?: string;
     OrganizationAccessRoleName?: string;
@@ -23,7 +25,9 @@ export class AccountResource extends Resource {
     public accountName?: string;
     public rootEmail?: string;
     public accountId?: string;
+    public partitionAccountId?: string;
     public alias?: string;
+    public partitionAlias?: string;
     public tags?: Record<string, string>;
     public serviceControlPolicies?: Reference<ServiceControlPolicyResource>[];
     public passwordPolicy?: Reference<PasswordPolicyResource>;
@@ -51,6 +55,7 @@ export class AccountResource extends Resource {
         this.rootEmail = this.props.RootEmail;
         this.accountName = this.props.AccountName;
         this.accountId = this.props.AccountId;
+        this.partitionAccountId = this.props.PartitionAccountId;
         this.supportLevel = this.props.SupportLevel;
         this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
         this.buildAccessRoleName = this.props.BuildAccessRoleName;
@@ -69,10 +74,11 @@ export class AccountResource extends Resource {
         }
         this.tags = this.props.Tags;
         this.alias = this.props.Alias;
+        this.partitionAlias = this.props.PartitionAlias;
         this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName', 'BuildAccessRoleName');
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'PartitionAlias', 'PartitionAccountId', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName', 'BuildAccessRoleName');
     }
 
     public calculateHash(): string {

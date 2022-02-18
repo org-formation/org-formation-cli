@@ -23,17 +23,22 @@ export class CloudFormationBinder {
         private readonly terminationProtection = false,
         private readonly stackPolicy: {} = undefined,
         private readonly tags: {} = undefined,
+        private readonly partition: boolean = false,
         private readonly customRoleName?: string,
         private readonly resolver?: CfnExpressionResolver,
         private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state, logVerbose),
         private readonly taskViaRoleArn: string = undefined,
     ) {
 
-        this.masterAccount = template.organizationSection.masterAccount.accountId;
-
-        if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
-            throw new OrgFormationError('state and template do not belong to the same organization');
+        if (template.organizationSection.masterAccount.partitionAccountId && this.partition) {
+            this.masterAccount = template.organizationSection.masterAccount.partitionAccountId;
+        } else {
+            this.masterAccount = template.organizationSection.masterAccount.accountId;
+            if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
+                throw new OrgFormationError('state and template do not belong to the same organization');
+            }
         }
+
     }
 
     public async enumBindings(): Promise<ICfnBinding[]> {
@@ -51,7 +56,15 @@ export class CloudFormationBinder {
             if (!accountBinding) {
                 throw new OrgFormationError(`Expected to find an account binding for account ${target.accountLogicalId} in state. Is your organization up to date?`);
             }
-            const accountId = accountBinding.physicalId;
+            let accountId: string;
+            /**
+             * Currently flagging for this. Might be a better solution.
+             */
+            if (this.partition && accountBinding.partitionAccountId) {
+                accountId = accountBinding.partitionAccountId;
+            } else {
+                accountId = accountBinding.physicalId;
+            }
             const region = target.region;
             const stackName = this.stackName;
             const key = { accountId, region, stackName };

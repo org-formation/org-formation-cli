@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2.5.1
         with:
           node-version: 12
       - name: Install Dependencies with NPM
@@ -29,7 +29,7 @@ jobs:
       - name: Add Coverage Report
         if: github.event_name == 'pull_request'
         id: coverage-report
-        uses: 5monkeys/cobertura-action@v1
+        uses: 5monkeys/cobertura-action@v12
         continue-on-error: true
         with:
           path: coverage/cobertura-coverage.xml
@@ -37,7 +37,7 @@ jobs:
           minimum_coverage: 40
       - name: Upload Artifacts
         id: upload-artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2.3.1
         with:
           name: artifacts
           path: coverage

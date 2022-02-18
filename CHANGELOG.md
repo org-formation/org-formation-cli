@@ -2,6 +2,8 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
+- **version 0.9.18**
+
 - feat: support ExcludeOrganizationalUnit in binding
 - feat: support ServerSideEncryption in copy-to-s3 task
 - fix: ensure password policy and alias don't get cleared on init/build

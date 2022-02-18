@@ -290,6 +290,10 @@ export class CfnExpressionResolver {
         if (binding === undefined) {
             throw new OrgFormationError(`unable to find ${resource.logicalId} in state. Is your organization up to date?`);
         }
+
+        if (AwsUtil.GetIsPartition()) {
+            return binding.partitionAccountId;
+        }
         return binding.physicalId;
     }
 

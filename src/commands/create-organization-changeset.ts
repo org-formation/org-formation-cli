@@ -4,6 +4,7 @@ import { BaseCliCommand, ICommandArgs } from './base-command';
 import { ChangeSetProvider } from '~change-set/change-set-provider';
 import { TemplateRoot } from '~parser/parser';
 import { GlobalState } from '~util/global-state';
+import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'create-change-set <templateFile>';
 const commandDescription = 'create change set that can be reviewed and executed later';
@@ -33,6 +34,13 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
         const tasks = binder.enumBuildTasks();
 
         const changeSet = await provider.createChangeSet(command.changeSetName, template, tasks);
+
+        const isPartition = await AwsUtil.GetPartitionProfile();
+        if (isPartition) {
+            const partitionProvider = new ChangeSetProvider(stateBucketName, true);
+            await partitionProvider.createChangeSet(command.changeSetName, template, tasks);
+
+        }
 
         const contents = JSON.stringify(changeSet, null, 2);
         ConsoleUtil.Out(contents);

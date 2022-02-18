@@ -83,7 +83,13 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
     public async generateDefaultTemplate(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
         const organizations = new Organizations({ region: 'us-east-1' });
-        const awsReader = new AwsOrganizationReader(organizations);
+        const partitionCredentials = await AwsUtil.GetPartitionCredentials();
+        let awsReader: AwsOrganizationReader;
+        if (partitionCredentials) {
+            awsReader = new AwsOrganizationReader(organizations, null, partitionCredentials);
+        } else {
+            awsReader = new AwsOrganizationReader(organizations);
+        }
         const awsOrganization = new AwsOrganization(awsReader);
         const writer = new DefaultTemplateWriter(awsOrganization);
         writer.DefaultBuildProcessAccessRoleName = defaultBuildAccessRoleName;
@@ -98,7 +104,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (command.state) {
             return command.state;
         }
+
         const storageProvider = await this.getStateStorageProvider(command);
+
         BaseCliCommand.StateBucketName = storageProvider.bucketName;
         const accountId = await AwsUtil.GetMasterAccountId();
 
@@ -148,6 +156,11 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--verbose', 'will enable debug logging');
         command.option('--no-color', 'will disable colorization of console logs');
         command.option('--master-account-id [master-account-id]', 'run org-formation on a build account that functions as a delegated master account');
+        command.option('--is-partition', 'is run on a partition');
+        command.option('--partition-keys', 'is to indicate to look for partition access keys');
+        command.option('--partition-profile [profile]', 'aws partition profile to use');
+        command.option('--partition-region [region]', 'aws partition region to use');
+
     }
 
     protected async getOrganizationBinder(template: TemplateRoot, state: PersistedState): Promise<OrganizationBinder> {
@@ -157,12 +170,23 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
+        const partitionCredentials = await AwsUtil.GetPartitionCredentials();
         const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount };
-
-        const awsReader = new AwsOrganizationReader(organizations, crossAccountConfig);
+        let awsReader: AwsOrganizationReader;
+        if (partitionCredentials) {
+            awsReader = new AwsOrganizationReader(organizations, crossAccountConfig, partitionCredentials);
+        } else {
+            awsReader = new AwsOrganizationReader(organizations, crossAccountConfig);
+        }
         const awsOrganization = new AwsOrganization(awsReader);
         await awsOrganization.initialize();
-        const awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig);
+        let awsWriter: AwsOrganizationWriter;
+
+        if (partitionCredentials) {
+            awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig, partitionCredentials);
+        } else {
+            awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig);
+        }
         const taskProvider = new TaskProvider(template, state, awsWriter);
         const binder = new OrganizationBinder(template, state, taskProvider);
         return binder;
@@ -184,7 +208,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName, accountId);
-        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey, credentials);
+        let storageProvider;
+        if (command.isPartition) {
+            storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials, AwsUtil.GetPartitionRegion());
+        } else {
+            storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials);
+        }
         return storageProvider;
     }
 
@@ -250,7 +279,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             ConsoleUtil.colorizeLogs = false;
         }
 
-        await AwsUtil.InitializeWithProfile(command.profile);
+        await AwsUtil.InitializeWithProfile(command.profile, command.isPartition);
 
         if (command.masterAccountId !== undefined) {
             AwsUtil.SetMasterAccountId(command.masterAccountId);
@@ -260,6 +289,23 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             NunjucksDebugSettings.debug = true;
         }
 
+        await AwsUtil.InitializeWithCurrentPartition();
+        if (command.partitionProfile !== undefined) {
+            AwsUtil.SetPartitionProfile(command.partitionProfile);
+            await AwsUtil.SetPartitionCredentials(command.partitionProfile);
+        }
+
+        if (command.isPartition) {
+            AwsUtil.SetIsPartition(true);
+        }
+
+        if (command.partitionRegion) {
+            AwsUtil.SetPartitionRegion(command.partitionRegion);
+        }
+
+        if (command.partitionKeys) {
+            await AwsUtil.SetPartitionCredentials();
+        }
         await AwsUtil.InitializeWithCurrentPartition();
 
         command.initialized = true;
@@ -311,6 +357,14 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 command.profile = rc.profile;
             }
 
+            if (process.argv.indexOf('--partition-profile') === -1 && rc.partitionProfile !== undefined) {
+                command.partitionProfile = rc.partitionProfile;
+            }
+
+            if (process.argv.indexOf('--partition-region') === -1 && rc.partitionRegion !== undefined) {
+                command.partitionProfile = rc.partitionProfile;
+            }
+
             if (process.argv.indexOf('--organization-file') === -1 && rc.organizationFile !== undefined) {
                 (command as IPerformTasksCommandArgs).organizationFile = rc.organizationFile;
             }
@@ -350,13 +404,17 @@ export interface ICommandArgs {
     organizationStateObject?: string;
     organizationStateBucketName?: string;
     profile?: string;
+    partitionProfile?: string;
     state?: PersistedState;
     debugTemplating?: boolean;
     initialized?: boolean;
     printStack?: boolean;
     verbose?: boolean;
     color?: boolean;
+    isPartition?: boolean;
+    partitionKeys?: boolean;
     resolver?: CfnExpressionResolver;
+    partitionRegion?: string;
 }
 
 export interface IRCObject {
@@ -370,6 +428,8 @@ export interface IRCObject {
     organizationStateBucketName?: string;
     debugTemplating?: boolean;
     profile?: string;
+    partitionProfile?: string;
+    partitionRegion?: string;
     configs: string[];
     config: string;
 }
