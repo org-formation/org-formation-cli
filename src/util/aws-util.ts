@@ -423,7 +423,7 @@ export class CfnUtil {
 
     public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackInput | UpdateStackInput | ValidateTemplateInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
         if (stackInput.TemplateBody && stackInput.TemplateBody.length > 50000) {
-            const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region);
+            const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region, binding.customRoleName);
             const bucketName = `org-formation-${binding.accountId}-${binding.region}-large-templates`;
             try {
                 await s3Service.createBucket({ Bucket: bucketName }).promise();
