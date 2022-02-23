@@ -119,7 +119,7 @@ export class Validator {
             Validator.validateReferenceToOU(binding.OrganizationalUnit, id);
         }
         if (binding.ExcludeOrganizationalUnit !== undefined) {
-            Validator.validateReferenceToOU(binding.OrganizationalUnit, id);
+            Validator.validateReferenceToOU(binding.ExcludeOrganizationalUnit, id);
         }
         if (binding.IncludeMasterAccount !== undefined) {
             if (typeof binding.IncludeMasterAccount !== 'boolean') {
