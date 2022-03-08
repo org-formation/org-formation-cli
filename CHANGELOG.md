@@ -2,7 +2,10 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
-- **version 0.9.18**
+**version 0.9.19**
+- fix: unable to package the initial commit when running init-pipeline.
+
+**version 0.9.18**
 
 - feat: support ExcludeOrganizationalUnit in binding
 - feat: support ServerSideEncryption in copy-to-s3 task
@@ -11,7 +14,7 @@ All notable changes to aws organization formation will be documented in this fil
 - fix: add retry and backoff when reading the organization (e.g. using init)
 - fix: strip dashes from account names when generating the logical names during init
 
-- **version 0.9.17**
+**version 0.9.17**
 
 - fix: allow templates without version attribute
 - feat: support `!Ref AWS::Partition` in tasks file
@@ -22,7 +25,7 @@ All notable changes to aws organization formation will be documented in this fil
 - feat: stack tags
 - fix: org-formation init to honor `--cross-account-role-name`
 
-- **version 0.9.16**
+**version 0.9.16**
 
 - fix: missing role in build account when running init-pipeline
 
