@@ -43,7 +43,7 @@ export abstract class BaseOrganizationTask implements IBuildTask {
         updateCommand.templateFile = this.templatePath;
         updateCommand.forceDeploy = this.forceDeploy;
         updateCommand.taskRoleName = this.taskRoleName;
-        updateCommand.templatingContext = this.templatingContext;
+        updateCommand.TemplatingContext = this.templatingContext;
 
         await this.innerPerform(updateCommand);
     }
