@@ -32,13 +32,14 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
     }
 
     public addOptions(command: Command): void {
+        command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
         super.addOptions(command);
     }
 
     public async performCommand(command: IUpdateOrganizationCommandArgs): Promise<void> {
 
 
-        const template = await TemplateRoot.create(command.templateFile, { TemplatingContext: command.templatingContext });
+        const template = await TemplateRoot.create(command.templateFile, { TemplatingContext: command.TemplatingContext });
         const state = await this.getState(command);
         let partitionProvider: S3StorageProvider;
 
@@ -46,8 +47,8 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
          * These additional providers and such are all over the place, since I added them as I went along.
          * Would be great if we could centralize the Partition provider stuff.
          */
-         const creds = await AwsUtil.GetPartitionCredentials();
-         if (creds) {
+        const creds = await AwsUtil.GetPartitionCredentials();
+        if (creds) {
             const masterAccountId = await AwsUtil.GetPartitionMasterAccountId();
             partitionProvider = await this.createOrGetStateBucket(command, AwsUtil.GetPartitionRegion(), masterAccountId, creds);
         }
@@ -97,5 +98,6 @@ export interface IUpdateOrganizationCommandArgs extends ICommandArgs {
     templateFile: string;
     forceDeploy?: boolean;
     taskRoleName?: string;
-    templatingContext?: {};
+    TemplatingContext?: {};
+    debugTemplating?: boolean;
 }
