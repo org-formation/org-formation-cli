@@ -6,6 +6,7 @@ export * from './execute-organization-changeset';
 export * from './init-organization-pipeline';
 export * from './init-organization';
 export * from './perform-tasks';
+export * from './print-org';
 export * from './print-stacks';
 export * from './update-organization';
 export * from './update-stacks';
