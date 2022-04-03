@@ -323,15 +323,33 @@ export class AwsUtil {
     }
 
     public static async GetCloudFormationExport(exportName: string, accountId: string, region: string, customRoleName: string, customViaRoleArn?: string): Promise<string | undefined> {
+        const cacheKey = `${exportName}|${accountId}|${region}|${customRoleName}${customViaRoleArn}`;
+        const cachedVal = this.CfnExportsCache[cacheKey];
+        if (cachedVal !== undefined) { return cachedVal; }
+
         const cfnRetrieveExport = await AwsUtil.GetCloudFormation(accountId, region, customRoleName, customViaRoleArn);
         const listExportsRequest: ListExportsInput = {};
         do {
-            const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
-            listExportsRequest.NextToken = listExportsResponse.NextToken;
-            const foundExport = listExportsResponse.Exports.find(x => x.Name === exportName);
-            if (foundExport) {
-                return foundExport.Value;
-            }
+            let throttled = false;
+            let throttledCount = 0;
+            do {
+                throttled = false;
+                try {
+                    const listExportsResponse = await cfnRetrieveExport.listExports(listExportsRequest).promise();
+                    listExportsRequest.NextToken = listExportsResponse.NextToken;
+                    const foundExport = listExportsResponse.Exports.find(x => x.Name === exportName);
+                    if (foundExport) {
+                        this.CfnExportsCache[cacheKey] = foundExport.Value;
+                        return foundExport.Value;
+                    }
+                } catch (err) {
+                    if (err.code === 'Throttling') {
+                        throttledCount += 1;
+                        await sleep(throttledCount * (1.5 * Math.random()));
+                        throttled = true;
+                    } else { throw err; }
+                }
+            } while (throttled);
         } while (listExportsRequest.NextToken);
         return undefined;
     }
@@ -369,6 +387,7 @@ export class AwsUtil {
     private static OrganizationsServiceCache: Record<string, Organizations> = {};
     private static CfnServiceCache: Record<string, CloudFormation> = {};
     private static S3ServiceCache: Record<string, S3> = {};
+    private static CfnExportsCache: Record<string, string> = {};
     private static isPartition = false;
 }
 
