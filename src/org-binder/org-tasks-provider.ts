@@ -793,6 +793,20 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
+    public createAccountDeleteTasks(binding: IBinding): IBuildTask[] {
+        const that = this;
+        return [{
+            type: binding.type,
+            logicalId: binding.logicalId,
+            action: 'Delete',
+            dependentTaskFilter: (): boolean => true,
+            perform: async (): Promise<void> => {
+                await that.writer.closeAccount(binding.physicalId);
+                this.state.removeBinding(binding);
+            },
+        }];
+    }
+
     public createForgetResourceTasks(binding: IBinding): IBuildTask[] {
         return [{
             type: binding.type,

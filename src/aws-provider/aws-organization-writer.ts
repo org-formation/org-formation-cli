@@ -1,5 +1,5 @@
 import { Organizations } from 'aws-sdk/clients/all';
-import { AttachPolicyRequest, CreateAccountRequest, CreateAccountStatus, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
+import { AttachPolicyRequest, CreateAccountRequest, CreateAccountStatus, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest, CloseAccountRequest } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
 import { AwsUtil, passwordPolicyEquals } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
@@ -516,6 +516,21 @@ export class AwsOrganizationWriter {
         if (!this.organization.masterAccount.PartitionId) {
             account.Tags = resource.tags;
         }
+    }
+
+    public async closeAccount(physicalId: string): Promise<void> {
+        return await performAndRetryIfNeeded(async () => {
+            const existingAccount = this.organization.accounts.find(x => x.Id === physicalId);
+            if (existingAccount === undefined) {
+                ConsoleUtil.LogDebug(`can't delete account ${physicalId} not found.`);
+                return;
+            }
+
+            const closeAccountRequest: CloseAccountRequest = {
+                AccountId: physicalId,
+            };
+            await this.organizationService.closeAccount(closeAccountRequest).promise();
+        });
     }
 
     private async _createOrganizationalUnit(resource: OrganizationalUnitResource, parentId: string): Promise<AWSOrganizationalUnit> {

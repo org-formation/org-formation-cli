@@ -82,7 +82,12 @@ export class OrganizationBinder {
                     tasks.push(...t2);
                     break;
                 case 'Delete':
-                    const t3 = this.taskProvider.createForgetResourceTasks(boundPolicy.state);
+                    let t3;
+                    if (org?.organizationRoot?.template?.closeAccountsOnRemoval) {
+                        t3 = this.taskProvider.createAccountDeleteTasks(boundPolicy.state);
+                    } else {
+                        t3 = this.taskProvider.createForgetResourceTasks(boundPolicy.state);
+                    }
                     tasks.push(...t3);
                     break;
             }
