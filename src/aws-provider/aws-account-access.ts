@@ -19,10 +19,9 @@ export  const GetOrganizationAccessRoleInTargetAccount = async (config: ICrossAc
                 role: config.masterAccountRoleName,
             };
         }
-         else {
-             return {
-             };
-         }
+        else {
+            return {};
+        }
     } else {
         const result: ICrossAccountAccess = {
             role: GlobalState.GetOrganizationAccessRoleName(targetAccountId),

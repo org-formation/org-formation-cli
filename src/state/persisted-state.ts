@@ -497,7 +497,7 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public setBindingPhysicalId(type: string, logicalId: string, physicalId: string): void {
+    public setBindingPhysicalId(type: string, logicalId: string, physicalId: string, partitionId?: string): void {
         if (this.organizationLevelState === false) {
             this.organizationState.setBindingHash(type, logicalId, physicalId);
             return;
@@ -512,7 +512,7 @@ export class PersistedState {
 
         const current = typeDict[logicalId];
         if (current === undefined) {
-            typeDict[logicalId] = { physicalId, logicalId, type } as IBinding;
+            typeDict[logicalId] = { physicalId, logicalId, type, partitionId } as IBinding;
         } else {
             current.physicalId = physicalId;
         }
@@ -613,7 +613,7 @@ export interface IBinding {
     type: string;
     physicalId: string;
     lastCommittedHash: string;
-    partitionAccountId?: string;
+    partitionId?: string;
 }
 
 export interface ICfnTarget {

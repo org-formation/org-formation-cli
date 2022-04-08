@@ -28,7 +28,7 @@ export class AwsUtil {
 
     public static ClearCache(): void {
         AwsUtil.masterAccountId = undefined;
-        AwsUtil.masterPartitionAccountId = undefined;
+        AwsUtil.masterPartitionId = undefined;
         AwsUtil.partitionProfile = undefined;
         AwsUtil.partitionCredentials = undefined;
         AwsUtil.CfnServiceCache = {};
@@ -179,14 +179,14 @@ export class AwsUtil {
         return partition;
     }
     public static async GetPartitionMasterAccountId(): Promise<string> {
-        if (AwsUtil.masterPartitionAccountId !== undefined) {
-            return AwsUtil.masterPartitionAccountId;
+        if (AwsUtil.masterPartitionId !== undefined) {
+            return AwsUtil.masterPartitionId;
         }
         const partitionCredentials = await AwsUtil.GetPartitionCredentials();
         const stsClient = new STS({ credentials: partitionCredentials, region: this.partitionRegion }); // if not set, assume build process runs in master
         const caller = await stsClient.getCallerIdentity().promise();
-        AwsUtil.masterPartitionAccountId = caller.Account;
-        return AwsUtil.masterPartitionAccountId;
+        AwsUtil.masterPartitionId = caller.Account;
+        return AwsUtil.masterPartitionId;
     }
 
     public static async GetBuildProcessAccountId(): Promise<string> {
@@ -378,7 +378,7 @@ export class AwsUtil {
     public static partition: string | undefined;
     private static partitionRegion = 'us-gov-west-1';
     private static masterAccountId: string | PromiseLike<string>;
-    private static masterPartitionAccountId: string | PromiseLike<string>;
+    private static masterPartitionId: string | PromiseLike<string>;
     private static partitionProfile: string | PromiseLike<string>;
     private static partitionCredentials: CredentialsOptions;
     private static buildProcessAccountId: string | PromiseLike<string>;

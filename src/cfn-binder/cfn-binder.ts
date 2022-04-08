@@ -30,8 +30,8 @@ export class CloudFormationBinder {
         private readonly taskViaRoleArn: string = undefined,
     ) {
 
-        if (template.organizationSection.masterAccount.partitionAccountId && this.partition) {
-            this.masterAccount = template.organizationSection.masterAccount.partitionAccountId;
+        if (template.organizationSection.masterAccount.partitionId && this.partition) {
+            this.masterAccount = template.organizationSection.masterAccount.partitionId;
         } else {
             this.masterAccount = template.organizationSection.masterAccount.accountId;
             if (this.state.masterAccount && this.masterAccount && this.state.masterAccount !== this.masterAccount) {
@@ -60,8 +60,8 @@ export class CloudFormationBinder {
             /**
              * Currently flagging for this. Might be a better solution.
              */
-            if (this.partition && accountBinding.partitionAccountId) {
-                accountId = accountBinding.partitionAccountId;
+            if (this.partition && accountBinding.partitionId) {
+                accountId = accountBinding.partitionId;
             } else {
                 accountId = accountBinding.physicalId;
             }

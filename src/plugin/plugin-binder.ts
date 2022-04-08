@@ -42,7 +42,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                         targetType: this.task.type,
                         logicalAccountId: logicalTargetAccountName,
                         region,
-                        accountId: isGovCloud ? accountBinding.partitionAccountId : accountBinding.physicalId,
+                        accountId: isGovCloud ? accountBinding.partitionId : accountBinding.physicalId,
                         definition: this.task,
                         logicalName: this.task.name,
                         logicalNamePrefix: this.logicalNamePrefix,
