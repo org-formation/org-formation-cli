@@ -292,7 +292,7 @@ export class CfnExpressionResolver {
         }
 
         if (AwsUtil.GetIsPartition()) {
-            return binding.partitionAccountId;
+            return binding.partitionId;
         }
         return binding.physicalId;
     }

@@ -163,7 +163,7 @@ export class TaskProvider {
         }];
     }
 
-    public createOrganizationalUnitCreateTasks(resource: OrganizationalUnitResource, hash: string): IBuildTask[] {
+    public createOrganizationalUnitCreateTasks(resource: OrganizationalUnitResource, hash: string, mirror: boolean): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
         const createOrganizationalUnitTask: IBuildTask = {
@@ -173,27 +173,29 @@ export class TaskProvider {
             dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
             perform: async (task): Promise<void> => {
                 let parentId: string;
+                console.log(resource)
                 if (resource.parentOULogicalName) {
                     const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.parentOULogicalName);
                     if (binding) {
                         parentId = binding.physicalId;
                     }
                 }
-                task.result = await that.writer.createOrganizationalUnit(resource, parentId);
-                that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result);
-            },
+                task.result = await that.writer.createOrganizationalUnit(mirror, resource, parentId);
+                that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result.CommercialId, createOrganizationalUnitTask.result.PartitionId);
+                console.log(that.state)
+            }
         };
 
         tasks.push(createOrganizationalUnitTask);
 
         for (const attachedSCP of resource.serviceControlPolicies) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createOrganizationalUnitTask.result);
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createOrganizationalUnitTask.result.CommercialId);
             attachSCPTask.dependentTasks = [createOrganizationalUnitTask];
             tasks.push(attachSCPTask);
         }
 
         for (const attachedAccount of resource.accounts) {
-            const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, () => createOrganizationalUnitTask.result);
+            const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, () => createOrganizationalUnitTask.result.CommercialId);
             attachAccountTask.dependentTasks = [createOrganizationalUnitTask];
             tasks.push(attachAccountTask);
         }
@@ -296,6 +298,7 @@ export class TaskProvider {
 
         return [...tasks, createOrganizationalUnitCommitHashTask];
     }
+
     public createDetachChildOUTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string): IBuildTask {
         let resourceIdentifier = childOu.PhysicalId;
         if (childOu.TemplateResource) {
@@ -455,7 +458,7 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
-    public createPartitionAccountUpdateTasks(resource: AccountResource, physicalId: string, partitionAccountId: string, hash: string): IBuildTask[] {
+    public createPartitionAccountUpdateTasks(resource: AccountResource, physicalId: string, partitionId: string, hash: string): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
         let previousResource = [...this.previousTemplate.organizationSection.accounts].find(x => x.logicalId === resource.logicalId);
@@ -472,7 +475,7 @@ export class TaskProvider {
                 perform: async (task): Promise<void> => {
                     task.result = {
                         commercial: await that.writer.updateAccount(resource, physicalId, previousResource),
-                        partition: await that.writer.updatePartitionAccount(resource, partitionAccountId, previousResource),
+                        partition: await that.writer.updatePartitionAccount(resource, partitionId, previousResource),
                     };
                 },
             };
@@ -492,7 +495,7 @@ export class TaskProvider {
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
                         physicalId,
-                        partitionAccountId,
+                        partitionId,
                     });
                 } else {
                     that.state.setBinding({
@@ -500,7 +503,7 @@ export class TaskProvider {
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
                         physicalId,
-                        partitionAccountId,
+                        partitionId,
                     });
                 }
             },
@@ -597,7 +600,7 @@ export class TaskProvider {
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
                         physicalId: createPartitionAccountTask.result.CommercialId,
-                        partitionAccountId: createPartitionAccountTask.result.PartitionAccountId,
+                        partitionId: createPartitionAccountTask.result.PartitionId,
                     });
                 }
             },
@@ -615,6 +618,7 @@ export class TaskProvider {
             },
         }];
     }
+    
     private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource | OrganizationRootResource, policy: Reference<ServiceControlPolicyResource>, that: this, getTargetId: () => string): IBuildTask {
         let scpIdentifier = policy.PhysicalId;
         if (policy.TemplateResource) {

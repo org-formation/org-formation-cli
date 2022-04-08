@@ -54,6 +54,8 @@ export class OrganizationBinder {
     public enumBuildTasks(): IBuildTask[] {
         const tasks: IBuildTask[] = [];
         const org = this.getOrganizationBinding();
+        const mirror: boolean = org?.organizationRoot?.template?.mirrorInPartition
+
         for (const boundPolicy of org.policies) {
             switch (boundPolicy.action) {
                 case 'Create':
@@ -84,7 +86,7 @@ export class OrganizationBinder {
                 case 'Update':
                     let t2;
                     if (org?.organizationRoot?.template?.mirrorInPartition) {
-                        t2 = this.taskProvider.createPartitionAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.state.partitionAccountId, boundPolicy.templateHash);
+                        t2 = this.taskProvider.createPartitionAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.state.partitionId, boundPolicy.templateHash);
                     } else {
                         t2 = this.taskProvider.createAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.templateHash);
                     }
@@ -99,7 +101,7 @@ export class OrganizationBinder {
         for (const boundPolicy of org.organizationalUnits) {
             switch (boundPolicy.action) {
                 case 'Create':
-                    const t1 = this.taskProvider.createOrganizationalUnitCreateTasks(boundPolicy.template, boundPolicy.templateHash);
+                    const t1 = this.taskProvider.createOrganizationalUnitCreateTasks(boundPolicy.template, boundPolicy.templateHash, mirror);
                     tasks.push(...t1);
                     break;
                 case 'Update':
