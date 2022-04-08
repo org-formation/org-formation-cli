@@ -13,6 +13,8 @@ import {
 import { TemplateRoot } from '~parser/parser';
 import { IBinding, PersistedState } from '~state/persisted-state';
 
+const IS_PARTITION = true;
+const IS_COMMERCIAL = false;
 
 export class TaskProvider {
     private state: PersistedState;
@@ -173,19 +175,25 @@ export class TaskProvider {
             dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
             perform: async (task): Promise<void> => {
                 let parentId: string;
+                let partitionParentId: string;
                 console.log(resource);
                 if (resource.parentOULogicalName) {
                     const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.parentOULogicalName);
                     if (binding) {
                         parentId = binding.physicalId;
+                        partitionParentId = binding.partitionId;
                     }
                 }
-                task.result = await that.writer.createOrganizationalUnit(mirror, resource, parentId);
-                that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result.CommercialId, createOrganizationalUnitTask.result.PartitionId);
+                task.result.CommercialId = await that.writer.createOrganizationalUnit(IS_COMMERCIAL, resource, parentId);
+                that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result.CommercialId);
+
+                if (mirror) {
+                    task.result.PartitionId = await that.writer.createOrganizationalUnit(IS_PARTITION, resource, partitionParentId);
+                    that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result.CommercialId, createOrganizationalUnitTask.result.PartitionId);
+                }
                 console.log(that.state);
             },
         };
-
         tasks.push(createOrganizationalUnitTask);
 
         for (const attachedSCP of resource.serviceControlPolicies) {

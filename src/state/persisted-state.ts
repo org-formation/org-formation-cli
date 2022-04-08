@@ -497,7 +497,7 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public setBindingPhysicalId(type: string, logicalId: string, physicalId: string, partitionId?: string): void {
+    public setBindingPhysicalId(type: string, logicalId: string, physicalId: string, partitionId?: string | undefined): void {
         if (this.organizationLevelState === false) {
             this.organizationState.setBindingHash(type, logicalId, physicalId);
             return;
