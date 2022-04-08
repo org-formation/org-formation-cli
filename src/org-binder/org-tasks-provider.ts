@@ -173,7 +173,7 @@ export class TaskProvider {
             dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
             perform: async (task): Promise<void> => {
                 let parentId: string;
-                console.log(resource)
+                console.log(resource);
                 if (resource.parentOULogicalName) {
                     const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.parentOULogicalName);
                     if (binding) {
@@ -182,8 +182,8 @@ export class TaskProvider {
                 }
                 task.result = await that.writer.createOrganizationalUnit(mirror, resource, parentId);
                 that.state.setBindingPhysicalId(resource.type, resource.logicalId, createOrganizationalUnitTask.result.CommercialId, createOrganizationalUnitTask.result.PartitionId);
-                console.log(that.state)
-            }
+                console.log(that.state);
+            },
         };
 
         tasks.push(createOrganizationalUnitTask);
@@ -618,7 +618,7 @@ export class TaskProvider {
             },
         }];
     }
-    
+
     private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource | OrganizationRootResource, policy: Reference<ServiceControlPolicyResource>, that: this, getTargetId: () => string): IBuildTask {
         let scpIdentifier = policy.PhysicalId;
         if (policy.TemplateResource) {
