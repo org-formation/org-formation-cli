@@ -52,7 +52,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, undefined, undefined, undefined, undefined, undefined, undefined, false, undefined, command.resolver);
 
         const bindings = await cfnBinder.enumBindings();
-        console.log(bindings)
+        console.log(bindings);
         // console.log(JSON.stringify(bindings[0].template))
         for (const binding of bindings) {
             if (binding.action === 'Delete') {
@@ -61,7 +61,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
             }
 
             const templateBody = binding.template.createTemplateBody({ outputCrossAccountExports: command.outputCrossAccountExports, output: command.output });
-            console.log(templateBody)
+            console.log(templateBody);
             const resolvedParameters = createParametersFileInput(binding);
 
             if (command.outputPath !== undefined) {

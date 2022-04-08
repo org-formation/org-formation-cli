@@ -54,7 +54,7 @@ export class OrganizationBinder {
     public enumBuildTasks(): IBuildTask[] {
         const tasks: IBuildTask[] = [];
         const org = this.getOrganizationBinding();
-        const mirror: boolean = org?.organizationRoot?.template?.mirrorInPartition
+        const mirror: boolean = org?.organizationRoot?.template?.mirrorInPartition;
 
         for (const boundPolicy of org.policies) {
             switch (boundPolicy.action) {

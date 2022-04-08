@@ -8,7 +8,7 @@ import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsEvents } from './aws-events';
 import { AwsOrganization } from './aws-organization';
-import { AWSOrganizationalUnit } from './aws-organization-reader'
+import { AWSOrganizationalUnit } from './aws-organization-reader';
 import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
 import { performAndRetryIfNeeded, sleep } from './util';
 import {
@@ -22,8 +22,8 @@ export interface PartitionCreateResponse {
     PartitionId?: string | undefined;
 }
 
-const IS_PARTITION = true
-const IS_COMMERCIAL = false
+const IS_PARTITION = true;
+const IS_COMMERCIAL = false;
 
 export class AwsOrganizationWriter {
 
@@ -36,7 +36,7 @@ export class AwsOrganizationWriter {
 
         this.organizationService = organizationService;
         this.organization = organization;
-        console.log(organization)
+        console.log(organization);
         if (partitionCredentials) {
             this.partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
             this.partitionOrgSTS = new STS({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
@@ -267,18 +267,18 @@ export class AwsOrganizationWriter {
     }
 
     public async createOrganizationalUnit(mirror: boolean, resource: OrganizationalUnitResource, parentId?: string): Promise<PartitionCreateResponse> {
-        const commercialOuList : AWSOrganizationalUnit[] = this.organization.organizationalUnits
-        const partitionOuList: AWSOrganizationalUnit[] = this.organization.partitionOrganizationalUnits
-        for (let ou of commercialOuList) {
-            ou["PartitionId"] = partitionOuList.find(x => x.Name === ou.Name)?.Id
+        const commercialOuList: AWSOrganizationalUnit[] = this.organization.organizationalUnits;
+        const partitionOuList: AWSOrganizationalUnit[] = this.organization.partitionOrganizationalUnits;
+        for (const ou of commercialOuList) {
+            ou.PartitionId = partitionOuList.find(x => x.Name === ou.Name)?.Id;
         }
         return await performAndRetryIfNeeded(async () => {
             if (parentId === undefined) {
                 parentId = this.organization.roots[0].Id;
             };
 
-            console.log(parentId)
-            console.log(commercialOuList)
+            console.log(parentId);
+            console.log(commercialOuList);
 
             const existingOu = commercialOuList.find(x => x.ParentId === parentId && x.Name === resource.organizationalUnitName);
             if (existingOu) {
@@ -286,8 +286,8 @@ export class AwsOrganizationWriter {
                     ConsoleUtil.LogDebug(`ou with name ${resource.organizationalUnitName} already exists (Id: ${existingOu.Id}).`);
                     return {CommercialId: existingOu.Id};
                 }
-                
-                const partitionOrganizationalUnit = partitionOuList.find(x => 
+
+                const partitionOrganizationalUnit = partitionOuList.find(x =>
                     x.Name === resource.organizationalUnitName &&
                     x.Id === existingOu.PartitionId);
 
@@ -295,36 +295,36 @@ export class AwsOrganizationWriter {
                     ConsoleUtil.LogDebug(`ou with name ${resource.organizationalUnitName} already exists (CommercialId: ${existingOu.Id}, PartitionId: ${existingOu.PartitionId}).`);
                     return {CommercialId: existingOu.Id, PartitionId: existingOu.PartitionId};
                 }
-                const partitionParentId = (existingOu.ParentId.startsWith('r-')) ? 
-                    this.organization.partitionRoots[0].Id : 
+                const partitionParentId = (existingOu.ParentId.startsWith('r-')) ?
+                    this.organization.partitionRoots[0].Id :
                     commercialOuList.find(x => x.Id === existingOu.ParentId).PartitionId;
 
                 const newPartitionOu = await this._createOrganizationalUnit(IS_PARTITION, resource, partitionParentId);
                 ConsoleUtil.LogDebug(`ou with name ${resource.organizationalUnitName} already existed in commercial region. Mirror created in partition region (CommercialId: ${existingOu.Id}, PartitionId: ${existingOu.PartitionId}).`);
-                return {CommercialId: existingOu.Id, PartitionId: newPartitionOu.Id}
+                return {CommercialId: existingOu.Id, PartitionId: newPartitionOu.Id};
             }
 
             const newCommercialOu = await this._createOrganizationalUnit(IS_COMMERCIAL, resource, parentId);
             ConsoleUtil.LogDebug(`organizational unit ${resource.organizationalUnitName} created (CommercialId: ${newCommercialOu.Id}), next is mirror.`);
             if (mirror) {
-                const partitionParentId = (newCommercialOu.ParentId.startsWith('r-')) ? 
-                    this.organization.partitionRoots[0].Id : 
+                const partitionParentId = (newCommercialOu.ParentId.startsWith('r-')) ?
+                    this.organization.partitionRoots[0].Id :
                     commercialOuList.find(x => x.Id === newCommercialOu.ParentId).PartitionId;
 
                 const newPartitionOu = await this._createOrganizationalUnit(IS_PARTITION, resource, partitionParentId);
 
-                newCommercialOu.PartitionId = newPartitionOu.Id
-                newCommercialOu.PartitionArn = newPartitionOu.Arn
+                newCommercialOu.PartitionId = newPartitionOu.Id;
+                newCommercialOu.PartitionArn = newPartitionOu.Arn;
                 partitionOuList.push(newPartitionOu);
                 commercialOuList.push(newCommercialOu);
 
                 ConsoleUtil.LogDebug(`organizational units ${resource.organizationalUnitName} created (CommercialId: ${newCommercialOu.Id}, PartitionId: ${newPartitionOu.Id}).`);
-                return {CommercialId: newCommercialOu.Id, PartitionId: newPartitionOu.Id}
+                return {CommercialId: newCommercialOu.Id, PartitionId: newPartitionOu.Id};
             }
 
             commercialOuList.push(newCommercialOu);
             ConsoleUtil.LogDebug(`organizational unit ${resource.organizationalUnitName} created (Id: ${newCommercialOu.Id}).`);
-            return {CommercialId: newCommercialOu.Id}
+            return {CommercialId: newCommercialOu.Id};
         });
     }
 
@@ -646,20 +646,19 @@ export class AwsOrganizationWriter {
         account.Tags = resource.tags;
     }
 
-    
 
-    private async _createOrganizationalUnit(is_partition: boolean, resource: OrganizationalUnitResource, parentId: string): Promise<AWSOrganizationalUnit> {
+    private async _createOrganizationalUnit(isPartition: boolean, resource: OrganizationalUnitResource, parentId: string): Promise<AWSOrganizationalUnit> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (is_partition) ?  this.partitionOrgService : this.organizationService
-            const orgId: string = (is_partition) ? this.organization.partitionOrganization.Id : this.organization.organization.Id
-            const masterAccountId: string = (is_partition) ?  this.organization.partitionMasterAccount.Id : this.organization.masterAccount.Id
+            const org: Organizations = (isPartition) ?  this.partitionOrgService : this.organizationService;
+            const orgId: string = (isPartition) ? this.organization.partitionOrganization.Id : this.organization.organization.Id;
+            const masterAccountId: string = (isPartition) ?  this.organization.partitionMasterAccount.Id : this.organization.masterAccount.Id;
 
             const createOrganizationalUnitRequest: CreateOrganizationalUnitRequest = {
                 Name: resource.organizationalUnitName,
                 ParentId: parentId,
             };
 
-            console.log(createOrganizationalUnitRequest)
+            console.log(createOrganizationalUnitRequest);
 
             const ou = await org.createOrganizationalUnit(createOrganizationalUnitRequest).promise();
             const output: AWSOrganizationalUnit = {
@@ -671,9 +670,9 @@ export class AwsOrganizationWriter {
                 Type: 'OrganizationalUnit',
                 Accounts: [],
                 OrganizationalUnits: [],
-            }
+            };
 
-            return output
+            return output;
         });
     }
 
