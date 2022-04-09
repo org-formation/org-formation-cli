@@ -498,6 +498,13 @@ export class PersistedState {
     }
 
     public setBindingPhysicalId(type: string, logicalId: string, physicalId: string, partitionId?: string | undefined): void {
+        console.log({
+            "settingBinding": true,
+            type: type,
+            logicalId: logicalId,
+            physicalId: physicalId,
+            partitionId: partitionId
+        })
         if (this.organizationLevelState === false) {
             this.organizationState.setBindingHash(type, logicalId, physicalId);
             return;

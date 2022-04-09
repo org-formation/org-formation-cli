@@ -59,15 +59,15 @@ export class OrganizationBinder {
         for (const boundPolicy of org.policies) {
             switch (boundPolicy.action) {
                 case 'Create':
-                    const t = this.taskProvider.createPolicyCreateTasks(boundPolicy.template, boundPolicy.templateHash);
+                    const t = this.taskProvider.createPolicyCreateTasks(boundPolicy.template, boundPolicy.templateHash, mirror);
                     tasks.push(...t);
                     break;
                 case 'Update':
-                    const t2 = this.taskProvider.createPolicyUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.templateHash);
+                    const t2 = this.taskProvider.createPolicyUpdateTasks(boundPolicy.template, boundPolicy.state, boundPolicy.templateHash, mirror);
                     tasks.push(...t2);
                     break;
                 case 'Delete':
-                    const t3 = this.taskProvider.createPolicyDeleteTasks(boundPolicy.state);
+                    const t3 = this.taskProvider.createPolicyDeleteTasks(boundPolicy.state, mirror);
                     tasks.push(...t3);
                     break;
             }
@@ -75,21 +75,11 @@ export class OrganizationBinder {
         for (const boundPolicy of org.accounts) {
             switch (boundPolicy.action) {
                 case 'Create':
-                    let t1;
-                    if (org?.organizationRoot?.template?.mirrorInPartition) {
-                        t1 = this.taskProvider.createPartitionAccountCreateTasks(boundPolicy.template, boundPolicy.templateHash);
-                    } else {
-                        t1 = this.taskProvider.createAccountCreateTasks(boundPolicy.template, boundPolicy.templateHash);
-                    }
+                    const t1 = this.taskProvider.createAccountCreateTasks(boundPolicy.template, boundPolicy.templateHash, mirror);
                     tasks.push(...t1);
                     break;
                 case 'Update':
-                    let t2;
-                    if (org?.organizationRoot?.template?.mirrorInPartition) {
-                        t2 = this.taskProvider.createPartitionAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.state.partitionId, boundPolicy.templateHash);
-                    } else {
-                        t2 = this.taskProvider.createAccountUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.templateHash);
-                    }
+                    const t2 = this.taskProvider.createAccountUpdateTasks(boundPolicy.template, boundPolicy.state, boundPolicy.templateHash, mirror);
                     tasks.push(...t2);
                     break;
                 case 'Delete':
@@ -105,11 +95,11 @@ export class OrganizationBinder {
                     tasks.push(...t1);
                     break;
                 case 'Update':
-                    const t2 = this.taskProvider.createOrganizationalUnitUpdateTasks(boundPolicy.template, boundPolicy.state.physicalId, boundPolicy.templateHash);
+                    const t2 = this.taskProvider.createOrganizationalUnitUpdateTasks(boundPolicy.template, boundPolicy.state, boundPolicy.templateHash, mirror);
                     tasks.push(...t2);
                     break;
                 case 'Delete':
-                    const t3 = this.taskProvider.createOrganizationalUnitDeleteTasks(boundPolicy.state);
+                    const t3 = this.taskProvider.createOrganizationalUnitDeleteTasks(boundPolicy.state, mirror);
                     tasks.push(...t3);
                     break;
             }
@@ -118,11 +108,11 @@ export class OrganizationBinder {
         if (org.masterAccount) {
             switch (org.masterAccount.action) {
                 case 'Create':
-                    const t1 = this.taskProvider.createAccountCreateTasks(org.masterAccount.template, org.masterAccount.templateHash);
+                    const t1 = this.taskProvider.createAccountCreateTasks(org.masterAccount.template, org.masterAccount.templateHash, mirror);
                     tasks.push(...t1);
                     break;
                 case 'Update':
-                    const t2 = this.taskProvider.createAccountUpdateTasks(org.masterAccount.template, org.masterAccount.state.physicalId, org.masterAccount.templateHash);
+                    const t2 = this.taskProvider.createAccountUpdateTasks(org.masterAccount.template, org.masterAccount.state, org.masterAccount.templateHash, mirror);
                     tasks.push(...t2);
                     break;
                 case 'Delete':
@@ -135,11 +125,11 @@ export class OrganizationBinder {
         if (org.organizationRoot) {
             switch (org.organizationRoot.action) {
                 case 'Create':
-                    const t1 = this.taskProvider.createRootCreateTasks(org.organizationRoot.template, org.organizationRoot.templateHash);
+                    const t1 = this.taskProvider.createRootCreateTasks(org.organizationRoot.template, org.organizationRoot.templateHash, mirror);
                     tasks.push(...t1);
                     break;
                 case 'Update':
-                    const t2 = this.taskProvider.createRootUpdateTasks(org.organizationRoot.template, org.organizationRoot.state.physicalId, org.organizationRoot.templateHash);
+                    const t2 = this.taskProvider.createRootUpdateTasks(org.organizationRoot.template, org.organizationRoot.state, org.organizationRoot.templateHash, mirror);
                     tasks.push(...t2);
                     break;
                 case 'Delete':
