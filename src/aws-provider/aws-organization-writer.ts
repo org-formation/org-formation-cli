@@ -8,7 +8,7 @@ import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsEvents } from './aws-events';
 import { AwsOrganization } from './aws-organization';
-import { AWSOrganizationalUnit } from './aws-organization-reader';
+import { AWSOrganizationalUnit, AWSPolicy, AWSAccount } from './aws-organization-reader';
 import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
 import { performAndRetryIfNeeded, sleep } from './util';
 import {
@@ -33,21 +33,22 @@ export class AwsOrganizationWriter {
 
         this.organizationService = organizationService;
         this.organization = organization;
-        console.log(organization);
         if (partitionCredentials) {
             this.partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
             this.partitionOrgSTS = new STS({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
         }
     }
 
-    public async ensureSCPEnabled(): Promise<void> {
+    public async ensureSCPEnabled(mirror: boolean): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+
             const enablePolicyTypeReq: EnablePolicyTypeRequest = {
-                RootId: this.organization.roots[0].Id!,
+                RootId: (mirror) ? this.organization.partitionRoots[0].Id! : this.organization.roots[0].Id!,
                 PolicyType: 'SERVICE_CONTROL_POLICY',
             };
             try {
-                await this.organizationService.enablePolicyType(enablePolicyTypeReq).promise();
+                await org.enablePolicyType(enablePolicyTypeReq).promise();
                 ConsoleUtil.LogDebug('enabled service control policies');
             } catch (err) {
                 if (err && err.code === 'PolicyTypeAlreadyEnabledException') {
@@ -59,8 +60,10 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async createPolicy(resource: ServiceControlPolicyResource): Promise<string> {
+    public async createPolicy(mirror: boolean, resource: ServiceControlPolicyResource): Promise<string> {
         return await performAndRetryIfNeeded(async () => {
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const policies: AWSPolicy[] = (mirror) ? this.organization.policies : this.organization.partitionPolicies
             try {
                 const createPolicyRequest: CreatePolicyRequest = {
                     Name: resource.policyName,
@@ -68,15 +71,15 @@ export class AwsOrganizationWriter {
                     Type: 'SERVICE_CONTROL_POLICY',
                     Content: JSON.stringify(resource.policyDocument, null, 2),
                 };
-                const response = await this.organizationService.createPolicy(createPolicyRequest).promise();
+                const response = await org.createPolicy(createPolicyRequest).promise();
                 const scpId = response.Policy!.PolicySummary!.Id!;
                 ConsoleUtil.LogDebug(`SCP Created ${scpId}`);
                 return scpId;
             } catch (err) {
                 if (err.code === 'DuplicatePolicyException') {
-                    const existingPolicy = this.organization.policies.find(x => x.Name === resource.policyName);
+                    const existingPolicy = policies.find(x => x.Name === resource.policyName);
                     const scpId = existingPolicy!.Id;
-                    await this.updatePolicy(resource, scpId);
+                    await this.updatePolicy(mirror, resource, scpId);
                     ConsoleUtil.LogDebug(`SCP found ${scpId}`);
                     return scpId;
                 }
@@ -86,20 +89,21 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async attachPolicy(targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
+    public async attachPolicy(mirror: boolean, targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
             const attachPolicyRequest: AttachPolicyRequest = {
                 PolicyId: policyPhysicalId,
                 TargetId: targetPhysicalId,
             };
             try {
                 try {
-                    await this.ensureSCPEnabled();
-                    await this.organizationService.attachPolicy(attachPolicyRequest).promise();
+                    await this.ensureSCPEnabled(mirror);
+                    await org.attachPolicy(attachPolicyRequest).promise();
                 } catch (err) {
                     if (err && err.code === 'PolicyTypeNotEnabledException') {
-                        await this.ensureSCPEnabled();
-                        await this.organizationService.attachPolicy(attachPolicyRequest).promise();
+                        await this.ensureSCPEnabled(mirror);
+                        await org.attachPolicy(attachPolicyRequest).promise();
                     } else {
                         throw err;
                     }
@@ -112,14 +116,15 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async detachPolicy(targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
+    public async detachPolicy(mirror: boolean, targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
             const detachPolicyRequest: DetachPolicyRequest = {
                 PolicyId: policyPhysicalId,
                 TargetId: targetPhysicalId,
             };
             try {
-                await this.organizationService.detachPolicy(detachPolicyRequest).promise();
+                await org.detachPolicy(detachPolicyRequest).promise();
             } catch (err) {
                 if (err && err.code !== 'PolicyNotAttachedException' && err.code !== 'PolicyNotFoundException') {
                     // 'ConcurrentModificationException' ??
@@ -129,25 +134,27 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async updatePolicy(resource: ServiceControlPolicyResource, physicalId: string): Promise<void> {
+    public async updatePolicy(mirror: boolean, resource: ServiceControlPolicyResource, physicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
             const updatePolicyRequest: UpdatePolicyRequest = {
                 PolicyId: physicalId,
                 Name: resource.policyName,
                 Description: resource.description,
                 Content: JSON.stringify(resource.policyDocument, null, 2),
             };
-            await this.organizationService.updatePolicy(updatePolicyRequest).promise();
+            await org.updatePolicy(updatePolicyRequest).promise();
         });
     }
 
-    public async deletePolicy(physicalId: string): Promise<void> {
+    public async deletePolicy(mirror: boolean, physicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
             const deletePolicyRequest: DeletePolicyRequest = {
                 PolicyId: physicalId,
             };
             try {
-                await this.organizationService.deletePolicy(deletePolicyRequest).promise();
+                await org.deletePolicy(deletePolicyRequest).promise();
             } catch (err) {
                 if (err && err.code !== 'PolicyNotFoundException' && err.code !== 'PolicyInUseException') {
                     // 'ConcurrentModificationException' ??
@@ -157,18 +164,22 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async detachAccount(targetId: string, accountId: string): Promise<void> {
-        await this.attachAccount(this.organization.roots[0].Id, accountId);
+    public async detachAccount(mirror: boolean, targetId: string, accountId: string): Promise<void> {
+        const root = await this.ensureRoot(mirror)
+        await this.attachAccount(mirror, root, accountId);
     }
 
-    public async attachAccount(parentPhysicalId: string, accountPhysicalId: string): Promise<void> {
+    public async attachAccount(mirror: boolean, parentPhysicalId: string, accountPhysicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const account = this.organization.accounts.find(x => x.Id === accountPhysicalId);
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const accountList: AWSAccount[] = (mirror) ? this.organization.partitionAccounts : this.organization.accounts;
+
+            const account = accountList.find(x => x.Id === accountPhysicalId);
             let parentId: string;
             if (account !== undefined) {
                 parentId = account.ParentId;
             } else {
-                const accountFromAws = await this.organizationService.listParents({ ChildId: accountPhysicalId }).promise();
+                const accountFromAws = await org.listParents({ ChildId: accountPhysicalId }).promise();
                 parentId = accountFromAws.Parents[0].Id;
 
             }
@@ -182,7 +193,7 @@ export class AwsOrganizationWriter {
                 AccountId: accountPhysicalId,
             };
 
-            await this.organizationService.moveAccount(moveAccountRequest).promise();
+            await org.moveAccount(moveAccountRequest).promise();
 
             // account will be undefined if account is suspended.
             // still needs to be moved when e.g. OU gets re-attached.
@@ -192,15 +203,19 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async detachOU(targetId: string, childOuPhysicalId: string): Promise<Record<string, string>> {
-        return await this.moveOU(this.organization.roots[0].Id, childOuPhysicalId);
+    public async detachOU(mirror: boolean, targetId: string, childOuPhysicalId: string): Promise<Record<string, string>> {
+        const root = await this.ensureRoot(mirror)
+        return await this.moveOU(mirror, root, childOuPhysicalId);
     }
 
-    public async moveOU(parentPhysicalId: string, childOuPhysicalId: string, mappedOUIds: Record<string, string> = {}): Promise<Record<string, string>> {
+    public async moveOU(mirror: boolean, parentPhysicalId: string, childOuPhysicalId: string, mappedOUIds: Record<string, string> = {}): Promise<Record<string, string>> {
         return await performAndRetryIfNeeded(async () => {
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const ouList: AWSOrganizationalUnit[] = (mirror) ? this.organization.partitionOrganizationalUnits : this.organization.organizationalUnits;
+
             ConsoleUtil.LogDebug(`calling describe ou for child ${childOuPhysicalId}`);
 
-            const childOu = await this.organizationService.describeOrganizationalUnit({ OrganizationalUnitId: childOuPhysicalId }).promise();
+            const childOu = await org.describeOrganizationalUnit({ OrganizationalUnitId: childOuPhysicalId }).promise();
             const organizationalUnitName = childOu.OrganizationalUnit.Name;
 
             ConsoleUtil.LogDebug(`moving from OU named ${organizationalUnitName}, Id: ${childOuPhysicalId}`);
@@ -209,42 +224,42 @@ export class AwsOrganizationWriter {
                 OrganizationalUnitId: childOuPhysicalId,
                 Name: organizationalUnitName + '-org-formation-move-source',
             };
-            await this.organizationService.updateOrganizationalUnit(updateOrganizationalUnitRequest).promise();
+            await org.updateOrganizationalUnit(updateOrganizationalUnitRequest).promise();
             ConsoleUtil.LogDebug(`renamed OU to ${updateOrganizationalUnitRequest.Name}`);
 
             const createOrganizationalUnitRequest: CreateOrganizationalUnitRequest = {
                 Name: organizationalUnitName,
                 ParentId: parentPhysicalId,
             };
-            const targetOrganizationalUnit = await this.organizationService.createOrganizationalUnit(createOrganizationalUnitRequest).promise();
+            const targetOrganizationalUnit = await org.createOrganizationalUnit(createOrganizationalUnitRequest).promise();
             const targetOrganizationalUnitId = targetOrganizationalUnit.OrganizationalUnit.Id;
 
             mappedOUIds[childOuPhysicalId] = targetOrganizationalUnitId;
             ConsoleUtil.LogDebug(`created new OU named ${organizationalUnitName}, Id ${targetOrganizationalUnitId}`);
 
-            await this._moveOuChildren(childOuPhysicalId, targetOrganizationalUnitId, mappedOUIds);
+            await this._moveOuChildren(mirror, childOuPhysicalId, targetOrganizationalUnitId, mappedOUIds);
             ConsoleUtil.LogDebug(`done moving children from ${childOuPhysicalId} to ${targetOrganizationalUnitId}`);
 
             const deleteOrganizationalUnitRequest: DeleteOrganizationalUnitRequest = {
                 OrganizationalUnitId: childOuPhysicalId,
             };
 
-            await this.organizationService.deleteOrganizationalUnit(deleteOrganizationalUnitRequest).promise();
+            await org.deleteOrganizationalUnit(deleteOrganizationalUnitRequest).promise();
 
             try {
-                const organizationalUnit = this.organization.organizationalUnits.find(x => x.Id === childOuPhysicalId);
+                const organizationalUnit = ouList.find(x => x.Id === childOuPhysicalId);
                 if (organizationalUnit === undefined) {
                     ConsoleUtil.LogWarning(`while moving OU unable to find ou with ${childOuPhysicalId} in internal model.`);
                 } else {
 
                     organizationalUnit.Id = targetOrganizationalUnitId;
 
-                    const oldParent = this.organization.organizationalUnits.find(x => x.OrganizationalUnits.includes(organizationalUnit));
+                    const oldParent = ouList.find(x => x.OrganizationalUnits.includes(organizationalUnit));
                     if (oldParent !== undefined) {
                         oldParent.OrganizationalUnits.push(organizationalUnit);
                     }
 
-                    const parentOrganizationalOU = this.organization.organizationalUnits.find(x => x.Id === parentPhysicalId);
+                    const parentOrganizationalOU = ouList.find(x => x.Id === parentPhysicalId);
                     if (parentOrganizationalOU !== undefined) {
                         parentOrganizationalOU.OrganizationalUnits.push(organizationalUnit);
                     }
@@ -258,9 +273,8 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async ensureRoot(): Promise<string> {
-        const roots = this.organization.roots;
-        return roots[0].Id;
+    public async ensureRoot(mirror?: boolean): Promise<string> {
+        return (mirror) ? this.organization.partitionRoots[0].Id : this.organization.roots[0].Id;
     }
 
     public async createOrganizationalUnit(mirror: boolean, resource: OrganizationalUnitResource, parentId?: string): Promise<string> {
@@ -268,11 +282,8 @@ export class AwsOrganizationWriter {
             const ouList: AWSOrganizationalUnit[] = (mirror) ? this.organization.partitionOrganizationalUnits : this.organization.organizationalUnits;
 
             if (parentId === undefined) {
-                parentId = (mirror) ? this.organization.partitionRoots[0].Id : this.organization.roots[0].Id;
+                parentId = await this.ensureRoot(mirror)
             };
-
-            console.log(parentId);
-            console.log(ouList);
 
             const existingOu = ouList.find(x => x.ParentId === parentId && x.Name === resource.organizationalUnitName);
             if (existingOu) {
@@ -287,31 +298,35 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async updateOrganizationalUnit(resource: OrganizationalUnitResource, physicalId: string): Promise<void> {
+    public async updateOrganizationalUnit(mirror: boolean, resource: OrganizationalUnitResource, physicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
             const updateOrganizationalUnitRequest: UpdateOrganizationalUnitRequest = {
                 OrganizationalUnitId: physicalId,
                 Name: resource.organizationalUnitName,
             };
-            await this.organizationService.updateOrganizationalUnit(updateOrganizationalUnitRequest).promise();
+            await org.updateOrganizationalUnit(updateOrganizationalUnitRequest).promise();
         });
     }
 
-    public async deleteOrganizationalUnit(physicalId: string): Promise<void> {
+    public async deleteOrganizationalUnit(mirror: boolean, physicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const existingOU = this.organization.organizationalUnits.find(x => x.Id === physicalId);
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const ouList: AWSOrganizationalUnit[] = (mirror) ? this.organization.partitionOrganizationalUnits : this.organization.organizationalUnits;
+            const existingOU = ouList.find(x => x.Id === physicalId);
+            console.log(physicalId)
             if (existingOU === undefined) {
                 ConsoleUtil.LogDebug(`can't delete organizational unit ${physicalId} not found.`);
                 return;
             }
-            const root = this.organization.roots[0];
+            const root = await this.ensureRoot(mirror)
 
-            this._moveOuChildren(physicalId, root.Id, {}, true);
+            this._moveOuChildren(mirror, physicalId, root, {}, true);
 
             const deleteOrganizationalUnitRequest: DeleteOrganizationalUnitRequest = {
                 OrganizationalUnitId: physicalId,
             };
-            await this.organizationService.deleteOrganizationalUnit(deleteOrganizationalUnitRequest).promise();
+            await org.deleteOrganizationalUnit(deleteOrganizationalUnitRequest).promise();
         });
     }
 
@@ -615,8 +630,6 @@ export class AwsOrganizationWriter {
                 ParentId: parentId,
             };
 
-            console.log(createOrganizationalUnitRequest);
-
             const ou = await org.createOrganizationalUnit(createOrganizationalUnitRequest).promise();
             const output: AWSOrganizationalUnit = {
                 Arn: ou.OrganizationalUnit.Arn,
@@ -755,15 +768,15 @@ export class AwsOrganizationWriter {
         });
     }
 
-    private async _moveOuChildren(sourceId: string, targetId: string, mappedOUIds: Record<string, string>, onlyAccounts = false): Promise<void> {
-
+    private async _moveOuChildren(isPartition: boolean, sourceId: string, targetId: string, mappedOUIds: Record<string, string>, onlyAccounts = false): Promise<void> {
+        const org: Organizations = (isPartition) ?  this.partitionOrgService : this.organizationService;
         const listAccountsOfPreviousOURequest: ListAccountsForParentRequest = { ParentId: sourceId };
         let listAccountsOfPreviousOU: ListAccountsForParentResponse = {};
         do {
-            listAccountsOfPreviousOU = await this.organizationService.listAccountsForParent(listAccountsOfPreviousOURequest).promise();
+            listAccountsOfPreviousOU = await org.listAccountsForParent(listAccountsOfPreviousOURequest).promise();
             for (const account of listAccountsOfPreviousOU.Accounts) {
                 ConsoleUtil.LogDebug(`moving account ${account.Name} from ou ${sourceId} to ou ${targetId}`);
-                await this.attachAccount(targetId, account.Id);
+                await this.attachAccount(isPartition, targetId, account.Id);
             }
             listAccountsOfPreviousOURequest.NextToken = listAccountsOfPreviousOURequest.NextToken;
         } while (listAccountsOfPreviousOU.NextToken);
@@ -773,22 +786,22 @@ export class AwsOrganizationWriter {
             const listServiceControlPoliciesOfPreviousOURequest: ListPoliciesForTargetRequest = { TargetId: sourceId, Filter: 'SERVICE_CONTROL_POLICY' };
             let listServiceControlPoliciesOfPreviousOU: ListPoliciesForTargetResponse = {};
             do {
-                listServiceControlPoliciesOfPreviousOU = await this.organizationService.listPoliciesForTarget(listServiceControlPoliciesOfPreviousOURequest).promise();
+                listServiceControlPoliciesOfPreviousOU = await org.listPoliciesForTarget(listServiceControlPoliciesOfPreviousOURequest).promise();
                 for (const scp of listServiceControlPoliciesOfPreviousOU.Policies) {
                     ConsoleUtil.LogDebug(`moving scp from ou ${sourceId} to ou ${targetId}`);
-                    const attachPromise = this.organizationService.attachPolicy({ PolicyId: scp.Id, TargetId: targetId });
-                    const detachPromise = this.organizationService.detachPolicy({ PolicyId: scp.Id, TargetId: sourceId });
+                    const attachPromise = org.attachPolicy({ PolicyId: scp.Id, TargetId: targetId });
+                    const detachPromise = org.detachPolicy({ PolicyId: scp.Id, TargetId: sourceId });
                     await Promise.all([attachPromise, detachPromise]);
                 }
             } while (listServiceControlPoliciesOfPreviousOU.NextToken);
 
             const listChildUnitsOfPreviousOURequest: ListOrganizationalUnitsForParentRequest = { ParentId: sourceId };
-            let childUnitsOfPreviousOU: ListOrganizationalUnitsForParentResponse = await this.organizationService.listOrganizationalUnitsForParent(listChildUnitsOfPreviousOURequest).promise();
+            let childUnitsOfPreviousOU: ListOrganizationalUnitsForParentResponse = await org.listOrganizationalUnitsForParent(listChildUnitsOfPreviousOURequest).promise();
             do {
-                childUnitsOfPreviousOU = await this.organizationService.listOrganizationalUnitsForParent(listChildUnitsOfPreviousOURequest).promise();
+                childUnitsOfPreviousOU = await org.listOrganizationalUnitsForParent(listChildUnitsOfPreviousOURequest).promise();
                 for (const child of childUnitsOfPreviousOU.OrganizationalUnits) {
                     ConsoleUtil.LogDebug(`moving child ou from ou ${sourceId} to ou ${targetId}`);
-                    await this.moveOU(targetId, child.Id, mappedOUIds);
+                    await this.moveOU(isPartition, targetId, child.Id, mappedOUIds);
                 }
             } while (childUnitsOfPreviousOU.NextToken);
 

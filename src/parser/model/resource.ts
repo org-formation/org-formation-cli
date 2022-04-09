@@ -5,8 +5,9 @@ import { IResource, IResourceRef, IResourceRefExpression, TemplateRoot } from '.
 import { OrgResourceTypes } from './resource-types';
 
 export interface Reference<TResource extends Resource> {
-   PhysicalId?: string;
-   TemplateResource?: TResource;
+    PhysicalId?: string;
+    PartitionId?: string;
+    TemplateResource?: TResource;
 }
 
 export abstract class Resource {
