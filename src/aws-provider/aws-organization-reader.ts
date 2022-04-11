@@ -209,7 +209,10 @@ export class AwsOrganizationReader {
         }
     }
 
-    private static async listPartitionAccounts(that: AwsOrganizationReader): Promise<AWSAccount[]> {
+    private static async listPartitionAccounts(that: AwsOrganizationReader, partition?: boolean): Promise<AWSAccount[]> {
+        if (!partition) {
+            return [] as AWSAccount[];
+        }
         const roots: AWSRoot[] = await that.roots.getPartitionValue();
         const policies: AWSPolicy[] = await that.policies.getPartitionValue();
         const organizationalUnits: AWSOrganizationalUnit[] = await that.organizationalUnits.getPartitionValue();

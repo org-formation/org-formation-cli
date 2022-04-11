@@ -41,7 +41,7 @@ export class AwsOrganizationWriter {
 
     public async ensureSCPEnabled(mirror: boolean): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
 
             const enablePolicyTypeReq: EnablePolicyTypeRequest = {
                 RootId: (mirror) ? this.organization.partitionRoots[0].Id! : this.organization.roots[0].Id!,
@@ -62,8 +62,8 @@ export class AwsOrganizationWriter {
 
     public async createPolicy(mirror: boolean, resource: ServiceControlPolicyResource): Promise<string> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
-            const policies: AWSPolicy[] = (mirror) ? this.organization.policies : this.organization.partitionPolicies
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
+            const policies: AWSPolicy[] = (mirror) ? this.organization.policies : this.organization.partitionPolicies;
             try {
                 const createPolicyRequest: CreatePolicyRequest = {
                     Name: resource.policyName,
@@ -91,7 +91,7 @@ export class AwsOrganizationWriter {
 
     public async attachPolicy(mirror: boolean, targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
             const attachPolicyRequest: AttachPolicyRequest = {
                 PolicyId: policyPhysicalId,
                 TargetId: targetPhysicalId,
@@ -118,7 +118,7 @@ export class AwsOrganizationWriter {
 
     public async detachPolicy(mirror: boolean, targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
             const detachPolicyRequest: DetachPolicyRequest = {
                 PolicyId: policyPhysicalId,
                 TargetId: targetPhysicalId,
@@ -136,7 +136,7 @@ export class AwsOrganizationWriter {
 
     public async updatePolicy(mirror: boolean, resource: ServiceControlPolicyResource, physicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
             const updatePolicyRequest: UpdatePolicyRequest = {
                 PolicyId: physicalId,
                 Name: resource.policyName,
@@ -149,7 +149,7 @@ export class AwsOrganizationWriter {
 
     public async deletePolicy(mirror: boolean, physicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
             const deletePolicyRequest: DeletePolicyRequest = {
                 PolicyId: physicalId,
             };
@@ -165,13 +165,13 @@ export class AwsOrganizationWriter {
     }
 
     public async detachAccount(mirror: boolean, targetId: string, accountId: string): Promise<void> {
-        const root = await this.ensureRoot(mirror)
+        const root = await this.ensureRoot(mirror);
         await this.attachAccount(mirror, root, accountId);
     }
 
     public async attachAccount(mirror: boolean, parentPhysicalId: string, accountPhysicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
             const accountList: AWSAccount[] = (mirror) ? this.organization.partitionAccounts : this.organization.accounts;
 
             const account = accountList.find(x => x.Id === accountPhysicalId);
@@ -204,13 +204,13 @@ export class AwsOrganizationWriter {
     }
 
     public async detachOU(mirror: boolean, targetId: string, childOuPhysicalId: string): Promise<Record<string, string>> {
-        const root = await this.ensureRoot(mirror)
+        const root = await this.ensureRoot(mirror);
         return await this.moveOU(mirror, root, childOuPhysicalId);
     }
 
     public async moveOU(mirror: boolean, parentPhysicalId: string, childOuPhysicalId: string, mappedOUIds: Record<string, string> = {}): Promise<Record<string, string>> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
             const ouList: AWSOrganizationalUnit[] = (mirror) ? this.organization.partitionOrganizationalUnits : this.organization.organizationalUnits;
 
             ConsoleUtil.LogDebug(`calling describe ou for child ${childOuPhysicalId}`);
@@ -282,7 +282,7 @@ export class AwsOrganizationWriter {
             const ouList: AWSOrganizationalUnit[] = (mirror) ? this.organization.partitionOrganizationalUnits : this.organization.organizationalUnits;
 
             if (parentId === undefined) {
-                parentId = await this.ensureRoot(mirror)
+                parentId = await this.ensureRoot(mirror);
             };
 
             const existingOu = ouList.find(x => x.ParentId === parentId && x.Name === resource.organizationalUnitName);
@@ -300,7 +300,7 @@ export class AwsOrganizationWriter {
 
     public async updateOrganizationalUnit(mirror: boolean, resource: OrganizationalUnitResource, physicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
             const updateOrganizationalUnitRequest: UpdateOrganizationalUnitRequest = {
                 OrganizationalUnitId: physicalId,
                 Name: resource.organizationalUnitName,
@@ -311,15 +311,14 @@ export class AwsOrganizationWriter {
 
     public async deleteOrganizationalUnit(mirror: boolean, physicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService
+            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
             const ouList: AWSOrganizationalUnit[] = (mirror) ? this.organization.partitionOrganizationalUnits : this.organization.organizationalUnits;
             const existingOU = ouList.find(x => x.Id === physicalId);
-            console.log(physicalId)
             if (existingOU === undefined) {
                 ConsoleUtil.LogDebug(`can't delete organizational unit ${physicalId} not found.`);
                 return;
             }
-            const root = await this.ensureRoot(mirror)
+            const root = await this.ensureRoot(mirror);
 
             this._moveOuChildren(mirror, physicalId, root, {}, true);
 

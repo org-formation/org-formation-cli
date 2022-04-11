@@ -41,7 +41,6 @@ export class OrganizationBinder {
         const accounts = Array.from(AccountBinding.enumerateAccountBindings(this.template, this.state));
         const masterAccount = Binding.getBindingOnType<MasterAccountResource>(this.state, this.template.organizationSection.masterAccount);
         const organizationRoot = Binding.getBindingOnType<OrganizationRootResource>(this.state, this.template.organizationSection.organizationRoot);
-
         return {
             policies,
             organizationalUnits,
