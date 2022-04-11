@@ -662,33 +662,32 @@ export class TaskProvider {
             }
             tasks.push(createAccountTask);
         }
-
         const previousPolicies = previousResource === undefined ? [] : previousResource.serviceControlPolicies;
         const previousSCPs = this.resolveIDs(previousPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
         for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
-            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, () => physicalId);
+            const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, () => physicalId, IS_COMMERCIAL);
             tasks.push(detachSCPTask);
         }
         for (const attachedSCP of currentSCPS.physicalIds.filter(x => !previousSCPs.physicalIds.includes(x))) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => physicalId);
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => physicalId, IS_COMMERCIAL);
             tasks.push(attachSCPTask);
         }
         for (const attachedSCP of currentSCPS.unresolvedResources) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => physicalId);
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => physicalId, IS_COMMERCIAL);
             tasks.push(attachSCPTask);
         }
         if (mirror) {
             for (const detachedSCP of previousSCPs.partitionIds.filter(x => !currentSCPS.partitionIds.includes(x))) {
-                const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, () => partitionId);
+                const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, () => partitionId, IS_PARTITION);
                 tasks.push(detachSCPTask);
             }
             for (const attachedSCP of currentSCPS.partitionIds.filter(x => !previousSCPs.partitionIds.includes(x))) {
-                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => partitionId);
+                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, () => partitionId, IS_PARTITION);
                 tasks.push(attachSCPTask);
             }
             for (const attachedSCP of currentSCPS.unresolvedResources) {
-                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => partitionId);
+                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, () => partitionId, IS_PARTITION);
                 tasks.push(attachSCPTask);
             }
         }
@@ -779,46 +778,26 @@ export class TaskProvider {
     public createAccountCreateTasks(resource: AccountResource, hash: string, mirror: boolean): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
-        let physicalId: string;
-        let partitionId: string;
-        let createAccountTask: IBuildTask;
-
-        if (mirror) {
-            createAccountTask = {
-                type: resource.type,
-                logicalId: resource.logicalId,
-                action:  'Create',
-                perform: async (task): Promise<void> => {
-                    task.result = await that.writer.createPartitionAccount(resource);
-                },
-            };
-            physicalId = createAccountTask.result.CommercialId;
-            partitionId = createAccountTask.result.PartitionId;
-        } else {
-            createAccountTask = {
-                type: resource.type,
-                logicalId: resource.logicalId,
-                action:  'Create',
-                perform: async (task): Promise<void> => {
-                    task.result = await that.writer.createAccount(resource);
-                },
-            };
-            physicalId = createAccountTask.result;
+        const createAccountTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'Create',
+            perform: async (task): Promise<void> => {
+                task.result = (mirror) ? await that.writer.createPartitionAccount(resource) : await that.writer.createAccount(resource);
+            },
         };
         tasks.push(createAccountTask);
 
         for (const attachedSCP of resource.serviceControlPolicies) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => physicalId);
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createAccountTask.result.PhysicalId, IS_COMMERCIAL);
             attachSCPTask.dependentTasks = [createAccountTask];
             tasks.push(attachSCPTask);
             if (mirror) {
-                const attachPartitionSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => partitionId);
+                const attachPartitionSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createAccountTask.result.PartitionId, IS_PARTITION);
                 attachPartitionSCPTask.dependentTasks = [createAccountTask];
                 tasks.push(attachPartitionSCPTask);
             }
         }
-
-
         const createAccountCommitHashTask: IBuildTask = {
             type: resource.type,
             logicalId: resource.logicalId,
@@ -830,16 +809,16 @@ export class TaskProvider {
                         type: resource.type,
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
-                        physicalId,
-                        partitionId,
+                        physicalId: createAccountTask.result.PhysicalId,
+                        partitionId: createAccountTask.result.PartitionId,
                     });
                 } else {
                     that.state.setBinding({
                         type: resource.type,
                         logicalId: resource.logicalId,
                         lastCommittedHash: hash,
-                        physicalId,
-                        partitionId,
+                        physicalId: createAccountTask.result.PhysicalId,
+                        partitionId: createAccountTask.result.PartitionId,
                     });
                 }
             },
