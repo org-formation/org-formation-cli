@@ -352,7 +352,17 @@ export class TaskProvider {
             }
         }
 
-        return [...tasks];
+        const createOrganizationalUnitCommitHashTask: IBuildTask = {
+            type: resource.type,
+            logicalId: resource.logicalId,
+            action:  'CommitHash',
+            dependentTasks: tasks,
+            perform: async (): Promise<void> => {
+                that.state.setBindingHash(resource.type, resource.logicalId, hash);
+            },
+        };
+
+        return [...tasks, createOrganizationalUnitCommitHashTask];
     }
 
     public createOrganizationalUnitUpdateTasks(resource: OrganizationalUnitResource, state: IBinding,  hash: string, mirror?: boolean): IBuildTask[] {

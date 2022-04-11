@@ -4,6 +4,7 @@ import { TestTemplates } from '../test-templates';
 import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { OrganizationalUnitResource } from '~parser/model/organizational-unit-resource';
+import { IBinding } from '~state/persisted-state';
 
 describe('when creating OU', () => {
     const sandbox = Sinon.createSandbox()
@@ -90,7 +91,7 @@ describe('when creating OU as child of other', () => {
         const ouResource =  template.organizationSection.organizationalUnits.find(x=>x.logicalId === 'OU');
         ouResource.organizationalUnits = [{TemplateResource: ou2Resource}];
         buildTasks = taskProvider.createOrganizationalUnitCreateTasks(ou2Resource, 'xxyyzz');
-        buildTaskOU = taskProvider.createOrganizationalUnitUpdateTasks(ouResource, 'physical-OU', '131231');
+        buildTaskOU = taskProvider.createOrganizationalUnitUpdateTasks(ouResource, {physicalId: 'physical-OU'} as IBinding, '131231');
     });
 
     afterEach(() => {
