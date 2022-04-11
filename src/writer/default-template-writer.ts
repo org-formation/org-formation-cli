@@ -55,11 +55,14 @@ export class DefaultTemplateWriter {
             if (!root.Id) {
                 throw new OrgFormationError(`organizational root ${root.Name} has no Id`);
             }
+            const partitionRoot: AWSRoot[] = this.organizationModel.partitionRoots;
+
             bindings.push({
                 type: rootResource.type,
                 logicalId: rootResource.logicalName,
                 physicalId: root.Id,
                 lastCommittedHash: '',
+                partitionId: (partitionRoot) ? partitionRoot[0].Id : '',
             });
         }
         for (const predefinedOu of templateGenerationSettings.predefinedOUs) {
@@ -70,26 +73,27 @@ export class DefaultTemplateWriter {
                 logicalId: ouResource.logicalName,
                 physicalId: predefinedOu.id,
                 lastCommittedHash: '',
+                partitionId: predefinedOu.id,
             });
 
         }
         for (const organizationalUnit of this.organizationModel.organizationalUnits) {
             const wasPredefined = templateGenerationSettings.predefinedOUs.some(x => x.id === organizationalUnit.Id);
             if (wasPredefined) { continue; }
-
             const organizationalUnitResource = this.generateOrganizationalUnit(lines, organizationalUnit);
+            const partitionOu: AWSOrganizationalUnit = this.organizationModel.partitionOrganizationalUnits?.find(x => x.Name === organizationalUnit.Name);
             bindings.push({
                 type: organizationalUnitResource.type,
                 logicalId: organizationalUnitResource.logicalName,
                 physicalId: organizationalUnit.Id,
                 lastCommittedHash: '',
+                partitionId: (partitionOu) ? partitionOu.Id : '',
             });
         }
 
         for (const predefinedAccount of templateGenerationSettings.predefinedAccounts) {
             const acct = this.organizationModel.accounts.find(x => x.Id === predefinedAccount.id);
             const accountResource = this.generatePredefinedAccount(lines, predefinedAccount, acct);
-
             bindings.push({
                 type: accountResource.type,
                 logicalId: accountResource.logicalName,
