@@ -124,12 +124,13 @@ export class DefaultTemplateWriter {
         for (const scp of this.organizationModel.policies) {
             if (scp.PolicySummary && scp.PolicySummary.AwsManaged) { continue; }
             const policyResource = this.generateSCP(lines, scp);
-
+            const partitionPolicy: AWSPolicy = this.organizationModel.partitionPolicies?.find(x => x.Name === scp.Name);
             bindings.push({
                 type: policyResource.type,
                 logicalId: policyResource.logicalName,
                 physicalId: scp.Id,
                 lastCommittedHash: '',
+                partitionId: (partitionPolicy) ? partitionPolicy.Id : '',
             });
         }
 

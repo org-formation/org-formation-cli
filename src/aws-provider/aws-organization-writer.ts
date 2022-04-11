@@ -18,7 +18,7 @@ import {
 } from '~parser/model';
 
 export interface PartitionCreateResponse {
-    CommercialId: string;
+    PhysicalId: string;
     PartitionId?: string | undefined;
 }
 
@@ -63,7 +63,7 @@ export class AwsOrganizationWriter {
     public async createPolicy(mirror: boolean, resource: ServiceControlPolicyResource): Promise<string> {
         return await performAndRetryIfNeeded(async () => {
             const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
-            const policies: AWSPolicy[] = (mirror) ? this.organization.policies : this.organization.partitionPolicies;
+            const policies: AWSPolicy[] = (mirror) ? this.organization.partitionPolicies : this.organization.policies;
             try {
                 const createPolicyRequest: CreatePolicyRequest = {
                     Name: resource.policyName,
@@ -329,7 +329,7 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async createAccount(resource: AccountResource): Promise<string> {
+    public async createAccount(resource: AccountResource): Promise<PartitionCreateResponse> {
 
         let accountId = resource.accountId;
 
@@ -338,7 +338,7 @@ export class AwsOrganizationWriter {
         if (account !== undefined) {
             await this.updateAccount(resource, account.Id);
             ConsoleUtil.LogDebug(`account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
-            return account.Id;
+            return {PhysicalId: account.Id};
         }
 
         accountId = await this._createAccount(resource);
@@ -361,7 +361,7 @@ export class AwsOrganizationWriter {
         } while (shouldRetry);
         await AwsEvents.putAccountCreatedEvent(accountId);
 
-        return accountId;
+        return {PhysicalId: accountId};
     }
 
     public async createPartitionAccount(resource: AccountResource): Promise<PartitionCreateResponse> {
@@ -373,7 +373,7 @@ export class AwsOrganizationWriter {
 
             ConsoleUtil.LogDebug(`account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
             return {
-                CommercialId: account.Id,
+                PhysicalId: account.Id,
                 PartitionId: account.PartitionId,
             };
         }
@@ -400,7 +400,7 @@ export class AwsOrganizationWriter {
         // await AwsEvents.putAccountCreatedEvent(accountId);
 
         return {
-            CommercialId: result.AccountId,
+            PhysicalId: result.AccountId,
             PartitionId: result.GovCloudAccountId,
         };
     }
