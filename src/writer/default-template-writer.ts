@@ -13,16 +13,20 @@ import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
 
 export class DefaultTemplateWriter {
     public organizationModel: AwsOrganization;
+    public partitionOrganizationModel: AwsOrganization;
     public logicalNames: LogicalNames;
     public DefaultBuildProcessAccessRoleName: string;
 
-    constructor(organizationModel?: AwsOrganization) {
+    constructor(organizationModel?: AwsOrganization, partitionOrganizationModel?: AwsOrganization) {
         if (organizationModel) {
             this.organizationModel = organizationModel;
         } else {
             const org = new Organizations({ region: 'us-east-1' });
             const reader = new AwsOrganizationReader(org);
             this.organizationModel = new AwsOrganization(reader);
+        }
+        if (partitionOrganizationModel) {
+            this.partitionOrganizationModel = partitionOrganizationModel;
         }
         this.logicalNames = new LogicalNames();
     }
@@ -81,7 +85,7 @@ export class DefaultTemplateWriter {
             const wasPredefined = templateGenerationSettings.predefinedOUs.some(x => x.id === organizationalUnit.Id);
             if (wasPredefined) { continue; }
             const organizationalUnitResource = this.generateOrganizationalUnit(lines, organizationalUnit);
-            const partitionOu: AWSOrganizationalUnit = this.organizationModel.partitionOrganizationalUnits?.find(x => x.Name === organizationalUnit.Name);
+            const partitionOu: AWSOrganizationalUnit = this.partitionOrganizationModel?.organizationalUnits?.find(x => x.Name === organizationalUnit.Name);
             bindings.push({
                 type: organizationalUnitResource.type,
                 logicalId: organizationalUnitResource.logicalName,
@@ -124,7 +128,7 @@ export class DefaultTemplateWriter {
         for (const scp of this.organizationModel.policies) {
             if (scp.PolicySummary && scp.PolicySummary.AwsManaged) { continue; }
             const policyResource = this.generateSCP(lines, scp);
-            const partitionPolicy: AWSPolicy = this.organizationModel.partitionPolicies?.find(x => x.Name === scp.Name);
+            const partitionPolicy: AWSPolicy = this.partitionOrganizationModel?.policies?.find(x => x.Name === scp.Name);
             bindings.push({
                 type: policyResource.type,
                 logicalId: policyResource.logicalName,

@@ -172,22 +172,26 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
         const partitionCredentials = await AwsUtil.GetPartitionCredentials();
         const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount };
-        let awsReader: AwsOrganizationReader;
-        if (partitionCredentials) {
-            awsReader = new AwsOrganizationReader(organizations, crossAccountConfig, partitionCredentials);
-        } else {
-            awsReader = new AwsOrganizationReader(organizations, crossAccountConfig);
-        }
+
+        // configure default Organization/Reader/Writer
+        const awsReader: AwsOrganizationReader = new AwsOrganizationReader(organizations, crossAccountConfig);
         const awsOrganization = new AwsOrganization(awsReader);
         await awsOrganization.initialize();
-        let awsWriter: AwsOrganizationWriter;
+        const awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig);
 
+        // configure partition Organization/Reader/Writer
+        let partitionReader: AwsOrganizationReader;
+        let partitionOrganization: AwsOrganization;
+        let partitionWriter: AwsOrganizationWriter;
         if (partitionCredentials) {
-            awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig, partitionCredentials);
-        } else {
-            awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig);
+            partitionReader = new AwsOrganizationReader(organizations, crossAccountConfig, partitionCredentials);
+            partitionOrganization = new AwsOrganization(partitionReader);
+            await awsOrganization.initialize();
+            partitionWriter = new AwsOrganizationWriter(organizations, partitionOrganization, crossAccountConfig, partitionCredentials);
         }
-        const taskProvider = new TaskProvider(template, state, awsWriter);
+
+
+        const taskProvider = new TaskProvider(template, state, awsWriter, partitionWriter);
         const binder = new OrganizationBinder(template, state, taskProvider);
         return binder;
     }
