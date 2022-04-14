@@ -172,12 +172,12 @@ describe('when updating account', () => {
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
         await writer.updateAccount(account as any, accountId);
-     });
+    });
 
     afterEach(() => {
         AWSMock.restore();
         jest.restoreAllMocks();
-     });
+    });
 
     test('account name is not updated, warning is logged instead', () => {
         const accountInModel = organizationModel.accounts.find((x) => x.Id === accountId);

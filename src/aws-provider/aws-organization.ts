@@ -38,19 +38,8 @@ export class AwsOrganization {
             this.organizationalUnits = await this.reader.organizationalUnits.getValue();
         };
 
-        const setPartitionOrgPromise = async (): Promise<void> => { this.partitionOrganization = await this.reader.organization.getPartitionValue(); };
-        const setPartitionRootsPromise = async (): Promise<void> => { this.partitionRoots = await this.reader.roots.getPartitionValue(); };
-        const setPartitionPolicies = async (): Promise<void> => { this.partitionPolicies = await this.reader.policies.getPartitionValue(); };
-        const setPartitionAccounts = async (): Promise<void> => {
-            const accounts = await this.reader.partitionAccounts.getValue();
-            this.partitionMasterAccount = accounts.find(x => x.Id === this.partitionOrganization.MasterAccountId);
-            this.partitionAccounts = accounts.filter(x => x.Id !== this.partitionOrganization.MasterAccountId);
-            this.partitionOrganizationalUnits = await this.reader.organizationalUnits.getPartitionValue();
-        };
-
         try {
-            await Promise.all([setOrgPromise(), setRootsPromise(), setPolicies(), setAccounts(),
-                setPartitionOrgPromise(), setPartitionRootsPromise(), setPartitionPolicies(), setPartitionAccounts()]);
+            await Promise.all([setOrgPromise(), setRootsPromise(), setPolicies(), setAccounts()]);
         } catch (err) {
             throw err;
         }
