@@ -66,18 +66,15 @@ const GetPoliciesForTarget = (list: AWSPolicy[], targetId: string, targetType: T
 
 export class AwsOrganizationReader {
 
-    public readonly hasPartition: boolean;
     private partitionOrgService: Organizations;
     private partitionOrgSTS: STS;
 
-    private static async getOrganization(that: AwsOrganizationReader, partition?: boolean): Promise<Organization> {
-        const org: Organizations = (partition) ? that.partitionOrgService : that.organizationService;
-        const resp = await performAndRetryIfNeeded(() => org.describeOrganization().promise());
+    private static async getOrganization(that: AwsOrganizationReader): Promise<Organization> {
+        const resp = await performAndRetryIfNeeded(() => that.organizationService.describeOrganization().promise());
         return resp.Organization;
     }
 
-    private static async listPolicies(that: AwsOrganizationReader, partition?: boolean): Promise<AWSPolicy[]> {
-        const org: Organizations = (partition) ? that.partitionOrgService : that.organizationService;
+    private static async listPolicies(that: AwsOrganizationReader): Promise<AWSPolicy[]> {
         try {
             const result: AWSPolicy[] = [];
             const req: ListPoliciesRequest = {
@@ -85,10 +82,10 @@ export class AwsOrganizationReader {
             };
             let resp: ListPoliciesResponse;
             do {
-                resp = await performAndRetryIfNeeded(() => org.listPolicies(req).promise());
+                resp = await performAndRetryIfNeeded(() => that.organizationService.listPolicies(req).promise());
                 for (const policy of resp.Policies) {
 
-                    const describedPolicy = await performAndRetryIfNeeded(() => org.describePolicy({ PolicyId: policy.Id }).promise());
+                    const describedPolicy = await performAndRetryIfNeeded(() => that.organizationService.describePolicy({ PolicyId: policy.Id }).promise());
 
                     const awsPolicy = {
                         ...describedPolicy.Policy,
@@ -105,7 +102,7 @@ export class AwsOrganizationReader {
                     };
                     let listTargetsResp: ListTargetsForPolicyResponse;
                     do {
-                        listTargetsResp = await performAndRetryIfNeeded(() => org.listTargetsForPolicy(listTargetsReq).promise());
+                        listTargetsResp = await performAndRetryIfNeeded(() => that.organizationService.listTargetsForPolicy(listTargetsReq).promise());
                         awsPolicy.Targets.push(...listTargetsResp.Targets);
                         listTargetsReq.NextToken = listTargetsResp.NextToken;
                     } while (listTargetsReq.NextToken);
@@ -120,16 +117,15 @@ export class AwsOrganizationReader {
         }
     }
 
-    private static async listRoots(that: AwsOrganizationReader, partition?: boolean): Promise<AWSRoot[]> {
-        const org: Organizations = (partition) ? that.partitionOrgService : that.organizationService;
-        const policies: AWSPolicy[] = (partition) ? await that.policies.getPartitionValue() : await that.policies.getValue();
+    private static async listRoots(that: AwsOrganizationReader): Promise<AWSRoot[]> {
+        const policies: AWSPolicy[] = await that.policies.getValue();
         try {
             const result: AWSRoot[] = [];
             let resp: ListRootsResponse;
             const req: ListRootsRequest = {};
 
             do {
-                resp = await performAndRetryIfNeeded(() => org.listRoots(req).promise());
+                resp = await performAndRetryIfNeeded(() => that.organizationService.listRoots(req).promise());
                 req.NextToken = resp.NextToken;
                 for (const root of resp.Roots) {
                     const item: AWSRoot = {
@@ -148,10 +144,9 @@ export class AwsOrganizationReader {
         }
     }
 
-    private static async listOrganizationalUnits(that: AwsOrganizationReader, partition?: boolean): Promise<AWSOrganizationalUnit[]> {
-        const org: Organizations = (partition) ? that.partitionOrgService : that.organizationService;
-        const roots: AWSRoot[] = (partition) ? await that.roots.getPartitionValue() : await that.roots.getValue();
-        const policies: AWSPolicy[] = (partition) ? await that.policies.getPartitionValue() : await that.policies.getValue();
+    private static async listOrganizationalUnits(that: AwsOrganizationReader): Promise<AWSOrganizationalUnit[]> {
+        const roots: AWSRoot[] = await that.roots.getValue();
+        const policies: AWSPolicy[] = await that.policies.getValue();
         try {
             const rootsIds: string[] = [];
             const result: AWSOrganizationalUnit[] = [];
@@ -163,7 +158,7 @@ export class AwsOrganizationReader {
                 };
                 let resp: ListOrganizationalUnitsForParentResponse;
                 do {
-                    resp = await performAndRetryIfNeeded(() => org.listOrganizationalUnitsForParent(req).promise());
+                    resp = await performAndRetryIfNeeded(() => that.organizationService.listOrganizationalUnitsForParent(req).promise());
                     req.NextToken = resp.NextToken;
                     if (!resp.OrganizationalUnits) { continue; }
 
@@ -209,79 +204,7 @@ export class AwsOrganizationReader {
         }
     }
 
-    private static async listPartitionAccounts(that: AwsOrganizationReader, partition?: boolean): Promise<AWSAccount[]> {
-        if (!partition) {
-            return [] as AWSAccount[];
-        }
-        const roots: AWSRoot[] = await that.roots.getPartitionValue();
-        const policies: AWSPolicy[] = await that.policies.getPartitionValue();
-        const organizationalUnits: AWSOrganizationalUnit[] = await that.organizationalUnits.getPartitionValue();
-
-        try {
-            const result: AWSAccount[] = [];
-            const parentIds = organizationalUnits.map(x => x.Id);
-            const rootIds = roots.map(x => x.Id);
-            parentIds.push(...rootIds);
-
-            do {
-                const req: ListAccountsForParentRequest = {
-                    ParentId: parentIds.pop(),
-                };
-                let resp: ListAccountsResponse;
-                do {
-                    resp = await performAndRetryIfNeeded(() => that.partitionOrgService.listAccountsForParent(req).promise());
-                    req.NextToken = resp.NextToken;
-
-                    for (const acc of resp.Accounts) {
-                        if (acc.Status === 'SUSPENDED') {
-                            continue;
-                        }
-
-                        let alias: string;
-                        try {
-                            [alias] = await Promise.all([
-                                AwsOrganizationReader.getIamAliasForPartitionAccount(that, acc.Id),
-                            ]);
-
-                        } catch (err) {
-                            if (err.code === 'AccessDenied') {
-                                ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot:`
-                                    + '\nhttps://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md');
-                            } else {
-                                throw err;
-                            }
-                        }
-
-                        const account = {
-                            ...acc,
-                            Type: 'Account',
-                            Name: acc.Name,
-                            Id: acc.Id,
-                            ParentId: req.ParentId,
-                            Policies: GetPoliciesForTarget(policies, acc.Id, 'ORGANIZATIONAL_UNIT'),
-                            Alias: alias,
-                        };
-
-                        const parentOU = organizationalUnits.find(x => x.Id === req.ParentId);
-                        if (parentOU) {
-                            parentOU.Accounts.push(account);
-                        }
-                        result.push(account);
-                    }
-
-                } while (resp.NextToken);
-
-            } while (parentIds.length > 0);
-
-            return result;
-        } catch (err) {
-            ConsoleUtil.LogError('unable to list accounts', err);
-            throw err;
-        }
-    }
-
-    private static async listAccounts(that: AwsOrganizationReader, partition?: boolean): Promise<AWSAccount[]> {
-        partition = false;
+    private static async listAccounts(that: AwsOrganizationReader): Promise<AWSAccount[]> {
         const roots: AWSRoot[] = await that.roots.getValue();
         const policies: AWSPolicy[] = await that.policies.getValue();
         const organizationalUnits: AWSOrganizationalUnit[] = await that.organizationalUnits.getValue();
@@ -304,7 +227,7 @@ export class AwsOrganizationReader {
                     let gcResp: ListAccountsResponse;
                     let partitionAccList: Accounts = [];
 
-                    if (partitionCreds && !partition) {
+                    if (partitionCreds) {
                         const partitionReq: ListAccountsRequest = {};
                         do {
                             gcResp = await that.partitionOrgService.listAccounts(partitionReq).promise();
@@ -499,7 +422,6 @@ export class AwsOrganizationReader {
 
     public readonly policies: Lazy<AWSPolicy[]>;
     public readonly accounts: Lazy<AWSAccount[]>;
-    public readonly partitionAccounts: Lazy<AWSAccount[]>;
     public readonly organizationalUnits: Lazy<AWSOrganizationalUnit[]>;
     public readonly organization: Lazy<Organization>;
     public readonly roots: Lazy<AWSRoot[]>;
@@ -511,11 +433,9 @@ export class AwsOrganizationReader {
         this.policies = new Lazy(this, AwsOrganizationReader.listPolicies);
         this.organizationalUnits = new Lazy(this, AwsOrganizationReader.listOrganizationalUnits);
         this.accounts = new Lazy(this, AwsOrganizationReader.listAccounts);
-        this.partitionAccounts = new Lazy(this, AwsOrganizationReader.listPartitionAccounts);
         this.organization = new Lazy(this, AwsOrganizationReader.getOrganization);
         this.roots = new Lazy(this, AwsOrganizationReader.listRoots);
         if (partitionCredentials) {
-            this.hasPartition = true;
             this.partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
             this.partitionOrgSTS = new STS({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
         }
@@ -524,15 +444,12 @@ export class AwsOrganizationReader {
 
 class Lazy<T> {
     private cachedValue: T | undefined;
-    private partitionCachedValue: T | undefined;
     private promise: Promise<T>;
-    private partitionPromise: Promise<T>;
     private valueTimestamp: Date | undefined;
-    private partitionValueTimestamp: Date | undefined;
-    private obtainValueFn: (that: AwsOrganizationReader, partition?: boolean) => Promise<T>;
+    private obtainValueFn: (that: AwsOrganizationReader) => Promise<T>;
     private that: AwsOrganizationReader;
 
-    constructor(that: AwsOrganizationReader, obtainValueFn: (that: AwsOrganizationReader, partition?: boolean) => Promise<T>) {
+    constructor(that: AwsOrganizationReader, obtainValueFn: (that: AwsOrganizationReader) => Promise<T>) {
         this.that = that;
         this.obtainValueFn = obtainValueFn;
     }
@@ -549,22 +466,5 @@ class Lazy<T> {
         this.cachedValue = await this.promise;
         this.valueTimestamp = new Date();
         return this.cachedValue;
-    }
-
-    public async getPartitionValue(since?: Date): Promise<T> {
-        if (!this.that.hasPartition) {
-            return;
-        }
-        if (this.partitionCachedValue) {
-            if (!since || since < this.partitionValueTimestamp) {
-                return this.partitionCachedValue;
-            }
-        }
-        if (!this.partitionPromise) {
-            this.partitionPromise = this.obtainValueFn(this.that, true);
-        }
-        this.partitionCachedValue = await this.partitionPromise;
-        this.partitionValueTimestamp = new Date();
-        return this.partitionCachedValue;
     }
 }

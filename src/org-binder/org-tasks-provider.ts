@@ -17,12 +17,14 @@ const IS_PARTITION = true;
 const IS_COMMERCIAL = false;
 
 export class TaskProvider {
-    private state: PersistedState;
-    private previousTemplate: TemplateRoot;
-    private writer: AwsOrganizationWriter;
+    protected state: PersistedState;
+    protected previousTemplate: TemplateRoot;
+    protected writer: AwsOrganizationWriter;
+    private partitionWriter: AwsOrganizationWriter;
 
-    constructor(currentTemplate: TemplateRoot, persistedState: PersistedState, writer: AwsOrganizationWriter) {
+    constructor(currentTemplate: TemplateRoot, persistedState: PersistedState, writer: AwsOrganizationWriter, partitionWriter?: AwsOrganizationWriter) {
         this.writer = writer;
+        this.partitionWriter = partitionWriter;
         this.state = persistedState;
         try {
             const previousTemplate = persistedState.getPreviousTemplate();
@@ -47,7 +49,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'Create',
             perform: async task => {
-                task.result = await that.writer.ensureRoot(IS_COMMERCIAL);
+                task.result = await that.writer.ensureRoot();
             },
         };
         tasks.push(createOrganizationRootTask);
@@ -58,7 +60,7 @@ export class TaskProvider {
                 logicalId: resource.logicalId,
                 action:  'Create',
                 perform: async task => {
-                    task.result = await that.writer.ensureRoot(IS_PARTITION);
+                    task.result = await that.partitionWriter.ensureRoot();
                 },
             };
             tasks.push(createPartitionOrganizationRootTask);
@@ -161,7 +163,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action: 'Create',
             perform: async (task): Promise<void> => {
-                task.result = await that.writer.createPolicy(IS_COMMERCIAL, resource);
+                task.result = await that.writer.createPolicy(resource);
             },
         };
         tasks.push(createPolicyTask);
@@ -172,7 +174,7 @@ export class TaskProvider {
                 logicalId: resource.logicalId,
                 action: 'Create',
                 perform: async (task): Promise<void> => {
-                    task.result = await that.writer.createPolicy(IS_PARTITION, resource);
+                    task.result = await that.partitionWriter.createPolicy(resource);
                 },
             };
             tasks.push(createPartitionPolicyTask);
@@ -208,7 +210,7 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action: 'Update',
             perform: async (): Promise<void> => {
-                await that.writer.updatePolicy(IS_COMMERCIAL, resource, physicalId);
+                await that.writer.updatePolicy(resource, physicalId);
             },
         });
         if (mirror) {
@@ -217,7 +219,7 @@ export class TaskProvider {
                 logicalId: resource.logicalId,
                 action: 'Update',
                 perform: async (): Promise<void> => {
-                    await that.writer.updatePolicy(IS_PARTITION, resource, partitionId);
+                    await that.partitionWriter.updatePolicy(resource, partitionId);
                 },
             });
         }
@@ -248,16 +250,16 @@ export class TaskProvider {
             action: 'Delete',
             dependentTaskFilter: (): boolean => true,
             perform: async (): Promise<void> => {
-                await that.writer.deletePolicy(IS_COMMERCIAL, binding.physicalId);
+                await that.writer.deletePolicy(binding.physicalId);
                 if (mirror) {
-                    await that.writer.deletePolicy(IS_PARTITION, binding.partitionId);
+                    await that.partitionWriter.deletePolicy(binding.partitionId);
                 }
                 this.state.removeBinding(binding);
             },
         }];
     }
 
-    public createOrganizationalUnitCreateTasks(resource: OrganizationalUnitResource, hash: string, isPartition?: boolean): IBuildTask[] {
+    public createOrganizationalUnitCreateTasks(resource: OrganizationalUnitResource, hash: string, mirror?: boolean): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
         const dependency: IBuildTask[] = [];
@@ -275,7 +277,7 @@ export class TaskProvider {
                         parentId = binding.physicalId;
                     }
                 }
-                task.result = await that.writer.createOrganizationalUnit(IS_COMMERCIAL, resource, parentId);
+                task.result = await that.writer.createOrganizationalUnit(resource, parentId);
                 that.state.setBinding({
                     type: resource.type,
                     logicalId: resource.logicalId,
@@ -287,7 +289,7 @@ export class TaskProvider {
         };
         tasks.push(createOrganizationalUnitTask);
         dependency.push(createOrganizationalUnitTask);
-        if (isPartition) {
+        if (mirror) {
             createPartitionOrganizationalUnitTask = {
                 type: resource.type,
                 logicalId: resource.logicalId,
@@ -301,7 +303,7 @@ export class TaskProvider {
                             parentId = binding.partitionId;
                         }
                     }
-                    task.result = await that.writer.createOrganizationalUnit(IS_PARTITION, resource, parentId);
+                    task.result = await that.partitionWriter.createOrganizationalUnit(resource, parentId);
                     that.state.setBinding({
                         type: resource.type,
                         logicalId: resource.logicalId,
@@ -331,7 +333,7 @@ export class TaskProvider {
             attachOuTask.dependentTasks = dependency;
             tasks.push(attachOuTask);
         }
-        if (isPartition) {
+        if (mirror) {
             for (const attachedSCP of resource.serviceControlPolicies) {
                 const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createPartitionOrganizationalUnitTask.result, IS_PARTITION);
                 attachSCPTask.dependentTasks = dependency;
@@ -375,7 +377,7 @@ export class TaskProvider {
                 logicalId: resource.logicalId,
                 action:  'Update',
                 perform: async (task): Promise<void> => {
-                    task.result = await that.writer.updateOrganizationalUnit(IS_COMMERCIAL, resource, physicalId);
+                    task.result = await that.writer.updateOrganizationalUnit(resource, physicalId);
                 },
             });
             if (mirror) {
@@ -384,7 +386,7 @@ export class TaskProvider {
                     logicalId: resource.logicalId,
                     action:  'Update',
                     perform: async (task): Promise<void> => {
-                        task.result = await that.writer.updateOrganizationalUnit(IS_PARTITION, resource, partitionId);
+                        task.result = await that.partitionWriter.updateOrganizationalUnit(resource, partitionId);
                     },
                 });
             }
@@ -504,6 +506,7 @@ export class TaskProvider {
     }
 
     public createDetachChildOUTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
+        const writer = (isPartition) ? that.partitionWriter : that.writer;
         let resourceIdentifier = (isPartition) ? childOu.PartitionId : childOu.PhysicalId;
         if (childOu.TemplateResource) {
             resourceIdentifier = childOu.TemplateResource.logicalId;
@@ -524,7 +527,7 @@ export class TaskProvider {
                 const targetId = getTargetId();
                 let physicalIdMap: Record<string, string> = {};
                 try {
-                    physicalIdMap = await that.writer.detachOU(isPartition, targetId, childOuId);
+                    physicalIdMap = await writer.detachOU(targetId, childOuId);
                 }
                 finally {
                     TaskProvider.updateStateWithOuPhysicalIds(that.state, physicalIdMap, isPartition);
@@ -601,9 +604,9 @@ export class TaskProvider {
             action: 'Delete',
             dependentTasks: tasks,
             perform: async (): Promise<void> => {
-                await that.writer.deleteOrganizationalUnit(IS_COMMERCIAL, binding.physicalId);
+                await that.writer.deleteOrganizationalUnit(binding.physicalId);
                 if (mirror) {
-                    await that.writer.deleteOrganizationalUnit(IS_PARTITION, binding.partitionId);
+                    await that.partitionWriter.deleteOrganizationalUnit(binding.partitionId);
                 }
                 this.state.removeBinding(binding);
             },
@@ -635,7 +638,7 @@ export class TaskProvider {
         }
 
         if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.accountName !== resource.accountName || previousResource.supportLevel !== resource.supportLevel || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)
-            || !policiesEqual(previousResource.passwordPolicy, resource.passwordPolicy)) {
+            || !TaskProvider.policiesEqual(previousResource.passwordPolicy, resource.passwordPolicy)) {
             if (mirror) {
                 createAccountTask = {
                     type: resource.type,
@@ -721,60 +724,6 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
-    // public createPartitionAccountUpdateTasks(resource: AccountResource, physicalId: string, partitionId: string, hash: string): IBuildTask[] {
-    //     const that = this;
-    //     const tasks: IBuildTask[] = [];
-    //     let previousResource = [...this.previousTemplate.organizationSection.accounts].find(x => x.logicalId === resource.logicalId);
-    //     if (!previousResource && resource.type === OrgResourceTypes.MasterAccount) {
-    //         previousResource = this.previousTemplate.organizationSection.masterAccount;
-    //     }
-
-    //     if (previousResource === undefined || previousResource.alias !== resource.alias || previousResource.partitionAlias !== resource.partitionAlias || previousResource.accountName !== resource.accountName || previousResource.supportLevel !== resource.supportLevel || JSON.stringify(previousResource.tags) !== JSON.stringify(resource.tags)
-    //         || !policiesEqual(previousResource.passwordPolicy, resource.passwordPolicy)) {
-    //         const updateAccountTask: IBuildTask = {
-    //             type: resource.type,
-    //             logicalId: resource.logicalId,
-    //             action:  'Update',
-    //             perform: async (task): Promise<void> => {
-    //                 task.result = {
-    //                     commercial: await that.writer.updateAccount(resource, physicalId, previousResource),
-    //                     partition: await that.writer.updatePartitionAccount(resource, partitionId, previousResource),
-    //                 };
-    //             },
-    //         };
-
-    //         tasks.push(updateAccountTask);
-    //     }
-
-    //     const createAccountCommitHashTask: IBuildTask = {
-    //         type: resource.type,
-    //         logicalId: resource.logicalId,
-    //         action:  'CommitHash',
-    //         dependentTasks: tasks,
-    //         perform: async (): Promise<void> => {
-    //             if (resource.type === OrgResourceTypes.MasterAccount) {
-    //                 that.state.setUniqueBindingForType({
-    //                     type: resource.type,
-    //                     logicalId: resource.logicalId,
-    //                     lastCommittedHash: hash,
-    //                     physicalId,
-    //                     partitionId,
-    //                 });
-    //             } else {
-    //                 that.state.setBinding({
-    //                     type: resource.type,
-    //                     logicalId: resource.logicalId,
-    //                     lastCommittedHash: hash,
-    //                     physicalId,
-    //                     partitionId,
-    //                 });
-    //             }
-    //         },
-    //     };
-
-    //     return [...tasks, createAccountCommitHashTask];
-    // }
-
     public createAccountCreateTasks(resource: AccountResource, hash: string, mirror: boolean): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
@@ -826,56 +775,6 @@ export class TaskProvider {
         return [...tasks, createAccountCommitHashTask];
     }
 
-    // public createPartitionAccountCreateTasks(resource: AccountResource, hash: string): IBuildTask[] {
-    //     /**
-    //      * Unsure if this needs its own entire block.
-    //      */
-    //     const that = this;
-    //     const tasks: IBuildTask[] = [];
-    //     const createPartitionAccountTask: IBuildTask = {
-    //         type: resource.type,
-    //         logicalId: resource.logicalId,
-    //         action:  'Create',
-    //         perform: async (task): Promise<void> => {
-    //             task.result = await that.writer.createPartitionAccount(resource);
-    //         },
-    //     };
-
-    //     tasks.push(createPartitionAccountTask);
-
-    //     for (const attachedSCP of resource.serviceControlPolicies) {
-    //         const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createPartitionAccountTask.result);
-    //         attachSCPTask.dependentTasks = [createPartitionAccountTask];
-    //         tasks.push(attachSCPTask);
-    //     }
-
-    //     const createAccountCommitHashTask: IBuildTask = {
-    //         type: resource.type,
-    //         logicalId: resource.logicalId,
-    //         action:  'CommitHash',
-    //         dependentTasks: tasks,
-    //         perform: async (): Promise<void> => {
-    //             if (resource.type === OrgResourceTypes.MasterAccount) {
-    //                 that.state.setUniqueBindingForType({
-    //                     type: resource.type,
-    //                     logicalId: resource.logicalId,
-    //                     lastCommittedHash: hash,
-    //                     physicalId: createPartitionAccountTask.result,
-    //                 });
-    //             } else {
-    //                 that.state.setBinding({
-    //                     type: resource.type,
-    //                     logicalId: resource.logicalId,
-    //                     lastCommittedHash: hash,
-    //                     physicalId: createPartitionAccountTask.result.CommercialId,
-    //                     partitionId: createPartitionAccountTask.result.PartitionId,
-    //                 });
-    //             }
-    //         },
-    //     };
-    //     return [...tasks, createAccountCommitHashTask];
-    // }
-
     public createForgetResourceTasks(binding: IBinding): IBuildTask[] {
         return [{
             type: binding.type,
@@ -888,43 +787,37 @@ export class TaskProvider {
     }
 
     private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource | OrganizationRootResource, policy: Reference<ServiceControlPolicyResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
-        let scpIdentifier = (isPartition) ? policy.PartitionId : policy.PhysicalId;
-        if (policy.TemplateResource) {
-            scpIdentifier = policy.TemplateResource.logicalId;
-        }
+        const writer = (isPartition) ? that.partitionWriter : that.writer;
+        let policyId = (isPartition) ? policy.PartitionId : policy.PhysicalId;
         return {
             type: resource.type,
             logicalId: resource.logicalId,
-            action: `Detach Policy (${scpIdentifier})`,
+            action: `Detach Policy (${(policy.TemplateResource) ? policy.TemplateResource.logicalId : policyId})`,
             perform: async (task): Promise<void> => {
-                let policyId = (isPartition) ? policy.PartitionId : policy.PhysicalId;
                 if (policyId === undefined) {
                     const binding = that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId);
                     policyId = (isPartition) ? binding.partitionId : binding.physicalId;
                 }
                 const targetId = getTargetId();
-                task.result = await that.writer.detachPolicy(isPartition, targetId, policyId);
+                task.result = await writer.detachPolicy(targetId, policyId);
             },
         };
     }
 
     private createAttachSCPTask(resource: Resource, policy: Reference<ServiceControlPolicyResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
-        let scpIdentifier = (isPartition) ? policy.PartitionId : policy.PhysicalId;
-        if (policy.TemplateResource) {
-            scpIdentifier = policy.TemplateResource.logicalId;
-        }
+        const writer = (isPartition) ? that.partitionWriter : that.writer;
+        let policyId = (isPartition) ? policy.PartitionId : policy.PhysicalId;
         const attachSCPTask: IBuildTask = {
             type: resource.type,
             logicalId: resource.logicalId,
-            action: `Attach Policy (${scpIdentifier})`,
+            action: `Attach Policy (${(policy.TemplateResource) ? policy.TemplateResource.logicalId : policyId})`,
             perform: async (task): Promise<void> => {
-                let policyId = (isPartition) ? policy.PartitionId : policy.PhysicalId;
                 if (policyId === undefined) {
                     const binding = that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId);
                     policyId = (isPartition) ? binding.partitionId : binding.physicalId;
                 }
                 const targetId = getTargetId();
-                task.result = await that.writer.attachPolicy(isPartition, targetId, policyId);
+                task.result = await writer.attachPolicy(isPartition, targetId, policyId);
             },
         };
         if (policy.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId)) {
@@ -937,22 +830,19 @@ export class TaskProvider {
     }
 
     private createDetachAccountTask(resource: OrganizationalUnitResource, account: Reference<AccountResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
-        let accountIdentifier = (isPartition) ? account.PartitionId : account.PhysicalId;
-        if (account.TemplateResource) {
-            accountIdentifier = account.TemplateResource.logicalId;
-        }
+        const writer = (isPartition) ? that.partitionWriter : that.writer;
+        let accountId = (isPartition) ? account.PartitionId : account.PhysicalId;
         const detachAccountTask: IBuildTask = {
             type: resource.type,
             logicalId: resource.logicalId,
-            action: `Detach Account (${accountIdentifier})`,
+            action: `Detach Account (${(account.TemplateResource) ? account.TemplateResource.logicalId : accountId})`,
             perform: async (task): Promise<void> => {
-                let accountId = (isPartition) ? account.PartitionId : account.PhysicalId;
                 if (accountId === undefined) {
                     const binding = that.state.getBinding(account.TemplateResource.type, account.TemplateResource.logicalId);
                     accountId = (isPartition) ? binding.partitionId : binding.physicalId;
                 }
                 const targetId = getTargetId();
-                task.result = await that.writer.detachAccount(isPartition, targetId, accountId);
+                task.result = await writer.detachAccount(targetId, accountId);
             },
         };
         if (account.TemplateResource && undefined === that.state.getBinding(account.TemplateResource.type, account.TemplateResource.logicalId)) {
@@ -964,22 +854,19 @@ export class TaskProvider {
     }
 
     private createAttachAccountTask(resource: OrganizationalUnitResource, account: Reference<AccountResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
-        let accountIdentifier = (isPartition) ? account.PartitionId : account.PhysicalId;
-        if (account.TemplateResource) {
-            accountIdentifier = account.TemplateResource.logicalId;
-        }
+        const writer = (isPartition) ? that.partitionWriter : that.writer;
+        let accountId = (isPartition) ? account.PartitionId : account.PhysicalId;
         const attachAccountTask: IBuildTask = {
             type: resource.type,
             logicalId: resource.logicalId,
-            action: `Attach Account (${accountIdentifier})`,
+            action: `Attach Account (${(account.TemplateResource) ? account.TemplateResource.logicalId : accountId})`,
             perform: async (task): Promise<void> => {
-                let accountId = (isPartition) ? account.PartitionId : account.PhysicalId;
                 if (accountId === undefined) {
                     const binding = that.state.getBinding(account.TemplateResource.type, account.TemplateResource.logicalId);
                     accountId = (isPartition) ? binding.partitionId : binding.physicalId;
                 }
                 const targetId = getTargetId();
-                task.result = await that.writer.attachAccount(isPartition, targetId, accountId);
+                task.result = await writer.attachAccount(targetId, accountId);
             },
         };
         if (account.TemplateResource && undefined === that.state.getBinding(account.TemplateResource.type, account.TemplateResource.logicalId)) {
@@ -991,14 +878,12 @@ export class TaskProvider {
     }
 
     private createAttachOrganizationalUnitTask(resource: OrganizationalUnitResource, childOu: Reference<OrganizationalUnitResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
-        let ouIdentifier = (isPartition) ? childOu.PartitionId : childOu.PhysicalId;
-        if (childOu.TemplateResource) {
-            ouIdentifier = childOu.TemplateResource.logicalId;
-        }
+        const writer = (isPartition) ? that.partitionWriter : that.writer;
+        const ouId = (isPartition) ? childOu.PartitionId : childOu.PhysicalId;
         const attachChildOuTask: IBuildTask = {
             type: resource.type,
             logicalId: resource.logicalId,
-            action: `Attach OU (${ouIdentifier})`,
+            action: `Attach OU (${(childOu.TemplateResource) ? childOu.TemplateResource.logicalId : ouId})`,
             perform: async (task): Promise<void> => {
                 const binding = await that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId);
                 const childOuId = (isPartition) ? binding.partitionId : binding.physicalId;
@@ -1006,7 +891,7 @@ export class TaskProvider {
                 const targetId = getTargetId();
                 const physicalIdMap: Record<string, string> = {};
                 try {
-                    await that.writer.moveOU(isPartition, targetId, childOuId, physicalIdMap);
+                    await writer.moveOU(targetId, childOuId, physicalIdMap);
                 } finally {
 
                     TaskProvider.updateStateWithOuPhysicalIds(that.state, physicalIdMap, isPartition);
@@ -1060,10 +945,22 @@ export class TaskProvider {
             }
         }
     }
+    public static policiesEqual(left: Reference<PasswordPolicyResource> , right: Reference<PasswordPolicyResource>): boolean {
+        const leftNull = !left || !left.TemplateResource;
+        const rightNull = !right || !right.TemplateResource;
+
+        if (leftNull && rightNull) {
+            return true;
+        }
+        if (leftNull || rightNull) {
+            return false;
+        }
+        return left.TemplateResource!.calculateHash() === right.TemplateResource!.calculateHash();
+    };
 }
 
 
-interface IResolvedIDs<TResource extends Resource> {
+export interface IResolvedIDs<TResource extends Resource> {
     physicalIds: string[];
     partitionIds?: string[];
     unresolvedResources: TResource[];
@@ -1080,17 +977,4 @@ export interface IBuildTask {
     perform: (task: IBuildTask) => Promise<void>;
 }
 
-type BuildTaskAction = 'Create' | 'Update' | 'Delete' | 'Relate' | 'Forget' | 'CommitHash' | string;
-
-const policiesEqual = (left: Reference<PasswordPolicyResource> , right: Reference<PasswordPolicyResource>): boolean => {
-    const leftNull = !left || !left.TemplateResource;
-    const rightNull = !right || !right.TemplateResource;
-
-    if (leftNull && rightNull) {
-        return true;
-    }
-    if (leftNull || rightNull) {
-        return false;
-    }
-    return left.TemplateResource!.calculateHash() === right.TemplateResource!.calculateHash();
-};
+export type BuildTaskAction = 'Create' | 'Update' | 'Delete' | 'Relate' | 'Forget' | 'CommitHash' | string;

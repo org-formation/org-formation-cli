@@ -24,7 +24,7 @@ describe('when creating a new organizational unit using writer', () => {
         createOrganizationalUnitSpy = jest.spyOn(organizationService, 'createOrganizationalUnit');
 
         writer = new AwsOrganizationWriter(organizationService, organizationModel);
-        await writer.createOrganizationalUnit(false, ou as any);
+        await writer.createOrganizationalUnit(ou as any);
     });
 
     afterEach(() => {
