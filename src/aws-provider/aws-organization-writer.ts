@@ -39,12 +39,12 @@ export class AwsOrganizationWriter {
         }
     }
 
-    public async ensureSCPEnabled(mirror: boolean): Promise<void> {
+    public async ensureSCPEnabled(): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
+            const org: Organizations = this.organizationService;
 
             const enablePolicyTypeReq: EnablePolicyTypeRequest = {
-                RootId: (mirror) ? this.organization.partitionRoots[0].Id! : this.organization.roots[0].Id!,
+                RootId: this.organization.roots[0].Id!,
                 PolicyType: 'SERVICE_CONTROL_POLICY',
             };
             try {
@@ -87,20 +87,20 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async attachPolicy(mirror: boolean, targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
+    public async attachPolicy(targetPhysicalId: string, policyPhysicalId: string): Promise<void> {
         return await performAndRetryIfNeeded(async () => {
-            const org: Organizations = (mirror) ? this.partitionOrgService : this.organizationService;
+            const org: Organizations = this.organizationService;
             const attachPolicyRequest: AttachPolicyRequest = {
                 PolicyId: policyPhysicalId,
                 TargetId: targetPhysicalId,
             };
             try {
                 try {
-                    await this.ensureSCPEnabled(mirror);
+                    await this.ensureSCPEnabled();
                     await org.attachPolicy(attachPolicyRequest).promise();
                 } catch (err) {
                     if (err && err.code === 'PolicyTypeNotEnabledException') {
-                        await this.ensureSCPEnabled(mirror);
+                        await this.ensureSCPEnabled();
                         await org.attachPolicy(attachPolicyRequest).promise();
                     } else {
                         throw err;
@@ -672,7 +672,6 @@ export class AwsOrganizationWriter {
     }
 
     private async _createPartitionAccount(resource: AccountResource): Promise<CreateAccountStatus> {
-
         return await performAndRetryIfNeeded(async () => {
             const createAccountReq: CreateAccountRequest = {
                 Email: resource.rootEmail,
@@ -729,25 +728,27 @@ export class AwsOrganizationWriter {
 
                 const handshakeList = await partitionAccountOrgService.listHandshakesForAccount().promise();
                 await partitionAccountOrgService.acceptHandshake({ HandshakeId: handshakeList.Handshakes[0].Id }).promise();
-
-
+            } else {
+                ConsoleUtil.LogWarning(`partition credentials not found. You may have to manually invite ${accountCreationStatus.GovCloudAccountId} to the GovCloud organization.`);
             }
 
-
-            this.organization.accounts.push({
-                Arn: `arn:aws:organizations::${this.organization.masterAccount.Id}:account/${this.organization.organization.Id}/${accountCreationStatus.AccountId}`,
-                Id: accountCreationStatus.AccountId,
-                ParentId: this.organization.roots[0].Id,
-                Policies: [],
-                Name: resource.accountName,
-                Email: resource.rootEmail,
-                Type: 'Account',
-                Tags: {},
-                SupportLevel: 'basic',
-                PartitionId: accountCreationStatus.GovCloudAccountId,
-            });
+            await this._pushAccount(resource, accountCreationStatus.AccountId);
 
             return accountCreationStatus;
+        });
+    }
+
+    public async _pushAccount(resource: AccountResource, accountId: string): Promise<void> {
+        this.organization.accounts.push({
+            Arn: `arn:aws:organizations::${this.organization.masterAccount.Id}:account/${this.organization.organization.Id}/${accountId}`,
+            Id: accountId,
+            ParentId: this.organization.roots[0].Id,
+            Policies: [],
+            Name: resource.accountName,
+            Email: resource.rootEmail,
+            Type: 'Account',
+            Tags: {},
+            SupportLevel: 'basic',
         });
     }
 

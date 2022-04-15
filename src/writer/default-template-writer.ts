@@ -13,7 +13,7 @@ import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
 
 export class DefaultTemplateWriter {
     public organizationModel: AwsOrganization;
-    public partitionOrganizationModel: AwsOrganization;
+    public partitionOrganizationModel: AwsOrganization | undefined;
     public logicalNames: LogicalNames;
     public DefaultBuildProcessAccessRoleName: string;
 
@@ -25,9 +25,8 @@ export class DefaultTemplateWriter {
             const reader = new AwsOrganizationReader(org);
             this.organizationModel = new AwsOrganization(reader);
         }
-        if (partitionOrganizationModel) {
-            this.partitionOrganizationModel = partitionOrganizationModel;
-        }
+
+        this.partitionOrganizationModel = partitionOrganizationModel;
         this.logicalNames = new LogicalNames();
     }
 
@@ -38,7 +37,11 @@ export class DefaultTemplateWriter {
         const lines: YamlLine[] = [];
         this.generateTemplateHeader(lines, this.organizationModel.organization);
 
-        const result = this.generateMasterAccount(lines, this.organizationModel.masterAccount);
+        const masterAccount: AWSAccount = this.organizationModel.masterAccount;
+        if (this.partitionOrganizationModel?.masterAccount) {
+            masterAccount.PartitionId = this.partitionOrganizationModel.masterAccount.Id;
+        }
+        const result = this.generateMasterAccount(lines, masterAccount);
 
         const masterAccountBinding: IBinding = {
             type: result.type,
@@ -59,7 +62,7 @@ export class DefaultTemplateWriter {
             if (!root.Id) {
                 throw new OrgFormationError(`organizational root ${root.Name} has no Id`);
             }
-            const partitionRoot: AWSRoot[] = this.organizationModel.partitionRoots;
+            const partitionRoot: AWSRoot[] = this.partitionOrganizationModel?.roots;
 
             bindings.push({
                 type: rootResource.type,
@@ -110,8 +113,12 @@ export class DefaultTemplateWriter {
             const wasPredefined = templateGenerationSettings.predefinedAccounts.some(x => x.id === account.Id);
             if (wasPredefined) { continue; }
 
-            const accountResource = this.generateAccount(lines, account);
+            const partitionAccount = this.partitionOrganizationModel?.accounts.find(p => p.Name === account.Name);
+            if (partitionAccount) {
+                account.PartitionId = partitionAccount.Id;
+            }
 
+            const accountResource = this.generateAccount(lines, account);
             const accountBinding: IBinding = {
                 type: accountResource.type,
                 logicalId: accountResource.logicalName,
