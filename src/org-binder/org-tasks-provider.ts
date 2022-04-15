@@ -732,7 +732,12 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action:  'Create',
             perform: async (task): Promise<void> => {
-                task.result = (mirror) ? await that.writer.createPartitionAccount(resource) : await that.writer.createAccount(resource);
+                if (mirror) {
+                    task.result = await that.writer.createPartitionAccount(resource);
+                    await that.partitionWriter._pushAccount(resource, task.result.PartitionId);
+                } else {
+                    await that.writer.createAccount(resource);
+                }
             },
         };
         tasks.push(createAccountTask);
@@ -817,7 +822,7 @@ export class TaskProvider {
                     policyId = (isPartition) ? binding.partitionId : binding.physicalId;
                 }
                 const targetId = getTargetId();
-                task.result = await writer.attachPolicy(isPartition, targetId, policyId);
+                task.result = await writer.attachPolicy(targetId, policyId);
             },
         };
         if (policy.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId)) {

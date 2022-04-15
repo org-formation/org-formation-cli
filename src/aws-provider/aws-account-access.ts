@@ -13,6 +13,8 @@ export interface ICrossAccountConfig {
 
 
 export  const GetOrganizationAccessRoleInTargetAccount = async (config: ICrossAccountConfig, targetAccountId: string): Promise<ICrossAccountAccess> => {
+    console.log(config);
+    console.log(targetAccountId);
     if (config && config.masterAccountId === targetAccountId) {
         if (config.masterAccountRoleName !== undefined) {
             return {
