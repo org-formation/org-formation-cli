@@ -9,15 +9,8 @@ export class AwsOrganization {
     public policies: AWSPolicy[];
     public accounts: AWSAccount[];
     public masterAccount: AWSAccount;
-    private readonly reader: AwsOrganizationReader;
+    public readonly reader: AwsOrganizationReader;
     private initializationPromise: Promise<void>;
-
-    public partitionOrganization: Organization | undefined;
-    public partitionRoots: AWSRoot[];
-    public partitionPolicies: AWSPolicy[];
-    public partitionMasterAccount: AWSAccount | undefined;
-    public partitionAccounts: AWSAccount[] | undefined;
-    public partitionOrganizationalUnits: AWSOrganizationalUnit[] | undefined;
 
     constructor(reader: AwsOrganizationReader) {
         this.reader = reader;
