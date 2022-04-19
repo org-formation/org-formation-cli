@@ -261,6 +261,9 @@ export class AwsUtil {
         const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn, isPartition);
         if (credentialOptions !== undefined) {
             config.credentials = credentialOptions;
+            if (isPartition) {
+                config.region = this.partitionRegion;
+            }
         }
 
         const service = new ctr(config);
@@ -271,7 +274,7 @@ export class AwsUtil {
 
     public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<CredentialsOptions | undefined> {
 
-        const masterAccountId = await AwsUtil.GetMasterAccountId();
+        const masterAccountId = (isPartition) ? await AwsUtil.GetPartitionMasterAccountId() : await AwsUtil.GetMasterAccountId();
         const useCurrentPrincipal = (masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId));
         if (useCurrentPrincipal) {
             return undefined;
@@ -280,21 +283,20 @@ export class AwsUtil {
         try {
             let roleArn: string;
             const config: STS.ClientConfiguration = {};
+            if (viaRoleArn !== undefined) {
+                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
+            }
 
             if (AwsUtil.isPartition || isPartition) {
                 roleArn = AwsUtil.GetPartitionRoleArn(accountId, roleInTargetAccount);
-                config.region = this.partitionRegion;
                 config.credentials = await AwsUtil.GetPartitionCredentials();
-                console.log('partition');
+                config.region = this.partitionRegion;
             } else {
                 roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
             }
 
-            if (viaRoleArn !== undefined) {
-                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
-            }
-            console.log(roleArn);
             return await AwsUtil.GetCredentialsForRole(roleArn, config);
+
         } catch (err) {
             const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
             if (accountId === buildAccountId) {

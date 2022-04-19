@@ -289,6 +289,22 @@ export class TaskProvider {
         };
         tasks.push(createOrganizationalUnitTask);
         dependency.push(createOrganizationalUnitTask);
+        for (const attachedSCP of resource.serviceControlPolicies) {
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createOrganizationalUnitTask.result, IS_COMMERCIAL);
+            attachSCPTask.dependentTasks = dependency;
+            tasks.push(attachSCPTask);
+        }
+        for (const attachedAccount of resource.accounts) {
+            const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, () => createOrganizationalUnitTask.result, IS_COMMERCIAL);
+            attachAccountTask.dependentTasks = dependency;
+            tasks.push(attachAccountTask);
+        }
+        for (const attachedOu of resource.organizationalUnits) {
+            const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, () => createOrganizationalUnitTask.result, IS_COMMERCIAL);
+            attachOuTask.dependentTasks = dependency;
+            tasks.push(attachOuTask);
+        }
+
         if (mirror) {
             createPartitionOrganizationalUnitTask = {
                 type: resource.type,
@@ -316,24 +332,7 @@ export class TaskProvider {
             createPartitionOrganizationalUnitTask.dependentTasks = [createOrganizationalUnitTask];
             tasks.push(createPartitionOrganizationalUnitTask);
             dependency.push(createPartitionOrganizationalUnitTask);
-        }
 
-        for (const attachedSCP of resource.serviceControlPolicies) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createOrganizationalUnitTask.result, IS_COMMERCIAL);
-            attachSCPTask.dependentTasks = dependency;
-            tasks.push(attachSCPTask);
-        }
-        for (const attachedAccount of resource.accounts) {
-            const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, () => createOrganizationalUnitTask.result, IS_COMMERCIAL);
-            attachAccountTask.dependentTasks = dependency;
-            tasks.push(attachAccountTask);
-        }
-        for (const attachedOu of resource.organizationalUnits) {
-            const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, () => createOrganizationalUnitTask.result, IS_COMMERCIAL);
-            attachOuTask.dependentTasks = dependency;
-            tasks.push(attachOuTask);
-        }
-        if (mirror) {
             for (const attachedSCP of resource.serviceControlPolicies) {
                 const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createPartitionOrganizationalUnitTask.result, IS_PARTITION);
                 attachSCPTask.dependentTasks = dependency;
@@ -371,6 +370,13 @@ export class TaskProvider {
         const tasks: IBuildTask[] = [];
         const previousResource = this.previousTemplate.organizationSection.organizationalUnits.find(x => x.logicalId === resource.logicalId);
 
+        const fnGetPhysicalId = (): string => {
+            return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.logicalId).physicalId;
+        };
+        const FnGetpartitionId = (): string => {
+            return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.logicalId).partitionId;
+        };
+
         if (previousResource === undefined || previousResource.organizationalUnitName !== resource.organizationalUnitName) {
             tasks.push({
                 type: resource.type,
@@ -380,27 +386,14 @@ export class TaskProvider {
                     task.result = await that.writer.updateOrganizationalUnit(resource, physicalId);
                 },
             });
-            if (mirror) {
-                tasks.push({
-                    type: resource.type,
-                    logicalId: resource.logicalId,
-                    action:  'Update',
-                    perform: async (task): Promise<void> => {
-                        task.result = await that.partitionWriter.updateOrganizationalUnit(resource, partitionId);
-                    },
-                });
-            }
         };
-
-        const fnGetPhysicalId = (): string => {
-            return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.logicalId).physicalId;
-        };
-        const FnGetpartitionId = (): string => {
-            return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.logicalId).partitionId;
-        };
-
         const previousSCPs = this.resolveIDs(previousResource === undefined ? [] : previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
+        const previousAccounts = this.resolveIDs(previousResource === undefined ? [] : previousResource.accounts);
+        const currentAccounts = this.resolveIDs(resource.accounts);
+        const previousChildOUs = this.resolveIDs(previousResource === undefined ? [] : previousResource.organizationalUnits);
+        const currentChildOUs = this.resolveIDs(resource.organizationalUnits);
+
         for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
             const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, fnGetPhysicalId, IS_COMMERCIAL);
             tasks.push(detachSCPTask);
@@ -413,23 +406,6 @@ export class TaskProvider {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, fnGetPhysicalId, IS_COMMERCIAL);
             tasks.push(attachSCPTask);
         }
-        if (mirror) {
-            for (const detachedSCP of previousSCPs.partitionIds.filter(x => !currentSCPS.partitionIds.includes(x))) {
-                const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, FnGetpartitionId, IS_PARTITION);
-                tasks.push(detachSCPTask);
-            }
-            for (const attachedSCP of currentSCPS.partitionIds.filter(x => !previousSCPs.partitionIds.includes(x))) {
-                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, FnGetpartitionId, IS_PARTITION);
-                tasks.push(attachSCPTask);
-            }
-            for (const attachedSCP of currentSCPS.unresolvedResources) {
-                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, FnGetpartitionId, IS_PARTITION);
-                tasks.push(attachSCPTask);
-            }
-        }
-
-        const previousAccounts = this.resolveIDs(previousResource === undefined ? [] : previousResource.accounts);
-        const currentAccounts = this.resolveIDs(resource.accounts);
         for (const detachedAccount of previousAccounts.physicalIds.filter(x => !currentAccounts.physicalIds.includes(x))) {
             const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, fnGetPhysicalId, IS_COMMERCIAL);
             tasks.push(detachAccountTask);
@@ -442,23 +418,6 @@ export class TaskProvider {
             const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, { TemplateResource: attachAccount as AccountResource }, that, fnGetPhysicalId, IS_COMMERCIAL);
             tasks.push(attachAccountTask);
         }
-        if (mirror) {
-            for (const detachedAccount of previousAccounts.partitionIds.filter(x => !currentAccounts.partitionIds.includes(x))) {
-                const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, FnGetpartitionId, IS_PARTITION);
-                tasks.push(detachAccountTask);
-            }
-            for (const attachAccount of currentAccounts.partitionIds.filter(x => !previousAccounts.partitionIds.includes(x))) {
-                const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, currentAccounts.mapping[attachAccount], that, FnGetpartitionId, IS_PARTITION);
-                tasks.push(attachAccountTask);
-            }
-            for (const attachAccount of currentAccounts.unresolvedResources) {
-                const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, { TemplateResource: attachAccount as AccountResource }, that, FnGetpartitionId, IS_PARTITION);
-                tasks.push(attachAccountTask);
-            }
-        }
-
-        const previousChildOUs = this.resolveIDs(previousResource === undefined ? [] : previousResource.organizationalUnits);
-        const currentChildOUs = this.resolveIDs(resource.organizationalUnits);
         for (const detachedChildOu of previousChildOUs.physicalIds.filter(x => !currentChildOUs.physicalIds.includes(x))) {
             const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId, IS_COMMERCIAL);
             tasks.push(detachChildOuTask);
@@ -472,6 +431,38 @@ export class TaskProvider {
             tasks.push(attachOUTask);
         }
         if (mirror) {
+            tasks.push({
+                type: resource.type,
+                logicalId: resource.logicalId,
+                action:  'Update',
+                perform: async (task): Promise<void> => {
+                    task.result = await that.partitionWriter.updateOrganizationalUnit(resource, partitionId);
+                },
+            });
+            for (const detachedSCP of previousSCPs.partitionIds.filter(x => !currentSCPS.partitionIds.includes(x))) {
+                const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, FnGetpartitionId, IS_PARTITION);
+                tasks.push(detachSCPTask);
+            }
+            for (const attachedSCP of currentSCPS.partitionIds.filter(x => !previousSCPs.partitionIds.includes(x))) {
+                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, FnGetpartitionId, IS_PARTITION);
+                tasks.push(attachSCPTask);
+            }
+            for (const attachedSCP of currentSCPS.unresolvedResources) {
+                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, FnGetpartitionId, IS_PARTITION);
+                tasks.push(attachSCPTask);
+            }
+            for (const detachedAccount of previousAccounts.partitionIds.filter(x => !currentAccounts.partitionIds.includes(x))) {
+                const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, FnGetpartitionId, IS_PARTITION);
+                tasks.push(detachAccountTask);
+            }
+            for (const attachAccount of currentAccounts.partitionIds.filter(x => !previousAccounts.partitionIds.includes(x))) {
+                const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, currentAccounts.mapping[attachAccount], that, FnGetpartitionId, IS_PARTITION);
+                tasks.push(attachAccountTask);
+            }
+            for (const attachAccount of currentAccounts.unresolvedResources) {
+                const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, { TemplateResource: attachAccount as AccountResource }, that, FnGetpartitionId, IS_PARTITION);
+                tasks.push(attachAccountTask);
+            }
             for (const detachedChildOu of previousChildOUs.partitionIds.filter(x => !currentChildOUs.partitionIds.includes(x))) {
                 const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, FnGetpartitionId, IS_PARTITION);
                 tasks.push(detachChildOuTask);

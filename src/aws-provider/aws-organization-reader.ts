@@ -1,4 +1,4 @@
-import { IAM, Organizations, STS, Support } from 'aws-sdk/clients/all';
+import { IAM, Organizations, Support } from 'aws-sdk/clients/all';
 import { Account, ListAccountsForParentRequest, ListAccountsResponse, ListOrganizationalUnitsForParentRequest,
     ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest,
     ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse,
@@ -289,13 +289,8 @@ export class AwsOrganizationReader {
     private static async getSupportLevelForAccount(that: AwsOrganizationReader, accountId: string): Promise<SupportLevel> {
         await that.organization.getValue();
         try {
-            let supportService: Support;
-            if (that.isPartition) {
-                supportService = new Support(await this.partitionAssumeRole(accountId));
-            } else {
-                const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
-                supportService = await AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
-            }
+            const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const supportService: Support = await AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 
             const severityLevels = await supportService.describeSeverityLevels().promise();
             const critical = severityLevels.severityLevels.find(x => x.code === 'critical');
@@ -319,17 +314,10 @@ export class AwsOrganizationReader {
     private static async getIamAliasForAccount(that: AwsOrganizationReader, accountId: string): Promise<string> {
         try {
             await that.organization.getValue();
-            let iamService: IAM;
-            if (that.isPartition) {
-                iamService = new IAM(await this.partitionAssumeRole(accountId));
-            } else {
-                const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
-                iamService = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
-            }
+            const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const iamService: IAM = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 
-            console.log('got iam');
             const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
-            console.log(response);
             if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
                 return response.AccountAliases[0];
             } else {
@@ -344,13 +332,8 @@ export class AwsOrganizationReader {
     private static async getIamPasswordPolicyForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAM.PasswordPolicy> {
         try {
             await that.organization.getValue();
-            let iamService: IAM;
-            if (that.isPartition) {
-                iamService = new IAM(await this.partitionAssumeRole(accountId));
-            } else {
-                const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
-                iamService = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole);
-            }
+            const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const iamService: IAM = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 
             try {
                 const response = await iamService.getAccountPasswordPolicy().promise();
@@ -382,24 +365,6 @@ export class AwsOrganizationReader {
             ConsoleUtil.LogError('unable to list tags for account ' + accountId, err);
             throw err;
         }
-    }
-
-    private static async partitionAssumeRole(accountId: string): Promise<STS.ClientConfiguration> {
-        const assumeParams = {
-            RoleArn: `arn:aws-us-gov:iam::${accountId}:role/OrganizationAccountAccessRole`,
-            RoleSessionName: 'AssumeRoleSession',
-        };
-        const partitionCredentials = await AwsUtil.GetPartitionCredentials();
-        const sts = new STS({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
-        const role = await sts.assumeRole(assumeParams).promise();
-        return {
-            credentials: {
-                accessKeyId: role.Credentials.AccessKeyId,
-                secretAccessKey: role.Credentials.SecretAccessKey,
-                sessionToken: role.Credentials.SessionToken,
-            },
-            region: AwsUtil.GetPartitionRegion(),
-        };
     }
 
     public readonly policies: Lazy<AWSPolicy[]>;
