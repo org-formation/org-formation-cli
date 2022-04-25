@@ -1,4 +1,4 @@
-import { IAM, Organizations, STS } from 'aws-sdk/clients/all';
+import { Organizations, STS } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateAccountStatus, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
 import { Credentials } from 'aws-sdk';
@@ -350,17 +350,18 @@ export class AwsOrganizationWriter {
         return {PhysicalId: accountId};
     }
 
-    public async createPartitionAccount(resource: AccountResource): Promise<PartitionCreateResponse> {
+    public async createPartitionAccount(resource: AccountResource, partitionWriter: AwsOrganizationWriter): Promise<PartitionCreateResponse> {
 
-        const account: AWSAccount = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === resource.accountId && x.PartitionId === resource.partitionId);
+        const account: AWSAccount = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === resource.accountId);
         if (account !== undefined) {
+            const partitionAccount = (await partitionWriter._listAccounts()).find(x => x.Email === account.Email);
             await this.updateAccount(resource, account.Id);
-            await this.updatePartitionAccount(resource, account.PartitionId);
+            await partitionWriter.updateAccount(resource, partitionAccount.Id);
 
             ConsoleUtil.LogDebug(`account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
             return {
                 PhysicalId: account.Id,
-                PartitionId: account.PartitionId,
+                PartitionId: partitionAccount.Id,
             };
         }
 
@@ -372,7 +373,7 @@ export class AwsOrganizationWriter {
             shouldRetry = false;
             try {
                 await this.updateAccount(resource, result.AccountId);
-                await this.updatePartitionAccount(resource, result.GovCloudAccountId);
+                await partitionWriter.updateAccount(resource, result.GovCloudAccountId);
             } catch (err) {
                 if (err.code === 'AccessDenied' && retryCountAccessDenied < 3) {
                     shouldRetry = true;
@@ -405,6 +406,7 @@ export class AwsOrganizationWriter {
         if (previousResource?.alias !== resource.alias) {
             const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
             const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
+            const alias = (account.Type === 'PartitionAccount') ? resource.partitionAlias : resource.alias;
             if (account.Alias) {
                 try {
                     await iam.deleteAccountAlias({ AccountAlias: account.Alias }).promise();
@@ -414,16 +416,16 @@ export class AwsOrganizationWriter {
                     }
                 }
             }
-            if (resource.alias) {
+            if (alias) {
                 try {
-                    await iam.createAccountAlias({ AccountAlias: resource.alias }).promise();
+                    await iam.createAccountAlias({ AccountAlias: alias }).promise();
                 } catch (err) {
                     const current = await iam.listAccountAliases({}).promise();
-                    if (current.AccountAliases.find(x => x === resource.alias)) {
+                    if (current.AccountAliases.find(x => x === alias)) {
                         return;
                     }
                     if (err && err.code === 'EntityAlreadyExists') {
-                        throw new OrgFormationError(`The account alias ${resource.alias} already exists. Most likely someone else already registered this alias to some other account.`);
+                        throw new OrgFormationError(`The account alias ${alias} already exists. Most likely someone else already registered this alias to some other account.`);
                     }
                 }
             }
@@ -524,87 +526,6 @@ export class AwsOrganizationWriter {
             account.Tags = resource.tags;
         }
     }
-
-    public async updatePartitionAccount(resource: AccountResource, accountId: string, previousResource?: AccountResource): Promise<void> {
-        const account: AWSAccount = [...this.organization.accounts, this.organization.masterAccount].find(x => x.PartitionId === accountId);
-
-        if (account.Name !== resource.accountName) {
-            ConsoleUtil.LogWarning(`account name for ${accountId} (logicalId: ${resource.logicalId}) cannot be changed from '${account.Name}' to '${resource.accountName}'. Instead: login with root on the specified account to change its name`);
-        }
-
-        if (previousResource && previousResource.organizationAccessRoleName !== resource.organizationAccessRoleName) {
-            ConsoleUtil.LogWarning(`when changing the organization access role for ${accountId} (logicalId: ${resource.logicalId}) the tool will not automatically rename roles in the target account. Instead: make sure that the name of the role in the organization model corresponds to a role in the AWS account.`);
-        }
-
-        if (account.PartitionAlias !== resource.partitionAlias) {
-
-            const assumeParams = {
-                RoleArn: `arn:aws-us-gov:iam::${accountId}:role/OrganizationAccountAccessRole`,
-                RoleSessionName: 'AssumeRoleSession',
-            };
-            const role = await this.partitionOrgSTS.assumeRole(assumeParams).promise();
-
-            const iam = new IAM({
-                credentials: {
-                    accessKeyId: role.Credentials.AccessKeyId,
-                    secretAccessKey: role.Credentials.SecretAccessKey,
-                    sessionToken: role.Credentials.SessionToken,
-                },
-                region: AwsUtil.GetPartitionRegion(),
-            });
-
-            if (account.PartitionAlias) {
-                try {
-                    await iam.deleteAccountAlias({ AccountAlias: account.PartitionAlias }).promise();
-                } catch (err) {
-                    if (err && err.code !== 'NoSuchEntity') {
-                        throw err;
-                    }
-                }
-            }
-
-            if (resource.partitionAlias) {
-                try {
-                    await iam.createAccountAlias({ AccountAlias: resource.partitionAlias }).promise();
-                } catch (err) {
-                    const current = await iam.listAccountAliases({}).promise();
-                    if (current.AccountAliases.find(x => x === resource.partitionAlias)) {
-                        return;
-                    }
-                    if (err && err.code === 'EntityAlreadyExists') {
-                        throw new OrgFormationError(`The account alias ${resource.partitionAlias} already exists. Most likely someone else already registered this alias to some other account.`);
-                    }
-                }
-            }
-        }
-
-        const tagsOnResource = Object.entries(resource.tags || {});
-        const keysOnResource = tagsOnResource.map(x => x[0]);
-        const tagsOnAccount = Object.entries(account.Tags || {});
-        const tagsToRemove = tagsOnAccount.map(x => x[0]).filter(x => keysOnResource.indexOf(x) === -1);
-        const tagsToUpdate = keysOnResource.filter(x => resource.tags[x] !== account.Tags[x]);
-
-        if (tagsToRemove.length > 0) {
-            const request: UntagResourceRequest = {
-                ResourceId: accountId,
-                TagKeys: tagsToRemove,
-            };
-            await this.partitionOrgService.untagResource(request).promise();
-        }
-
-        if (tagsToUpdate.length > 0) {
-            const tags: Tag[] = tagsOnResource.filter(x => tagsToUpdate.indexOf(x[0]) >= 0).map(x => ({ Key: x[0], Value: (x[1] || '').toString() }));
-
-            const request: TagResourceRequest = {
-                ResourceId: accountId,
-                Tags: tags,
-            };
-            await this.partitionOrgService.tagResource(request).promise();
-        }
-
-        account.Tags = resource.tags;
-    }
-
 
     private async _createOrganizationalUnit(resource: OrganizationalUnitResource, parentId: string): Promise<AWSOrganizationalUnit> {
         return await performAndRetryIfNeeded(async () => {
@@ -746,7 +667,7 @@ export class AwsOrganizationWriter {
             Policies: [],
             Name: resource.accountName,
             Email: resource.rootEmail,
-            Type: 'Account',
+            Type: 'PartitionAccount',
             Tags: {},
             SupportLevel: 'basic',
         });
@@ -770,8 +691,8 @@ export class AwsOrganizationWriter {
             let listServiceControlPoliciesOfPreviousOU: ListPoliciesForTargetResponse = {};
             do {
                 listServiceControlPoliciesOfPreviousOU = await this.organizationService.listPoliciesForTarget(listServiceControlPoliciesOfPreviousOURequest).promise();
-                for (const scp of listServiceControlPoliciesOfPreviousOU.Policies) {
-                    ConsoleUtil.LogDebug(`moving scp from ou ${sourceId} to ou ${targetId}`);
+                for (const scp of listServiceControlPoliciesOfPreviousOU.Policies.filter(x => x.Id !== 'p-FullAWSAccess')) {
+                    ConsoleUtil.LogDebug(`moving scp (${scp.Id}) from ou ${sourceId} to ou ${targetId}`);
                     const attachPromise = this.organizationService.attachPolicy({ PolicyId: scp.Id, TargetId: targetId });
                     const detachPromise = this.organizationService.detachPolicy({ PolicyId: scp.Id, TargetId: sourceId });
                     await Promise.all([attachPromise, detachPromise]);
@@ -789,6 +710,9 @@ export class AwsOrganizationWriter {
             } while (childUnitsOfPreviousOU.NextToken);
 
         }
+    }
 
+    public async _listAccounts(): Promise<AWSAccount[]> {
+        return this.organization.accounts;
     }
 }

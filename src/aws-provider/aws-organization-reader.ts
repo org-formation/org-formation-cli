@@ -235,7 +235,6 @@ export class AwsOrganizationReader {
                         let alias: string;
                         let passwordPolicy: IAM.PasswordPolicy;
                         let supportLevel = 'basic';
-                        let partitionAlias: string;
 
                         try {
                             [tags, alias, passwordPolicy, supportLevel] = await Promise.all([
@@ -256,7 +255,7 @@ export class AwsOrganizationReader {
 
                         const account = {
                             ...acc,
-                            Type: 'Account',
+                            Type: (that.isPartition) ? 'PartitionAccount' : 'Account',
                             Name: acc.Name,
                             Id: acc.Id,
                             ParentId: req.ParentId,
@@ -265,7 +264,6 @@ export class AwsOrganizationReader {
                             Alias: alias,
                             PasswordPolicy: passwordPolicy,
                             SupportLevel: supportLevel,
-                            PartitionAlias: partitionAlias,
                         };
 
                         const parentOU = organizationalUnits.find(x => x.Id === req.ParentId);
