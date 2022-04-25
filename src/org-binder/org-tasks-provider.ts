@@ -394,51 +394,49 @@ export class TaskProvider {
         const previousChildOUs = this.resolveIDs(previousResource === undefined ? [] : previousResource.organizationalUnits);
         const currentChildOUs = this.resolveIDs(resource.organizationalUnits);
 
-        const detachSCPTasks: IBuildTask[] = [];
-        const detachAccountTasks: IBuildTask[] = [];
-        const detachChildOuTasks: IBuildTask[] = [];
+        const detachTasks: IBuildTask[] = [];
         for (const detachedSCP of previousSCPs.physicalIds.filter(x => !currentSCPS.physicalIds.includes(x))) {
             const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, fnGetPhysicalId, IS_COMMERCIAL);
-            detachSCPTasks.push(detachSCPTask);
+            detachTasks.push(detachSCPTask);
         }
         for (const detachedAccount of previousAccounts.physicalIds.filter(x => !currentAccounts.physicalIds.includes(x))) {
             const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, fnGetPhysicalId, IS_COMMERCIAL);
-            detachAccountTasks.push(detachAccountTask);
+            detachTasks.push(detachAccountTask);
         }
         for (const detachedChildOu of previousChildOUs.physicalIds.filter(x => !currentChildOUs.physicalIds.includes(x))) {
             const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId, IS_COMMERCIAL);
-            detachChildOuTasks.push(detachChildOuTask);
+            detachTasks.push(detachChildOuTask);
         }
-        tasks.concat(detachSCPTasks, detachAccountTasks, detachChildOuTasks);
+        tasks.push(...detachTasks);
 
         for (const attachedSCP of currentSCPS.physicalIds.filter(x => !previousSCPs.physicalIds.includes(x))) {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, fnGetPhysicalId, IS_COMMERCIAL);
-            attachSCPTask.dependentTasks = detachSCPTasks;
+            attachSCPTask.dependentTasks = detachTasks;
             tasks.push(attachSCPTask);
         }
         for (const attachedSCP of currentSCPS.unresolvedResources) {
             const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, fnGetPhysicalId, IS_COMMERCIAL);
-            attachSCPTask.dependentTasks = detachSCPTasks;
+            attachSCPTask.dependentTasks = detachTasks;
             tasks.push(attachSCPTask);
         }
         for (const attachAccount of currentAccounts.physicalIds.filter(x => !previousAccounts.physicalIds.includes(x))) {
             const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, currentAccounts.mapping[attachAccount], that, fnGetPhysicalId, IS_COMMERCIAL);
-            attachAccountTask.dependentTasks = detachAccountTasks;
+            attachAccountTask.dependentTasks = detachTasks;
             tasks.push(attachAccountTask);
         }
         for (const attachAccount of currentAccounts.unresolvedResources) {
             const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, { TemplateResource: attachAccount as AccountResource }, that, fnGetPhysicalId, IS_COMMERCIAL);
-            attachAccountTask.dependentTasks = detachAccountTasks;
+            attachAccountTask.dependentTasks = detachTasks;
             tasks.push(attachAccountTask);
         }
         for (const attachedOU of currentChildOUs.physicalIds.filter(x => !previousChildOUs.physicalIds.includes(x))) {
             const attachOUTask: IBuildTask = this.createAttachOrganizationalUnitTask(resource, currentChildOUs.mapping[attachedOU], that, fnGetPhysicalId, IS_COMMERCIAL);
-            attachOUTask.dependentTasks = detachChildOuTasks;
+            attachOUTask.dependentTasks = detachTasks;
             tasks.push(attachOUTask);
         }
         for (const attachedOU of currentChildOUs.unresolvedResources) {
             const attachOUTask: IBuildTask = this.createAttachOrganizationalUnitTask(resource, { TemplateResource: attachedOU as OrganizationalUnitResource }, that, fnGetPhysicalId, IS_COMMERCIAL);
-            attachOUTask.dependentTasks = detachChildOuTasks;
+            attachOUTask.dependentTasks = detachTasks;
             tasks.push(attachOUTask);
         }
         if (mirror) {
@@ -450,51 +448,49 @@ export class TaskProvider {
                     task.result = await that.partitionWriter.updateOrganizationalUnit(resource, partitionId);
                 },
             });
-            const detachPartitionSCPTasks: IBuildTask[] = [];
-            const detachPartitionAccountTasks: IBuildTask[] = [];
-            const detachPartitionChildOuTasks: IBuildTask[] = [];
+            const detachPartitionTasks: IBuildTask[] = [];
             for (const detachedSCP of previousSCPs.partitionIds.filter(x => !currentSCPS.partitionIds.includes(x))) {
                 const detachSCPTask: IBuildTask = this.createDetachSCPTask(resource, previousSCPs.mapping[detachedSCP], that, FnGetpartitionId, IS_PARTITION);
-                detachPartitionSCPTasks.push(detachSCPTask);
+                detachPartitionTasks.push(detachSCPTask);
             }
             for (const detachedAccount of previousAccounts.partitionIds.filter(x => !currentAccounts.partitionIds.includes(x))) {
                 const detachAccountTask: IBuildTask = this.createDetachAccountTask(resource, previousAccounts.mapping[detachedAccount], that, FnGetpartitionId, IS_PARTITION);
-                detachPartitionAccountTasks.push(detachAccountTask);
+                detachPartitionTasks.push(detachAccountTask);
             }
             for (const detachedChildOu of previousChildOUs.partitionIds.filter(x => !currentChildOUs.partitionIds.includes(x))) {
                 const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(resource, previousChildOUs.mapping[detachedChildOu], that, FnGetpartitionId, IS_PARTITION);
-                detachPartitionChildOuTasks.push(detachChildOuTask);
+                detachPartitionTasks.push(detachChildOuTask);
             }
-            tasks.concat(detachPartitionSCPTasks, detachPartitionAccountTasks, detachPartitionChildOuTasks);
+            tasks.push(...detachPartitionTasks);
 
             for (const attachedSCP of currentSCPS.partitionIds.filter(x => !previousSCPs.partitionIds.includes(x))) {
                 const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, currentSCPS.mapping[attachedSCP], that, FnGetpartitionId, IS_PARTITION);
-                attachSCPTask.dependentTasks = detachPartitionSCPTasks;
+                attachSCPTask.dependentTasks = detachPartitionTasks;
                 tasks.push(attachSCPTask);
             }
             for (const attachedSCP of currentSCPS.unresolvedResources) {
                 const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, { TemplateResource: attachedSCP as ServiceControlPolicyResource }, that, FnGetpartitionId, IS_PARTITION);
-                attachSCPTask.dependentTasks = detachPartitionSCPTasks;
+                attachSCPTask.dependentTasks = detachPartitionTasks;
                 tasks.push(attachSCPTask);
             }
             for (const attachAccount of currentAccounts.partitionIds.filter(x => !previousAccounts.partitionIds.includes(x))) {
                 const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, currentAccounts.mapping[attachAccount], that, FnGetpartitionId, IS_PARTITION);
-                attachAccountTask.dependentTasks = detachPartitionAccountTasks;
+                attachAccountTask.dependentTasks = detachPartitionTasks;
                 tasks.push(attachAccountTask);
             }
             for (const attachAccount of currentAccounts.unresolvedResources) {
                 const attachAccountTask: IBuildTask = this.createAttachAccountTask(resource, { TemplateResource: attachAccount as AccountResource }, that, FnGetpartitionId, IS_PARTITION);
-                attachAccountTask.dependentTasks = detachPartitionAccountTasks;
+                attachAccountTask.dependentTasks = detachPartitionTasks;
                 tasks.push(attachAccountTask);
             }
             for (const attachedOU of currentChildOUs.partitionIds.filter(x => !previousChildOUs.partitionIds.includes(x))) {
                 const attachOUTask: IBuildTask = this.createAttachOrganizationalUnitTask(resource, currentChildOUs.mapping[attachedOU], that, FnGetpartitionId, IS_PARTITION);
-                attachOUTask.dependentTasks = detachPartitionChildOuTasks;
+                attachOUTask.dependentTasks = detachPartitionTasks;
                 tasks.push(attachOUTask);
             }
             for (const attachedOU of currentChildOUs.unresolvedResources) {
                 const attachOUTask: IBuildTask = this.createAttachOrganizationalUnitTask(resource, { TemplateResource: attachedOU as OrganizationalUnitResource }, that, FnGetpartitionId, IS_PARTITION);
-                attachOUTask.dependentTasks = detachPartitionChildOuTasks;
+                attachOUTask.dependentTasks = detachPartitionTasks;
                 tasks.push(attachOUTask);
             }
         }
@@ -660,7 +656,7 @@ export class TaskProvider {
                     perform: async (task): Promise<void> => {
                         task.result = {
                             commercial: await that.writer.updateAccount(resource, physicalId, previousResource),
-                            partition: await that.writer.updatePartitionAccount(resource, partitionId, previousResource),
+                            partition: await that.partitionWriter.updateAccount(resource, partitionId, previousResource),
                         };
                     },
                 };
@@ -746,7 +742,7 @@ export class TaskProvider {
             action:  'Create',
             perform: async (task): Promise<void> => {
                 if (mirror) {
-                    task.result = await that.writer.createPartitionAccount(resource);
+                    task.result = await that.writer.createPartitionAccount(resource, that.partitionWriter);
                     await that.partitionWriter._pushAccount(resource, task.result.PartitionId);
                 } else {
                     await that.writer.createAccount(resource);
@@ -878,6 +874,7 @@ export class TaskProvider {
             type: resource.type,
             logicalId: resource.logicalId,
             action: `Attach Account (${(account.TemplateResource) ? account.TemplateResource.logicalId : accountId})`,
+            dependentTaskFilter: task => task.action.startsWith('Detach Account'),
             perform: async (task): Promise<void> => {
                 if (accountId === undefined) {
                     const binding = that.state.getBinding(account.TemplateResource.type, account.TemplateResource.logicalId);
@@ -919,8 +916,8 @@ export class TaskProvider {
         };
         if (childOu.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId)) {
             attachChildOuTask.dependentTaskFilter = (task): boolean => task.logicalId === childOu.TemplateResource.logicalId &&
-                (task.action === 'Create'
-                || task.action.startsWith('Detach OU')) && task.type === OrgResourceTypes.OrganizationalUnit;
+                (task.action === 'Create' || task.action.startsWith('Detach OU')) &&
+                task.type === OrgResourceTypes.OrganizationalUnit;
         }
         return attachChildOuTask;
     }
