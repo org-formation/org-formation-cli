@@ -743,7 +743,6 @@ export class TaskProvider {
             perform: async (task): Promise<void> => {
                 if (mirror) {
                     task.result = await that.writer.createPartitionAccount(resource, that.partitionWriter);
-                    await that.partitionWriter._pushAccount(resource, task.result.PartitionId);
                 } else {
                     await that.writer.createAccount(resource);
                 }
