@@ -1,8 +1,6 @@
-import { Organizations, STS } from 'aws-sdk/clients/all';
+import { Organizations } from 'aws-sdk/clients/all';
 import { AttachPolicyRequest, CreateAccountRequest, CreateAccountStatus, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
-import { Credentials } from 'aws-sdk';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AwsUtil, passwordPolicyEquals } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -23,20 +21,12 @@ export interface PartitionCreateResponse {
 }
 
 export class AwsOrganizationWriter {
-
     private organization: AwsOrganization;
     private organizationService: Organizations;
-    private partitionOrgService: Organizations;
-    private partitionOrgSTS: STS;
 
-    constructor(organizationService: Organizations, organization: AwsOrganization, private readonly crossAccountConfig?: ICrossAccountConfig, partitionCredentials?: CredentialsOptions) {
-
+    constructor(organizationService: Organizations, organization: AwsOrganization, private readonly crossAccountConfig?: ICrossAccountConfig) {
         this.organizationService = organizationService;
         this.organization = organization;
-        if (partitionCredentials) {
-            this.partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
-            this.partitionOrgSTS = new STS({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
-        }
     }
 
     public async ensureSCPEnabled(): Promise<void> {
@@ -365,7 +355,7 @@ export class AwsOrganizationWriter {
             };
         }
 
-        const result = await this._createPartitionAccount(resource);
+        const result = await this._createPartitionAccount(resource, partitionWriter);
 
         let retryCountAccessDenied = 0;
         let shouldRetry = false;
@@ -405,7 +395,7 @@ export class AwsOrganizationWriter {
 
         if (previousResource?.alias !== resource.alias) {
             const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
-            const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
+            const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, (account.Type === 'PartitionAccount'));
             const alias = (account.Type === 'PartitionAccount') ? resource.partitionAlias : resource.alias;
             if (account.Alias) {
                 try {
@@ -447,7 +437,7 @@ export class AwsOrganizationWriter {
                     try {
                         const targetAccountId = this.organization.masterAccount.Id;
                         const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, targetAccountId);
-                        const support = await AwsUtil.GetSupportService(targetAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
+                        const support = await AwsUtil.GetSupportService(targetAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, (account.Type === 'PartitionAccount'));
                         const createCaseRequest: CreateCaseRequest = {
                             subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
                             communicationBody: `Hi AWS,
@@ -473,7 +463,7 @@ export class AwsOrganizationWriter {
 
         if (!passwordPolicyEquals(previousResource?.passwordPolicy, resource.passwordPolicy)) {
             const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
-            const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole);
+            const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, (account.Type === 'PartitionAccount'));
             if (account.PasswordPolicy) {
                 try {
                     await iam.deleteAccountPasswordPolicy().promise();
@@ -551,7 +541,6 @@ export class AwsOrganizationWriter {
     }
 
     private async _createAccount(resource: AccountResource): Promise<string> {
-
         return await performAndRetryIfNeeded(async () => {
             const createAccountReq: CreateAccountRequest = {
                 Email: resource.rootEmail,
@@ -576,23 +565,12 @@ export class AwsOrganizationWriter {
                 accountCreationStatus = response.CreateAccountStatus;
             }
 
-            this.organization.accounts.push({
-                Arn: `arn:aws:organizations::${this.organization.masterAccount.Id}:account/${this.organization.organization.Id}/${accountCreationStatus.AccountId}`,
-                Id: accountCreationStatus.AccountId,
-                ParentId: this.organization.roots[0].Id,
-                Policies: [],
-                Name: resource.accountName,
-                Email: resource.rootEmail,
-                Type: 'Account',
-                Tags: {},
-                SupportLevel: 'basic',
-            });
-
+            await this._pushAccount(resource, accountCreationStatus.AccountId, 'Account');
             return accountCreationStatus.AccountId;
         });
     }
 
-    private async _createPartitionAccount(resource: AccountResource): Promise<CreateAccountStatus> {
+    private async _createPartitionAccount(resource: AccountResource, partitionWriter: AwsOrganizationWriter): Promise<CreateAccountStatus> {
         return await performAndRetryIfNeeded(async () => {
             const createAccountReq: CreateAccountRequest = {
                 Email: resource.rootEmail,
@@ -618,48 +596,37 @@ export class AwsOrganizationWriter {
                 accountCreationStatus = response.CreateAccountStatus;
             }
 
-            const partitionCredentials = new Credentials(await AwsUtil.GetPartitionCredentials());
+            await this._pushAccount(resource, accountCreationStatus.AccountId, 'Account');
+            await partitionWriter._pushAccount(resource, accountCreationStatus.GovCloudAccountId, 'PartitionAccount');
 
-            if (partitionCredentials) {
-
-                const inviteParams = {
-                    Target: {
-                        Id: accountCreationStatus.GovCloudAccountId,
-                        Type: 'ACCOUNT',
-                    },
-                };
-
-                await this.partitionOrgService.inviteAccountToOrganization(inviteParams).promise();
-
-                const assumeParams = {
-                    RoleArn: `arn:aws-us-gov:iam::${accountCreationStatus.GovCloudAccountId}:role/OrganizationAccountAccessRole`,
-                    RoleSessionName: 'AssumeRoleSession',
-                };
-
-                const role = await this.partitionOrgSTS.assumeRole(assumeParams).promise();
-                const partitionAccountOrgService = new Organizations({
-                    credentials: {
-                        accessKeyId: role.Credentials.AccessKeyId,
-                        secretAccessKey: role.Credentials.SecretAccessKey,
-                        sessionToken: role.Credentials.SessionToken,
-                    },
-                    region: AwsUtil.GetPartitionRegion(),
-                }
-                );
-
-                const handshakeList = await partitionAccountOrgService.listHandshakesForAccount().promise();
-                await partitionAccountOrgService.acceptHandshake({ HandshakeId: handshakeList.Handshakes[0].Id }).promise();
-            } else {
-                ConsoleUtil.LogWarning(`partition credentials not found. You may have to manually invite ${accountCreationStatus.GovCloudAccountId} to the GovCloud organization.`);
+            try {
+                await partitionWriter._inviteToPartitionOrg(accountCreationStatus);
+            } catch (err) {
+                ConsoleUtil.LogWarning(`Error inviting account to organization. You may have to manually invite ${accountCreationStatus.GovCloudAccountId} to the GovCloud organization.`);
+                ConsoleUtil.LogWarning(err);
+                ConsoleUtil.LogWarning('Ignoring error and moving on...');
             }
-
-            await this._pushAccount(resource, accountCreationStatus.AccountId);
-
             return accountCreationStatus;
         });
     }
 
-    public async _pushAccount(resource: AccountResource, accountId: string): Promise<void> {
+    public async _inviteToPartitionOrg(accountCreationStatus: CreateAccountStatus, ): Promise<void> {
+        const inviteParams = {
+            Target: {
+                Id: accountCreationStatus.GovCloudAccountId,
+                Type: 'ACCOUNT',
+            },
+        };
+
+        await this.organizationService.inviteAccountToOrganization(inviteParams).promise();
+        const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountCreationStatus.GovCloudAccountId);
+        const org = await AwsUtil.GetOrganizationsService(accountCreationStatus.GovCloudAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, true);
+
+        const handshakeList = await org.listHandshakesForAccount().promise();
+        await org.acceptHandshake({ HandshakeId: handshakeList.Handshakes[0].Id }).promise();
+    }
+
+    public async _pushAccount(resource: AccountResource, accountId: string, type: string): Promise<void> {
         this.organization.accounts.push({
             Arn: `arn:aws:organizations::${this.organization.masterAccount.Id}:account/${this.organization.organization.Id}/${accountId}`,
             Id: accountId,
@@ -667,7 +634,7 @@ export class AwsOrganizationWriter {
             Policies: [],
             Name: resource.accountName,
             Email: resource.rootEmail,
-            Type: 'PartitionAccount',
+            Type: type,
             Tags: {},
             SupportLevel: 'basic',
         });
