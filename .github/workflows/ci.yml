@@ -13,7 +13,7 @@ jobs:
   test:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 12
@@ -37,7 +37,7 @@ jobs:
           minimum_coverage: 40
       - name: Upload Artifacts
         id: upload-artifacts
-        uses: actions/upload-artifact@v2.3.1
+        uses: actions/upload-artifact@v3
         with:
           name: artifacts
           path: coverage
