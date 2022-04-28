@@ -6,7 +6,7 @@ Each account will have its own account-id, resources and resource limits just li
 
 The Organizations Service (in the Master Account) can also be used to organize these accounts in a hierarchical structure and put restrictions and policies on specific accounts or parts of the organization hierarchy.
 
-This article will help you come up with a rationale on how to devide your workload over different AWS Accounts.
+This article will help you come up with a rationale on how to divide your workload over different AWS Accounts.
 
 ![example organization](aws-organizations/organization.png "example organization")
 
