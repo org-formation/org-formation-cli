@@ -69,13 +69,30 @@ export class AwsUtil {
                 (): AWS.Credentials => new AWS.ProcessCredentials(params),
             ]);
         }
-        const defaultProviders = CredentialProviderChain.defaultProviders;
-
-        defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
         if (partition) {
+            process.env.AWS_SDK_LOAD_CONFIG = '1';
+            console.log(await AwsUtil.partitionProfile);
+            const params: CredentialProviderOptions = { profile: await AwsUtil.partitionProfile };
+            if (process.env.AWS_SHARED_CREDENTIALS_FILE) {
+                params.filename = process.env.AWS_SHARED_CREDENTIALS_FILE;
+            }
+
+            // Setup a MFA callback to ask the code from user
+            params.tokenCodeFn = async (mfaSerial: string, callback: any): Promise<void> => {
+                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
+                callback(null, token);
+            };
             AWS.config.region = AwsUtil.GetPartitionRegion();
-            defaultProviders.splice(0, 0, (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'));
+            return await this.Initialize([
+                (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'),
+                (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
+                (): AWS.Credentials => new SingleSignOnCredentials(params),
+                (): AWS.Credentials => new AWS.ProcessCredentials(params),
+            ]);
         }
+
+        const defaultProviders = CredentialProviderChain.defaultProviders;
+        defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
 
         return await this.Initialize(defaultProviders);
     }

@@ -295,17 +295,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             ConsoleUtil.colorizeLogs = false;
         }
 
-        await AwsUtil.InitializeWithProfile(command.profile, command.isPartition);
-
-        if (command.masterAccountId !== undefined) {
-            AwsUtil.SetMasterAccountId(command.masterAccountId);
-        }
-
-        if (command.debugTemplating) {
-            NunjucksDebugSettings.debug = true;
-        }
-
-        await AwsUtil.InitializeWithCurrentPartition();
         if (command.partitionProfile !== undefined) {
             AwsUtil.SetPartitionProfile(command.partitionProfile);
             await AwsUtil.SetPartitionCredentials(command.partitionProfile);
@@ -322,6 +311,18 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (command.partitionKeys) {
             await AwsUtil.SetPartitionCredentials();
         }
+
+        await AwsUtil.InitializeWithCurrentPartition();
+        await AwsUtil.InitializeWithProfile(command.profile, command.isPartition);
+
+        if (command.masterAccountId !== undefined) {
+            AwsUtil.SetMasterAccountId(command.masterAccountId);
+        }
+
+        if (command.debugTemplating) {
+            NunjucksDebugSettings.debug = true;
+        }
+
         await AwsUtil.InitializeWithCurrentPartition();
 
         command.initialized = true;
