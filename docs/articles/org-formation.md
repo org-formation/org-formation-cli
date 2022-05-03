@@ -105,7 +105,7 @@ Any of these resources might have been created by `org-formation` or by another 
 
 ## Updating AWS Organizations resources
 
-If you have an organization.yml file that described your AWS Organization resources you can make changes to these resources and `run org-formation update organization.yml` to apply these changes to the AWS Organization in your master account.
+If you have an organization.yml file that described your AWS Organization resources you can make changes to these resources and run `org-formation update organization.yml` to apply these changes to the AWS Organization in your master account.
 
 You simply change the file and run the `org-formation update` command. e.g:
 
