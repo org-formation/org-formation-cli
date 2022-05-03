@@ -33,8 +33,8 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                 ConsoleUtil.LogWarning(`Task ${this.task.type} / ${this.task.name} is not bind to any region. Therefore, this task will not be executed.`);
             }
             for (const region of regions) {
-
-                const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.organizationLogicalName, this.logicalNamePrefix, this.task.name, accountBinding.physicalId, region);
+                const accountId = isGovCloud ? accountBinding.partitionId : accountBinding.physicalId;
+                const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.organizationLogicalName, this.logicalNamePrefix, this.task.name, accountId, region);
 
                 const binding: IPluginBinding<TTaskDefinition> = {
                     action: 'UpdateOrCreate',
@@ -42,7 +42,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                         targetType: this.task.type,
                         logicalAccountId: logicalTargetAccountName,
                         region,
-                        accountId: isGovCloud ? accountBinding.partitionId : accountBinding.physicalId,
+                        accountId,
                         definition: this.task,
                         logicalName: this.task.name,
                         logicalNamePrefix: this.logicalNamePrefix,
