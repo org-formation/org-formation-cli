@@ -312,7 +312,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             await AwsUtil.SetPartitionCredentials();
         }
 
-        await AwsUtil.InitializeWithCurrentPartition();
         await AwsUtil.InitializeWithProfile(command.profile, command.isPartition);
 
         if (command.masterAccountId !== undefined) {
