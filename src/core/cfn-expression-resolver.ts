@@ -333,7 +333,6 @@ export class CfnExpressionResolver {
         resolver.addResourceWithResolverFn('CurrentAccount', currentAccountResolverFn);
         resolver.addResourceWithResolverFn('AWSAccount', currentAccountResolverFn);
         resolver.addResourceWithResolverFn('ORG::PrincipalOrgID', () => AwsUtil.GetPrincipalOrgId());
-        resolver.addResourceWithResolverFn('ORG::PartitionOrgID', () => AwsUtil.GetPrincipalOrgId());
         resolver.addResolver((that: CfnExpressionResolver, resource: string, resourcePath: string | undefined) => CfnExpressionResolver.ResolveOrganizationExpressionByLogicalName(resource, resourcePath, organizationSection, state));
 
         resolver.addTreeResolver((that: CfnExpressionResolver, obj) => CfnExpressionResolver.ResolveCopyValueFunctions(that, accountId, region, taskRoleName, viaRoleArn, obj, finalPerform));
