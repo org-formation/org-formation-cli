@@ -42,8 +42,8 @@ export class AwsUtil {
         if (this.organization !== undefined) {
             return this.organization.Organization.Id;
         }
-
-        const organizationService = new Organizations({ region: 'us-east-1' });
+        const region = (this.isPartition) ? this.partitionRegion : 'us-east-1';
+        const organizationService = new Organizations({ region });
         this.organization = await organizationService.describeOrganization().promise();
         return this.organization.Organization.Id;
 
