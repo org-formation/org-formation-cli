@@ -4,6 +4,10 @@
 This page is here to troubleshoot access denied issues you run into when using `org-formation`. Typically this has to do with a misconfigured or missing cross-account role - by default this is `OrganizationAccountAccessRole`. org-formation also supports non-default role names by using `--cross-account-role-name` as a [command line option](https://github.com/org-formation/org-formation-cli/blob/master/docs/cli-reference.md#org-formation-init) during init or by setting the `DefaultOrganizationAccessRoleName` attribute on your `OC::ORG::OrganizationRoot`. This value can also be overwritten for every account using the `OrganizationAccessRoleName` on your `OC::ORG::Account`s. For further information see the [organization resources page](https://github.com/org-formation/org-formation-cli/blob/master/docs/organization-resources.md).
 
 
+#### I am logged in as the root user
+
+root users cannot assume IAM Roles and therefore cannot be used. Also: it is not recommended to use the root user (see also: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html)
+
 #### I just created the account using org-formation
 
 Please rerun the process: as all things AWS are eventually consistent it could be that the cross-account role (default `OrganizationAccountAccessRole`) still needs to be created.
