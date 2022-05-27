@@ -147,9 +147,9 @@ export class AwsOrganizationReader {
     }
 
     private static async listOrganizationalUnits(that: AwsOrganizationReader): Promise<AWSOrganizationalUnit[]> {
-        const roots: AWSRoot[] = await that.roots.getValue();
-        const policies: AWSPolicy[] = await that.policies.getValue();
         try {
+            const roots: AWSRoot[] = await that.roots.getValue();
+            const policies: AWSPolicy[] = await that.policies.getValue();
             const rootsIds: string[] = [];
             const result: AWSOrganizationalUnit[] = [];
             rootsIds.push(...roots.map(x => x.Id!));
@@ -207,11 +207,10 @@ export class AwsOrganizationReader {
     }
 
     private static async listAccounts(that: AwsOrganizationReader): Promise<AWSAccount[]> {
-        const roots: AWSRoot[] = await that.roots.getValue();
-        const policies: AWSPolicy[] = await that.policies.getValue();
-        const organizationalUnits: AWSOrganizationalUnit[] = await that.organizationalUnits.getValue();
-
         try {
+            const roots: AWSRoot[] = await that.roots.getValue();
+            const policies: AWSPolicy[] = await that.policies.getValue();
+            const organizationalUnits: AWSOrganizationalUnit[] = await that.organizationalUnits.getValue();
             const result: AWSAccount[] = [];
             const parentIds = organizationalUnits.map(x => x.Id);
             const rootIds = roots.map(x => x.Id);
@@ -300,7 +299,6 @@ export class AwsOrganizationReader {
                 return 'business';
             }
             return 'developer';
-            return 'test';
         } catch (err) {
             if (err.code === 'SubscriptionRequiredException') {
                 return 'basic';
