@@ -196,11 +196,13 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         let partitionOrganization: AwsOrganization;
         let partitionWriter: AwsOrganizationWriter;
         if (partitionCredentials) {
-            const partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
-            partitionReader = new AwsOrganizationReader(partitionOrgService, crossAccountConfig);
+            const partitionMasterAccountId = await AwsUtil.GetPartitionMasterAccountId();
+            const partitionCrossAccountConfig = { masterAccountId: partitionMasterAccountId, masterAccountRoleName: roleInMasterAccount };
+            const partitionOrgService = await AwsUtil.GetOrganizationsService(partitionMasterAccountId, roleInMasterAccount, null, true);
+            partitionReader = new AwsOrganizationReader(partitionOrgService, partitionCrossAccountConfig);
             partitionOrganization = new AwsOrganization(partitionReader);
             await partitionOrganization.initialize();
-            partitionWriter = new AwsOrganizationWriter(partitionOrgService, partitionOrganization, crossAccountConfig);
+            partitionWriter = new AwsOrganizationWriter(partitionOrgService, partitionOrganization, partitionCrossAccountConfig);
         }
 
         const taskProvider = new TaskProvider(template, state, awsWriter, partitionWriter);

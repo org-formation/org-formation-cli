@@ -245,16 +245,13 @@ export class AwsUtil {
 
         return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, config, roleInTargetAccount);
     }
-    public static GetGovCloudRoleArn(accountId: string, roleInTargetAccount: string): string {
-        return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
-    }
 
     public static async GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): Promise<IAM> {
         return await AwsUtil.GetOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}`, {}, roleInTargetAccount, viaRoleArn, isPartition);
     }
 
-    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string): Promise<CloudFormation> {
-        return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId, `${accountId}/${region}/${roleInTargetAccount}/${roleInTargetAccount}/${viaRoleArn}`, { region }, roleInTargetAccount, viaRoleArn);
+    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): Promise<CloudFormation> {
+        return await AwsUtil.GetOrCreateService<CloudFormation>(CloudFormation, AwsUtil.CfnServiceCache, accountId, `${accountId}/${region}/${roleInTargetAccount}/${roleInTargetAccount}/${viaRoleArn}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string, credentials: CredentialsOptions = undefined): Promise<void> {
@@ -290,8 +287,7 @@ export class AwsUtil {
     }
 
     public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<CredentialsOptions | undefined> {
-
-        const masterAccountId = (isPartition) ? await AwsUtil.GetPartitionMasterAccountId() : await AwsUtil.GetMasterAccountId();
+        const masterAccountId = await AwsUtil.GetMasterAccountId();
         const useCurrentPrincipal = (masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId));
         if (useCurrentPrincipal) {
             return undefined;
@@ -300,7 +296,7 @@ export class AwsUtil {
         try {
             let roleArn: string;
             const config: STS.ClientConfiguration = {};
-            if (viaRoleArn !== undefined) {
+            if (viaRoleArn) {
                 config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
             }
 
