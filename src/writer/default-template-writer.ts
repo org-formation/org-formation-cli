@@ -298,7 +298,7 @@ export class DefaultTemplateWriter {
         }
 
         if (account.PartitionId) {
-            lines.push(new Line('PartitionId', account.PartitionId, 6));
+            lines.push(new Line('PartitionAccountId', account.PartitionId, 6));
         }
         if (account.Tags) {
             const tags = Object.entries(account.Tags);
@@ -380,7 +380,7 @@ export class DefaultTemplateWriter {
             lines.push(new Line('Alias', masterAccount.Alias, 6));
         }
         if (masterAccount.PartitionId) {
-            lines.push(new Line('PartitionId', masterAccount.PartitionId, 6));
+            lines.push(new Line('PartitionAccountId', masterAccount.PartitionId, 6));
         }
         if (masterAccount.Tags) {
             const tags = Object.entries(masterAccount.Tags);

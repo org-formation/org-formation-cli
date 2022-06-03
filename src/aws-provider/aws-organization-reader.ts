@@ -120,8 +120,8 @@ export class AwsOrganizationReader {
     }
 
     public static async listRoots(that: AwsOrganizationReader): Promise<AWSRoot[]> {
-        const policies: AWSPolicy[] = await that.policies.getValue();
         try {
+            const policies: AWSPolicy[] = await that.policies.getValue();
             const result: AWSRoot[] = [];
             let resp: ListRootsResponse;
             const req: ListRootsRequest = {};
@@ -284,8 +284,8 @@ export class AwsOrganizationReader {
     }
 
     private static async getSupportLevelForAccount(that: AwsOrganizationReader, accountId: string): Promise<SupportLevel> {
-        await that.organization.getValue();
         try {
+            await that.organization.getValue();
             const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
             const supportService: Support = await AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 

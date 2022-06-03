@@ -10,7 +10,7 @@ import { AwsUtil, CfnUtil } from '~util/aws-util';
 import { ConsoleUtil } from '~util/console-util';
 
 const communityResourceProviderCatalog = 'community-resource-provider-catalog';
-const communityResourceProviderCatalogS3Path = 's3://' + communityResourceProviderCatalog + '/';
+const communityResourceProviderCatalogGov = 'community-resource-provider-catalog-gov';
 
 export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, IRpCommandArgs, IRpTask> {
     type = 'register-type';
@@ -80,7 +80,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     async performRemove(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver*/): Promise<void> {
-        const cfn = await AwsUtil.GetCloudFormation(binding.target.accountId, binding.target.region, binding.task.taskRoleName);
+        const cfn = await AwsUtil.GetCloudFormation(binding.target.accountId, binding.target.region, binding.task.taskRoleName, null, AwsUtil.GetIsPartition());
         let listVersionsResponse: ListTypeVersionsOutput = {};
         do {
             listVersionsResponse = await cfn.listTypeVersions({ Type: 'RESOURCE', TypeName: binding.task.resourceType, NextToken: listVersionsResponse.NextToken }).promise();
@@ -104,13 +104,15 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
             return;
         }
 
-        const cfn = await AwsUtil.GetCloudFormation(target.accountId, target.region, task.taskRoleName);
+        const catalog = this.getCatalogBucket(AwsUtil.GetIsPartition());
+
+        const cfn = await AwsUtil.GetCloudFormation(target.accountId, target.region, task.taskRoleName, task.taskViaRoleArn, AwsUtil.GetIsPartition());
 
         let roleArn = task.executionRole;
         const schemaHandlerPackage = task.schemaHandlerPackage;
 
         if (roleArn === undefined) {
-            roleArn = await this.ensureExecutionRole(cfn, schemaHandlerPackage);
+            roleArn = await this.ensureExecutionRole(cfn, schemaHandlerPackage, catalog);
         }
 
         const response = await cfn.registerType({
@@ -133,16 +135,15 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         await cfn.setTypeDefaultVersion({ Arn: registrationStatus.TypeVersionArn }).promise();
     }
 
-    private async ensureExecutionRole(cfn: CloudFormation, handlerPackageUrl: string): Promise<string> {
-
-        if (handlerPackageUrl === undefined || !handlerPackageUrl.startsWith(communityResourceProviderCatalogS3Path)) {
-            throw new OrgFormationError('Can only automatically install ExecutionRole for resource providers hosted on community-resource-provider-catalog. As a workaround, you can use the native CloudFormation resource to register the type: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudformation-resourceversion.html');
+    private async ensureExecutionRole(cfn: CloudFormation, handlerPackageUrl: string, catalog: Catalog): Promise<string> {
+        if (handlerPackageUrl === undefined || !handlerPackageUrl.startsWith(catalog.uri)) {
+            throw new OrgFormationError('Can only automatically install ExecutionRole for resource providers hosted on community-resource-provider-catalog or community-resource-provider-catalog-gov. As a workaround, you can use the native CloudFormation resource to register the type: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudformation-resourceversion.html');
         }
 
-        const { name, version } = this.getResourceRoleName(handlerPackageUrl);
+        const { name, version } = this.getResourceRoleName(handlerPackageUrl, catalog);
         const updateStackInput: UpdateStackInput = {
             StackName: name,
-            TemplateURL: `https://${communityResourceProviderCatalog}.s3.amazonaws.com/${name}-${version}.yml`,
+            TemplateURL: `${catalog.path}${name}-${version}.yml`,
             Capabilities: ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
         };
         const stacks = await CfnUtil.UpdateOrCreateStack(cfn, updateStackInput);
@@ -152,8 +153,8 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         return output.OutputValue;
     }
 
-    private getResourceRoleName(handlerPackageUrl: string): { name: string; version: string } {
-        const packageNameWithVersion = handlerPackageUrl.replace(communityResourceProviderCatalogS3Path, '').replace('.zip', '');
+    private getResourceRoleName(handlerPackageUrl: string, catalog: Catalog): { name: string; version: string } {
+        const packageNameWithVersion = handlerPackageUrl.replace(catalog.uri, '').replace('.zip', '');
         const packageNameWithVersionParts = packageNameWithVersion.split('-');
         const version = packageNameWithVersionParts[packageNameWithVersionParts.length - 1];
         const nameParts = packageNameWithVersionParts.slice(0, -1);
@@ -161,11 +162,24 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         return { name, version };
     }
 
+    private getCatalogBucket(isPartition: boolean): Catalog {
+        return {
+            bucket: (isPartition) ? communityResourceProviderCatalogGov : communityResourceProviderCatalog,
+            uri: (isPartition) ? `s3://${communityResourceProviderCatalogGov}/` : `s3://${communityResourceProviderCatalog}/`,
+            path: (isPartition) ? `https://${communityResourceProviderCatalogGov}.s3-us-gov-west-1.amazonaws.com/` : `https://${communityResourceProviderCatalog}.s3.amazonaws.com/`,
+        };
+    }
+
     appendResolvers(): Promise<void> {
         return Promise.resolve();
     }
 }
 
+interface Catalog {
+    bucket: string;
+    uri: string;
+    path: string;
+}
 
 interface IRpBuildTaskConfig extends IBuildTaskConfiguration {
     SchemaHandlerPackage: string;

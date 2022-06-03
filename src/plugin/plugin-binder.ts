@@ -21,7 +21,6 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
     }
 
     public enumBindings(): IPluginBinding<TTaskDefinition>[] {
-        const isGovCloud = AwsUtil.GetIsPartition();
         const regions = this.template.resolveNormalizedRegions(this.organizationBinding);
 
         const result: IPluginBinding<TTaskDefinition>[] = [];
@@ -34,7 +33,7 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
                 ConsoleUtil.LogWarning(`Task ${this.task.type} / ${this.task.name} is not bind to any region. Therefore, this task will not be executed.`);
             }
             for (const region of regions) {
-                const accountId = isGovCloud ? accountBinding.partitionId : accountBinding.physicalId;
+                const accountId = (AwsUtil.GetIsPartition()) ? accountBinding.partitionId : accountBinding.physicalId;
                 const existingTargetBinding = this.state.getGenericTarget<TTaskDefinition>(this.task.type, this.organizationLogicalName, this.logicalNamePrefix, this.task.name, accountId, region);
 
                 const binding: IPluginBinding<TTaskDefinition> = {
