@@ -59,7 +59,7 @@ export class TaskProvider {
                 type: resource.type,
                 logicalId: resource.logicalId,
                 action:  'Create',
-                perform: async task => {
+                perform: async (task: IBuildTask): Promise<void> => {
                     task.result = await that.partitionWriter.ensureRoot();
                 },
             };
@@ -310,7 +310,7 @@ export class TaskProvider {
                 type: resource.type,
                 logicalId: resource.logicalId,
                 action:  'Create',
-                dependentTaskFilter: task => task.action === 'Delete' && task.type === resource.type,
+                dependentTaskFilter: (task: IBuildTask): boolean => task.action === 'Delete' && task.type === resource.type,
                 perform: async (task): Promise<void> => {
                     let parentId: string;
                     if (resource.parentOULogicalName) {
