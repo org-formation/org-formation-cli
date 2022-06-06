@@ -3,7 +3,7 @@ import { existsSync, writeFileSync } from 'fs';
 import { ConsoleUtil } from '~util/console-util';
 
 describe('when org-formation perform-tasks fails', () => {
-    let response: SpawnSyncReturns<string>;
+    let response: SpawnSyncReturns<Buffer>;
 
     beforeAll(() => {
         response = spawnSync('npx', ['ts-node', 'cli', 'perform-tasks', './test/integration-tests/resources/scenario-task-that-fails/organization-tasks.yml', '--no-color', '--profile', 'org-formation-test-v2', '--print-stack']);
