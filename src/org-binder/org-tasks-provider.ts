@@ -744,7 +744,7 @@ export class TaskProvider {
                 if (mirror) {
                     task.result = await that.writer.createPartitionAccount(resource, that.partitionWriter);
                 } else {
-                    await that.writer.createAccount(resource);
+                    task.result = await that.writer.createAccount(resource);
                 }
             },
         };
