@@ -71,25 +71,23 @@ export class PluginBinder<TTaskDefinition extends IPluginTask> {
 
         const targetsInState = this.state.enumGenericTargets<TTaskDefinition>(this.task.type, this.organizationLogicalName, this.logicalNamePrefix, this.task.name);
         for (const targetToBeDeleted of targetsInState.filter(x => !result.find(y => y.target.accountId === x.accountId && y.target.region === x.region))) {
-            if (regions.indexOf(targetToBeDeleted.region) > -1) {
-                result.push({
-                    action: 'Delete',
-                    task: targetToBeDeleted.definition,
-                    target: {
-                        targetType: this.task.type,
-                        logicalAccountId: targetToBeDeleted.logicalAccountId,
-                        region: targetToBeDeleted.region,
-                        accountId: targetToBeDeleted.accountId,
-                        logicalNamePrefix: this.logicalNamePrefix,
-                        organizationLogicalName: this.organizationLogicalName,
-                        definition: targetToBeDeleted.definition,
-                        logicalName: targetToBeDeleted.definition.name,
-                        lastCommittedHash: targetToBeDeleted.definition.hash,
-                    },
-                    previousBindingLocalHash: targetToBeDeleted.lastCommittedLocalHash,
-                });
-                ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${targetToBeDeleted.accountId} to Delete`, this.task.logVerbose);
-            }
+            result.push({
+                action: 'Delete',
+                task: targetToBeDeleted.definition,
+                target: {
+                    targetType: this.task.type,
+                    logicalAccountId: targetToBeDeleted.logicalAccountId,
+                    region: targetToBeDeleted.region,
+                    accountId: targetToBeDeleted.accountId,
+                    logicalNamePrefix: this.logicalNamePrefix,
+                    organizationLogicalName: this.organizationLogicalName,
+                    definition: targetToBeDeleted.definition,
+                    logicalName: targetToBeDeleted.definition.name,
+                    lastCommittedHash: targetToBeDeleted.definition.hash,
+                },
+                previousBindingLocalHash: targetToBeDeleted.lastCommittedLocalHash,
+            });
+            ConsoleUtil.LogDebug(`Setting build action on ${this.task.type} / ${this.task.name} for ${targetToBeDeleted.accountId} to Delete`, this.task.logVerbose);
         }
         return result;
     }
