@@ -191,7 +191,7 @@ export class TaskProvider {
                     logicalId: resource.logicalId,
                     lastCommittedHash: hash,
                     physicalId: createPolicyTask.result,
-                    partitionId: createPartitionPolicyTask.result,
+                    partitionId: createPartitionPolicyTask?.result,
                 });
             },
         };
