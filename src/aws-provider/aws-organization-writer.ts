@@ -191,23 +191,24 @@ export class AwsOrganizationWriter {
     }
 
     public async moveOU(parentPhysicalId: string, childOuPhysicalId: string, mappedOUIds: Record<string, string> = {}): Promise<Record<string, string>> {
-        return await performAndRetryIfNeeded(async () => {
-            const ouList: AWSOrganizationalUnit[] = this.organization.organizationalUnits;
+        const ouList: AWSOrganizationalUnit[] = this.organization.organizationalUnits;
 
+        const organizationalUnitName = await performAndRetryIfNeeded(async () => {
             ConsoleUtil.LogDebug(`calling describe ou for child ${childOuPhysicalId}`);
 
             const childOu = await this.organizationService.describeOrganizationalUnit({ OrganizationalUnitId: childOuPhysicalId }).promise();
-            const organizationalUnitName = childOu.OrganizationalUnit.Name;
+            return childOu.OrganizationalUnit.Name;
+        });
 
+        return await performAndRetryIfNeeded(async () => {
             ConsoleUtil.LogDebug(`moving from OU named ${organizationalUnitName}, Id: ${childOuPhysicalId}`);
 
             const updateOrganizationalUnitRequest: UpdateOrganizationalUnitRequest = {
                 OrganizationalUnitId: childOuPhysicalId,
-                Name: organizationalUnitName + '-org-formation-move-source',
+                Name: organizationalUnitName + '_tmp',
             };
             await this.organizationService.updateOrganizationalUnit(updateOrganizationalUnitRequest).promise();
             ConsoleUtil.LogDebug(`renamed OU to ${updateOrganizationalUnitRequest.Name}`);
-
             const createOrganizationalUnitRequest: CreateOrganizationalUnitRequest = {
                 Name: organizationalUnitName,
                 ParentId: parentPhysicalId,

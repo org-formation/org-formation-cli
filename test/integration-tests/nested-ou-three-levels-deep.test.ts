@@ -22,28 +22,25 @@ describe('when nesting ou\'s', () => {
         orgClient = new Organizations({ region: 'us-east-1' });
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true };
 
-        try {
-            await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
-            await sleepForTest(200);
-            await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
+        await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
+        await sleepForTest(200);
+        await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
 
-            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
-            await sleepForTest(500);
-            organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
-            await organizationAfterInit.initialize();
+        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
+        await sleepForTest(500);
+        organizationAfterInit = new AwsOrganization(new AwsOrganizationReader(orgClient));
+        await organizationAfterInit.initialize();
 
-            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '5-three-levels-deep.yml'});
-            await sleepForTest(500);
-            organizationAfterThreeLevelsDeep = new AwsOrganization(new AwsOrganizationReader(orgClient));
-            await organizationAfterThreeLevelsDeep.initialize();
+        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '5-three-levels-deep.yml'});
+        await sleepForTest(500);
+        organizationAfterThreeLevelsDeep = new AwsOrganization(new AwsOrganizationReader(orgClient));
+        await organizationAfterThreeLevelsDeep.initialize();
 
-            await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '7-cleanup-organization.yml'});
-            await sleepForTest(500);
-            organizationAfterCleanup = new AwsOrganization(new AwsOrganizationReader(orgClient));
-            await organizationAfterCleanup.initialize();
-        } catch(err) {
-           // expect(err.message).toBe('');
-        }
+        await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '7-cleanup-organization.yml'});
+        await sleepForTest(500);
+        organizationAfterCleanup = new AwsOrganization(new AwsOrganizationReader(orgClient));
+        await organizationAfterCleanup.initialize();
+    
     })
 
     test('after three levels deep', async () => {

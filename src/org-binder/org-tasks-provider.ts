@@ -260,6 +260,11 @@ export class TaskProvider {
     }
 
     public createOrganizationalUnitCreateTasks(resource: OrganizationalUnitResource, hash: string, mirror?: boolean): IBuildTask[] {
+
+        const fnGetPhysicalId = (): string => {
+            return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, resource.logicalId).physicalId;
+        };
+
         const that = this;
         const tasks: IBuildTask[] = [];
         const dependency: IBuildTask[] = [];
@@ -290,17 +295,17 @@ export class TaskProvider {
         tasks.push(createOrganizationalUnitTask);
         dependency.push(createOrganizationalUnitTask);
         for (const attachedSCP of resource.serviceControlPolicies) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createOrganizationalUnitTask.result, IS_COMMERCIAL);
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, fnGetPhysicalId, IS_COMMERCIAL);
             attachSCPTask.dependentTasks = dependency;
             tasks.push(attachSCPTask);
         }
         for (const attachedAccount of resource.accounts) {
-            const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, () => createOrganizationalUnitTask.result, IS_COMMERCIAL);
+            const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, fnGetPhysicalId, IS_COMMERCIAL);
             attachAccountTask.dependentTasks = dependency;
             tasks.push(attachAccountTask);
         }
         for (const attachedOu of resource.organizationalUnits) {
-            const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, () => createOrganizationalUnitTask.result, IS_COMMERCIAL);
+            const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, fnGetPhysicalId, IS_COMMERCIAL);
             attachOuTask.dependentTasks = dependency;
             tasks.push(attachOuTask);
         }
@@ -320,13 +325,7 @@ export class TaskProvider {
                         }
                     }
                     task.result = await that.partitionWriter.createOrganizationalUnit(resource, parentId);
-                    that.state.setBinding({
-                        type: resource.type,
-                        logicalId: resource.logicalId,
-                        lastCommittedHash: hash,
-                        physicalId: createOrganizationalUnitTask.result,
-                        partitionId: task.result,
-                    });
+                    that.state.setBindingHash( resource.type, resource.logicalId, hash);
                 },
             };
             createPartitionOrganizationalUnitTask.dependentTasks = [createOrganizationalUnitTask];
@@ -334,17 +333,17 @@ export class TaskProvider {
             dependency.push(createPartitionOrganizationalUnitTask);
 
             for (const attachedSCP of resource.serviceControlPolicies) {
-                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createPartitionOrganizationalUnitTask.result, IS_PARTITION);
+                const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that,fnGetPhysicalId, IS_PARTITION);
                 attachSCPTask.dependentTasks = dependency;
                 tasks.push(attachSCPTask);
             }
             for (const attachedAccount of resource.accounts) {
-                const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, () => createPartitionOrganizationalUnitTask.result, IS_PARTITION);
+                const attachAccountTask = this.createAttachAccountTask(resource, attachedAccount, that, fnGetPhysicalId, IS_PARTITION);
                 attachAccountTask.dependentTasks = dependency;
                 tasks.push(attachAccountTask);
             }
-            for (const attachedOu of resource.organizationalUnits) {
-                const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, () => createPartitionOrganizationalUnitTask.result, IS_PARTITION);
+            for (const attachedOu of resource.organizationalUnits) {//
+                const attachOuTask = this.createAttachOrganizationalUnitTask(resource, attachedOu, that, fnGetPhysicalId, IS_PARTITION);
                 attachOuTask.dependentTasks = dependency;
                 tasks.push(attachOuTask);
             }
@@ -899,15 +898,14 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action: `Attach OU (${(childOu.TemplateResource) ? childOu.TemplateResource.logicalId : ouId})`,
             perform: async (task): Promise<void> => {
-                const binding = await that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId);
+                const binding = that.state.getBinding(OrgResourceTypes.OrganizationalUnit, childOu.TemplateResource.logicalId);
                 const childOuId = (isPartition) ? binding.partitionId : binding.physicalId;
 
                 const targetId = getTargetId();
-                const physicalIdMap: Record<string, string> = {};
+                let physicalIdMap: Record<string, string> = {};
                 try {
-                    await writer.moveOU(targetId, childOuId, physicalIdMap);
+                    physicalIdMap = await writer.moveOU(targetId, childOuId, physicalIdMap);
                 } finally {
-
                     TaskProvider.updateStateWithOuPhysicalIds(that.state, physicalIdMap, isPartition);
                 }
                 task.result = physicalIdMap;
