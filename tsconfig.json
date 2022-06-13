@@ -6,43 +6,82 @@
     "compilerOptions": {
         "allowJs": true,
         "declaration": true,
-        "noEmitOnError" : true,
+        "noEmitOnError": true,
         "noImplicitAny": true,
         "noImplicitThis": true,
         "alwaysStrict": true,
-        "outDir" : "dist",
+        "outDir": "dist",
         "module": "commonjs",
         "target": "ES2017",
         "resolveJsonModule": true,
+        "skipLibCheck": true,
         "esModuleInterop": true,
         "sourceMap": true,
         "baseUrl": ".",
         "paths": {
-            "~aws-provider/*": ["src/aws-provider/*"],
-            "~build-tasks/*": ["src/build-tasks/*"],
-            "~cfn-binder/*": ["src/cfn-binder/*"],
-            "~change-set/*": ["src/change-set/*"],
-            "~commands/*": ["src/commands/*"],
-            "~core/*": ["src/core/*"],
-            "~org-binder/*": ["src/org-binder/*"],
-            "~parser/*": ["src/parser/*"],
-            "~state/*": ["src/state/*"],
-            "~writer/*": ["src/writer/*"],
-            "~sls-com/*": ["src/sls-com/*"],
-            "~plugin/*": ["src/plugin/*"],
-            "~util/*": ["src/util/*"],
-            "~yaml-cfn/*": ["src/yaml-cfn/*"],
-            "~org-formation-error": ["src/org-formation-error"]
+            "~aws-provider/*": [
+                "src/aws-provider/*"
+            ],
+            "~build-tasks/*": [
+                "src/build-tasks/*"
+            ],
+            "~cfn-binder/*": [
+                "src/cfn-binder/*"
+            ],
+            "~change-set/*": [
+                "src/change-set/*"
+            ],
+            "~commands/*": [
+                "src/commands/*"
+            ],
+            "~core/*": [
+                "src/core/*"
+            ],
+            "~org-binder/*": [
+                "src/org-binder/*"
+            ],
+            "~parser/*": [
+                "src/parser/*"
+            ],
+            "~state/*": [
+                "src/state/*"
+            ],
+            "~writer/*": [
+                "src/writer/*"
+            ],
+            "~sls-com/*": [
+                "src/sls-com/*"
+            ],
+            "~plugin/*": [
+                "src/plugin/*"
+            ],
+            "~util/*": [
+                "src/util/*"
+            ],
+            "~yaml-cfn/*": [
+                "src/yaml-cfn/*"
+            ],
+            "~org-formation-error": [
+                "src/org-formation-error"
+            ]
         },
         "plugins": [
             {
                 "transform": "@zerollup/ts-transform-paths",
-                "exclude": [ "*" ]
+                "exclude": [
+                    "*"
+                ]
             }
         ]
     },
-    "include": [ "src/**/*", "*.ts"],
-    "exclude": [ "node_modules", "dist"],
+    "include": [
+        "src/**/*",
+        "*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ],
     "typeRoots": [
         "node_modules/@types"
     ],
