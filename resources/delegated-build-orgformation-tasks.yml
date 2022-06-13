@@ -51,4 +51,4 @@ OrganizationFormationRole:
   Parameters:
     assumeRolePrincipal:  !Ref XXX-buildAccountLogicalName # you could tighten this up with: !CopyValue [XXX-stackName-role-id, !Ref XXX-buildAccountLogicalName, !Ref primaryRegion]
   TaskRoleName: !GetAtt CurrentAccount.OrganizationAccessRoleName
-  TaskViaRoleArn: !Sub 'arn:aws:iam::${MasterAccount}:role/XXX-organizationFormationBuildAccessRoleName'
+  TaskViaRoleArn: !Sub 'arn:aws:iam::${ManagementAccount}:role/XXX-organizationFormationBuildAccessRoleName'
