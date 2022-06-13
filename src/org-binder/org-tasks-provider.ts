@@ -325,7 +325,13 @@ export class TaskProvider {
                         }
                     }
                     task.result = await that.partitionWriter.createOrganizationalUnit(resource, parentId);
-                    that.state.setBindingHash( resource.type, resource.logicalId, hash);
+                    that.state.setBinding({
+                        type: resource.type,
+                        logicalId: resource.logicalId,
+                        lastCommittedHash: hash,
+                        physicalId: fnGetPhysicalId(),
+                        partitionId: task.result,
+                    });
                 },
             };
             createPartitionOrganizationalUnitTask.dependentTasks = [createOrganizationalUnitTask];
