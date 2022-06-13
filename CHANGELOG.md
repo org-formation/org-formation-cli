@@ -2,6 +2,13 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
+**unreleased changes**
+- feat: AWS GovCloud (US) support (using --partition flags)
+- fix: invalid CRC checksum on zipfile when running init-pipeline
+- feat: support for up to 4000 AWS Accounts within an organization
+- fix: caching of exported values, therefore improving performance and avoiding rate limiting errors 
+- fix: template support for --print-tasks
+
 **version 0.9.19**
 - fix: unable to package the initial commit when running init-pipeline.
 
