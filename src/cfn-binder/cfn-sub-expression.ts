@@ -68,5 +68,5 @@ export class SubExpression {
 export interface ISubExpressionVariable {
     resource: string;
     path?: string;
-    replace(replacement: string): void;
+    replace(replacement: string | boolean): void;
 }

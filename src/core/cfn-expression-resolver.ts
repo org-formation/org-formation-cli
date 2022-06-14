@@ -21,7 +21,7 @@ interface ITreeResolver<T> {
 
 
 export class CfnExpressionResolver {
-    readonly parameters: Record<string, string> = {};
+    readonly parameters: Record<string, string | boolean> = {};
     readonly bindings: Record<string, IOrganizationBinding> = {};
     readonly resolvers: Record<string, IResolver> = {};
     readonly globalResolvers: IResolver[] = [];
@@ -50,7 +50,7 @@ export class CfnExpressionResolver {
         this.filePath = filePath;
     }
 
-    addParameter(key: string, value: string): void {
+    addParameter(key: string, value: string | boolean): void {
         this.parameters[key] = value;
     }
 
