@@ -324,8 +324,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             NunjucksDebugSettings.debug = true;
         }
 
-        await AwsUtil.InitializeWithCurrentPartition();
-        await AwsUtil.SetEnabledRegions();
+        await Promise.all([AwsUtil.InitializeWithCurrentPartition(), AwsUtil.SetEnabledRegions()]);
 
         command.initialized = true;
     }
