@@ -257,7 +257,7 @@ describe('when setting binding physical id', () => {
     beforeEach(() => {
         state = PersistedState.CreateEmpty('123123123123');
 
-        state.setBindingPhysicalId('myType', 'logical-id-1', 'physical-id-2');
+        state.setBinding({'type': 'myType', 'logicalId': 'logical-id-1', 'lastCommittedHash': '', 'physicalId': 'physical-id-2'});
     });
 
 
@@ -266,11 +266,6 @@ describe('when setting binding physical id', () => {
         expect(binding).toBeDefined();
         expect(binding.physicalId).toBe('physical-id-2')
     })
-
-    test('put binding has undefined hash', () => {
-        const binding = state.getBinding('myType', 'logical-id-1');
-        expect(binding.lastCommittedHash).toBeUndefined();
-    });
 });
 
 describe('when overwriting binding physical id', () => {
@@ -286,7 +281,7 @@ describe('when overwriting binding physical id', () => {
         });
 
 
-        state.setBindingPhysicalId('myType', 'logical-id-1', 'physical-id-2');
+        state.setBinding({'type': 'myType', 'logicalId': 'logical-id-1', 'lastCommittedHash': '', 'physicalId': 'physical-id-2'});
     });
 
 
@@ -295,11 +290,6 @@ describe('when overwriting binding physical id', () => {
         expect(binding).toBeDefined();
         expect(binding.physicalId).toBe('physical-id-2')
     })
-
-    test('binding keeps hash', () => {
-        const binding = state.getBinding('myType', 'logical-id-1');
-        expect(binding.lastCommittedHash).toBe('23123');
-    });
 });
 
 describe('when overwriting binding hash', () => {

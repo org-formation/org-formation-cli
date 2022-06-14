@@ -7,6 +7,7 @@ import { PluginBinder } from '~plugin/plugin-binder';
 import { DefaultTaskRunner } from '~core/default-task-runner';
 import { ConsoleUtil } from '~util/console-util';
 import { GlobalState } from '~util/global-state';
+import { AwsUtil } from '~util/aws-util'
 
 describe('when creating cleanup command', () => {
     let command: RemoveCommand;
@@ -26,8 +27,8 @@ describe('when creating cleanup command', () => {
     });
 
     test('cleanup command has description', () => {
-       expect(subCommanderCommand).toBeDefined();
-       expect(subCommanderCommand.description()).toBeDefined();
+        expect(subCommanderCommand).toBeDefined();
+        expect(subCommanderCommand.description()).toBeDefined();
     });
 
     test('command has state bucket parameter with correct default', () => {
@@ -65,6 +66,7 @@ describe('when executing cleanup command', () => {
         appendResolvers: jest.fn(),
         performRemove: jest.fn(),
     } as any;
+    let enabledRegions: jest.SpyInstance;
     let enumBindingsStub: jest.SpyInstance;
     let consoleInfo: jest.SpyInstance;
 
@@ -94,6 +96,9 @@ describe('when executing cleanup command', () => {
 
         getPluginStub = jest.spyOn(PluginProvider, 'GetPlugin')
                             .mockReturnValue(mockPlugin);
+
+        enabledRegions = jest.spyOn(AwsUtil, 'GetEnabledRegions')
+                            .mockReturnValue(['eu-central-1'])
 
         enumBindingsStub = jest.spyOn(PluginBinder.prototype, 'enumBindings');
 

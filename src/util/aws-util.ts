@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 // import { inspect } from 'util'; // or directly
-import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations, EnvironmentCredentials } from 'aws-sdk';
+import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations, EnvironmentCredentials, EC2 } from 'aws-sdk';
 import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
@@ -47,6 +47,17 @@ export class AwsUtil {
         this.organization = await organizationService.describeOrganization().promise();
         return this.organization.Organization.Id;
 
+    }
+
+    public static async SetEnabledRegions(): Promise<void> {
+        const region = (this.isPartition) ? this.partitionRegion : 'us-east-1';
+        const ec2Client = new EC2({ region });
+        const enabledRegions = await ec2Client.describeRegions().promise();
+        this.enabledRegions = enabledRegions.Regions.map(output => output.RegionName);
+    }
+
+    public static GetEnabledRegions(): string[] {
+        return AwsUtil.enabledRegions;
     }
 
     public static async InitializeWithProfile(profile?: string, partition?: boolean): Promise<AWS.Credentials> {
@@ -406,6 +417,7 @@ export class AwsUtil {
     private static S3ServiceCache: Record<string, S3> = {};
     private static CfnExportsCache: Record<string, string> = {};
     private static isPartition = false;
+    private static enabledRegions: string[];
 }
 
 export const passwordPolicyEquals = (pwdPolicyResourceA: Reference<PasswordPolicyResource>, pwdPolicyResourceB: Reference<PasswordPolicyResource>): boolean => {

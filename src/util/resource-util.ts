@@ -192,7 +192,7 @@ interface IResourceExpression {
     resource: string;
     path?: string;
     rewriteExpression(resource: string, path?: string): void;
-    resolveToValue(val: string): void;
+    resolveToValue(val: string | boolean): void;
 }
 
 export interface ICfnFunctionExpression {

@@ -497,28 +497,6 @@ export class PersistedState {
         this.dirty = true;
     }
 
-    public setBindingPhysicalId(type: string, logicalId: string, physicalId: string, partitionId?: string | undefined): void {
-        if (this.organizationLevelState === false) {
-            this.organizationState.setBindingHash(type, logicalId, physicalId);
-            return;
-        }
-        if (this.readonly) {
-            throw new OrgFormationError('attempt to modify to read-only organization level state');
-        }
-        let typeDict: Record<string, IBinding> = this.state.bindings[type];
-        if (!typeDict) {
-            typeDict = this.state.bindings[type] = {};
-        }
-
-        const current = typeDict[logicalId];
-        if (current === undefined) {
-            typeDict[logicalId] = { physicalId, logicalId, type, partitionId } as IBinding;
-        } else {
-            current.physicalId = physicalId;
-        }
-        this.dirty = true;
-    }
-
     public removeBinding(binding: IBinding): void {
         if (this.organizationLevelState === false) {
             this.organizationState.removeBinding(binding);

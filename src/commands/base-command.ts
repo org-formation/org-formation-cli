@@ -325,6 +325,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
 
         await AwsUtil.InitializeWithCurrentPartition();
+        await AwsUtil.SetEnabledRegions();
 
         command.initialized = true;
     }

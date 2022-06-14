@@ -9,6 +9,7 @@ import { TemplateRoot } from '~parser/parser';
 import { ICfnTarget, PersistedState } from '~state/persisted-state';
 import { ICfnCopyValue, ICfnExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
+import { AwsUtil } from '~util/aws-util';
 
 export class CloudFormationBinder {
     private readonly masterAccount: string;
@@ -174,24 +175,25 @@ export class CloudFormationBinder {
             const accountId = storedTarget.accountId;
             const region = storedTarget.region;
             const stackName = storedTarget.stackName;
-            if (!targetsInTemplate.find(element => element.accountId === accountId && element.region === region && element.stackName === stackName)) {
-                result.push({
-                    accountId,
-                    region,
-                    stackName,
-                    customViaRoleArn: storedTarget.customViaRoleArn,
-                    customRoleName: storedTarget.customRoleName,
-                    cloudFormationRoleName: storedTarget.cloudFormationRoleName,
-                    templateHash: 'deleted',
-                    action: 'Delete',
-                    state: storedTarget,
-                    dependencies: [],
-                    dependents: [],
-                    regionDependencies: [],
-                    accountDependencies: [],
-                } as ICfnBinding);
+            if (!targetsInTemplate.find(element => element.accountId === accountId && element.region === region && element.stackName === stackName)
+                && AwsUtil.GetEnabledRegions().indexOf(region) > -1) {
+                    result.push({
+                        accountId,
+                        region,
+                        stackName,
+                        customViaRoleArn: storedTarget.customViaRoleArn,
+                        customRoleName: storedTarget.customRoleName,
+                        cloudFormationRoleName: storedTarget.cloudFormationRoleName,
+                        templateHash: 'deleted',
+                        action: 'Delete',
+                        state: storedTarget,
+                        dependencies: [],
+                        dependents: [],
+                        regionDependencies: [],
+                        accountDependencies: [],
+                    } as ICfnBinding);
 
-                ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to Delete - target found in state but not in binding.`, this.logVerbose);
+                    ConsoleUtil.LogDebug(`Setting build action on stack ${stackName} for ${accountId}/${region} to Delete - target found in state but not in binding.`, this.logVerbose);
             }
         }
         return result;
