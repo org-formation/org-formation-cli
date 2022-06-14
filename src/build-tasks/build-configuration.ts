@@ -224,8 +224,8 @@ export class BuildConfiguration {
         this.resolver.addMappings(this.mappings);
         this.resolver.setFilePath(filePath);
         this.resolver.addParameter('AWS::Partition', AwsUtil.partition);
-        this.resolver.addParameter('IsPartition', AwsUtil.GetIsPartition());
-        this.resolver.addParameter('IsNotPartition', !AwsUtil.GetIsPartition());
+        this.resolver.addParameter('ORG::IsPartition', AwsUtil.GetIsPartition());
+        this.resolver.addParameter('ORG::IsCommercial', !AwsUtil.GetIsPartition());
         const resolvedContents = this.resolver.resolveFirstPass(buildFile);
 
         const result: IBuildTaskConfiguration[] = [];
