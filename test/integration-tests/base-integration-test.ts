@@ -18,7 +18,7 @@ export const baseBeforeAll = async (profileName: string = profileForIntegrationT
     process.on('unhandledRejection', error => {
         // Will print "unhandledRejection err is not defined"
         expect(`${error}`).toBeUndefined();
-      });
+    });
 
     //const logDebugMock = jest.spyOn(ConsoleUtil, 'LogDebug').mockImplementation();
     const logInfoMock = jest.spyOn(ConsoleUtil, 'LogInfo').mockImplementation();
@@ -28,6 +28,7 @@ export const baseBeforeAll = async (profileName: string = profileForIntegrationT
         () => new EnvironmentCredentials(environmentCredentials),
         () => new SharedIniFileCredentials({ profile: profileName }),
     ]);
+    await AwsUtil.SetEnabledRegions();
 
 
     const stateBucketName = `${v4()}`;
