@@ -82,7 +82,6 @@ export class AwsUtil {
         }
         if (partition) {
             process.env.AWS_SDK_LOAD_CONFIG = '1';
-            console.log(await AwsUtil.partitionProfile);
             const params: CredentialProviderOptions = { profile: await AwsUtil.partitionProfile };
             if (process.env.AWS_SHARED_CREDENTIALS_FILE) {
                 params.filename = process.env.AWS_SHARED_CREDENTIALS_FILE;
@@ -233,11 +232,13 @@ export class AwsUtil {
 
 
     public static async GetOrganizationsService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<Organizations> {
-        return await AwsUtil.GetOrCreateService<Organizations>(Organizations, AwsUtil.OrganizationsServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region: 'us-east-1' }, roleInTargetAccount, viaRoleArn, isPartition);
+        const region = (isPartition) ? this.partitionRegion : 'us-east-1';
+        return await AwsUtil.GetOrCreateService<Organizations>(Organizations, AwsUtil.OrganizationsServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
     }
 
     public static async GetSupportService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<Support> {
-        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region: 'us-east-1' }, roleInTargetAccount, viaRoleArn, isPartition);
+        const region = (isPartition) ? this.partitionRegion : 'us-east-1';
+        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
     }
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
@@ -286,7 +287,7 @@ export class AwsUtil {
         const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn, isPartition);
         if (credentialOptions !== undefined) {
             config.credentials = credentialOptions;
-            if (isPartition) {
+            if (isPartition && !config.region) {
                 config.region = this.partitionRegion;
             }
         }
