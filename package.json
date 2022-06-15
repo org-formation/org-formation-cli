@@ -1,6 +1,6 @@
 {
   "name": "aws-organization-formation",
-  "version": "0.9.20-beta.4",
+  "version": "1.0.0",
   "description": "Infrastructure as code solution for AWS Organizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
