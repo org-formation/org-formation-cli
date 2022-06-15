@@ -2,8 +2,8 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
-**unreleased changes**
-- feat: AWS GovCloud (US) support (using --partition flags)
+**version  1.0.0**
+- feat: AWS GovCloud (US) support (using --partition flags). AWS organizations from the commercial partition will be mirrored to a non-commercial partition e.g. AWS GovCloud (US).
 - fix: invalid CRC checksum on zipfile when running init-pipeline
 - feat: support for up to 4000 AWS Accounts within an organization
 - fix: caching of exported values, therefore improving performance and avoiding rate limiting errors 
