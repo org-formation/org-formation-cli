@@ -27,7 +27,6 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
         command.option('--stack-name <stack-name>', 'name of the stack that will be deleted');
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks after which execution stops', 0);
-
     }
 
     public async performCommand(command: IDeleteStackCommandArgs): Promise<void> {
@@ -37,6 +36,11 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
         const stackName = command.stackName;
 
         const state = await this.getState(command);
+        const previousTemplate = state.getPreviousTemplate();
+        if (!previousTemplate) {
+            ConsoleUtil.LogWarning('no previous organization template found in state, unable to clean up tasks');
+            return;
+        }
         const orgTemplate = JSON.parse(state.getPreviousTemplate()) as ITemplate;
         delete orgTemplate.Resources;
         const emptyTemplate = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
