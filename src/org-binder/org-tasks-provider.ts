@@ -42,7 +42,6 @@ export class TaskProvider {
     public createRootCreateTasks(resource: OrganizationRootResource, hash: string, mirror?: boolean): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
-        let partitionId: string;
         let createPartitionOrganizationRootTask: IBuildTask;
         const createOrganizationRootTask: IBuildTask = {
             type: resource.type,
@@ -53,7 +52,6 @@ export class TaskProvider {
             },
         };
         tasks.push(createOrganizationRootTask);
-        const physicalId = createOrganizationRootTask.result;
         if (mirror) {
             createPartitionOrganizationRootTask = {
                 type: resource.type,
@@ -64,15 +62,14 @@ export class TaskProvider {
                 },
             };
             tasks.push(createPartitionOrganizationRootTask);
-            partitionId = createPartitionOrganizationRootTask.result;
         }
 
         for (const attachedSCP of resource.serviceControlPolicies) {
-            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => physicalId, IS_COMMERCIAL);
+            const attachSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createOrganizationRootTask.result, IS_COMMERCIAL);
             attachSCPTask.dependentTasks = [createOrganizationRootTask];
             tasks.push(attachSCPTask);
             if (mirror) {
-                const attachPartitionSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => partitionId, IS_PARTITION);
+                const attachPartitionSCPTask: IBuildTask = this.createAttachSCPTask(resource, attachedSCP, that, () => createPartitionOrganizationRootTask.result, IS_PARTITION);
                 attachPartitionSCPTask.dependentTasks = [createPartitionOrganizationRootTask];
                 tasks.push(attachPartitionSCPTask);
             }
@@ -88,8 +85,8 @@ export class TaskProvider {
                     type: resource.type,
                     logicalId: resource.logicalId,
                     lastCommittedHash: hash,
-                    physicalId,
-                    partitionId,
+                    physicalId: createOrganizationRootTask.result,
+                    partitionId: createPartitionOrganizationRootTask.result,
                 });
             },
         };
