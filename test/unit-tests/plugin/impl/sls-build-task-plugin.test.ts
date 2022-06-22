@@ -68,6 +68,10 @@ describe('when validating task', () => {
             OrganizationBinding: { IncludeMasterAccount: true}},
             { organizationFile: './organization.yml'} as any);
     });
+
+    test('test') {
+        expect(commandArgs).toBeDefined();
+    }
 });
 
 
