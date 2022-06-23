@@ -2,6 +2,11 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
+**version 1.0.1**
+- fix: ExcludeOrganizationalUnit throws a validation error.
+- fix: No targetId when attaching scp to root
+- chore: update runtime deps
+
 **version  1.0.0**
 - feat: AWS GovCloud (US) support (using --partition flags). AWS organizations from the commercial partition will be mirrored to a non-commercial partition e.g. AWS GovCloud (US).
 - fix: invalid CRC checksum on zipfile when running init-pipeline
