@@ -189,6 +189,10 @@ export class CfnTemplate {
         if (this.templateRoot.contents.Transform) {
             this.resultingTemplate.Transform = this.templateRoot.contents.Transform;
         }
+
+        if (this.templateRoot.contents.Rules) {
+            this.resultingTemplate.Rules = this.templateRoot.contents.Rules;
+        }
     }
 
     public listDependencies(binding: ICfnBinding, others: ICfnBinding[]): ICfnCrossAccountDependency[] {
