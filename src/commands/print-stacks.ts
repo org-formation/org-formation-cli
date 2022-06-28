@@ -49,7 +49,8 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         const state = await this.getState(command);
         GlobalState.Init(state, template);
         const parameters = this.parseCfnParameters(command.parameters);
-        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, undefined, undefined, undefined, undefined, undefined, undefined, false, undefined, command.resolver);
+        const taskRoleName = command.taskRoleName;
+        const cfnBinder = new CloudFormationBinder(command.stackName, template, state, parameters, undefined, undefined, taskRoleName, undefined, undefined, undefined, false, undefined, command.resolver);
 
         const bindings = await cfnBinder.enumBindings();
         for (const binding of bindings) {
@@ -117,4 +118,5 @@ export interface IPrintStacksCommandArgs extends ICommandArgs {
     printParameters?: boolean;
     parameters?: string | {};
     output?: 'json' | 'yaml';
+    taskRoleName?: string;
 }
