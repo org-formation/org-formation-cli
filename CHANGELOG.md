@@ -2,6 +2,10 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
+**version 1.0.2**
+- feat: support top-level rules in template
+- fix: honour taskRoleName when printing tasks
+
 **version 1.0.1**
 - fix: ExcludeOrganizationalUnit throws a validation error.
 - fix: No targetId when attaching scp to root
