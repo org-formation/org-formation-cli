@@ -2,6 +2,9 @@
 
 All notable changes to aws organization formation will be documented in this file.
 
+**BREAKING CHANGES**:
+- v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
+
 **version 1.0.2**
 - feat: support top-level rules in template
 - fix: honour taskRoleName when printing tasks
