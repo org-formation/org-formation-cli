@@ -1,0 +1,7 @@
+
+AnotherAccount:
+  Type: OC::ORG::Account
+  Properties:
+    AccountName: Users Account
+    AccountId: '549476213961'
+    RootEmail: account+users@olafconijn.awsapps.com
