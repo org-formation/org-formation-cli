@@ -212,3 +212,76 @@ describe('when updating account', () => {
 
     });
 });
+
+describe('when deleting an account', () => {
+    let organizationService: AWS.Organizations;
+    let organizationModel: AwsOrganization;
+    let writer: AwsOrganizationWriter;
+    let closeAccountSpy: jest.SpyInstance;
+    let logWarningSpy: jest.SpyInstance;
+    const accountId = '123456789012';
+
+    beforeEach(async () => {
+        AWSMock.mock('Organizations', 'closeAccount', (params: any, callback: any) => { callback(null, {}); });
+
+        organizationService = new AWS.Organizations();
+        organizationModel = TestOrganizations.createBasicOrganization();
+
+        closeAccountSpy = jest.spyOn(organizationService, 'closeAccount');
+
+        logWarningSpy = jest.spyOn(ConsoleUtil, 'LogWarning')
+                            .mockImplementation(() => {});
+
+        writer = new AwsOrganizationWriter(organizationService, organizationModel);
+        await writer.closeAccount(accountId);
+    });
+
+    afterEach(() => {
+        AWSMock.restore();
+        jest.restoreAllMocks();
+    });
+
+    test('organization closes account is called', () => {
+        expect(closeAccountSpy).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('when deleting an account that does not exists', () => {
+    let organizationService: AWS.Organizations;
+    let organizationModel: AwsOrganization;
+    let writer: AwsOrganizationWriter;
+    let closeAccountSpy: jest.SpyInstance;
+    let logWarningSpy: jest.SpyInstance;
+    const notExistingAccountId = '123456789013';
+
+    beforeEach(async () => {
+        AWSMock.mock('Organizations', 'closeAccount', (params: any, callback: any) => { callback(null, {}); });
+
+        organizationService = new AWS.Organizations();
+        organizationModel = TestOrganizations.createBasicOrganization();
+
+        closeAccountSpy = jest.spyOn(organizationService, 'closeAccount');
+
+        logWarningSpy = jest.spyOn(ConsoleUtil, 'LogWarning')
+                            .mockImplementation(() => {});
+
+        writer = new AwsOrganizationWriter(organizationService, organizationModel);
+        await writer.closeAccount(notExistingAccountId);
+    });
+
+    afterEach(() => {
+        AWSMock.restore();
+        jest.restoreAllMocks();
+    });
+
+    test('organization closes is not called', () => {
+        expect(closeAccountSpy).toHaveBeenCalledTimes(0);
+    });
+
+    test('warning is logged instead', () => {
+        expect(logWarningSpy).toHaveBeenCalledTimes(1);
+        const message = logWarningSpy.mock.calls[0][0];
+        expect(message).toEqual(expect.stringContaining(notExistingAccountId));
+        expect(message).toEqual(expect.stringContaining("can't delete account"));
+    })
+});
