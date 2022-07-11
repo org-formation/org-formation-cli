@@ -1,6 +1,6 @@
 import * as AWS from 'aws-sdk';
 import * as AWSMock from 'aws-sdk-mock';
-import { CreateAccountRequest, TagResourceRequest, UntagResourceRequest } from 'aws-sdk/clients/organizations';
+import { CloseAccountRequest, CreateAccountRequest, TagResourceRequest, UntagResourceRequest } from 'aws-sdk/clients/organizations';
 import { AwsEvents } from '~aws-provider/aws-events';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
@@ -218,16 +218,19 @@ describe('when deleting an account', () => {
     let organizationModel: AwsOrganization;
     let writer: AwsOrganizationWriter;
     let closeAccountSpy: jest.SpyInstance;
+    let describeAccountSpy: jest.SpyInstance;
     let logWarningSpy: jest.SpyInstance;
     const accountId = '123456789012';
 
     beforeEach(async () => {
         AWSMock.mock('Organizations', 'closeAccount', (params: any, callback: any) => { callback(null, {}); });
+        AWSMock.mock('Organizations', 'describeAccount', (params: any, callback: any) => { callback(null, {Account: { Status: 'SUSPENDED' }}); });
 
         organizationService = new AWS.Organizations();
         organizationModel = TestOrganizations.createBasicOrganization();
 
         closeAccountSpy = jest.spyOn(organizationService, 'closeAccount');
+        describeAccountSpy = jest.spyOn(organizationService, 'describeAccount');
 
         logWarningSpy = jest.spyOn(ConsoleUtil, 'LogWarning')
                             .mockImplementation(() => {});
@@ -241,8 +244,17 @@ describe('when deleting an account', () => {
         jest.restoreAllMocks();
     });
 
-    test('organization closes account is called', () => {
+    test('organization close account is called', () => {
         expect(closeAccountSpy).toHaveBeenCalledTimes(1);
+    });
+
+    test('organization close account was passed the right arguments', () => {
+        const args: CloseAccountRequest = closeAccountSpy.mock.calls[0][0];
+        expect(args.AccountId).toBe(accountId);
+    });
+
+    test('organization describe account is called', () => {
+        expect(describeAccountSpy).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -274,7 +286,7 @@ describe('when deleting an account that does not exists', () => {
         jest.restoreAllMocks();
     });
 
-    test('organization closes is not called', () => {
+    test('organization close account is not called', () => {
         expect(closeAccountSpy).toHaveBeenCalledTimes(0);
     });
 
