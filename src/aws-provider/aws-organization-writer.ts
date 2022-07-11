@@ -522,7 +522,7 @@ export class AwsOrganizationWriter {
         return await performAndRetryIfNeeded(async () => {
             const existingAccount = this.organization.accounts.find(x => x.Id === physicalId);
             if (existingAccount === undefined) {
-                ConsoleUtil.LogDebug(`can't delete account ${physicalId} not found.`);
+                ConsoleUtil.LogWarning(`Error, can't delete account ${physicalId}, account not found.`);
                 return;
             }
 
