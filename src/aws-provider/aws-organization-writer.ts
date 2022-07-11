@@ -1,5 +1,5 @@
 import { Organizations } from 'aws-sdk/clients/all';
-import { AttachPolicyRequest, CreateAccountRequest, CreateAccountStatus, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest, CloseAccountRequest } from 'aws-sdk/clients/organizations';
+import { AttachPolicyRequest, CreateAccountRequest, CreateAccountStatus, CreateOrganizationalUnitRequest, CreatePolicyRequest, DeleteOrganizationalUnitRequest, DeletePolicyRequest, DescribeCreateAccountStatusRequest, DetachPolicyRequest, EnablePolicyTypeRequest, ListAccountsForParentRequest, ListAccountsForParentResponse, ListOrganizationalUnitsForParentRequest, ListOrganizationalUnitsForParentResponse, ListPoliciesForTargetRequest, ListPoliciesForTargetResponse, MoveAccountRequest, Tag, TagResourceRequest, UntagResourceRequest, UpdateOrganizationalUnitRequest, UpdatePolicyRequest, CloseAccountRequest, DescribeAccountRequest, Account } from 'aws-sdk/clients/organizations';
 import { CreateCaseRequest } from 'aws-sdk/clients/support';
 import { AwsUtil, passwordPolicyEquals } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
@@ -530,6 +530,18 @@ export class AwsOrganizationWriter {
                 AccountId: physicalId,
             };
             await this.organizationService.closeAccount(closeAccountRequest).promise();
+            let account: Account = { Status: 'PENDING_CLOSURE' };
+            while (account.Status !== 'SUSPENDED') {
+                if (account.Status === 'ACTIVE') {
+                    throw new OrgFormationError('deleting account failed');
+                }
+                const describeAccountStatusReq: DescribeAccountRequest = {
+                    AccountId: physicalId,
+                };
+                await sleep(1000);
+                const response = await this.organizationService.describeAccount(describeAccountStatusReq).promise();
+                account = response.Account;
+            }
         });
     }
 
