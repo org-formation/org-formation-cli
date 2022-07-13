@@ -26,7 +26,15 @@ export class TaskRunner {
                 await task.perform(task);
                 task.done = true;
                 if (task.result) {
+                    if ('PhysicalId' in task.result) {
+                        line += ` (${task.result.PhysicalId})`;
+                    } else if ('commercial' in task.result) {
+                        if (task.result.commercial !== undefined) {
+                         line += ` (${task.result.commercial})`;
+                        }
+                    } else if (typeof task.result !== 'object'){
                     line += ` (${task.result})`;
+                    }
                 }
 
                 ConsoleUtil.Out(line);
