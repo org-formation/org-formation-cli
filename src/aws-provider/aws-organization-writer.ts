@@ -343,7 +343,7 @@ export class AwsOrganizationWriter {
 
     public async createPartitionAccount(resource: AccountResource, partitionWriter: AwsOrganizationWriter): Promise<PartitionCreateResponse> {
 
-        const account: AWSAccount = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === resource.accountId);
+        const account: AWSAccount = [...this.organization.accounts, this.organization.masterAccount].find(x => x.Id === resource.accountId || x.Email === resource.rootEmail);
         if (account !== undefined) {
             const partitionAccount = (await partitionWriter._listAccounts()).find(x => x.Email === account.Email);
             await this.updateAccount(resource, account.Id);
