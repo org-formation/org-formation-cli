@@ -416,10 +416,11 @@ export class CfnTemplate {
 
                 if (val !== null && typeof val === 'string') {
                     if (val.startsWith('Fn::EnumTargetAccounts ')) {
-                        const result = this.resolveEnumExpression('EnumTargetAccounts', val, 'account');
+                        const accountParams: string[] = ['account', 'AccountId', 'LogicalId', 'AccountName', 'Alias', 'RootEmail', 'Tags'];
+                        const result = this.resolveEnumExpression('EnumTargetAccounts', val, accountParams);
                         resource = CfnTemplate.replaceEnumExpressionWithResults(resource, key, val, result);
                     } else if (val.startsWith('Fn::EnumTargetRegions')) {
-                        const result = this.resolveEnumExpression('EnumTargetRegions', val, 'region');
+                        const result = this.resolveEnumExpression('EnumTargetRegions', val, ['region']);
                         resource = CfnTemplate.replaceEnumExpressionWithResults(resource, key, val, result);
                     } else if (val.startsWith('Fn:TargetCount')) {
                         ConsoleUtil.LogWarning('expression references Fn::TargetCount with 1 colon (:) instead of two.');
@@ -493,7 +494,7 @@ export class CfnTemplate {
         return numRegions * numTemplates;
 
     }
-    private resolveEnumExpression(which: 'EnumTargetAccounts' | 'EnumTargetRegions', val: string, replacementParameter: string): any[] {
+    private resolveEnumExpression(which: 'EnumTargetAccounts' | 'EnumTargetRegions', val: string, replacementParameters: string[]): any[] {
         const value = val.trim();
         let expr: string;
         let bindingId: string;
@@ -520,24 +521,31 @@ export class CfnTemplate {
         const organizationBinding = bindingId !== undefined ?
             this.templateRoot.bindingSection.getBinding(bindingId) :
             this.templateRoot.bindingSection.defaultBinding;
-        const enumUnderlyingValues = [];
+        const enumUnderlyingValues: IEnumTargetsParams[] = [];
         if (which === 'EnumTargetAccounts') {
-            const normalizedLogicalAccountIds = this.templateRoot.resolveNormalizedLogicalAccountIds(organizationBinding);
-            for (const logicalAccountId of normalizedLogicalAccountIds) {
-                const otherAccount = this.templateRoot.organizationSection.findAccount(x => x.logicalId === logicalAccountId);
-                const physicalId = this.resolveAccountGetAtt(otherAccount, 'AccountId');
-                enumUnderlyingValues.push(physicalId);
-            }
+            const accounts = this.templateRoot.resolveNormalizedAccounts(organizationBinding);
+            enumUnderlyingValues.push(...accounts.map(acc => ({
+                account: acc.accountId,
+                AccountId: acc.accountId,
+                LogicalId: acc.logicalId,
+                AccountName: acc.accountName,
+                Alias: acc.alias,
+                RootEmail: acc.rootEmail,
+                Tags: acc.tags ?? {},
+            })));
+
         } else if (which === 'EnumTargetRegions') {
             const normalizedRegions = this.templateRoot.resolveNormalizedRegions(organizationBinding);
-            enumUnderlyingValues.push(...normalizedRegions);
+            enumUnderlyingValues.push(...normalizedRegions.map(regionName => ({
+                region: regionName}
+            )));
         }
 
-        let expression = '${' + replacementParameter + '}';
+        let expression = '${' + replacementParameters[0] + '}';
         if (expr !== undefined) {
             expression = expr;
         }
-        const converted = this.convertExpression(enumUnderlyingValues, expression, replacementParameter);
+        const converted = this.convertExpression(enumUnderlyingValues, expression, replacementParameters);
         const result: any[] = [];
         for (const element of converted) {
             if (element.hasVariables()) {
@@ -552,13 +560,23 @@ export class CfnTemplate {
         return result;
     }
 
-    private convertExpression(values: string[], expression: string, resourceId: string): SubExpression[] {
+    private convertExpression(values: IEnumTargetsParams[], expression: string, resourceId: string[]): SubExpression[] {
         const result: SubExpression[] = [];
         for (const val of values) {
             const x = new SubExpression(expression);
-            const accountVar = x.variables.find(v => v.resource === resourceId);
-            if (accountVar) {
-                accountVar.replace(val);
+            for (const key of resourceId) {
+                if (key === 'Tags' && key !== undefined) {
+                    for (const [tag, value] of Object.entries(val[key as keyof IEnumTargetsParams])) {
+                        const tagVar = x.variables.find(v => v.resource === tag);
+                        if (tagVar) {
+                            tagVar.replace(value);
+                        }
+                    }
+                }
+                const accountVar = x.variables.find(v => v.resource === key);
+                if (accountVar) {
+                    accountVar.replace(val[key as keyof IEnumTargetsParams] as string);
+                }
             }
             result.push(x);
         }
@@ -612,4 +630,14 @@ interface ICfnCrossAccountReference {
 interface ITemplateGenerationOptions {
     output: 'json' | 'yaml';
     outputCrossAccountExports: boolean;
+}
+interface IEnumTargetsParams {
+    account?: string;
+    region?: string;
+    AccountId?: string;
+    LogicalId?: string;
+    AccountName?: string;
+    Alias?: string;
+    RootEmail?: string;
+    Tags?: Record<string, string>;
 }

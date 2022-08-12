@@ -27,8 +27,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             concurrencyForCleanup: config.MaxConcurrentStacks,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
-                const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
-                updateStacksCommand.resolver = resolver;
+                const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command, resolver);
                 ConsoleUtil.LogInfo(`Executing: ${config.Type} ${updateStacksCommand.templateFile} ${updateStacksCommand.stackName}.`);
                 await UpdateStacksCommand.Perform(updateStacksCommand);
             },
@@ -45,8 +44,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             StackName: config.StackName,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
-                const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
-                updateStacksCommand.resolver = resolver;
+                const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command, resolver);
                 await ValidateStacksCommand.Perform(updateStacksCommand);
             },
         };
@@ -61,8 +59,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             StackName: config.StackName,
             isDependency: BuildTaskProvider.createIsDependency(config),
             perform: async (): Promise<void> => {
-                const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command);
-                updateStacksCommand.resolver = resolver;
+                const updateStacksCommand = UpdateStacksBuildTaskProvider.createUpdateStacksCommandArgs(config, command, resolver);
                 await PrintStacksCommand.Perform({ ...updateStacksCommand, stackName: config.StackName });
             },
         };
@@ -98,7 +95,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         };
     }
 
-    static createUpdateStacksCommandArgs(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs): IUpdateStacksCommandArgs {
+    static createUpdateStacksCommandArgs(config: IUpdateStackTaskConfiguration, command: IPerformTasksCommandArgs, resolver: CfnExpressionResolver): IUpdateStacksCommandArgs {
 
         let templatePath = config.Template;
 
@@ -112,6 +109,9 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             stackName: config.StackName,
             templateFile: templatePath,
         };
+
+        args.resolver = resolver;
+
         if (config.StackDescription) {
             args.stackDescription = config.StackDescription;
         }
@@ -123,7 +123,7 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
         }
 
         if (config.TemplatingContext) {
-            args.templatingContext = config.TemplatingContext;
+            args.templatingContext = resolver.resolveTemplatingContext(config.TemplatingContext);
         } else {
             args.templatingContext = undefined;
         }
