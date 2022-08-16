@@ -339,10 +339,28 @@ Principal:
 
 - The Sub expression can have single quotes
 - The Sub expression may also contain other Sub expression constructs (such as Ref to parameter)
-- For `Fn::EnumTargetAccounts` use the pre-defined variable `${account}` in the Sub expression
+- For `Fn::EnumTargetAccounts` use one of the pre-defined variables `${account}`, `${AccountId}`, `${AccountName}`, `${LogicalId}`, `${RootEmail}`, `${Alias}`, `${Tags.TAGNAME}` anywhere in the Sub expression
+- If an account does not have the specified Tag or no Alias is defined, the expression will return variables as `${Tags.TAGNAME} or ${Alias}` literally.
 - For `Fn::EnumTargetRegions` use the pre-defined variable `${region}` in the Sub expression
 - When placed inside an array the output of `Fn::EnumTargetAccounts` and `Fn::EnumTargetRegions` will be inserted into the array.
 
+Multiple variables may be used in the same Sub expression.
+``` yaml
+Principal:
+  AWS: Fn::EnumTargetAccounts MyBinding ${AccountId}:${RootEmail}:${Tags.subdomain}
+
+ ```
+
+ Will result in the following CloudFormation (assuming MyBinding has 3 accounts):
+
+``` yaml
+Principal:
+  AWS:
+    - 111111111111:account+01@example.com:mysubdomain1
+    - 222222222222:account+02@example.com:mysubdomain2
+    - 333333333333:account+03@example.com:mysubdomain3
+
+ ```
 
 ### Fn::TargetCount
 `Fn::TargetCount` will return the number of targets for a binding (regions * accounts).
