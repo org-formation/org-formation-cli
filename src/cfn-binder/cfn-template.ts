@@ -525,8 +525,8 @@ export class CfnTemplate {
         if (which === 'EnumTargetAccounts') {
             const accounts = this.templateRoot.resolveNormalizedAccounts(organizationBinding);
             enumUnderlyingValues.push(...accounts.map(acc => ({
-                account: acc.accountId,
-                AccountId: acc.accountId,
+                account: this.resolveAccountGetAtt(acc, 'AccountId'),
+                AccountId: this.resolveAccountGetAtt(acc, 'AccountId'),
                 LogicalId: acc.logicalId,
                 AccountName: acc.accountName,
                 Alias: acc.alias,
@@ -565,17 +565,22 @@ export class CfnTemplate {
         for (const val of values) {
             const x = new SubExpression(expression);
             for (const key of resourceId) {
-                if (key === 'Tags' && key !== undefined) {
+                if (key === 'Tags') {
                     for (const [tag, value] of Object.entries(val[key as keyof IEnumTargetsParams])) {
-                        const tagVar = x.variables.find(v => v.resource === tag);
+                        const tagVar = x.variables.find(v => v.resource === 'Tags' && v.path === tag);
                         if (tagVar) {
                             tagVar.replace(value);
                         }
                     }
-                }
-                const accountVar = x.variables.find(v => v.resource === key);
-                if (accountVar) {
-                    accountVar.replace(val[key as keyof IEnumTargetsParams] as string);
+                } else {
+                    const accountVar = x.variables.find(v => v.resource === key);
+                    if (accountVar) {
+                        const replaceString = val[key as keyof IEnumTargetsParams] as string;
+                        if (key === 'Alias' && replaceString === undefined) {
+                            continue;
+                        }
+                        accountVar.replace(replaceString);
+                    }
                 }
             }
             result.push(x);

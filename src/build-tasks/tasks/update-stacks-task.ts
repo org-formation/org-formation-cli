@@ -112,7 +112,6 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             stackName: config.StackName,
             templateFile: templatePath,
         };
-
         if (config.StackDescription) {
             args.stackDescription = config.StackDescription;
         }

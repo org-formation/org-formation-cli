@@ -11,6 +11,7 @@ Organization:
     Properties:
       AccountId: '000000000000'
       AccountName: 'master account'
+      Alias: 'MasterAlias'
       RootEmail: 'root@mail.com'
 
   Account1:
@@ -18,6 +19,7 @@ Organization:
     Properties:
       RootEmail: acc1@my.org
       AccountName: Account1
+      Alias: Account1Alias
       Tags:
         subdomain: acc1
 
@@ -26,6 +28,7 @@ Organization:
     Properties:
       RootEmail: acc2@my.org
       AccountName: Account2
+      Alias: Account2Alias
       Tags:
         subdomain: acc2
 
@@ -35,16 +38,17 @@ Organization:
     Properties:
       RootEmail: acc3@my.org
       AccountName: Account3
+      Alias: Account3Alias
       Tags:
-        subdomain: acc2
+        nosubdomain: acc3
 
   Account4:
     Type: OC::ORG::Account
     Properties:
       RootEmail: acc4@my.org
       AccountName: Account4
-      Tags:
-        subdomain: acc2
+      # Alias: Account4Alias
+
 
   #============================================#
   # Organizational Units
