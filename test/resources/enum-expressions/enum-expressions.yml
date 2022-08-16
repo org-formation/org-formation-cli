@@ -110,3 +110,11 @@ Resources:
       - '3'
       - Fn::EnumTargetAccounts Account2Binding 'blabla ${account} blabla'
       - '5'
+
+  Resource3:
+    Type: AWS::SNS::Topic
+    OrganizationBinding:
+      Region: eu-west-1
+      IncludeMasterAccount: true
+    Properties:
+      EnumAllTargetAccounts: Fn::EnumTargetAccounts AllAccountsBinding blabla-${AccountId}-${LogicalId}-${AccountName}-${Alias}-${RootEmail}-${Tags.subdomain}-blabla

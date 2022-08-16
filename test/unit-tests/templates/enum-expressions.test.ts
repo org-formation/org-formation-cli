@@ -176,5 +176,21 @@ describe('when resolving enum-expressions', () => {
         expect(val[4]).toBe('5');
     });
 
+    test('enum target for all accounts creates array with all values for all accounts', () => {
+        const resource = masterAccountTemplate.Resources.Resource3;
+        const val = resource.Properties.EnumAllTargetAccounts;
+        expect(Array.isArray(val)).toBe(true);
+        expect(val.length).toBe(4);
+        expect(val[0]).toBe('blabla-111111111111-Account1-Account1-Account1Alias-acc1@my.org-acc1-blabla');
+        expect(val[1]).toBe('blabla-222222222222-Account2-Account2-Account2Alias-acc2@my.org-acc2-blabla');
+    });
 
+    test('enum accounts for results in Sub expression if missing Tags', () => {
+        const resource = masterAccountTemplate.Resources.Resource3;
+        const val = resource.Properties.EnumAllTargetAccounts;
+        expect(val[2]['Fn::Sub']).toBeDefined();
+        expect(val[3]['Fn::Sub']).toBeDefined();
+        expect(val[2]['Fn::Sub']).toBe('blabla-333333333333-Account3-Account3-Account3Alias-acc3@my.org-${Tags.subdomain}-blabla');
+        expect(val[3]['Fn::Sub']).toBe('blabla-444444444444-Account4-Account4-${Alias}-acc4@my.org-${Tags.subdomain}-blabla');
+    });
 });
