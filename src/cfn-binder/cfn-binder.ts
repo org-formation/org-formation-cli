@@ -137,7 +137,8 @@ export class CloudFormationBinder {
                 if (!dependsOnAccountBinding) {
                     throw new OrgFormationError(`unable to find account with logical Id ${dependsOnLogicalAccount}`);
                 }
-                binding.accountDependencies.push(dependsOnAccountBinding.physicalId);
+                const physicalId = (this.partition && dependsOnAccountBinding.partitionId) ? dependsOnAccountBinding.partitionId : dependsOnAccountBinding.physicalId;
+                binding.accountDependencies.push(physicalId);
             }
             /* end move elsewhere */
 
