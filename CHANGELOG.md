@@ -5,6 +5,11 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
+**unreleased**
+- feat: allow `Fn::EnumTargetAccounts` to be used in combination with `${AccountId}`, `${AccountName}`, `${LogicalId}`, `${RootEmail}`, `${Alias}`, `${Tags.TAGNAME}`
+- feat: dependsOnAccount support for govcloud
+- fix: EMAIL_ALREADY_EXISTS when importing account using rootemail for govcloud
+
 **version 1.0.3**
 - fix: creating a new account doesnt properly display the new account id in the logs (displays [object Object] instead)
 
