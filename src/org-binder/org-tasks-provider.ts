@@ -86,7 +86,7 @@ export class TaskProvider {
                     logicalId: resource.logicalId,
                     lastCommittedHash: hash,
                     physicalId: createOrganizationRootTask.result,
-                    partitionId: createPartitionOrganizationRootTask.result,
+                    partitionId: createPartitionOrganizationRootTask?.result,
                 });
             },
         };
