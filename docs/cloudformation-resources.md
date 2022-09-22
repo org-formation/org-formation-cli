@@ -3,13 +3,14 @@
 
 <!-- code_chunk_output -->
 
-- [OrganizationBinding: Where to create which resource](#organizationbinding-where-to-create-which-resource)
-- [Creating cross account resource dependencies](#creating-cross-account-resource-dependencies)
-- [DependsOnAccount and DependsOnRegion](#dependsonaccount-and-dependsonregion)
-- [Referencing the account the resource is created in](#referencing-the-account-the-resource-is-created-in)
-- [Foreach: Iterating over accounts when creating resources](#foreach-iterating-over-accounts-when-creating-resources)
-- [Fn::EnumTargetAccounts/Regions](#fnenumtargetaccountsregions)
-- [Fn::TargetCount](#fntargetcount)
+- [Organization Annotated CloudFormation](#organization-annotated-cloudformation)
+    - [OrganizationBinding: Where to create which resource](#organizationbinding-where-to-create-which-resource)
+    - [Creating cross account resource dependencies](#creating-cross-account-resource-dependencies)
+    - [DependsOnAccount and DependsOnRegion](#dependsonaccount-and-dependsonregion)
+    - [Referencing the account the resource is created in](#referencing-the-account-the-resource-is-created-in)
+    - [Foreach: Iterating over accounts when creating resources](#foreach-iterating-over-accounts-when-creating-resources)
+    - [Fn::EnumTargetAccounts/Regions](#fnenumtargetaccountsregions)
+    - [Fn::TargetCount](#fntargetcount)
 
 <!-- /code_chunk_output -->
 
@@ -124,8 +125,9 @@ There is a lot of other ways to specify an account binding though:
 |Region|String or list of String|Resource will be created in all the specified resources.|
 |Account|literal '*'|Resource will be created in all accounts **except** for the master account.|
 ||!Ref or list of !Ref|Resource will be created in [Accounts](#account) that are referred to.|
-|OrganizationalUnit|!Ref or list of !Ref|Resource will be created in all accounts that below to the [OrganizationalUnits](#organizationalunit) that are referred to. This includes accounts created within nested OU's|
+|OrganizationalUnit|!Ref or list of !Ref|Resource will be created in all accounts that belong to the [OrganizationalUnits](#organizationalunit) that are referred to. This includes accounts created within nested OU's|
 |ExcludeAccount|!Ref or list of !Ref|Resource will **not** be created in [Accounts](#account) that are referred to.|
+|ExcludeOrganizationalUnit|!Ref or list of !Ref|Resource will **not**  be created in all accounts that belong to the [OrganizationalUnits](#organizationalunit) that are referred to. This includes accounts created within nested OU's|
 |IncludeMasterAccount|``true`` or ``false``| If ``true``, resource will be created in the organizational master account.|
 |AccountsWithTag|tag-name|Resource will be created in all accounts that have a tag specified with tag-name.|
 

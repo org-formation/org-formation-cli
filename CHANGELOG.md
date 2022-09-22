@@ -8,6 +8,7 @@ All notable changes to aws organization formation will be documented in this fil
 **unreleased**
 - feat: allow `Fn::EnumTargetAccounts` to be used in combination with `${AccountId}`, `${AccountName}`, `${LogicalId}`, `${RootEmail}`, `${Alias}`, `${Tags.TAGNAME}`
 - feat: dependsOnAccount support for govcloud
+- feat: support for ExcludeOrganizationalUnit in organization binding
 - fix: EMAIL_ALREADY_EXISTS when importing account using rootemail for govcloud
 
 **version 1.0.3**
