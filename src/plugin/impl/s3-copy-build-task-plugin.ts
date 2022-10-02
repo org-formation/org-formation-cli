@@ -128,7 +128,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         await s3client.putObject(request).promise();
     }
 
-    async createBody(task: IS3CopyTask): Promise<S3.Body> {
+    private async createBody(task: IS3CopyTask): Promise<S3.Body> {
         if (!task.zipBeforePut) {
             return fs.readFileSync(task.localPath);
         } else {
@@ -136,7 +136,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         }
     }
 
-    createZip(directory: string): Promise<S3.Body> {
+    private createZip(directory: string): Promise<S3.Body> {
         return new Promise<S3.Body>((resolve, reject) => {
             const output = new WritableStream();
             const archive = archiver('zip');
@@ -157,7 +157,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         return Promise.resolve();
     }
 
-    static getBucketAndKey(task: IS3CopyTask): IBucketAndKey {
+    private static getBucketAndKey(task: IS3CopyTask): IBucketAndKey {
         // s3://bucket/path/to/file
         if (task.remotePath.startsWith('s3://')) {
             const objectPath = task.remotePath.substring(5);
