@@ -20,8 +20,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
 
     convertToCommandArgs(config: IS3CopyBuildTaskConfig, command: IPerformTasksCommandArgs): IS3CopyCommandArgs {
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'LocalPath', 'RemotePath',
-            'FilePath', 'ZipBeforePut', 'ServerSideEncryption');
-
+            'FilePath', 'ZipBeforePut', 'ServerSideEncryption', 'TemplatingContext'); // What is the `FilePath` attribute for ?
 
         if (!config.LocalPath) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute LocalPath`);
@@ -41,6 +40,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
             serverSideEncryption: config.ServerSideEncryption,
+            templatingContext: config.TemplatingContext, // TODO can also be fetched from command.TemplatingContext?
         };
     }
     validateCommandArgs(commandArgs: IS3CopyCommandArgs): void {
@@ -50,6 +50,10 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
 
         if (!existsSync(commandArgs.localPath)) {
             throw new OrgFormationError(`task ${commandArgs.name} cannot find path ${commandArgs.localPath}`);
+        }
+
+        if (commandArgs.templatingContext && commandArgs.zipBeforePut) {
+            throw new OrgFormationError(`task ${commandArgs.name} can not use zipBeforePut and templatingContext together.`);
         }
 
         const stat = statSync(commandArgs.localPath);
@@ -180,7 +184,7 @@ export interface IS3CopyBuildTaskConfig extends IBuildTaskConfiguration {
     ZipBeforePut?: true;
     OrganizationBinding: IOrganizationBinding;
     ServerSideEncryption?: ServerSideEncryption;
-
+    TemplatingContext?: {}; // TODO change accordingly
 }
 
 export interface IS3CopyCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -188,6 +192,7 @@ export interface IS3CopyCommandArgs extends IBuildTaskPluginCommandArgs {
     remotePath: string;
     zipBeforePut: boolean;
     serverSideEncryption?: ServerSideEncryption;
+    templatingContext?: {}; // TODO change accordingly
 }
 
 export interface IS3CopyTask extends IPluginTask {
