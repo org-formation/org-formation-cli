@@ -13,6 +13,7 @@ import { Md5Util } from '~util/md5-util';
 import { IOrganizationBinding } from '~parser/parser';
 import { AwsUtil } from '~util/aws-util';
 import { Validator } from '~parser/validator';
+import { nunjucksRender } from '~yaml-cfn/index';
 
 export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConfig, IS3CopyCommandArgs, IS3CopyTask> {
     type = 'copy-to-s3';
@@ -20,7 +21,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
 
     convertToCommandArgs(config: IS3CopyBuildTaskConfig, command: IPerformTasksCommandArgs): IS3CopyCommandArgs {
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'LocalPath', 'RemotePath',
-            'FilePath', 'ZipBeforePut', 'ServerSideEncryption', 'TemplatingContext'); // What is the `FilePath` attribute for ?
+            'FilePath', 'ZipBeforePut', 'ServerSideEncryption', 'TemplatingContext');
 
         if (!config.LocalPath) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute LocalPath`);
@@ -40,7 +41,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
             serverSideEncryption: config.ServerSideEncryption,
-            templatingContext: config.TemplatingContext, // TODO can also be fetched from command.TemplatingContext?
+            templatingContext: config.TemplatingContext,
         };
     }
     validateCommandArgs(commandArgs: IS3CopyCommandArgs): void {
@@ -75,6 +76,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             zipBeforePut: commandArgs.zipBeforePut,
             path: hashOfLocalDirectory,
             serverSideEncryption: commandArgs.serverSideEncryption,
+            templatingContext: commandArgs.templatingContext,
         };
     }
     convertToTask(command: IS3CopyCommandArgs, globalHash: string): IS3CopyTask {
@@ -84,6 +86,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
             localPath: command.localPath,
             remotePath: command.remotePath,
             zipBeforePut: command.zipBeforePut,
+            templatingContext: command.templatingContext,
             hash: globalHash,
             taskRoleName: command.taskRoleName,
             forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
@@ -130,7 +133,9 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
 
     private async createBody(task: IS3CopyTask): Promise<S3.Body> {
         if (!task.zipBeforePut) {
-            return fs.readFileSync(task.localPath);
+            const fileContent = fs.readFileSync(task.localPath);
+            const debugFilename = `${task.localPath}.debug`;
+            return nunjucksRender(fileContent.toString(), debugFilename, task.templatingContext);
         } else {
             return await this.createZip(task.localPath);
         }
@@ -184,7 +189,7 @@ export interface IS3CopyBuildTaskConfig extends IBuildTaskConfiguration {
     ZipBeforePut?: true;
     OrganizationBinding: IOrganizationBinding;
     ServerSideEncryption?: ServerSideEncryption;
-    TemplatingContext?: {}; // TODO change accordingly
+    TemplatingContext?: Record<string, unknown>;
 }
 
 export interface IS3CopyCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -192,7 +197,7 @@ export interface IS3CopyCommandArgs extends IBuildTaskPluginCommandArgs {
     remotePath: string;
     zipBeforePut: boolean;
     serverSideEncryption?: ServerSideEncryption;
-    templatingContext?: {}; // TODO change accordingly
+    templatingContext?: Record<string, unknown>;
 }
 
 export interface IS3CopyTask extends IPluginTask {
@@ -200,4 +205,5 @@ export interface IS3CopyTask extends IPluginTask {
     remotePath: string;
     zipBeforePut: boolean;
     serverSideEncryption?: ServerSideEncryption;
+    templatingContext?: Record<string, unknown>;
 }
