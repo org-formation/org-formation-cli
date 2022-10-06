@@ -1,4 +1,4 @@
-import { CopyToS3TaskPlugin, IS3CopyTask } from "~plugin/impl/s3-copy-build-task-plugin";
+import { CopyToS3TaskPlugin, IS3CopyCommandArgs, IS3CopyTask } from "~plugin/impl/s3-copy-build-task-plugin";
 import { IPluginBinding, PluginBinder } from "~plugin/plugin-binder";
 import { PersistedState } from "~state/persisted-state";
 import { TemplateRoot } from "~parser/parser";
@@ -6,8 +6,11 @@ import { TestTemplates } from "../../test-templates";
 import { S3 } from "aws-sdk";
 import { on } from '@jurijzahn8019/aws-promise-jest-mock';
 import { AwsUtil } from "~util/aws-util";
+import { OrgFormationError } from "~org-formation-error";
+import fs from "fs"
 
 jest.mock('aws-sdk');
+jest.mock('fs');
 
 describe('when creating s3 copy plugin', () => {
     let plugin: CopyToS3TaskPlugin;
@@ -33,6 +36,9 @@ describe('when creating s3 copy plugin', () => {
             LocalPath: './file.ext',
             RemotePath: 's3://bucket/path',
             TaskRoleName: 'TaskRole',
+            TemplatingContext: {
+                testAttribute: "testValue"
+            },
             OrganizationBinding: { IncludeMasterAccount: true}},
             { organizationFile: './organization.yml'} as any);
         expect(commandArgs.name).toBe('test-task');
@@ -42,8 +48,27 @@ describe('when creating s3 copy plugin', () => {
         expect(commandArgs.maxConcurrent).toBe(1);
         expect(commandArgs.failedTolerance).toBe(0);
         expect(commandArgs.taskRoleName).toBe('TaskRole');
+        expect(commandArgs.templatingContext).toStrictEqual({
+            testAttribute: "testValue"
+        })
         expect(commandArgs.organizationBinding).toBeDefined();
         expect(commandArgs.organizationBinding.IncludeMasterAccount).toBe(true);
+    });
+    
+    test('exception is thrown when templatingContext and zipBeforePut:true are used together', async () => {
+        
+        jest.spyOn(fs, "existsSync").mockReturnValueOnce(true)
+        
+        const commandArgs = {
+            localPath: './file.ext',
+            organizationBinding: { IncludeMasterAccount: true},
+            zipBeforePut: true,
+            templatingContext: {},
+        } as IS3CopyCommandArgs;
+        
+        expect(() => plugin.validateCommandArgs(commandArgs)).toThrow(
+            new OrgFormationError(`task ${commandArgs.name} can not use zipBeforePut and templatingContext together.`)
+        )
     });
 });
 

@@ -134,7 +134,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
     private async createBody(task: IS3CopyTask): Promise<S3.Body> {
         if (!task.zipBeforePut) {
             const fileContent = fs.readFileSync(task.localPath);
-            const debugFilename = `${task.localPath}.debug`;
+            const debugFilename = path.basename(task.localPath);
             if(task.templatingContext) {
                 return nunjucksRender(fileContent.toString(), debugFilename, task.templatingContext);
             } else {
