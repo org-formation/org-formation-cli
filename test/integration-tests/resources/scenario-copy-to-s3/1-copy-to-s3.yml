@@ -51,3 +51,13 @@ CopyToS3WithZipBeforePut:
   OrganizationBinding:
     Account: !Ref AccountA
     Region: eu-central-1
+
+CopyToS3WithTemplatingContext:
+  Type: copy-to-s3
+  DependsOn: Template
+  RemotePath: s3://org-formation-integration-test/template-output.txt
+  LocalPath: ./files/template.njk
+  TemplatingContext: { number: 42 }
+  OrganizationBinding:
+    Account: !Ref AccountA
+    Region: eu-central-1

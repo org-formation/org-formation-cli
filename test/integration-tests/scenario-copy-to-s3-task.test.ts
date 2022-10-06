@@ -13,9 +13,11 @@ describe('when calling org-formation perform tasks', () => {
     let mockAfterAfterUpdateWithoutChanging: jest.MockContext<any, any>;
     let mockAfterAfterUpdateWithChanging: jest.MockContext<any, any>;
     let mockAfterAfterUpdateWithForceDeploy: jest.MockContext<any, any>;
+    let copyS3WithTemplateContextContent: string;
 
     beforeAll(async () => {
         context = await baseBeforeAll();
+        
         await context.prepareStateBucket(basePathForScenario + '../state.json');
         const { command } = context;
 
@@ -40,17 +42,17 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     test('perform create or update is called after initial upload', () => {
-        expect(mockAfterInitialUpload.calls.length).toBe(4);
+        expect(mockAfterInitialUpload.calls.length).toBe(5);
     });
 
     test('perform create or update is called with the right remotePath', () => {
-        expect(mockAfterInitialUpload.calls.length).toBe(4);
+        expect(mockAfterInitialUpload.calls.length).toBe(5);
         const firstCall: any[] = mockAfterInitialUpload.calls;
         const callsWithAccountNumberInRemotePath = firstCall.filter(x => x[0].task.remotePath.includes('102625093955'))
         expect(callsWithAccountNumberInRemotePath.length).toBe(3);
 
         const callsWithIntegrationTestBucketName = firstCall.filter(x => x[0].task.remotePath.includes('org-formation-integration-test'))
-        expect(callsWithIntegrationTestBucketName.length).toBe(4);
+        expect(callsWithIntegrationTestBucketName.length).toBe(5);
 
         const callsWithZipFile = firstCall.filter(x => x[0].task.remotePath.includes('.zip'))
         expect(callsWithZipFile.length).toBe(1);
@@ -65,7 +67,7 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     test('perform create or update is called when deploy is forced', () => {
-        expect(mockAfterAfterUpdateWithForceDeploy.calls.length).toBe(4);
+        expect(mockAfterAfterUpdateWithForceDeploy.calls.length).toBe(5);
     });
 
     afterAll(async () => {
