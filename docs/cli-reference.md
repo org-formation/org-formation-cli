@@ -10,22 +10,22 @@ If you choose to pass a `build-account-id` option, you will need to have created
 
 Typing ``help`` after any command in the commandline will print documentation.
 
-- [org-formation cli reference](#org-formation-cli-reference)
+- [``org-formation`` cli reference](#org-formation-clireference)
   - [Operations on organization resources](#operations-on-organization-resources)
-    - [org-formation init](#org-formation-init)
-    - [org-formation init-pipeline](#org-formation-init-pipeline)
-    - [org-formation update](#org-formation-update)
-    - [org-formation create-change-set](#org-formation-create-change-set)
-    - [org-formation execute-change-set](#org-formation-execute-change-set)
+    - [``org-formation init``](#org-formation-init)
+    - [``org-formation init-pipeline``](#org-formation-init-pipeline)
+    - [``org-formation update``](#org-formation-update)
+    - [``org-formation create-change-set``](#org-formation-create-change-set)
+    - [``org-formation execute-change-set``](#org-formation-execute-change-set)
   - [Operations on stacks](#operations-on-stacks)
-    - [org-formation update-stacks](#org-formation-update-stacks)
-    - [org-formation validate-stacks](#org-formation-validate-stacks)
-    - [org-formation print-stacks](#org-formation-print-stacks)
-    - [org-formation describe-stacks](#org-formation-describe-stacks)
-    - [org-formation delete-stacks](#org-formation-delete-stacks)
+    - [``org-formation update-stacks``](#org-formation-update-stacks)
+    - [``org-formation validate-stacks``](#org-formation-validate-stacks)
+    - [``org-formation print-stacks``](#org-formation-print-stacks)
+    - [``org-formation describe-stacks``](#org-formation-describe-stacks)
+    - [``org-formation delete-stacks``](#org-formation-delete-stacks)
   - [Operations on task files](#operations-on-task-files)
-    - [org-formation perform-tasks](#org-formation-perform-tasks)
-    - [org-formation validate-tasks](#org-formation-validate-tasks)
+    - [``org-formation perform-tasks``](#org-formation-perform-tasks)
+    - [``org-formation validate-tasks``](#org-formation-validate-tasks)
   - [Global options](#global-options)
   - [Runtime configuration (.org-formationrc)](#runtime-configuration-org-formationrc)
 
@@ -116,6 +116,11 @@ parameters can be passed in a similar fashion CloudFormation parameters are pass
 or the somewhat more simple fashion:
 ``> org-formation update-stacks template.yml --stack-name my-stack --parameters Param1=Val1 Param2=Val2``
 
+Comma-delimited lists can be passed either by escaping the commas:
+``> org-formation update-stacks template.yml --stack-name my-stack --parameters ParameterKey=MyRegions,ParameterValue=eu-west-1\,us-east-2``
+
+or by using quotes (`"`) around the parameter value:
+``> org-formation update-stacks template.yml --stack-name my-stack --parameters ParameterKey=MyRegions,ParameterValue="eu-west-1,us-east-2"``
 
 ### ``org-formation validate-stacks``
 
