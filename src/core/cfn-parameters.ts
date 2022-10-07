@@ -1,6 +1,9 @@
 import { OrgFormationError } from '../org-formation-error';
 
+const parameterRe = /ParameterKey=(.*),ParameterValue=(.*)/;
+
 export class CfnParameters {
+
     static ParseParameterValues(commandParameters: string): Record<string, string> {
         if (commandParameters === undefined || commandParameters === '') {
             return {};
@@ -8,25 +11,32 @@ export class CfnParameters {
         const parameters: Record<string, string> = {};
         const parameterParts = commandParameters.split(' ');
         for (const parameterPart of parameterParts) {
-            const parameterAttributes = parameterPart.split(',');
-            if (parameterAttributes.length === 1) {
-                const parts = parameterAttributes[0].split('=');
-                if (parts.length !== 2) {
-                    throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected either key=val or ParameterKey=key,ParameterValue=val.`);
-                }
-                parameters[parts[0]] = parts[1];
+            const match = parameterPart.match(parameterRe);
+            if (match) {
+                parameters[match[1]] = this.normalizeValue(match[2]);
             } else {
-                const key = parameterAttributes.find(x => x.startsWith('ParameterKey='));
-                const value = parameterAttributes.find(x => x.startsWith('ParameterValue='));
-                if (key === undefined || value === undefined) {
-                    throw new OrgFormationError(`error reading parameter ${parameterAttributes[0]}. Expected ParameterKey=key,ParameterValue=val`);
+                const parts = parameterPart.split('=');
+                if (parts.length !== 2) {
+                    throw new OrgFormationError(`error reading parameter ${parameterPart}. Expected either key=val or ParameterKey=key,ParameterValue=val.`);
                 }
-                const paramKey = key.substr(13);
-                const paramVal = value.substr(15);
-                parameters[paramKey] = paramVal;
+                parameters[parts[0]] = this.normalizeValue(parts[1]);
             }
         }
 
         return parameters;
+    }
+
+    /**
+     * Removed surrounding quotes if present and replace escaped commas with the comma only
+     *
+     * @param value The parameter value to be normalized
+     */
+    static normalizeValue(value: string): string {
+       let normalized = value;
+       if (value.length > 1 && value[0] === '"' && value [value.length - 1] === '"')  {
+           normalized = value.substring(1, value.length - 1);
+       }
+       normalized = normalized.replace('\\,', ',');
+       return normalized;
     }
 }
