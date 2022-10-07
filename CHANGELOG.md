@@ -10,7 +10,8 @@ All notable changes to aws organization formation will be documented in this fil
 - feat: dependsOnAccount support for govcloud
 - feat: support for ExcludeOrganizationalUnit in organization binding
 - fix: EMAIL_ALREADY_EXISTS when importing account using rootemail for govcloud
-
+- feat: Nunjucks templating support on LocalFile contents of copy-to-s3 tasks
+ 
 **version 1.0.3**
 - fix: creating a new account doesnt properly display the new account id in the logs (displays [object Object] instead)
 
