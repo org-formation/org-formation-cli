@@ -29,6 +29,13 @@ describe('when processing stack parameters', () => {
     expect(parsed).toStrictEqual(expected)
   });
 
+  test('comma-delimited lists are parsed with mixed quoting and escaping', () => {
+    const commandParameters = 'ParameterKey=a,ParameterValue="A1,A2" ParameterKey=b,ParameterValue=B1\,B2 ParameterKey=c,ParameterValue=C1\,C2';
+    const expected = { a: 'A1,A2', b: 'B1,B2', c: 'C1,C2' }
+    const parsed = CfnParameters.ParseParameterValues(commandParameters)
+    expect(parsed).toStrictEqual(expected)
+  });
+
   test('empty strings are handled', () => {
     const commandParameters = '';
     const expected = {}
@@ -46,5 +53,15 @@ describe('when processing stack parameters', () => {
     const expected = { foo: 'bar', foo2: 'bar2' };
     const parsed = CfnParameters.ParseParameterValues(commandParameters);
     expect(parsed).toStrictEqual(expected);
+  })
+
+  test('invalid syntax throws an error', () => {
+    const commandParameters = 'foo-bar';
+    expect(() => CfnParameters.ParseParameterValues(commandParameters)).toThrowError()
+  })
+
+  test('key=value syntax with multiple equals signs throws an error', () => {
+    const commandParameters = 'foo=bar=bar2';
+    expect(() => CfnParameters.ParseParameterValues(commandParameters)).toThrowError()
   })
 });
