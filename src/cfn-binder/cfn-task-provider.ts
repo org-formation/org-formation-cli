@@ -157,6 +157,9 @@ export class CfnTaskProvider {
                         lastCommittedHash: binding.templateHash,
                         logicalAccountId: binding.target.accountLogicalId,
                         terminationProtection: binding.terminationProtection,
+                        cloudFormationRoleName: binding.cloudFormationRoleName,
+                        customRoleName: binding.customRoleName,
+                        customViaRoleArn: binding.customViaRoleArn,
                     });
                 } catch (err) {
                     if (err.code !== 'OptInRequired') {

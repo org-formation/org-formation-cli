@@ -10,3 +10,17 @@ CfnTemplate:
   Template: ./templates/buckets.yml
   StackName: scenario-cleanup-buckets
   MaxConcurrentStacks: 10
+
+CfnCustomRole:
+  Type: update-stacks
+  Template: ./templates/custom-role.yml
+  StackName: custom-role
+  MaxConcurrentStacks: 10
+
+CfnCustomRoleBuckets:
+  Type: update-stacks
+  DependsOn: CfnCustomRole
+  TaskRoleName: CustomRole
+  Template: ./templates/buckets.yml
+  StackName: buckets-using-custom-role
+  MaxConcurrentStacks: 10
