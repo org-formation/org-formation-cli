@@ -16,6 +16,12 @@ Parameters:
     Type: String
     Default: eu-west-1
 
+  binding:
+    Type: OrganizationBinding
+    Default: 
+      IncludeMasterAccount: true
+      Region: eu-west-1
+
 OrganizationUpdate:
   Type: update-organization
   Skip: true
@@ -28,6 +34,12 @@ BucketTemplate:
   DefaultOrganizationBindingRegion: !Ref region
   DefaultOrganizationBinding:
     IncludeMasterAccount: !Ref includeMasterAccount
+
+BucketTemplate2:
+  Type: update-stacks
+  Template: ./bucket.yml
+  StackName: !Sub ${stackPrefix}-scenario-stack-parameters-2
+  DefaultOrganizationBinding: !Ref binding
 
 includeOther:
   DependsOn: BucketTemplate

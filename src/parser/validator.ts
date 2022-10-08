@@ -136,7 +136,7 @@ export class Validator {
             throw new OrgFormationError(`expected Region to be a string or string[], found ${typeof binding.Region} (${binding.Region})`);
 
         }
-        Validator.ThrowForUnknownAttribute(binding, id, 'OrganizationalUnit', 'Account', 'ExcludeAccount', 'ExcludeOrganizationalUnit', 'Region', 'IncludeMasterAccount', 'AccountsWithTag');
+        Validator.ThrowForUnknownAttribute(binding, id, 'OrganizationalUnit', 'Account', 'ExcludeAccount', 'ExcludeOrganizationalUnit', 'Region', 'IncludeMasterAccount', 'AccountsWithTag', 'Ref');
     }
 
     public static ThrowForUnknownAttribute(obj: any, id: string, ...knownAttributes: string[]): void {

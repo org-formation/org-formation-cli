@@ -107,7 +107,8 @@ export class CfnExpressionResolver {
         for (const expression of expressions) {
             const paramVal = this.parameters[expression.resource];
             if (!expression.path && paramVal !== undefined) {
-                if (typeof paramVal !== 'object' || Array.isArray(paramVal)) {
+                if (typeof paramVal !== 'object' || Array.isArray(paramVal) || (paramVal as any).__organizationBinding) {
+                    delete (paramVal as any).__organizationBinding;
                     expression.resolveToValue(paramVal);
                 } else {
                     const valueAsExpression = ResourceUtil.GetExpression(paramVal);
