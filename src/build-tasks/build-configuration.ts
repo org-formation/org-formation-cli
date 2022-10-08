@@ -15,6 +15,7 @@ import { IOrganizationBinding, TemplateRoot } from '~parser/parser';
 import { nunjucksParseWithIncludes } from '~yaml-cfn/nunjucks-parse-includes';
 import { AwsUtil } from '~util/aws-util';
 import { nunjucksRender } from '~yaml-cfn/index';
+import { Validator } from '~parser/validator';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -185,7 +186,7 @@ export class BuildConfiguration {
                 throw new OrgFormationError(`expected Type on parameter ${paramName} declared in tasks file ${filePath}`);
             }
 
-            const supportedParamTypes = ['String', 'Number', 'Boolean', 'List<String>'];
+            const supportedParamTypes = ['String', 'Number', 'Boolean', 'List<String>', 'OrganizationBinding'];
             if (!supportedParamTypes.includes(paramType)) {
                 throw new OrgFormationError(`unsupported Type on parameter ${paramName} expected one of ${supportedParamTypes.join(', ')}, found: ${paramType}`);
             }
@@ -207,6 +208,11 @@ export class BuildConfiguration {
                 } else {
                     throw new OrgFormationError(`unable to convert value for parameter ${paramName} to boolean. Expected: 'true', 'false', 0 or 1. received ${value}`);
                 }
+            }
+
+            if (paramType === 'OrganizationBinding') {
+                Validator.ValidateOrganizationBinding(value, paramName);
+                value.__organizationBinding = true;
             }
 
             if (paramType === 'Number') {
