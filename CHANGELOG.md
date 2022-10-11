@@ -5,13 +5,14 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
-**unreleased**
+**version 1.0.4**
 - feat: allow `Fn::EnumTargetAccounts` to be used in combination with `${AccountId}`, `${AccountName}`, `${LogicalId}`, `${RootEmail}`, `${Alias}`, `${Tags.TAGNAME}`
 - feat: dependsOnAccount support for govcloud
 - feat: support for ExcludeOrganizationalUnit in organization binding
 - fix: EMAIL_ALREADY_EXISTS when importing account using root email for govcloud
 - feat: Nunjucks templating support on LocalFile contents of copy-to-s3 tasks
 - feat: allow organization binding to be declared as a task-file parameter (Type: 'OrganizationBinding')
+- feat: support comma-delimited CloudFormation parameter values
  
 **version 1.0.3**
 - fix: creating a new account doesnt properly display the new account id in the logs (displays [object Object] instead)
