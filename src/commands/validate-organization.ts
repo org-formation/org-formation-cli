@@ -5,6 +5,7 @@ import { IUpdateOrganizationCommandArgs } from './update-organization';
 import { IUpdateStacksCommandArgs } from './update-stacks';
 import { TemplateRoot } from '~parser/parser';
 import { GlobalState } from '~util/global-state';
+import { OrgResourceTypes } from '~parser/model';
 
 
 const commandName = 'validate <templateFile>';
@@ -42,7 +43,7 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
         const binder = await this.getOrganizationBinder(template, state);
 
         const tasks = binder.enumBuildTasks();
-        const createTasks = tasks.filter(x => x.action === 'Create');
+        const createTasks = tasks.filter(x => x.action === 'Create' && x.type === OrgResourceTypes.Account);
         if (createTasks.length > 0) {
             ConsoleUtil.LogWarning('Accounts were added to the organization model.');
             ConsoleUtil.LogWarning('Tasks might depend on updating the organization.');
