@@ -5,6 +5,9 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
+**unreleased**
+- fix: only prevent printing/ validating stacks if an account is added to organization.yml (not prevent printing if an OU got added)
+
 **version 1.0.4**
 - feat: allow `Fn::EnumTargetAccounts` to be used in combination with `${AccountId}`, `${AccountName}`, `${LogicalId}`, `${RootEmail}`, `${Alias}`, `${Tags.TAGNAME}`
 - feat: dependsOnAccount support for govcloud
