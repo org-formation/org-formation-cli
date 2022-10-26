@@ -115,24 +115,25 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
             roleArn = await this.ensureExecutionRole(cfn, schemaHandlerPackage, catalog);
         }
 
-        const response = await cfn.registerType({
-            TypeName: task.resourceType,
-            Type: 'RESOURCE',
-            SchemaHandlerPackage: task.schemaHandlerPackage,
-            ExecutionRoleArn: roleArn,
-        }).promise();
+        await retryTypeRegistrationWrapper(task.resourceType,  async () => {
+            const response = await cfn.registerType({
+                TypeName: task.resourceType,
+                Type: 'RESOURCE',
+                SchemaHandlerPackage: task.schemaHandlerPackage,
+                ExecutionRoleArn: roleArn,
+            }).promise();
 
-        let registrationStatus: DescribeTypeRegistrationOutput = {};
-        do {
-            await sleep(3000);
-            registrationStatus = await cfn.describeTypeRegistration({ RegistrationToken: response.RegistrationToken }).promise();
-        } while (registrationStatus.ProgressStatus === 'IN_PROGRESS');
+            let registrationStatus: DescribeTypeRegistrationOutput = {};
+            do {
+                await sleep(3000);
+                registrationStatus = await cfn.describeTypeRegistration({ RegistrationToken: response.RegistrationToken }).promise();
+            } while (registrationStatus.ProgressStatus === 'IN_PROGRESS');
 
-        if (registrationStatus.ProgressStatus !== 'COMPLETE') {
-            throw new OrgFormationError(`Registration of Resource Type ${task.resourceType} failed. ${registrationStatus.Description}`);
-        }
-
-        await cfn.setTypeDefaultVersion({ Arn: registrationStatus.TypeVersionArn }).promise();
+            if (registrationStatus.ProgressStatus !== 'COMPLETE') {
+                throw new OrgFormationError(`Registration of Resource Type ${task.resourceType} failed. ${registrationStatus.Description}`);
+            }
+            await cfn.setTypeDefaultVersion({ Arn: registrationStatus.TypeVersionArn }).promise();
+        });
     }
 
     private async ensureExecutionRole(cfn: CloudFormation, handlerPackageUrl: string, catalog: Catalog): Promise<string> {
@@ -174,6 +175,32 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         return Promise.resolve();
     }
 }
+
+const retryTypeRegistrationWrapper = async (type: string, fn: () => Promise<any>): Promise<void> => {
+    let retryCount = 0;
+    let retryTypeRegistration = false;
+    do {
+        retryTypeRegistration = false;
+        try {
+            await fn();
+        } catch (err) {
+            const message = err.message as string;
+            if (message && -1 !== message.indexOf('Deployment is currently in DEPLOY_STAGE of status FAILED')) {
+            if (retryCount >= 20) {
+                throw err;
+            }
+
+            ConsoleUtil.LogInfo(`Type registration ${type} is in DEPLOY_STAGE of status FAILED. waiting.... `);
+            retryCount += 1;
+            await sleep(1000 * (26 + (4 * Math.random())));
+            retryTypeRegistration = true;
+
+        } else {
+            throw err;
+        }
+        }
+    } while (retryTypeRegistration);
+};
 
 interface Catalog {
     bucket: string;
