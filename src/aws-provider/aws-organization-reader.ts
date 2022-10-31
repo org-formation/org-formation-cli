@@ -225,9 +225,9 @@ export class AwsOrganizationReader {
                     resp = await performAndRetryIfNeeded(() => that.organizationService.listAccountsForParent(req).promise());
                     req.NextToken = resp.NextToken;
 
-                    for (const acc of resp.Accounts) {
+                    const getAccount = async (acc: Account): Promise<void> => {
                         if (acc.Status === 'SUSPENDED') {
-                            continue;
+                            return;
                         }
 
                         let tags: IAWSTags = {};
@@ -270,7 +270,8 @@ export class AwsOrganizationReader {
                             parentOU.Accounts.push(account);
                         }
                         result.push(account);
-                    }
+                    };
+                    await Promise.all(resp.Accounts.map(getAccount));
 
                 } while (resp.NextToken);
 
