@@ -26,6 +26,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         command.option('--parameters [parameters]', 'parameter values passed to CloudFormation when executing stacks');
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in CloudFormation', 'validation');
+        command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
         super.addOptions(command);
     }
 
@@ -40,7 +41,6 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         const failedStacksTolerance = command.failedStacksTolerance ?? 99;
         Validator.validatePositiveInteger(maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(failedStacksTolerance, 'failedStacksTolerance');
-
 
         const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);

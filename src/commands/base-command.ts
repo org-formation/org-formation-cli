@@ -1,5 +1,5 @@
 import path from 'path';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { Organizations } from 'aws-sdk';
 import { Command } from 'commander';
 import RC from 'rc';
@@ -72,6 +72,16 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 }
                 this.invoke();
             });
+        }
+    }
+
+    public loadTemplatingContext(command: {templatingContextFile?: string; TemplatingContext?: {}}): void {
+        if (typeof command.templatingContextFile === 'string') {
+            if (!existsSync(command.templatingContextFile)) {
+                throw new OrgFormationError('unable to find templating context file with path: ' + command.templatingContextFile);
+            }
+
+            command.TemplatingContext = JSON.parse(readFileSync(command.templatingContextFile).toString());
         }
     }
 
@@ -387,7 +397,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 (command as IPerformTasksCommandArgs).organizationFile = rc.organizationFile;
             }
 
-            if (process.argv.indexOf('--templating-context') === -1 && rc.templatingContext !== undefined) {
+            if (process.argv.indexOf('--templating-context-file') === -1 && rc.templatingContext !== undefined) {
                 (command as IPerformTasksCommandArgs).TemplatingContext = JSON.parse(readFileSync(rc.templatingContext).toString());
             }
 

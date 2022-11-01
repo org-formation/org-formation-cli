@@ -33,6 +33,7 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         command.option('--output-cross-account-exports <output-path>', 'when set, output well generate cross account exports as part of cfn parameter', false);
         command.option('--no-print-parameters', 'will not print parameter files when printing stacks');
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
+        command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
 
         super.addOptions(command);
     }
@@ -44,6 +45,7 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
+        this.loadTemplatingContext(command);
 
         if (command.masterAccountId !== undefined) {
             AwsUtil.SetMasterAccountId(command.masterAccountId);

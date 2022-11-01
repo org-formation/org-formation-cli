@@ -9,6 +9,7 @@ All notable changes to aws organization formation will be documented in this fil
 - fix: only prevent printing/ validating stacks if an account is added to organization.yml (not prevent printing if an OU got added)
 - chore: better perf on update-organization task
 - fix: explicitly retry on type registrations that return `DEPLOY_STAGE of status FAILED` 
+- feat: allow nunjucks templating context to be passed to cli commands perform-tasks, print-tasks, validate-tasks, update & print-org
 
 **version 1.0.4**
 - feat: allow `Fn::EnumTargetAccounts` to be used in combination with `${AccountId}`, `${AccountName}`, `${LogicalId}`, `${RootEmail}`, `${Alias}`, `${Tags.TAGNAME}`
