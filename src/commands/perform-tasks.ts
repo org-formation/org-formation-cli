@@ -42,7 +42,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--organization-state-object [organization-state-object]', 'key for object used to load read-only organization state');
         command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
-
+        command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
         super.addOptions(command);
     }
 
@@ -53,6 +53,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
+        this.loadTemplatingContext(command);
         this.storeCommand(command);
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters, command.TemplatingContext);
@@ -114,6 +115,7 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     organizationFileContents?: string;
     organizationFileHash?: string;
     TemplatingContext?: {};
+    templatingContextFile?: string;
     parameters?: string | {};
     parsedParameters?: Record<string, string>;
     logicalNamePrefix?: string;

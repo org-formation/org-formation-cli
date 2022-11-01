@@ -92,4 +92,5 @@ export class UpdateOrganizationTaskProvider implements IBuildTaskProvider<IUpdat
 export interface IUpdateOrganizationTaskConfiguration extends IBuildTaskConfiguration {
     Template: string;
     TemplatingContext?: {};
+    templatingContextFile?: string;
 }

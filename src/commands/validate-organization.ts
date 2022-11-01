@@ -24,7 +24,14 @@ export class ValidateOrganizationCommand extends BaseCliCommand<IUpdateOrganizat
         await x.performCommand(command);
     }
 
+    public addOptions(command: Command): void {
+        command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
+        command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
+        super.addOptions(command);
+    }
+
     protected async performCommand(command: IUpdateOrganizationCommandArgs): Promise<void> {
+        this.loadTemplatingContext(command);
 
         const template = await TemplateRoot.create(command.templateFile, { TemplatingContext: command.TemplatingContext, OrganizationFileContents: (command as IUpdateStacksCommandArgs).organizationFileContents }, (command as IUpdateStacksCommandArgs).organizationFileHash);
         const state = await this.getState(command);
