@@ -212,6 +212,7 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     StackDescription?: string;
     Parameters?: Record<string, string | object>;
     TemplatingContext?: Record<string, string | object>;
+    templatingContextFile?: string;
     DeletionProtection?: boolean;
     OrganizationFile?: string;
     OrganizationBinding?: IOrganizationBinding; // old: dont use

@@ -166,6 +166,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     stackDescription?: string;
     parameters?: string | {};
     templatingContext?: {};
+    templatingContextFile?: string;
     terminationProtection?: boolean;
     updateProtection?: boolean;
     forceDeploy?: boolean;

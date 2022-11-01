@@ -33,12 +33,13 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
 
     public addOptions(command: Command): void {
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
+        command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
         super.addOptions(command);
     }
 
     public async performCommand(command: IUpdateOrganizationCommandArgs): Promise<void> {
 
-
+        this.loadTemplatingContext(command);
         const template = await TemplateRoot.create(command.templateFile, { TemplatingContext: command.TemplatingContext });
         const state = await this.getState(command);
         let partitionProvider: S3StorageProvider;
@@ -99,5 +100,6 @@ export interface IUpdateOrganizationCommandArgs extends ICommandArgs {
     forceDeploy?: boolean;
     taskRoleName?: string;
     TemplatingContext?: {};
+    templatingContextFile?: string;
     debugTemplating?: boolean;
 }

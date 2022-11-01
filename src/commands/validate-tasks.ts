@@ -28,6 +28,7 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         command.option('--parameters [parameters]', 'parameters used when creating build tasks from tasks file');
         command.option('--organization-state-object [organization-state-object]', 'key for object used to load read-only organization state');
         command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
+        command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
 
         super.addOptions(command);
@@ -40,6 +41,7 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
         Validator.validatePositiveInteger(command.maxConcurrentTasks, 'maxConcurrentTasks');
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
+        this.loadTemplatingContext(command);
 
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters, command.TemplatingContext);

@@ -40,6 +40,7 @@ export class PrintOrganizationCommand extends BaseCliCommand<IPrintOrganizationC
 export interface IPrintOrganizationCommandArgs extends ICommandArgs {
     templateFile: string;
     TemplatingContext?: {};
+    templatingContextFile?: string;
     debugTemplating?: boolean;
     output?: 'json' | 'yaml';
 }
