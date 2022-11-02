@@ -108,7 +108,7 @@ describe('when reading a organizational unit using reader', () => {
         expect(listAccountsSpy).toHaveBeenCalledTimes(2);
         expect(listTagsSpy).toHaveBeenCalledTimes(6);
         expect(describeOrganizationSpy).toHaveBeenCalledTimes(1);
-        expect(getIdentity).toHaveBeenCalledTimes(3);
+        expect(getIdentity).toHaveBeenCalledTimes(9);
         expect(assumeRole).toHaveBeenCalledTimes(9);
         expect(listAliases).toHaveBeenCalledTimes(6);
         expect(getPasswordPolicy).toHaveBeenCalledTimes(6);
