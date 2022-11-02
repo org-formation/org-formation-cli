@@ -465,7 +465,7 @@ export class AwsOrganizationWriter {
         if (!passwordPolicyEquals(previousResource?.passwordPolicy, resource.passwordPolicy)) {
             const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
             const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, (account.Type === 'PartitionAccount'));
-            if (account.PasswordPolicy) {
+            if (account.PasswordPolicy && !resource.passwordPolicy.TemplateResource) {
                 try {
                     await iam.deleteAccountPasswordPolicy().promise();
                 } catch (err) {
