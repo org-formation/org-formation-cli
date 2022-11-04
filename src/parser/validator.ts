@@ -55,11 +55,11 @@ export class Validator {
             Validator.ValidateOrganizationBinding(binding, `binding ${bindingName} of task ${taskName}`);
         }
 
-        Validator.ThrowForUnknownAttribute(config, `task ${taskName}`,
-            'Type', 'DependsOn', 'Skip', 'Template', 'StackName', 'StackDescription', 'Parameters', 'TemplatingContext', 'StackPolicy', 'Tags',
+        Validator.ThrowForUnknownAttribute(config, `task ${taskName}`, 'Skip',
+            'Type', 'DependsOn', 'DisableStackRollbacks', 'Template', 'StackName', 'StackDescription', 'Parameters', 'TemplatingContext', 'StackPolicy', 'Tags',
             'DeletionProtection', 'OrganizationFile', 'OrganizationBinding', 'OrganizationBindingRegion', 'DefaultOrganizationBinding', 'DefaultOrganizationBindingRegion',
             'OrganizationBindings', 'TerminationProtection', 'UpdateProtection', 'CloudFormationRoleName', 'TaskRoleName',
-            'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance', 'LogVerbose', 'ForceDeploy', 'TaskViaRoleArn');
+            'LogicalName', 'FilePath', 'MaxConcurrentStacks', 'FailedStackTolerance', 'LogVerbose', 'ForceDeploy', 'TaskViaRoleArn', 'DisableStackRollbacks');
     }
 
     public static ValidateTemplateRoot(root: ITemplate): void {

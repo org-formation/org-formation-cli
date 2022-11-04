@@ -138,7 +138,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const state = await this.getState(command);
         GlobalState.Init(state, template);
 
-        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, tags, partition, cloudFormationRoleName, command.resolver, undefined, taskViaRoleArn);
+        const cfnBinder = new CloudFormationBinder(stackName, template, state, parameters, command.forceDeploy === true, command.verbose === true, taskRoleName, terminationProtection, stackPolicy, tags, partition, cloudFormationRoleName, command.resolver, undefined, taskViaRoleArn, command.disableStackRollbacks === true);
 
         const cfnTasks = await cfnBinder.enumTasks();
         if (cfnTasks.length === 0) {
@@ -175,6 +175,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     cloudFormationRoleName?: string;
     taskRoleName?: string;
     taskViaRoleArn?: string;
+    disableStackRollbacks?: boolean;
     stackPolicy?: {};
     tags?: {};
 }

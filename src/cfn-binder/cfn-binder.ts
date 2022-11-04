@@ -29,6 +29,7 @@ export class CloudFormationBinder {
         private readonly resolver?: CfnExpressionResolver,
         private readonly taskProvider: CfnTaskProvider = new CfnTaskProvider(template, state, logVerbose),
         private readonly taskViaRoleArn: string = undefined,
+        private readonly disableStackRollbacks: boolean = false
     ) {
 
         if (template.organizationSection.masterAccount.partitionId && this.partition) {
@@ -112,6 +113,7 @@ export class CloudFormationBinder {
                 template: cfnTemplate,
                 dependencies: [],
                 dependents: [],
+                disableStackRollbacks: this.disableStackRollbacks,
                 regionDependencies: [],
                 accountDependencies: [],
             };
@@ -241,6 +243,7 @@ export class CloudFormationBinder {
 
 export interface ICfnBinding {
     accountLogicalId: string;
+    disableStackRollbacks?: boolean;
     accountId: string;
     region: string;
     stackName: string;
