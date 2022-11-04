@@ -82,7 +82,7 @@ export class CfnTaskProvider {
 
                 const entries = Object.entries(binding.tags ?? {});
                 stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as CloudFormation.Tag));
-
+                stackInput.DisableRollback = !!binding.disableStackRollbacks;
                 for (const dependency of dependencies) {
 
                     const foundExport = await AwsUtil.GetCloudFormationExport(dependency.ExportName, dependency.ExportAccountId, dependency.ExportRegion, customRoleName, customViaRoleArn);

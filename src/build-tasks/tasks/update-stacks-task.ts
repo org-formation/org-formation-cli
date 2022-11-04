@@ -197,6 +197,8 @@ export class UpdateStacksBuildTaskProvider implements IBuildTaskProvider<IUpdate
             args.taskViaRoleArn = config.TaskViaRoleArn;
         }
 
+        args.disableStackRollbacks = !!config.DisableStackRollbacks;
+
         return args;
     }
 
@@ -230,5 +232,6 @@ export interface IUpdateStackTaskConfiguration extends IBuildTaskConfiguration {
     TaskRoleName?: string;
     TaskViaRoleArn?: string;
     LogVerbose?: boolean;
+    DisableStackRollbacks?: boolean;
     ForceDeploy?: boolean;
 }
