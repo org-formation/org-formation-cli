@@ -7,6 +7,7 @@ import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { IOrganizationBinding, ITemplateOverrides, TemplateRoot } from '~parser/parser';
 import { Validator } from '~parser/validator';
 import { GlobalState } from '~util/global-state';
+import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'update-stacks <templateFile>';
 const commandDescription = 'update CloudFormation resources in accounts';
@@ -68,7 +69,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         command.option('--update-protection', 'value that indicates whether stack must have a stack policy that prevents updates');
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks after which execution stops', 0);
-
+        command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
         super.addOptions(command);
     }
 
@@ -83,7 +84,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         Validator.validateBoolean(command.updateProtection, 'updateProtection');
         Validator.validateBoolean(command.isPartition, 'isPartition');
 
-
+        AwsUtil.SetLargeTemplateBucketName(command.largeTemplateBucketName);
         this.storeCommand(command);
 
         const terminationProtection = command.terminationProtection === true;
@@ -160,6 +161,7 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     organizationFileHash?: string;
     defaultOrganizationBindingRegion?: any;
     defaultOrganizationBinding?: any;
+    largeTemplateBucketName?: string;
     organizationBindings?: Record<string, IOrganizationBinding>;
     templateFile: string;
     stackName: string;
