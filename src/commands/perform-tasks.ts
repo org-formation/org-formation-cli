@@ -13,6 +13,7 @@ import { AwsEvents } from '~aws-provider/aws-events';
 import { yamlParse } from '~yaml-cfn/index';
 import { GlobalState } from '~util/global-state';
 import { FileUtil } from '~util/file-util';
+import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -43,6 +44,8 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
         command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
+        command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
+
         super.addOptions(command);
     }
 
@@ -55,6 +58,8 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         Validator.validatePositiveInteger(command.failedTasksTolerance, 'failedTasksTolerance');
         this.loadTemplatingContext(command);
         this.storeCommand(command);
+
+        AwsUtil.SetLargeTemplateBucketName(command.largeTemplateBucketName);
         command.parsedParameters = this.parseCfnParameters(command.parameters);
         const config = new BuildConfiguration(tasksFile, command.parsedParameters, command.TemplatingContext);
 
@@ -110,6 +115,7 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     maxConcurrentTasks: number;
     failedTasksTolerance: number;
     maxConcurrentStacks: number;
+    largeTemplateBucketName?: string;
     failedStacksTolerance: number;
     organizationFile?: string;
     organizationFileContents?: string;

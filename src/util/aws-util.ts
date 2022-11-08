@@ -144,6 +144,14 @@ export class AwsUtil {
         AwsUtil.partitionProfile = partitionProfile;
     }
 
+    public static SetLargeTemplateBucketName(largeTemplateBucketName: string | undefined): void {
+        AwsUtil.largeTemplateBucketName = largeTemplateBucketName;
+    }
+
+    public static GetLargeTemplateBucketName(): string | undefined {
+        return AwsUtil.largeTemplateBucketName;
+    }
+
     public static async SetPartitionCredentials(partitionProfile?: string): Promise<void> {
         if (partitionProfile) {
             const partitionCredentials = await this.InitializeWithGovProfile(partitionProfile);
@@ -409,6 +417,7 @@ export class AwsUtil {
     private static masterAccountId: string | PromiseLike<string>;
     private static masterPartitionId: string | PromiseLike<string>;
     private static partitionProfile: string | PromiseLike<string>;
+    private static largeTemplateBucketName: string | undefined;
     private static partitionCredentials: CredentialsOptions;
     private static buildProcessAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAM> = {};
@@ -473,36 +482,38 @@ export class CfnUtil {
     public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackInput | UpdateStackInput | ValidateTemplateInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
         if (stackInput.TemplateBody && stackInput.TemplateBody.length > 50000) {
             const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region, binding.customRoleName);
-            const bucketName = `org-formation-${binding.accountId}-${binding.region}-large-templates`;
-            try {
-                await s3Service.createBucket({ Bucket: bucketName }).promise();
-                await s3Service.putBucketOwnershipControls({ Bucket: bucketName, OwnershipControls: { Rules: [{ ObjectOwnership: 'BucketOwnerPreferred' }] } }).promise();
-                await s3Service.putPublicAccessBlock({
-                    Bucket: bucketName,
-                    PublicAccessBlockConfiguration: {
-                        BlockPublicAcls: true,
-                        IgnorePublicAcls: true,
-                        BlockPublicPolicy: true,
-                        RestrictPublicBuckets: true,
-                    },
-                }).promise();
-                await s3Service.putBucketEncryption({
-                    Bucket: bucketName, ServerSideEncryptionConfiguration: {
-                        Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }],
-                    },
-                }).promise();
-            } catch (err) {
-                if (err && err.code !== 'BucketAlreadyOwnedByYou') {
-                    throw new OrgFormationError(`unable to create bucket ${bucketName} in account ${binding.accountId}, error: ${err}`);
+            const preExistingBucket = AwsUtil.GetLargeTemplateBucketName() ;
+            const bucketName = preExistingBucket ?? `org-formation-${binding.accountId}-${binding.region}-large-templates`;
+            if (!preExistingBucket) {
+                try {
+                    await s3Service.createBucket({ Bucket: bucketName }).promise();
+                    await s3Service.putBucketOwnershipControls({ Bucket: bucketName, OwnershipControls: { Rules: [{ ObjectOwnership: 'BucketOwnerPreferred' }] } }).promise();
+                    await s3Service.putPublicAccessBlock({
+                        Bucket: bucketName,
+                        PublicAccessBlockConfiguration: {
+                            BlockPublicAcls: true,
+                            IgnorePublicAcls: true,
+                            BlockPublicPolicy: true,
+                            RestrictPublicBuckets: true,
+                        },
+                    }).promise();
+                    await s3Service.putBucketEncryption({
+                        Bucket: bucketName, ServerSideEncryptionConfiguration: {
+                            Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }],
+                        },
+                    }).promise();
+                } catch (err) {
+                    if (err && (err.code !== 'BucketAlreadyOwnedByYou')) {
+                        throw new OrgFormationError(`unable to create bucket ${bucketName} in account ${binding.accountId}, error: ${err}`);
+                    }
                 }
             }
-
-            const putObjetRequest: PutObjectRequest = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
-            await s3Service.putObject(putObjetRequest).promise();
+            const putObjectRequest: PutObjectRequest = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
+            await s3Service.putObject(putObjectRequest).promise();
             if (binding.region.includes('us-gov')) {
-                stackInput.TemplateURL = `https://${bucketName}.s3-${binding.region}.amazonaws.com/${putObjetRequest.Key}`;
+                stackInput.TemplateURL = `https://${bucketName}.s3-${binding.region}.amazonaws.com/${putObjectRequest.Key}`;
             } else {
-                stackInput.TemplateURL = `https://${bucketName}.s3.amazonaws.com/${putObjetRequest.Key}`;
+                stackInput.TemplateURL = `https://${bucketName}.s3.amazonaws.com/${putObjectRequest.Key}`;
             }
             delete stackInput.TemplateBody;
         }
