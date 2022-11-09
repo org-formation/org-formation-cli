@@ -375,34 +375,7 @@ describe("when running perform-tasks with taskMatchers", () => {
         }] as IBuildTask[];
         expect(buildRunnerRunTasksMock).toBeCalledWith(expectedTask, false, 1, 0);
     })
-    
-    test.each([
-        ["match","*",true],
-        ["match","match",true],
-        ["/match","*",false],
-        ["/match","match",false],
-        ["/dontMatch/","*",false],
-        ["/folder/match","*",false],
-        ["/folder/dontMatch/","*",false],
-        
-        ["/match","/*",true],
-        ["/dontMatch/","/*",true],
-        ["/folder/dontMatch/","/*",false],
-        ["/folder/dontMatch","/*",false],
-        
-        ["/folder/match","/*/**",true],
-        ["/folder/","/*/**",true],
-        
-        ["/folder/","/*/**/*.(js|ts)",false],
-        ["/folder/some.js","/*/**/*+(.js|.ts)",true],
-        ["/folder/some.ts","/*/**/*+(.js|.ts)",true],
-        ["/folder/some.ts.d","/*/**/*+(.js|.ts)",false],
-        
-    ])("Testing Minimatch: %s, %s, %s", (str, globMatcher, result) => {
-        expect(minimatch(str,globMatcher)).toBe(result)
-        
-    })
-    
+
     test.each([
         //globMatcher, [updateOrg, node1, leaf2, leaf11, leaf12], [updateOrg, node1, leaf2, leaf11, leaf12]],
         ["test", [,,,,], [,true,true,true,true]],
@@ -424,7 +397,7 @@ describe("when running perform-tasks with taskMatchers", () => {
         
         ["/updateOrg/**/*+(2|12)", [,,,,true], [,true,,true,true]], //checking that the top task is also skipped when no child is executed
         
-    ])("Task Matchers are present: %s", async (taskMatcher, skipTasks, skippedTasks) => {
+    ])("Task Matcher is present: %s", async (taskMatcher, skipTasks, skippedTasks) => {
         
         const [updateOrgSkip, nodeTask1Skip, leafTask2Skip, leafTask11Skip, leafTask12Skip] = skipTasks
         const tasks = [{
