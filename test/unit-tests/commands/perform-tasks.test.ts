@@ -7,6 +7,7 @@ import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ConsoleUtil } from '~util/console-util';
 import { DeleteStacksCommand, BaseCliCommand } from '~commands/index';
 import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/organization-task';
+import minimatch from "minimatch";
 
 describe('when creating perform-tasks command', () => {
     let command: PerformTasksCommand;
@@ -312,3 +313,178 @@ describe('when executing perform-tasks command', () => {
         });
     });
 });
+
+describe("when running perform-tasks with taskMatchers", () => {
+    
+    let commandArgs: IPerformTasksCommandArgs;
+    let taskConfig: IUpdateOrganizationTaskConfiguration[];
+    let performTaskState:PersistedState;
+    let buildRunnerRunTasksMock: jest.SpyInstance;
+    let commanderCommand:Command;
+    let command: PerformTasksCommand;
+    
+    
+    beforeEach(() => {
+        commandArgs = {
+            maxConcurrentStacks:1,
+            maxConcurrentTasks:1,
+            failedStacksTolerance:0,
+            failedTasksTolerance:0,
+            tasksFile: 'tasks.yml',
+            logicalName: 'default',
+        } as IPerformTasksCommandArgs
+        
+        taskConfig = [{
+            Type: 'update-organization',
+            LogicalName: 'updateOrg',
+            Template: 'organization.yml',
+        } as IUpdateOrganizationTaskConfiguration]
+        jest.spyOn(BuildConfiguration.prototype, 'enumBuildConfiguration').mockReturnValue(taskConfig);
+        
+        performTaskState = PersistedState.CreateEmpty('123123123123');
+        jest.spyOn(PerformTasksCommand.prototype, 'getState').mockReturnValue(Promise.resolve(performTaskState));
+        jest.spyOn(BuildConfiguration.prototype, 'fixateOrganizationFile').mockReturnValue(Promise.resolve(undefined));
+        
+        buildRunnerRunTasksMock = jest.spyOn(BuildRunner, 'RunTasks').mockImplementation();
+        
+        commanderCommand = new Command('root');
+        command = new PerformTasksCommand(commanderCommand);
+        
+    })
+    
+    afterEach(() => {
+        jest.restoreAllMocks();
+    })
+    
+    test("No taskMatchers",async () => {
+        const tasks = [{
+            name: 'updateOrg',
+            type: 'update-organization',
+            childTasks: [],
+            skip: undefined
+        }] as IBuildTask[];
+        jest.spyOn(BuildConfiguration.prototype, 'enumBuildTasks').mockReturnValue(tasks);
+        
+        await command.performCommand({ ...commandArgs, taskMatcher:undefined});
+        
+        const expectedTask = [{
+            name: 'updateOrg',
+            type: 'update-organization',
+            childTasks: [],
+            skip: undefined,
+        }] as IBuildTask[];
+        expect(buildRunnerRunTasksMock).toBeCalledWith(expectedTask, false, 1, 0);
+    })
+    
+    test.each([
+        ["match","*",true],
+        ["match","match",true],
+        ["/match","*",false],
+        ["/match","match",false],
+        ["/dontMatch/","*",false],
+        ["/folder/match","*",false],
+        ["/folder/dontMatch/","*",false],
+        
+        ["/match","/*",true],
+        ["/dontMatch/","/*",true],
+        ["/folder/dontMatch/","/*",false],
+        ["/folder/dontMatch","/*",false],
+        
+        ["/folder/match","/*/**",true],
+        ["/folder/","/*/**",true],
+        
+        ["/folder/","/*/**/*.(js|ts)",false],
+        ["/folder/some.js","/*/**/*+(.js|.ts)",true],
+        ["/folder/some.ts","/*/**/*+(.js|.ts)",true],
+        ["/folder/some.ts.d","/*/**/*+(.js|.ts)",false],
+        
+    ])("Testing Minimatch: %s, %s, %s", (str, globMatcher, result) => {
+        expect(minimatch(str,globMatcher)).toBe(result)
+        
+    })
+    
+    test.each([
+        //globMatcher, [updateOrg, node1, leaf2, leaf11, leaf12], [updateOrg, node1, leaf2, leaf11, leaf12]],
+        ["test", [,,,,], [,true,true,true,true]],
+        ["/", [,,,,], [,true,true,true,true]],
+        ["/*", [,,,,], [,true,true,true,true]],
+        ["/*/*", [,,,,], [,true,,true,true]],
+        ["/*/**", [,,,,], [,,,,]],
+        ["/**", [,,,,], [,,,,]],
+        ["/updateOrg/**", [,,,,], [,,,,]],
+        ["/updateOrg/nodeTask1/**", [,,,,], [,,true,,]],
+        ["/updateOrg/nodeTask1", [,,,,], [,true,true,true,true]],
+        ["/updateOrg/nodeTask1/*", [,,,,], [,,true,,]],
+        ["/updateOrg/leafTask2", [,,,,], [,true,,true,true]],
+        ["/updateOrg/nodeTask", [,,,,], [,true,true,true,true]],
+        ["/updateOrg/leafTask", [,,,,], [,true,true,true,true]],
+        ["/updateOrg/*Task*", [,,,,], [,true,,true,true]],
+        ["/updateOrg/**/*+(2|12)", [,,,,], [,,,true,]],
+        ["/updateOrg/**/*+(1|2)", [,,,,], [,,,,]],
+        
+        ["/updateOrg/**/*+(2|12)", [,,,,true], [,true,,true,true]], //checking that the top task is also skipped when no child is executed
+        
+    ])("Task Matchers are present: %s", async (taskMatcher, skipTasks, skippedTasks) => {
+        
+        const [updateOrgSkip, nodeTask1Skip, leafTask2Skip, leafTask11Skip, leafTask12Skip] = skipTasks
+        const tasks = [{
+            name: 'updateOrg',
+            type: 'update-organization',
+            skip: updateOrgSkip,
+            childTasks: [{
+                name: "nodeTask1",
+                type: "update-stacks",
+                skip: nodeTask1Skip,
+                childTasks: [{
+                    name: "leafTask11",
+                    type: "update-stacks",
+                    skip: leafTask11Skip,
+                    childTasks:[]
+                },{
+                    name: "leafTask12",
+                    type: "update-stacks",
+                    skip: leafTask12Skip,
+                    childTasks:[]
+                }]
+            },{
+                name: "leafTask2",
+                type: "update-stacks",
+                skip: leafTask2Skip,
+                childTasks: []
+            }]
+        }] as IBuildTask[];
+        jest.spyOn(BuildConfiguration.prototype, 'enumBuildTasks').mockReturnValue(tasks);
+        
+        await command.performCommand({ ...commandArgs, taskMatcher});
+        
+        const [skippedUpdateOrg, skippedNodeTask1, skippedLeafTask2, skippedLeafTask11, skippedLeafTask12] = skippedTasks
+        const expectedTask = [{
+            name: 'updateOrg',
+            type: 'update-organization',
+            skip: skippedUpdateOrg,
+            childTasks: [{
+                name: "nodeTask1",
+                type: "update-stacks",
+                skip: skippedNodeTask1,
+                childTasks:[{
+                    name: "leafTask11",
+                    type: "update-stacks",
+                    skip: skippedLeafTask11,
+                    childTasks:[]
+                },{
+                    name: "leafTask12",
+                    type: "update-stacks",
+                    skip: skippedLeafTask12,
+                    childTasks:[]
+                }]
+            },{
+                name: "leafTask2",
+                type: "update-stacks",
+                skip: skippedLeafTask2,
+                childTasks: []
+            }]
+        }] as IBuildTask[];
+        expect(buildRunnerRunTasksMock).toBeCalledWith(expectedTask, false, 1, 0);
+    })
+    
+})

@@ -1,11 +1,12 @@
 import { readFileSync } from 'fs';
 import { Command } from 'commander';
+import minimatch from 'minimatch';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { UpdateOrganizationCommand } from './update-organization';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ITrackedTask, PersistedState } from '~state/persisted-state';
 import { Validator } from '~parser/validator';
-import { BuildConfiguration } from '~build-tasks/build-configuration';
+import { BuildConfiguration, IBuildTask } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { ConsoleUtil } from '~util/console-util';
 import { S3StorageProvider } from '~state/storage-provider';
@@ -44,6 +45,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
         command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
+        command.option('--task-matchers [task-matchers]', 'glob patters used to define/filter which tasks to run.');
         command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
 
         command.option('--skip-storing-state', 'when set, the state will not be stored');
@@ -71,6 +73,11 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         const tasks = config.enumBuildTasks(command);
         ConsoleUtil.state = state;
 
+        if(command.taskMatcher) {
+            const tasksPrefix = '/';
+            this.skipNonMatchingLeafTasks(tasks, command.taskMatcher, tasksPrefix);
+        }
+
         state.performUpdateToVersion2IfNeeded();
         UpdateOrganizationCommand.ResetHasRan();
 
@@ -90,6 +97,34 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
         await state.save();
 
+    }
+
+    private skipNonMatchingLeafTasks(tasks: IBuildTask[], taskMatcher: string, tasksPrefix: string): number {
+        let skippedLeaves = 0;
+        for(const task of tasks) {
+
+            let skipTask = false;
+            const isLeafTask = task.childTasks.length === 0;
+            const taskFullName = `${tasksPrefix}${task.name}`;
+
+            if(isLeafTask) {
+                const isMatching = minimatch(taskFullName, taskMatcher);
+                skipTask = isMatching ? task.skip : true;
+                console.log(taskFullName, isMatching, task.skip);
+            }
+
+            if(isLeafTask === false && task.skip !== true) {
+                const skippedChildTasks = this.skipNonMatchingLeafTasks(task.childTasks, taskMatcher, `${taskFullName}/`);
+                const isAllSkipped = task.childTasks.length === skippedChildTasks;
+                task.skip = isAllSkipped ? true : task.skip;
+            }
+
+            if (skipTask) {
+                task.skip = true;
+                skippedLeaves = skippedLeaves + 1;
+            }
+        }
+        return skippedLeaves;
     }
 
     public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {
@@ -129,4 +164,5 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     forceDeploy?: boolean;
     organizationObject?: any;
     skipStoringState?: true;
+    taskMatcher?: string;
 }
