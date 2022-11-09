@@ -45,7 +45,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--organization-state-bucket-name [organization-state-bucket-name]', 'name of the bucket that contains the read-only organization state');
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
         command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
-        command.option('--task-matchers [task-matchers]', 'glob patters used to define/filter which tasks to run.');
+        command.option('--task-matcher [task-matcher]', 'glob pattern used to define/filter which tasks to run.');
         command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
 
         command.option('--skip-storing-state', 'when set, the state will not be stored');
@@ -110,7 +110,6 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
             if(isLeafTask) {
                 const isMatching = minimatch(taskFullName, taskMatcher);
                 skipTask = isMatching ? task.skip : true;
-                console.log(taskFullName, isMatching, task.skip);
             }
 
             if(isLeafTask === false && task.skip !== true) {
@@ -123,6 +122,11 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
                 task.skip = true;
                 skippedLeaves = skippedLeaves + 1;
             }
+
+            if(isLeafTask && skipTask !== true) {
+                ConsoleUtil.LogInfo(`${taskFullName} matched the '${taskMatcher}' globPattern`);
+            }
+
         }
         return skippedLeaves;
     }
