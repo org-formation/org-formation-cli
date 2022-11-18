@@ -5,6 +5,7 @@ import { AwsUtil } from '../util/aws-util';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS, DEFAULT_ROLE_FOR_ORG_ACCESS } from '~util/aws-util';
 import { S3StorageProvider } from '~state/storage-provider';
+import { ITemplateGenerationSettings } from '~writer/default-template-writer';
 
 
 const commandName = 'init <file>';
@@ -23,6 +24,7 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
 
     public addOptions(command: Command): void {
         command.option('--region <region>', 'region used to created state-bucket in');
+        command.option('--exclude <exclude-accounts>', 'comma delimited list of accountIds that need to be excluded');
         command.option('--cross-account-role-name <cross-account-role-name>', 'name of the role used to perform cross account access', 'OrganizationAccountAccessRole');
         super.addOptions(command);
     }
@@ -32,11 +34,14 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;
             DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName = command.crossAccountRoleName;
         }
+        const exclude = !command.exclude ? [] : command.exclude.split(',').map(x=>x.trim());
+        const templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [], exclude };
+
         this.storeCommand(command);
         let partitionProvider: S3StorageProvider;
         const filePath = command.file;
         const storageProvider = await this.createOrGetStateBucket(command, command.region);
-        const template = await this.generateDefaultTemplate();
+        const template = await this.generateDefaultTemplate(undefined, templateGenerationSettings);
         const templateContents = template.template;
         writeFileSync(filePath, templateContents);
 
@@ -67,4 +72,5 @@ export interface IInitCommandArgs extends ICommandArgs {
     file: string;
     region: string;
     crossAccountRoleName: string;
+    exclude: string;
 }
