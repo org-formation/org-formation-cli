@@ -74,7 +74,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         ConsoleUtil.state = state;
 
         if(command.taskMatcher) {
-            const tasksPrefix = '/';
+            const tasksPrefix = '';
             this.skipNonMatchingLeafTasks(tasks, command.taskMatcher, tasksPrefix);
         }
 

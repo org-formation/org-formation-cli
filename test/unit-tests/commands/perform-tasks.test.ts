@@ -379,23 +379,22 @@ describe("when running perform-tasks with taskMatchers", () => {
     test.each([
         //globMatcher, [updateOrg, node1, leaf2, leaf11, leaf12], [updateOrg, node1, leaf2, leaf11, leaf12]],
         ["test", [,,,,], [,true,true,true,true]],
-        ["/", [,,,,], [,true,true,true,true]],
-        ["/*", [,,,,], [,true,true,true,true]],
-        ["/*/*", [,,,,], [,true,,true,true]],
-        ["/*/**", [,,,,], [,,,,]],
-        ["/**", [,,,,], [,,,,]],
-        ["/updateOrg/**", [,,,,], [,,,,]],
-        ["/updateOrg/nodeTask1/**", [,,,,], [,,true,,]],
-        ["/updateOrg/nodeTask1", [,,,,], [,true,true,true,true]],
-        ["/updateOrg/nodeTask1/*", [,,,,], [,,true,,]],
-        ["/updateOrg/leafTask2", [,,,,], [,true,,true,true]],
-        ["/updateOrg/nodeTask", [,,,,], [,true,true,true,true]],
-        ["/updateOrg/leafTask", [,,,,], [,true,true,true,true]],
-        ["/updateOrg/*Task*", [,,,,], [,true,,true,true]],
-        ["/updateOrg/**/*+(2|12)", [,,,,], [,,,true,]],
-        ["/updateOrg/**/*+(1|2)", [,,,,], [,,,,]],
-        
-        ["/updateOrg/**/*+(2|12)", [,,,,true], [,true,,true,true]], //checking that the top task is also skipped when no child is executed
+        ["", [,,,,], [,,,,]],
+        ["*", [,,,,], [,true,true,true,true]],
+        ["*/*", [,,,,], [,true,,true,true]],
+        ["*/**", [,,,,], [,,,,]],
+        ["**", [,,,,], [,,,,]],
+        ["updateOrg/**", [,,,,], [,,,,]],
+        ["updateOrg/nodeTask1/**", [,,,,], [,,true,,]],
+        ["updateOrg/nodeTask1", [,,,,], [,true,true,true,true]],
+        ["updateOrg/nodeTask1/*", [,,,,], [,,true,,]],
+        ["updateOrg/leafTask2", [,,,,], [,true,,true,true]],
+        ["updateOrg/nodeTask", [,,,,], [,true,true,true,true]],
+        ["updateOrg/leafTask", [,,,,], [,true,true,true,true]],
+        ["updateOrg/*Task*", [,,,,], [,true,,true,true]],
+        ["updateOrg/**/*+(2|12)", [,,,,], [,,,true,]],
+        ["updateOrg/**/*+(1|2)", [,,,,], [,,,,]],
+        ["updateOrg/**/*+(2|12)", [,,,,true], [,true,,true,true]], //checking that the top task is also skipped when no child is executed
         
     ])("Task Matcher is present: %s", async (taskMatcher, skipTasks, skippedTasks) => {
         
