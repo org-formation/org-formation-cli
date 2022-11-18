@@ -250,7 +250,7 @@ export class TemplateRoot {
 
         const organizationAccountsAndMaster = [this.organizationSection.masterAccount, ...this.organizationSection.accounts];
         const accounts = this.resolve(binding.Account, binding.Account === '*' ? this.organizationSection.accounts : organizationAccountsAndMaster);
-        const excludeAccounts = this.resolve(binding.ExcludeAccount, binding.ExcludeAccount === '*' ? this.organizationSection.accounts : organizationAccountsAndMaster);
+        const exclude = this.resolve(binding.ExcludeAccount, binding.ExcludeAccount === '*' ? this.organizationSection.accounts : organizationAccountsAndMaster);
         const organizationalUnits = this.resolve(binding.OrganizationalUnit, this.organizationSection.organizationalUnits);
         const excludeOrganizationalUnits = this.resolve(binding.ExcludeOrganizationalUnit, this.organizationSection.organizationalUnits);
 
@@ -279,7 +279,7 @@ export class TemplateRoot {
             result.delete(accountsForUnit);
         }
 
-        for (const account of excludeAccounts.map(x => x.TemplateResource!.logicalId)) {
+        for (const account of exclude.map(x => x.TemplateResource!.logicalId)) {
             result.delete(account);
         }
 
