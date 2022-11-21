@@ -206,7 +206,7 @@ export class AwsOrganizationReader {
         }
     }
 
-    private static async listAccounts(that: AwsOrganizationReader): Promise<AWSAccount[]> {
+    private static async listAccounts(that: AwsOrganizationReader, excludeAccountIds: string[]): Promise<AWSAccount[]> {
         try {
             const roots: AWSRoot[] = await that.roots.getValue();
             const policies: AWSPolicy[] = await that.policies.getValue();
@@ -224,6 +224,7 @@ export class AwsOrganizationReader {
                 do {
                     resp = await performAndRetryIfNeeded(() => that.organizationService.listAccountsForParent(req).promise());
                     req.NextToken = resp.NextToken;
+                    const accounts = resp.Accounts?.filter(x=>!excludeAccountIds.includes(x.Id));
 
                     const getAccount = async (acc: Account): Promise<void> => {
                         if (acc.Status === 'SUSPENDED') {
@@ -271,7 +272,7 @@ export class AwsOrganizationReader {
                         }
                         result.push(account);
                     };
-                    await Promise.all(resp.Accounts.map(getAccount));
+                    await Promise.all(accounts.map(getAccount));
 
                 } while (resp.NextToken);
 
@@ -372,12 +373,12 @@ export class AwsOrganizationReader {
     private readonly organizationService: Organizations;
     private isPartition: boolean;
 
-    constructor(organizationService: Organizations, private readonly crossAccountConfig?: ICrossAccountConfig) {
+    constructor(organizationService: Organizations, excludeAccountIds: string[] = [],  private readonly crossAccountConfig?: ICrossAccountConfig) {
 
         this.organizationService = organizationService;
         this.policies = new Lazy(this, AwsOrganizationReader.listPolicies);
         this.organizationalUnits = new Lazy(this, AwsOrganizationReader.listOrganizationalUnits);
-        this.accounts = new Lazy(this, AwsOrganizationReader.listAccounts);
+        this.accounts = new Lazy(this, x=> AwsOrganizationReader.listAccounts(x, excludeAccountIds));
         this.organization = new Lazy(this, AwsOrganizationReader.getOrganization);
         this.roots = new Lazy(this, AwsOrganizationReader.listRoots);
         this.isPartition = false;
