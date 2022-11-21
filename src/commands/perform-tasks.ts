@@ -46,6 +46,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
         command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
 
+        command.option('--skip-storing-state', 'when set, the state will not be stored');
         super.addOptions(command);
     }
 
@@ -127,4 +128,5 @@ export interface IPerformTasksCommandArgs extends ICommandArgs {
     logicalNamePrefix?: string;
     forceDeploy?: boolean;
     organizationObject?: any;
+    skipStoringState?: true;
 }

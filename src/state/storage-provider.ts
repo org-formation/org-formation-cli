@@ -26,7 +26,7 @@ export class S3StorageProvider implements IStorageProvider {
     public readonly objectKey: string;
     private readonly credentials: CredentialsOptions;
     private readonly region: string;
-
+    public dontPut = false;
 
     private constructor(stateBucketName: string, stateObject: string, credentials?: CredentialsOptions, region?: string) {
         if (!stateBucketName || stateBucketName === '') {
@@ -118,8 +118,12 @@ export class S3StorageProvider implements IStorageProvider {
     }
 
     public async put(contents: string): Promise<void> {
-        try {
+        if (this.dontPut) {
+            ConsoleUtil.LogInfo('skipped saving updated state to server');
+            return;
+        }
 
+        try {
             const s3client = new S3({ credentials: this.credentials, region: this.region });
             const putObjectRequest: PutObjectRequest = {
                 Bucket: this.bucketName,

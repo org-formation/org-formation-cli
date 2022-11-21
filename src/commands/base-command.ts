@@ -242,6 +242,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         } else {
             storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials);
         }
+        if (BaseCliCommand.CliCommandArgs && (BaseCliCommand.CliCommandArgs as IPerformTasksCommandArgs).skipStoringState) {
+            storageProvider.dontPut = true;
+        }
         return storageProvider;
     }
 
