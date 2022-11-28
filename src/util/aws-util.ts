@@ -571,6 +571,7 @@ export class CfnUtil {
                         (-1 !== message.indexOf('is in CREATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) ||
                         (-1 !== message.indexOf('is in CREATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) ||
                         (-1 !== message.indexOf('is in CREATE_IN_PROGRESS state and can not be updated.')) ||
+                        (-1 !== message.indexOf('is in DELETE_IN_PROGRESS state and can not be updated.')) ||
                         (err.code === 'ResourceNotReady' && err.originalError?.code === 'Throttling')) {
                         if (retryStackIsBeingUpdatedCount >= 20) { // 20 * 30 sec = 10 minutes
                             throw new OrgFormationError(`Stack ${updateStackInput.StackName} seems stuck in UPDATE_IN_PROGRESS (or similar) state.`);
