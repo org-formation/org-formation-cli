@@ -44,7 +44,6 @@ Creates a local organization formation file that contains all organization resou
 |---|---|---|
 |<nobr>--region</nobr>| none | The ``--region`` used to create the S3 bucket used to store state|
 |<nobr>--cross-account-role-name</nobr> |``OrganizationAccountAccessRole``| Name of the cross account IAM Role that should be used for cross account access.
-|<nobr>--exclude</nobr> | none | comma delimited list of account ids that should be excluded
 
 ### ``org-formation init-pipeline``
 
@@ -63,7 +62,7 @@ Creates an organization as done using the init command as well as default CodeCo
 |<nobr>--cross-account-role-name</nobr> |``OrganizationAccountAccessRole``| Name of the cross account IAM Role that should be used for cross account access.
 |<nobr>--build-account-id</nobr> |none| Account Id of an existing AWS Account within your organization that should be used to manage the organization.
 |<nobr>--role-stack-name</nobr> |`organization-formation-role`| stack name used to create cross account roles for org-formation access. only used when --build-account-id is passed.
-|<nobr>--exclude</nobr> | none | comma delimited list of account ids that should be excluded
+|<nobr>--exclude-accounts</nobr> | none | comma delimited list of account ids that should be excluded
 
 **note**: if you specify `--build-account-id` when initializing org-formation, should must always pass the account id of the master account in any subsequent call. you can put this value in [runtime configurations](#runtime-configuration-org-formationrc) file.
 
@@ -255,6 +254,8 @@ PolicyDocument:
 |<nobr>--print-stack</nobr> |   | the `--print-stack` option will log stack traces for errors that occur.|
 |<nobr>--verbose</nobr> |   | the `--verbose` option will log debug level information.|
 |<nobr>--master-account-id</nobr> |   | the `--master-account-id` option must be specified when the org-formation command is ran from a non-master account |
+|<nobr>--exclude-accounts</nobr> | none | comma delimited list of account ids that should be excluded
+
 
 ## Runtime configuration (.org-formationrc)
 

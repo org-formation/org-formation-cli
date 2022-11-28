@@ -30,7 +30,7 @@ export class DefaultTemplateWriter {
         this.logicalNames = new LogicalNames();
     }
 
-    public async generateDefaultTemplate(templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [], exclude: [] }): Promise<DefaultTemplate> {
+    public async generateDefaultTemplate(templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [] }): Promise<DefaultTemplate> {
         await this.organizationModel.initialize();
         const bindings: IBinding[] = [];
         const state = PersistedState.CreateEmpty(this.organizationModel.masterAccount.Id);
@@ -112,11 +112,6 @@ export class DefaultTemplateWriter {
         for (const account of this.organizationModel.accounts) {
             const wasPredefined = templateGenerationSettings.predefinedAccounts.some(x => x.id === account.Id);
             if (wasPredefined) { continue; }
-
-            if (templateGenerationSettings.exclude.includes(account.Id)) {
-                console.log(`excluded account ${account.Id}`);
-                continue;
-            }
 
             const partitionAccount = this.partitionOrganizationModel?.accounts.find(p => p.Name === account.Name);
             if (partitionAccount) {
@@ -580,7 +575,6 @@ interface WriterResource {
 
 export interface ITemplateGenerationSettings {
     predefinedAccounts: IPredefinedAccount[];
-    exclude: string[];
     predefinedOUs: IPredefinedOU[];
 }
 
