@@ -216,20 +216,23 @@ export class CfnTaskProvider {
                 try {
                     const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
-                    let roleArn: string;
-                    if (cloudFormationRoleName) {
-                        roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
-                    }
+                    await performAndRetryIfNeeded(async () => {
+                        let roleArn: string;
+                        if (cloudFormationRoleName) {
+                            roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
+                        }
 
-                    const deleteStackInput: DeleteStackInput = {
-                        StackName: stackName,
-                        RoleARN: roleArn,
-                    };
-                    await cfn.deleteStack(deleteStackInput).promise();
-                    await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        const deleteStackInput: DeleteStackInput = {
+                            StackName: stackName,
+                            RoleARN: roleArn,
+                        };
+                        await cfn.deleteStack(deleteStackInput).promise();
+                        await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    });
                 } catch (err) {
                     ConsoleUtil.LogInfo(`unable to delete stack ${stackName} from ${binding.accountId} / ${binding.region}. Removing stack from state instead.`);
                 }
+
                 that.state.removeTarget(
                     stackName,
                     binding.accountId,
@@ -239,6 +242,32 @@ export class CfnTaskProvider {
     }
 
 }
+
+export const performAndRetryIfNeeded = async <T extends unknown>(fn: () => Promise<T>): Promise<T> => {
+  let shouldRetry = false;
+  let retryCount = 0;
+  do {
+    shouldRetry = false;
+    try {
+      return await fn();
+    } catch (err) {
+      if (err && (err.code === 'ThrottlingException') && retryCount < 10) {
+        retryCount = retryCount + 1;
+        shouldRetry = true;
+        const wait = retryCount + (0.5 * Math.random());
+        ConsoleUtil.LogDebug(`received retryable error ${err.code}. wait ${wait} and retry-count ${retryCount}`);
+        await sleep(wait * 1000);
+        continue;
+      }
+      throw err;
+    }
+  }
+  while (shouldRetry);
+};
+
+export const sleep = (time: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, time));
+  };
 
 interface ICrossAccountParameterDependency {
     ExportAccountId: string;

@@ -8,6 +8,7 @@ import { CfnTaskRunner } from '~cfn-binder/cfn-task-runner';
 import { CfnValidateTaskProvider } from '~cfn-binder/cfn-validate-task-provider';
 import { GlobalState } from '~util/global-state';
 import { Validator } from '~parser/validator';
+import { AwsUtil } from '~util/aws-util';
 
 const commandName = 'validate-stacks <templateFile>';
 const commandDescription = 'validates the CloudFormation templates that will be generated';
@@ -27,6 +28,8 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         command.option('--organization-file [organization-file]', 'organization file used for organization bindings');
         command.option('--stack-name <stack-name>', 'name of the stack that will be used in CloudFormation', 'validation');
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
+        command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
+
         super.addOptions(command);
     }
 
@@ -41,6 +44,7 @@ export class ValidateStacksCommand extends BaseCliCommand<IUpdateStacksCommandAr
         const failedStacksTolerance = command.failedStacksTolerance ?? 99;
         Validator.validatePositiveInteger(maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(failedStacksTolerance, 'failedStacksTolerance');
+        AwsUtil.SetLargeTemplateBucketName(command.largeTemplateBucketName);
 
         const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
         const state = await this.getState(command);

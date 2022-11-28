@@ -110,6 +110,7 @@ Will deploy CloudFormation resources specified in *templateFile*.
 |<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
 |<nobr>--max-concurrent-stacks</nobr> | 1 | Maximum number of stacks to be updated concurrently |
 |<nobr>--failed-stacks-tolerance</nobr> | 0 | The number of failed stacks after which execution stops|
+|<nobr>--large-template-bucket-name</nobr> | 0 | The name of the S3 bucket that should be used when uploading templates larger than 50_000 bytes |
 
 
 parameters can be passed in a similar fashion CloudFormation parameters are passed:
@@ -135,7 +136,7 @@ validates the CloudFormation templates that will be generated based on *template
 |<nobr>--stack-name</nobr> | 'validation' | The stack name used to deploy CloudFormation resources (used in e.g. generated names for output)|
 |<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
 |<nobr>--parameters</nobr> | none | parameters that need to be passed to the CloudFormation template.|
-
+|<nobr>--large-template-bucket-name</nobr> | 0 | The name of the S3 bucket that should be used when uploading templates larger than 50_000 bytes |
 
 parameters can be passed in a similar fashion CloudFormation parameters are passed:
 ``> org-formation validate-stacks template.yml --stack-name my-stack --parameters ParameterKey=Param1,ParameterValue=Val1 ParameterKey=Param2,ParameterValue=Val2``
@@ -156,9 +157,7 @@ Will print out CloudFormation templates generated based on *templateFile*.
 |<nobr>--parameters</nobr> | none | parameters that need to be passed to the CloudFormation template.|
 |<nobr>--organization-file</nobr>| undefined | path to the organization file that will be used to evaluate organizational bindings |
 |<nobr>--no-print-parameters</nobr>| print-parameters | do not print parameter values in parameter file |
-
-
-
+|<nobr>--large-template-bucket-name</nobr> | 0 | The name of the S3 bucket that should be used when uploading templates larger than 50_000 bytes |
 
 ### ``org-formation describe-stacks``
 
@@ -207,6 +206,7 @@ Will perform tasks from *tasksFile*.
 |<nobr>--failed-tasks-tolerance</nobr> | 0 | The number of failed tasks after which execution stops|
 |<nobr>--max-concurrent-stacks</nobr> | 1 | Maximum number of stacks (within a task) to be executed concurrently |
 |<nobr>--failed-stacks-tolerance</nobr> | 0 | The number of failed stacks (within a task) after which execution stops|
+|<nobr>--large-template-bucket-name</nobr> | 0 | The name of the S3 bucket that should be used when uploading templates larger than 50_000 bytes |
 
 
 Parameters can be passed using the following syntax:
