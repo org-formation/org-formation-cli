@@ -11,7 +11,7 @@ All notable changes to aws organization formation will be documented in this fil
 - fix: explicitly retry on type registrations that return `DEPLOY_STAGE of status FAILED` 
 - feat: allow nunjucks templating context to be passed to cli commands perform-tasks, print-tasks, validate-tasks, update & print-org
 - feat: support disableRollback on update-stacks tasks
-- feat: allow accounts to be excluded when doing init (--exclude '112223344555,112223344555' )
+- feat: allow accounts to be excluded when performing any command (--exclude-accounts '112223344555,112223344555' )
 - feat: specify bucket to be used for large template uploads (on validate-tasks, perform-tasks, validate-stacks and update-stacks)
 
 **version 1.0.4**

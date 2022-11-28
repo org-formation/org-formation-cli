@@ -24,7 +24,6 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
 
     public addOptions(command: Command): void {
         command.option('--region <region>', 'region used to created state-bucket in');
-        command.option('--exclude <exclude-accounts>', 'comma delimited list of accountIds that need to be excluded');
         command.option('--cross-account-role-name <cross-account-role-name>', 'name of the role used to perform cross account access', 'OrganizationAccountAccessRole');
         super.addOptions(command);
     }
@@ -34,8 +33,8 @@ export class InitOrganizationCommand extends BaseCliCommand<IInitCommandArgs> {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;
             DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName = command.crossAccountRoleName;
         }
-        const exclude = !command.exclude ? [] : command.exclude.split(',').map(x=>x.trim());
-        const templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [], exclude };
+
+        const templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [] };
 
         this.storeCommand(command);
         let partitionProvider: S3StorageProvider;
@@ -72,5 +71,4 @@ export interface IInitCommandArgs extends ICommandArgs {
     file: string;
     region: string;
     crossAccountRoleName: string;
-    exclude: string;
 }

@@ -94,9 +94,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     public async generateDefaultTemplate(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
         const organizations = new Organizations({ region: 'us-east-1' });
         const partitionCredentials = await AwsUtil.GetPartitionCredentials();
-        const excludedAccountIds = templateGenerationSettings?.exclude ?? [];
+
         // configure default Organization/Reader
-        const awsReader: AwsOrganizationReader = new AwsOrganizationReader(organizations, excludedAccountIds);
+        const awsReader: AwsOrganizationReader = new AwsOrganizationReader(organizations);
         const awsOrganization = new AwsOrganization(awsReader);
         await awsOrganization.initialize();
 
@@ -108,7 +108,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             const accessRoleName = (defaultBuildAccessRoleName) ? defaultBuildAccessRoleName : DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName;
             const crossAccountConfig = { masterAccountId, masterAccountRoleName: accessRoleName, isPartition: true };
             const partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
-            partitionReader = new AwsOrganizationReader(partitionOrgService, excludedAccountIds, crossAccountConfig);
+            partitionReader = new AwsOrganizationReader(partitionOrgService, crossAccountConfig);
             partitionOrganization = new AwsOrganization(partitionReader);
             await partitionOrganization.initialize();
         }
@@ -182,6 +182,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         command.option('--partition-keys', 'is to indicate to look for partition access keys');
         command.option('--partition-profile [profile]', 'aws partition profile to use');
         command.option('--partition-region [region]', 'aws partition region to use');
+        command.option('--exclude-accounts <exclude-accounts>', 'comma delimited list of accountIds that need to be excluded');
 
     }
 
@@ -196,7 +197,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount };
 
         // configure default Organization/Reader/Writer
-        const awsReader: AwsOrganizationReader = new AwsOrganizationReader(organizations, [], crossAccountConfig);
+        const awsReader: AwsOrganizationReader = new AwsOrganizationReader(organizations, crossAccountConfig);
         const awsOrganization = new AwsOrganization(awsReader);
         await awsOrganization.initialize();
         const awsWriter = new AwsOrganizationWriter(organizations, awsOrganization, crossAccountConfig);
@@ -209,7 +210,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             const partitionMasterAccountId = await AwsUtil.GetPartitionMasterAccountId();
             const partitionCrossAccountConfig = { masterAccountId: partitionMasterAccountId, masterAccountRoleName: roleInMasterAccount };
             const partitionOrgService = await AwsUtil.GetOrganizationsService(partitionMasterAccountId, roleInMasterAccount, null, true);
-            partitionReader = new AwsOrganizationReader(partitionOrgService, [], partitionCrossAccountConfig);
+            partitionReader = new AwsOrganizationReader(partitionOrgService, partitionCrossAccountConfig);
             partitionOrganization = new AwsOrganization(partitionReader);
             await partitionOrganization.initialize();
             partitionWriter = new AwsOrganizationWriter(partitionOrgService, partitionOrganization, partitionCrossAccountConfig);
@@ -299,6 +300,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }, undefined, 2)}`);
 
         this.loadRuntimeConfiguration(command);
+
+        if (command.excludeAccounts) {
+            const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x=>x.trim());;
+            ConsoleUtil.LogInfo(`excluding the following accounts: ${exclude.join(', ')}`);
+            AwsOrganizationReader.excludeAccountIds = exclude;
+        }
 
         if (command.printStack === true) {
             ConsoleUtil.printStacktraces = true;
@@ -392,6 +399,10 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
                 command.partitionProfile = rc.partitionProfile;
             }
 
+            if (process.argv.indexOf('--exclude-accounts') === -1 && rc.excludeAccounts !== undefined) {
+                command.excludeAccounts = rc.excludeAccounts;
+            }
+
             if (process.argv.indexOf('--partition-region') === -1 && rc.partitionRegion !== undefined) {
                 command.partitionProfile = rc.partitionProfile;
             }
@@ -446,6 +457,7 @@ export interface ICommandArgs {
     partitionKeys?: boolean;
     resolver?: CfnExpressionResolver;
     partitionRegion?: string;
+    excludeAccounts?: string;
 }
 
 export interface IRCObject {
@@ -461,6 +473,7 @@ export interface IRCObject {
     profile?: string;
     partitionProfile?: string;
     partitionRegion?: string;
+    excludeAccounts?: string;
     configs: string[];
     config: string;
 }

@@ -369,16 +369,17 @@ export class AwsOrganizationReader {
     public readonly accounts: Lazy<AWSAccount[]>;
     public readonly organizationalUnits: Lazy<AWSOrganizationalUnit[]>;
     public readonly organization: Lazy<Organization>;
+    public static excludeAccountIds: string[] = [];
     public readonly roots: Lazy<AWSRoot[]>;
     private readonly organizationService: Organizations;
     private isPartition: boolean;
 
-    constructor(organizationService: Organizations, excludeAccountIds: string[] = [],  private readonly crossAccountConfig?: ICrossAccountConfig) {
+    constructor(organizationService: Organizations, private readonly crossAccountConfig?: ICrossAccountConfig) {
 
         this.organizationService = organizationService;
         this.policies = new Lazy(this, AwsOrganizationReader.listPolicies);
         this.organizationalUnits = new Lazy(this, AwsOrganizationReader.listOrganizationalUnits);
-        this.accounts = new Lazy(this, x=> AwsOrganizationReader.listAccounts(x, excludeAccountIds));
+        this.accounts = new Lazy(this, x=> AwsOrganizationReader.listAccounts(x, AwsOrganizationReader.excludeAccountIds));
         this.organization = new Lazy(this, AwsOrganizationReader.getOrganization);
         this.roots = new Lazy(this, AwsOrganizationReader.listRoots);
         this.isPartition = false;

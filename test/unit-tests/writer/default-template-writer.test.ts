@@ -309,7 +309,6 @@ describe('when writing template for organization', () => {
 
     describe('and generated is supplied with predefined accounts', () => {
         const settings: ITemplateGenerationSettings = {
-            exclude: [],
             predefinedOUs: [],
             predefinedAccounts:
                 [{
@@ -334,7 +333,6 @@ describe('when writing template for organization', () => {
     });
     describe('and predefined account already exists', () => {
         const settings: ITemplateGenerationSettings = {
-            exclude: [],
             predefinedOUs: [],
             predefinedAccounts:
                 [{
@@ -366,7 +364,6 @@ describe('when writing template for organization', () => {
     });
     describe('and generate is supplied with predefined OUs', () => {
         const settings: ITemplateGenerationSettings = {
-            exclude: [],
             predefinedOUs: [{
                 logicalName: "SharedOU",
                 id: "o-123",

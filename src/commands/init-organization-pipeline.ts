@@ -35,7 +35,6 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         command.option('--build-account-id [build-account-id]', 'account id of the aws account that will host the orgformation build process');
         command.option('--role-stack-name [role-stack-name]', 'stack name used to create cross account roles for org-formation access. only used when --build-account-id is passed', 'organization-formation-role');
         command.option('--template-package-url [template-package-url]', 'url of a package that could be used as an initial set of templates');
-        command.option('--exclude <exclude-accounts>', 'comma delimited list of accountIds that need to be excluded');
 
         super.addOptions(command);
     }
@@ -75,8 +74,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         }
 
         const cloudformationTemplateContents = readFileSync(path + codePipelineTemplateFileName).toString('utf8');
-        const exclude = !command.exclude ? [] : command.exclude.split(',').map(x=>x.trim());;
-        let templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [], exclude };
+        let templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [] };
         let extractedTemplate: ExtractedTemplate | undefined;
         if (command.templatePackageUrl) {
             extractedTemplate = await InitialCommitUtil.extractTemplate(command.templatePackageUrl);
@@ -332,5 +330,4 @@ export interface IInitPipelineCommandArgs extends ICommandArgs {
     logicalNameToIdMap?: Record<string, string>;
     logicalNameToRootEmailMap?: Record<string, string>;
     packageParameters?: Record<string, string>;
-    exclude: string;
 }
