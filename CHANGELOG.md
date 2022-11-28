@@ -13,6 +13,7 @@ All notable changes to aws organization formation will be documented in this fil
 - feat: support disableRollback on update-stacks tasks
 - feat: allow accounts to be excluded when performing any command (--exclude-accounts '112223344555,112223344555' )
 - feat: specify bucket to be used for large template uploads (on validate-tasks, perform-tasks, validate-stacks and update-stacks)
+- feat: support closing removed accounts form the organization specifying "CloseAccountsOnRemoval: true" on the OrganizationRoot in organization.yml
 
 **version 1.0.4**
 - feat: allow `Fn::EnumTargetAccounts` to be used in combination with `${AccountId}`, `${AccountName}`, `${LogicalId}`, `${RootEmail}`, `${Alias}`, `${Tags.TAGNAME}`
