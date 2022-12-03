@@ -183,9 +183,14 @@ export class GenericTaskRunner {
                     throw err;
                 }
                 task.done = true;
-                task.failed = true;
                 task.running = false;
-                ConsoleUtil.LogError(`${delegate.getName(task)} ${delegate.getVerb(task)} failed. reason: ${err.message}`, err instanceof OrgFormationError ? undefined : err);
+                if (delegate.getVerb(task) === 'deleted') {
+                    task.failed = false;
+                    ConsoleUtil.LogWarning(`${delegate.getName(task)} ${delegate.getVerb(task)} failed. removing from state`);
+                } else {
+                    task.failed = true;
+                    ConsoleUtil.LogError(`${delegate.getName(task)} ${delegate.getVerb(task)} failed. reason: ${err.message}`, err instanceof OrgFormationError ? undefined : err);
+                }
             }
         } while (retryWhenRateLimited);
     }
