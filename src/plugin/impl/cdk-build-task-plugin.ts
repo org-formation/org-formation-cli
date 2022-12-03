@@ -126,7 +126,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             Validator.throwForUnresolvedExpressions(task.customDeployCommand, 'CustomDeployCommand');
             command = task.customDeployCommand as string;
         } else {
-            const commandExpression = { 'Fn::Sub': 'npx cdk deploy ${CurrentTask.Parameters}' } as ICfnSubExpression;
+            const commandExpression = { 'Fn::Sub': 'npx cdk deploy --all --require-approval=never ${CurrentTask.Parameters}' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression, 'CustomDeployCommand');
 
             if (task.runNpmBuild) {
@@ -152,7 +152,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             Validator.throwForUnresolvedExpressions(task.customRemoveCommand, 'CustomRemoveCommand');
             command = task.customRemoveCommand as string;
         } else {
-            const commandExpression = { 'Fn::Sub': 'npx cdk destroy ${CurrentTask.Parameters}' } as ICfnSubExpression;
+            const commandExpression = { 'Fn::Sub': 'npx cdk destroy --all --require-approval=never ${CurrentTask.Parameters}' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression, 'CustomRemoveCommand');
 
             if (task.runNpmBuild) {
