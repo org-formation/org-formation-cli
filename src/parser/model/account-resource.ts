@@ -5,6 +5,7 @@ import { PasswordPolicyResource } from './password-policy-resource';
 import { Reference, Resource } from './resource';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
 import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
+import { ConsoleUtil } from '~util/console-util';
 
 export interface IAccountProperties {
     RootEmail?: string;
@@ -108,10 +109,17 @@ export class AccountResource extends Resource {
         }
 
         if (this.buildAccessRoleName === undefined) {
-            this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultBuildAccessRoleName;
+            if (this.root.developmentRole) {
+                this.organizationAccessRoleName = 'OrganizationFormationLocalDevelopmentBuildRole';
+                // this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultDevelopmentBuildAccessRoleName;
+            } else {
+                this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultBuildAccessRoleName;
+            }
             if (this.buildAccessRoleName === undefined) {
                 this.buildAccessRoleName = this.organizationAccessRoleName;
             }
         }
+
+        ConsoleUtil.LogInfo(`Using ${this.buildAccessRoleName} to run the task`);
     }
 }

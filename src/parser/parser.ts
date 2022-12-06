@@ -90,12 +90,12 @@ export interface ITemplateOverrides {
 
 export class TemplateRoot {
 
-    public static async create(path: string, overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): Promise<TemplateRoot> {
+    public static async create(path: string, overrides: ITemplateOverrides = {}, devRole: boolean, templateImportContentMd5?: string): Promise<TemplateRoot> {
         try {
             const contents = await FileUtil.GetContents(path);
             const dirname = Path.dirname(path);
             const filename = Path.basename(path);
-            return TemplateRoot.createFromContents(contents, dirname, filename, overrides, templateImportContentMd5);
+            return TemplateRoot.createFromContents(contents, devRole, dirname, filename, overrides, templateImportContentMd5);
         } catch (err) {
             let reason = 'unknown';
             if (err && err.message) {
@@ -105,7 +105,7 @@ export class TemplateRoot {
         }
     }
 
-    public static createFromContents(contents: string, dirname = './', filename = 'n/a', overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
+    public static createFromContents(contents: string, devRole: boolean, dirname = './', filename = 'n/a', overrides: ITemplateOverrides = {}, templateImportContentMd5?: string): TemplateRoot {
         if (contents === undefined) { throw new OrgFormationError('contents is undefined'); }
         if (contents.trim().length === 0) { throw new OrgFormationError('contents is empty'); }
         const organizationInclude = /Organization:\s*!Include\s*(\S*)/.exec(contents);
@@ -147,7 +147,7 @@ export class TemplateRoot {
         delete overrides.ParameterValues;
 
         const mergedWithOverrides = { ...obj, ...overrides };
-        return new TemplateRoot(mergedWithOverrides, dirname, filename, paramValues);
+        return new TemplateRoot(mergedWithOverrides, devRole, dirname, filename, paramValues);
 
     }
 
@@ -155,7 +155,7 @@ export class TemplateRoot {
         return new TemplateRoot({
             AWSTemplateFormatVersion: '2010-09-09-OC',
             Organization: {},
-        }, './');
+        }, false, './');
     }
 
     private static getIncludedOrganization(path: string, templateImportContentMd5?: string): IOrganization {
@@ -181,6 +181,7 @@ export class TemplateRoot {
     public readonly dirname: string;
     public readonly filename: string;
     public readonly filepath: string;
+    public readonly developmentRole: boolean;
     public readonly organizationSection: OrganizationSection;
     public readonly defaultOrganizationBinding: IOrganizationBinding;
     public readonly defaultOrganizationBindingRegion: string | string[];
@@ -190,10 +191,11 @@ export class TemplateRoot {
     public readonly hash: string;
     public readonly paramValues: Record<string, any>;
 
-    constructor(contents: ITemplate, dirname: string, filename?: string, paramValues?: Record<string, any>) {
+    constructor(contents: ITemplate, devRole: boolean, dirname: string, filename?: string, paramValues?: Record<string, any>) {
 
         Validator.ValidateTemplateRoot(contents);
 
+        this.developmentRole = devRole;
         this.contents = contents;
         this.dirname = dirname ?? './';
         this.filename = filename ?? 'template.yml';
@@ -226,7 +228,7 @@ export class TemplateRoot {
     }
     public clone(): TemplateRoot {
         const clonedContents = JSON.parse(JSON.stringify(this.contents));
-        return new TemplateRoot(clonedContents, this.dirname);
+        return new TemplateRoot(clonedContents, this.developmentRole, this.dirname);
     }
 
     public resolveNormalizedRegions(binding: IOrganizationBinding): string[] {

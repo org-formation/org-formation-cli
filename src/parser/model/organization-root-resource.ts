@@ -16,6 +16,7 @@ export class OrganizationRootResource extends Resource {
     private props: IOrganizationRootProperties;
     public defaultOrganizationAccessRoleName?: string;
     public defaultBuildAccessRoleName?: string;
+    public defaultDevelopmentBuildAccessRoleName?: string;
     public mirrorInPartition?: boolean;
     public closeAccountsOnRemoval?: boolean;
 

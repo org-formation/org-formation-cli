@@ -52,7 +52,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
                 templateOverrides.TemplatingContext[key] = val;
             }
         }
-        const template = await TemplateRoot.create(templateFile, templateOverrides, command.organizationFileHash);
+        const template = await TemplateRoot.create(templateFile, templateOverrides, command.devRole, command.organizationFileHash);
         return template;
     }
 
