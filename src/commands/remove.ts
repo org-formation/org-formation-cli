@@ -49,7 +49,7 @@ export class RemoveCommand extends BaseCliCommand<IRemoveCommandArgs> {
         if (prevTemplate) {
             const orgTemplate = JSON.parse(prevTemplate ? prevTemplate : '{}') as ITemplate;
             delete orgTemplate.Resources;
-            templateRoot = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
+            templateRoot = TemplateRoot.createFromContents(JSON.stringify(orgTemplate), command.devRole);
         } else {
             templateRoot = TemplateRoot.createEmpty();
         }

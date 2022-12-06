@@ -40,7 +40,11 @@ export class UpdateOrganizationCommand extends BaseCliCommand<IUpdateOrganizatio
     public async performCommand(command: IUpdateOrganizationCommandArgs): Promise<void> {
 
         this.loadTemplatingContext(command);
-        const template = await TemplateRoot.create(command.templateFile, { TemplatingContext: command.TemplatingContext });
+        const template = await TemplateRoot.create(
+            command.templateFile,
+            { TemplatingContext: command.TemplatingContext },
+            command.devRole
+        );
         const state = await this.getState(command);
         let partitionProvider: S3StorageProvider;
 

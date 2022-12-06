@@ -29,7 +29,7 @@ export class ExecuteChangeSetCommand extends BaseCliCommand<IExecuteChangeSetCom
             ConsoleUtil.LogError(`change set '${changeSetName}' not found.`);
             return;
         }
-        const template = new TemplateRoot(changeSetObj.template, './');
+        const template = new TemplateRoot(changeSetObj.template, command.devRole, './');
         const state = await this.getState(command);
 
         GlobalState.Init(state, template);

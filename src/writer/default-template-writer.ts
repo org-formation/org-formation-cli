@@ -148,7 +148,7 @@ export class DefaultTemplateWriter {
         this.generateResource(lines);
 
         const template = lines.map(x => x.toString()).join('');
-        const templateRoot = TemplateRoot.createFromContents(template);
+        const templateRoot = TemplateRoot.createFromContents(template, false);
 
         for (const binding of bindings) {
             let foundResource: Resource | undefined;

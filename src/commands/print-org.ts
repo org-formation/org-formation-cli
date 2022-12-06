@@ -27,7 +27,11 @@ export class PrintOrganizationCommand extends BaseCliCommand<IPrintOrganizationC
 
     public async performCommand(command: IPrintOrganizationCommandArgs): Promise<void> {
 
-        const template = await TemplateRoot.create(command.templateFile, { TemplatingContext: command.TemplatingContext });
+        const template = await TemplateRoot.create(
+            command.templateFile,
+            { TemplatingContext: command.TemplatingContext },
+            command.devRole
+        );
 
         if (command.output === 'json') {
             ConsoleUtil.Out(template.source);
