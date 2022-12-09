@@ -378,25 +378,27 @@ describe("when running perform-tasks with taskMatchers", () => {
 
     test.each([
         //globMatcher, [updateOrg, node1, leaf2, leaf11, leaf12], [updateOrg, node1, leaf2, leaf11, leaf12]],
-        ["test", [,,,,], [false,true,true,true,true]],
+        ["test", [,,,,], [true,true,true,true,true]],
         ["", [,,,,], [,,,,]], // "" is falsy, thus no matching.
-        ["*", [,,,,], [false,true,true,true,true]],
+        ["*", [,,,,], [true,true,true,true,true]],
         ["*/*", [,,,,], [false,true,false,true,true]],
         ["*/**", [,,,,], [false,false,false,false,false]],
         ["**", [,,,,], [false,false,false,false,false]],
         ["updateOrg/**", [,,,,], [false,false,false,false,false]],
         ["updateOrg/nodeTask1/**", [,,,,], [false,false,true,false,false]],
-        ["updateOrg/nodeTask1", [,,,,], [false,true,true,true,true]],
+        ["updateOrg/nodeTask1", [,,,,], [true,true,true,true,true]],
         ["updateOrg/nodeTask1/*", [,,,,], [false,false,true,false,false]],
         ["updateOrg/leafTask2", [,,,,], [false,true,false,true,true]],
-        ["updateOrg/nodeTask", [,,,,], [false,true,true,true,true]],
-        ["updateOrg/leafTask", [,,,,], [false,true,true,true,true]],
+        ["updateOrg/nodeTask", [,,,,], [true,true,true,true,true]],
+        ["updateOrg/leafTask", [,,,,], [true,true,true,true,true]],
         ["updateOrg/*Task*", [,,,,], [false,true,false,true,true]],
         ["updateOrg/**/*+(2|12)", [,,,,], [false,false,false,true,false]],
         ["updateOrg/**/*+(1|2)", [,,,,], [false,false,false,false,false]],
         ["updateOrg/**/*+(2|12)", [,,,,true], [false,false,false,true,false]], //checking unskip
         ["updateOrg/**/*Task2", [,,,,true], [false,true,false,true,true]], //checking that the top task is also skipped when no child is executed
         ["updateOrg/**/*11", [,true,,true,true], [false,false,true,false,true]], //parent is skipped but child matched, parent and child should be un-skipped.
+        ["**/3", [,,,,], [true,true,true,true,true]], //parent is skipped but child matched, parent and child should be un-skipped.
+        ["updateOrg/**", [,true,true,true,], [false,false,false,false,false]],
         
     ])("Task Matcher is present: %s", async (match, skipTasks, skippedTasks) => {
         

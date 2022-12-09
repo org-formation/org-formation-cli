@@ -100,36 +100,31 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
     }
 
     private skipNonMatchingLeafTasks(tasks: IBuildTask[], taskMatcher: string, tasksPrefix: string): number {
-        let skippedLeaves = 0;
+        let skippedTasks = 0;
         for(const task of tasks) {
 
-            let skipTask = false;
             const isLeafTask = task.childTasks.length === 0;
             const taskFullName = `${tasksPrefix}${task.name}`;
 
             if(isLeafTask) {
                 const isMatching = minimatch(taskFullName, taskMatcher);
-                skipTask = isMatching ? false : true;
-            }
-
-            if(isLeafTask === false) {
+                task.skip = isMatching ? false : true;
+            } else {
                 const skippedChildTasks = this.skipNonMatchingLeafTasks(task.childTasks, taskMatcher, `${taskFullName}/`);
                 const isAllSkipped = task.childTasks.length === skippedChildTasks;
                 task.skip = isAllSkipped ? true : false;
             }
 
-            if (skipTask) {
-                task.skip = true;
-                skippedLeaves = skippedLeaves + 1;
+            if(task.skip) {
+                skippedTasks = skippedTasks + 1;
             }
 
-            if(isLeafTask && skipTask !== true) {
-                task.skip = false;
+            if(isLeafTask && task.skip !== true) {
                 ConsoleUtil.LogInfo(`${taskFullName} matched the '${taskMatcher}' globPattern`);
             }
 
         }
-        return skippedLeaves;
+        return skippedTasks;
     }
 
     public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {
