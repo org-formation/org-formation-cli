@@ -365,7 +365,7 @@ describe("when running perform-tasks with taskMatchers", () => {
         }] as IBuildTask[];
         jest.spyOn(BuildConfiguration.prototype, 'enumBuildTasks').mockReturnValue(tasks);
         
-        await command.performCommand({ ...commandArgs, taskMatcher:undefined});
+        await command.performCommand({ ...commandArgs, match:undefined});
         
         const expectedTask = [{
             name: 'updateOrg',
@@ -398,7 +398,7 @@ describe("when running perform-tasks with taskMatchers", () => {
         ["updateOrg/**/*Task2", [,,,,true], [false,true,false,true,true]], //checking that the top task is also skipped when no child is executed
         ["updateOrg/**/*11", [,true,,true,true], [false,false,true,false,true]], //parent is skipped but child matched, parent and child should be un-skipped.
         
-    ])("Task Matcher is present: %s", async (taskMatcher, skipTasks, skippedTasks) => {
+    ])("Task Matcher is present: %s", async (match, skipTasks, skippedTasks) => {
         
         const [updateOrgSkip, nodeTask1Skip, leafTask2Skip, leafTask11Skip, leafTask12Skip] = skipTasks
         const tasks = [{
@@ -429,7 +429,7 @@ describe("when running perform-tasks with taskMatchers", () => {
         }] as IBuildTask[];
         jest.spyOn(BuildConfiguration.prototype, 'enumBuildTasks').mockReturnValue(tasks);
         
-        await command.performCommand({ ...commandArgs, taskMatcher});
+        await command.performCommand({ ...commandArgs, match});
         
         const [skippedUpdateOrg, skippedNodeTask1, skippedLeafTask2, skippedLeafTask11, skippedLeafTask12] = skippedTasks
         const expectedTask = [{
