@@ -109,13 +109,13 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
             if(isLeafTask) {
                 const isMatching = minimatch(taskFullName, taskMatcher);
-                skipTask = isMatching ? task.skip : true;
+                skipTask = isMatching ? false : true;
             }
 
-            if(isLeafTask === false && task.skip !== true) {
+            if(isLeafTask === false) {
                 const skippedChildTasks = this.skipNonMatchingLeafTasks(task.childTasks, taskMatcher, `${taskFullName}/`);
                 const isAllSkipped = task.childTasks.length === skippedChildTasks;
-                task.skip = isAllSkipped ? true : task.skip;
+                task.skip = isAllSkipped ? true : false;
             }
 
             if (skipTask) {
@@ -124,6 +124,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
             }
 
             if(isLeafTask && skipTask !== true) {
+                task.skip = false;
                 ConsoleUtil.LogInfo(`${taskFullName} matched the '${taskMatcher}' globPattern`);
             }
 
