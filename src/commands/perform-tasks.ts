@@ -74,8 +74,10 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         ConsoleUtil.state = state;
 
         if(command.match) {
-            const tasksPrefix = '';
-            this.skipNonMatchingLeafTasks(tasks, command.match, tasksPrefix);
+            const skippedTasks = this.skipNonMatchingLeafTasks(tasks, command.match, '');
+            if(skippedTasks === tasks.length) {
+                ConsoleUtil.LogWarning(`--match parameter ${command.match} did not match any tasks`);
+            }
         }
 
         state.performUpdateToVersion2IfNeeded();
