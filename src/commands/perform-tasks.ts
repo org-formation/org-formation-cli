@@ -73,10 +73,10 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         const tasks = config.enumBuildTasks(command);
         ConsoleUtil.state = state;
 
-        if(command.match) {
+        if (command.match) {
             const skippedTasks = this.skipNonMatchingLeafTasks(tasks, command.match, '');
-            if(skippedTasks === tasks.length) {
-                ConsoleUtil.LogWarning(`--match parameter ${command.match} did not match any tasks`);
+            if (skippedTasks === tasks.length) {
+                ConsoleUtil.LogWarning(`--match parameter glob '${command.match}' did not match any tasks. Use --verbose to see the tasks it did not match`);
             }
         }
 
@@ -103,13 +103,13 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
     private skipNonMatchingLeafTasks(tasks: IBuildTask[], taskMatcher: string, tasksPrefix: string): number {
         let skippedTasks = 0;
-        for(const task of tasks) {
+        for (const task of tasks) {
 
             const isLeafTask = task.childTasks.length === 0;
             const taskFullName = `${tasksPrefix}${task.name}`;
 
-            if(isLeafTask) {
-                const isMatching = minimatch(taskFullName, taskMatcher);
+            if (isLeafTask) {
+                const isMatching = task.name === taskMatcher || minimatch(taskFullName, taskMatcher);
                 task.skip = isMatching ? false : true;
             } else {
                 const skippedChildTasks = this.skipNonMatchingLeafTasks(task.childTasks, taskMatcher, `${taskFullName}/`);
@@ -117,12 +117,14 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
                 task.skip = isAllSkipped ? true : false;
             }
 
-            if(task.skip) {
+            if (task.skip) {
                 skippedTasks = skippedTasks + 1;
             }
 
-            if(isLeafTask && task.skip !== true) {
+            if (isLeafTask && task.skip !== true) {
                 ConsoleUtil.LogInfo(`${taskFullName} matched the '${taskMatcher}' globPattern`);
+            } else {
+                ConsoleUtil.LogDebug(`${taskFullName} did not match the '${taskMatcher}' globPattern`);
             }
 
         }
