@@ -15,6 +15,7 @@ All notable changes to aws organization formation will be documented in this fil
 - feat: specify bucket to be used for large template uploads (on validate-tasks, perform-tasks, validate-stacks and update-stacks)
 - feat: support closing removed accounts form the organization specifying "CloseAccountsOnRemoval: true" on the OrganizationRoot in organization.yml
 - fix: better defaults for the deploy-cdk task: added `--all --require-approval=never` to default deploy and destroy commands
+- fix: allow matching a single task using `--match` taking a globPattern (e.g. `--match '**/MyTask'`) or the exact name of a task.
 
 
 **version 1.0.4**
