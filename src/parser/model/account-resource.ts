@@ -110,8 +110,7 @@ export class AccountResource extends Resource {
 
         if (this.buildAccessRoleName === undefined) {
             if (this.root.developmentRole) {
-                this.organizationAccessRoleName = 'OrganizationFormationLocalDevelopmentBuildRole';
-                // this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultDevelopmentBuildAccessRoleName;
+                this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultDevelopmentBuildAccessRoleName;
             } else {
                 this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultBuildAccessRoleName;
             }
