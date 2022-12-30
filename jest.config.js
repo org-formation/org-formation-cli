@@ -43,7 +43,7 @@ module.exports = {
                 name: 'integration-test',
                 color: 'magenta',
             },
-            testMatch: ['<rootDir>/test/integration-tests/**/scenario-copy-to-s3-task.test.ts'],
+            testMatch: ['<rootDir>/test/integration-tests/**/*.test.ts'],
         },
         {
             ...defaultConfig,
