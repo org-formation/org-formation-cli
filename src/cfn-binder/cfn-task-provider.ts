@@ -230,7 +230,7 @@ export class CfnTaskProvider {
                         await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     });
                 } catch (err) {
-                    ConsoleUtil.LogInfo(`unable to delete stack ${stackName} from ${binding.accountId} / ${binding.region}. Removing stack from state instead.`);
+                    ConsoleUtil.LogError(`unable to delete stack ${stackName} from ${binding.accountId} / ${binding.region}. Removing stack from state instead.`, err);
                 }
 
                 that.state.removeTarget(
@@ -244,30 +244,30 @@ export class CfnTaskProvider {
 }
 
 export const performAndRetryIfNeeded = async <T extends unknown>(fn: () => Promise<T>): Promise<T> => {
-  let shouldRetry = false;
-  let retryCount = 0;
-  do {
-    shouldRetry = false;
-    try {
-      return await fn();
-    } catch (err) {
-      if (err && (err.code === 'ThrottlingException') && retryCount < 10) {
-        retryCount = retryCount + 1;
-        shouldRetry = true;
-        const wait = retryCount + (0.5 * Math.random());
-        ConsoleUtil.LogDebug(`received retryable error ${err.code}. wait ${wait} and retry-count ${retryCount}`);
-        await sleep(wait * 1000);
-        continue;
-      }
-      throw err;
+    let shouldRetry = false;
+    let retryCount = 0;
+    do {
+        shouldRetry = false;
+        try {
+            return await fn();
+        } catch (err) {
+            if (err && (err.code === 'ThrottlingException') && retryCount < 10) {
+                retryCount = retryCount + 1;
+                shouldRetry = true;
+                const wait = retryCount + (0.5 * Math.random());
+                ConsoleUtil.LogDebug(`received retryable error ${err.code}. wait ${wait} and retry-count ${retryCount}`);
+                await sleep(wait * 1000);
+                continue;
+            }
+            throw err;
+        }
     }
-  }
-  while (shouldRetry);
+    while (shouldRetry);
 };
 
 export const sleep = (time: number): Promise<void> => {
     return new Promise(resolve => setTimeout(resolve, time));
-  };
+};
 
 interface ICrossAccountParameterDependency {
     ExportAccountId: string;
