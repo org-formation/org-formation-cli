@@ -17,8 +17,6 @@ Organization:
       PasswordPolicy: !Ref PasswordPolicy
       Tags:
         Test: tag-value
-      ServiceControlPolicies:
-        - !Ref DenyS3DeleteBucket
 
   OrganizationBuildAccount:
     Type: OC::ORG::Account
@@ -28,8 +26,6 @@ Organization:
       AccountName: Account A
       AccountId: '340381375986'
       RootEmail: account+a@olafconijn.awsapps.com
-      ServiceControlPolicies:
-        - !Ref DenyS3DeleteBucket
 
   AccountB:
     Type: OC::ORG::Account
@@ -40,8 +36,6 @@ Organization:
       AccountId: '362239514602'
       RootEmail: account+b@olafconijn.awsapps.com
       OrganizationAccessRoleName: CustomCrossAccountRole
-      ServiceControlPolicies:
-        - !Ref DenyS3DeleteBucket
 
   AccountC:
     Type: OC::ORG::Account
@@ -52,8 +46,6 @@ Organization:
       AccountId: '673026687213'
       RootEmail: account+c@olafconijn.awsapps.com
       OrganizationAccessRoleName: AnotherCustomRole
-      ServiceControlPolicies:
-        - !Ref DenyS3DeleteBucket
 
   AnotherAccount:
     Type: OC::ORG::Account
@@ -63,9 +55,6 @@ Organization:
       AccountName: Users Account
       AccountId: '549476213961'
       RootEmail: account+users@olafconijn.awsapps.com
-      ServiceControlPolicies:
-        - !Ref DenyS3DeleteBucket
-
 
   PasswordPolicy:
     Type: OC::ORG::PasswordPolicy
@@ -78,16 +67,3 @@ Organization:
       RequireUppercaseCharacters: true
       PasswordReusePrevention: 24
       AllowUsersToChangePassword: true
-
-  DenyS3DeleteBucket:
-    Type: OC::ORG::ServiceControlPolicy
-    Properties:
-      Description: Prevents the deletion of s3 buckets
-      PolicyName: DenyS3DeleteBucket
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: DenyS3DeleteBucket
-            Effect: Deny
-            Action: s3:DeleteBucket
-            Resource: '*'

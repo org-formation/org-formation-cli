@@ -315,7 +315,7 @@ export class AwsOrganizationWriter {
         if (account !== undefined) {
             await this.updateAccount(resource, account.Id);
             ConsoleUtil.LogDebug(`account with email ${resource.rootEmail} was already part of the organization (accountId: ${account.Id}).`);
-            return {PhysicalId: account.Id};
+            return { PhysicalId: account.Id };
         }
 
         accountId = await this._createAccount(resource);
@@ -338,7 +338,7 @@ export class AwsOrganizationWriter {
         } while (shouldRetry);
         await AwsEvents.putAccountCreatedEvent(accountId);
 
-        return {PhysicalId: accountId};
+        return { PhysicalId: accountId };
     }
 
     public async createPartitionAccount(resource: AccountResource, partitionWriter: AwsOrganizationWriter): Promise<PartitionCreateResponse> {
@@ -465,7 +465,7 @@ export class AwsOrganizationWriter {
         if (!passwordPolicyEquals(previousResource?.passwordPolicy, resource.passwordPolicy)) {
             const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountId);
             const iam = await AwsUtil.GetIamService(accountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, (account.Type === 'PartitionAccount'));
-            if (account.PasswordPolicy && !resource.passwordPolicy.TemplateResource) {
+            if (account.PasswordPolicy && !resource.passwordPolicy?.TemplateResource) {
                 try {
                     await iam.deleteAccountPasswordPolicy().promise();
                 } catch (err) {
@@ -638,7 +638,7 @@ export class AwsOrganizationWriter {
         });
     }
 
-    public async _inviteToPartitionOrg(accountCreationStatus: CreateAccountStatus, ): Promise<void> {
+    public async _inviteToPartitionOrg(accountCreationStatus: CreateAccountStatus,): Promise<void> {
         const inviteParams = {
             Target: {
                 Id: accountCreationStatus.GovCloudAccountId,
