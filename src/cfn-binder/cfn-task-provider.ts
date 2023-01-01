@@ -230,7 +230,7 @@ export class CfnTaskProvider {
                         await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     });
                 } catch (err) {
-                    ConsoleUtil.LogError(`unable to delete stack ${stackName} from ${binding.accountId} / ${binding.region}. Removing stack from state instead.`, err);
+                    ConsoleUtil.LogError(`unable to delete stack ${stackName} from ${binding.accountId} / ${binding.region}. Removing stack from state instead. \n${err.message}`, err);
                 }
 
                 that.state.removeTarget(
