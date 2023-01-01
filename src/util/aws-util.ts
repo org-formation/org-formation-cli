@@ -292,7 +292,7 @@ export class AwsUtil {
             roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
         }
 
-        const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn, isPartition);
+        const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, config.region, viaRoleArn, isPartition);
         if (credentialOptions !== undefined) {
             config.credentials = credentialOptions;
             if (isPartition && !config.region) {
@@ -306,7 +306,7 @@ export class AwsUtil {
         return service;
     }
 
-    public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<CredentialsOptions | undefined> {
+    public static async GetCredentials(accountId: string, roleInTargetAccount: string, stsRegion?: string, viaRoleArn?: string, isPartition?: boolean): Promise<CredentialsOptions | undefined> {
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         const useCurrentPrincipal = (masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId));
         if (useCurrentPrincipal) {
@@ -317,7 +317,10 @@ export class AwsUtil {
             let roleArn: string;
             const config: STS.ClientConfiguration = {};
             if (viaRoleArn) {
-                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
+                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, stsRegion ? { region: stsRegion } : {});
+            }
+            if (stsRegion) {
+                config.region = stsRegion;
             }
 
             if (AwsUtil.isPartition || isPartition) {
@@ -482,7 +485,7 @@ export class CfnUtil {
     public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackInput | UpdateStackInput | ValidateTemplateInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
         if (stackInput.TemplateBody && stackInput.TemplateBody.length > 50000) {
             const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region, binding.customRoleName);
-            const preExistingBucket = AwsUtil.GetLargeTemplateBucketName() ;
+            const preExistingBucket = AwsUtil.GetLargeTemplateBucketName();
             const bucketName = preExistingBucket ?? `org-formation-${binding.accountId}-${binding.region}-large-templates`;
             if (!preExistingBucket) {
                 try {
