@@ -5,7 +5,7 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
-**unreleased**
+**version 1.0.6**
 - fix: only prevent printing/ validating stacks if an account is added to organization.yml (not prevent printing if an OU got added)
 - chore: better perf on update-organization task
 - fix: explicitly retry on type registrations that return `DEPLOY_STAGE of status FAILED` 
@@ -17,6 +17,7 @@ All notable changes to aws organization formation will be documented in this fil
 - fix: better defaults for the deploy-cdk task: added `--all --require-approval=never` to default deploy and destroy commands
 - fix: allow matching a single task using `--match` taking a globPattern (e.g. `--match '**/MyTask'`) or the exact name of a task.
 
+**version 1.0.5** (version contained packaging error, got unpublished)
 
 **version 1.0.4**
 - feat: allow `Fn::EnumTargetAccounts` to be used in combination with `${AccountId}`, `${AccountName}`, `${LogicalId}`, `${RootEmail}`, `${Alias}`, `${Tags.TAGNAME}`
