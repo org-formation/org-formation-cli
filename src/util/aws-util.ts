@@ -317,10 +317,11 @@ export class AwsUtil {
             let roleArn: string;
             const config: STS.ClientConfiguration = {};
             if (viaRoleArn) {
-                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, stsRegion ? { region: stsRegion } : {});
+                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, stsRegion ? { region: stsRegion, stsRegionalEndpoints: 'regional' } : {});
             }
             if (stsRegion) {
                 config.region = stsRegion;
+                config.stsRegionalEndpoints = 'regional';
             }
 
             if (AwsUtil.isPartition || isPartition) {
