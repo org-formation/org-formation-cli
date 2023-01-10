@@ -22,7 +22,7 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
 
     public async performCommand(command: ICreateChangeSetCommandArgs): Promise<void> {
 
-        const template = await TemplateRoot.create(command.templateFile, {}, command.devRole);
+        const template = await TemplateRoot.create(command.templateFile);
         const state = await this.getState(command);
 
         GlobalState.Init(state, template);

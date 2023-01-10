@@ -43,7 +43,7 @@ export class DeleteStacksCommand extends BaseCliCommand<IDeleteStackCommandArgs>
         }
         const orgTemplate = JSON.parse(state.getPreviousTemplate()) as ITemplate;
         delete orgTemplate.Resources;
-        const emptyTemplate = TemplateRoot.createFromContents(JSON.stringify(orgTemplate), command.devRole);
+        const emptyTemplate = TemplateRoot.createFromContents(JSON.stringify(orgTemplate));
 
         GlobalState.Init(state, emptyTemplate);
 

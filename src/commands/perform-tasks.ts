@@ -15,6 +15,7 @@ import { yamlParse } from '~yaml-cfn/index';
 import { GlobalState } from '~util/global-state';
 import { FileUtil } from '~util/file-util';
 import { AwsUtil } from '~util/aws-util';
+import { TemplateRoot } from '~parser/parser';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -47,7 +48,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
         command.option('--match [match]', 'glob pattern used to define/filter which tasks to run.');
         command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
-        command.option('--dev-role [dev-role]', 'use the development build role that does not have access to production environments.', true);
+        command.option('--use-dev-role', 'use the development build role that does not have access to production environments.', true);
 
         command.option('--skip-storing-state', 'when set, the state will not be stored');
         super.addOptions(command);
@@ -56,8 +57,8 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
 
-        if(command.devRole) {
-            ConsoleUtil.LogInfo('Using dev role');
+        if(command.useDevRole) {
+            TemplateRoot.useDevelopmentRole = true;
         }
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');

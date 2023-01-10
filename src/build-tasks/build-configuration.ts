@@ -104,7 +104,7 @@ export class BuildConfiguration {
         const organizationFileContents = await this.readOrganizationFileContents(command.organizationFile, command.TemplatingContext);
         const pathDirname = path.dirname(command.organizationFile);
         const pathFile = path.basename(command.organizationFile);
-        const templateRoot = TemplateRoot.createFromContents(organizationFileContents, command.devRole, pathDirname, pathFile, {}, command.organizationFileHash);
+        const templateRoot = TemplateRoot.createFromContents(organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
 
         if (templateRoot.source) {
             command.organizationFileContents = templateRoot.source;

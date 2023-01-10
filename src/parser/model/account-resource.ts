@@ -109,7 +109,7 @@ export class AccountResource extends Resource {
         }
 
         if (this.buildAccessRoleName === undefined) {
-            if (this.root.developmentRole) {
+            if (TemplateRoot.useDevelopmentRole) {
                 this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultDevelopmentBuildAccessRoleName;
             } else {
                 this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultBuildAccessRoleName;

@@ -29,7 +29,7 @@ export class TaskProvider {
         try {
             const previousTemplate = persistedState.getPreviousTemplate();
             if (previousTemplate) {
-                this.previousTemplate = TemplateRoot.createFromContents(previousTemplate, currentTemplate.developmentRole, currentTemplate.dirname);
+                this.previousTemplate = TemplateRoot.createFromContents(previousTemplate, currentTemplate.dirname);
             } else {
                 this.previousTemplate = TemplateRoot.createEmpty();
             }

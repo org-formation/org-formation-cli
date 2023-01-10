@@ -117,7 +117,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         writer.DefaultBuildProcessAccessRoleName = defaultBuildAccessRoleName;
         const template = await writer.generateDefaultTemplate(templateGenerationSettings);
         template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
-        const parsedTemplate = TemplateRoot.createFromContents(template.template, false, './');
+        const parsedTemplate = TemplateRoot.createFromContents(template.template, './');
         template.state.setPreviousTemplate(parsedTemplate.source);
         return template;
     }
@@ -458,7 +458,7 @@ export interface ICommandArgs {
     resolver?: CfnExpressionResolver;
     partitionRegion?: string;
     excludeAccounts?: string;
-    devRole: boolean;
+    useDevRole: boolean;
 }
 
 export interface IRCObject {
