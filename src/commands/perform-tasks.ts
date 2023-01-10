@@ -15,7 +15,6 @@ import { yamlParse } from '~yaml-cfn/index';
 import { GlobalState } from '~util/global-state';
 import { FileUtil } from '~util/file-util';
 import { AwsUtil } from '~util/aws-util';
-import { TemplateRoot } from '~parser/parser';
 
 const commandName = 'perform-tasks <tasks-file>';
 const commandDescription = 'performs all tasks from either a file or directory structure';
@@ -58,7 +57,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         const tasksFile = command.tasksFile;
 
         if(command.useDevRole) {
-            TemplateRoot.useDevelopmentRole = true;
+            AwsUtil.SetIsDevelopmentRole(true);
         }
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');

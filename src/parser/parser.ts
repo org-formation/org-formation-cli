@@ -181,7 +181,6 @@ export class TemplateRoot {
     public readonly dirname: string;
     public readonly filename: string;
     public readonly filepath: string;
-    public static useDevelopmentRole = false;
     public readonly organizationSection: OrganizationSection;
     public readonly defaultOrganizationBinding: IOrganizationBinding;
     public readonly defaultOrganizationBindingRegion: string | string[];
