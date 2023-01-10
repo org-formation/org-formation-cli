@@ -119,7 +119,5 @@ export class AccountResource extends Resource {
                 this.buildAccessRoleName = this.organizationAccessRoleName;
             }
         }
-
-        ConsoleUtil.LogInfo(`Using ${this.buildAccessRoleName} to run the task`);
     }
 }
