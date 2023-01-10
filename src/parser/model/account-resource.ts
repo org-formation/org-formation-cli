@@ -111,6 +111,7 @@ export class AccountResource extends Resource {
         if (this.buildAccessRoleName === undefined) {
             if (TemplateRoot.useDevelopmentRole) {
                 this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultDevelopmentBuildAccessRoleName;
+                this.buildAccessRoleName ?? ConsoleUtil.LogWarning('Development role is missing, falling back to the default behavior.');
             } else {
                 this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultBuildAccessRoleName;
             }
