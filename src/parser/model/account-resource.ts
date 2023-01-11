@@ -109,7 +109,7 @@ export class AccountResource extends Resource {
         }
 
         if (this.buildAccessRoleName === undefined) {
-            if (AwsUtil.IsDevelopmentRole()) {
+            if (AwsUtil.IsDevelopmentBuild()) {
                 this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultDevelopmentBuildAccessRoleName;
                 this.buildAccessRoleName ?? ConsoleUtil.LogWarning('Development role is missing, falling back to the default behavior.');
             } else {
