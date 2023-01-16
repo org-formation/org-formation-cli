@@ -207,7 +207,7 @@ Will perform tasks from *tasksFile*.
 |<nobr>--failed-stacks-tolerance</nobr> | 0 | The number of failed stacks (within a task) after which execution stops|
 |<nobr>--large-template-bucket-name</nobr> | 0 | The name of the S3 bucket that should be used when uploading templates larger than 50_000 bytes |
 |<nobr>--match</nobr> | undefined | Matches a specific tasks using using a globPattern (e.g. `--match 'MyTask/**'`) or the exact name of a task.|
-
+|<nobr>--dev</nobr> | false | use development settings, e.g. DefaultDevelopmentBuildAccessRoleName instead of DefaultBuildAccessRoleName |
 
 Parameters can be passed using the following syntax:
 ``> org-formation perform-tasks taskfile.yml --parameters Param1=Val1 Param2=Val2``

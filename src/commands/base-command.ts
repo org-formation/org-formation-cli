@@ -75,7 +75,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
     }
 
-    public loadTemplatingContext(command: {templatingContextFile?: string; TemplatingContext?: {}}): void {
+    public loadTemplatingContext(command: { templatingContextFile?: string; TemplatingContext?: {} }): void {
         if (typeof command.templatingContextFile === 'string') {
             if (!existsSync(command.templatingContextFile)) {
                 throw new OrgFormationError('unable to find templating context file with path: ' + command.templatingContextFile);
@@ -302,7 +302,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         this.loadRuntimeConfiguration(command);
 
         if (command.excludeAccounts) {
-            const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x=>x.trim());;
+            const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x => x.trim());;
             ConsoleUtil.LogInfo(`excluding the following accounts: ${exclude.join(', ')}`);
             AwsOrganizationReader.excludeAccountIds = exclude;
         }
@@ -458,6 +458,7 @@ export interface ICommandArgs {
     resolver?: CfnExpressionResolver;
     partitionRegion?: string;
     excludeAccounts?: string;
+    dev?: boolean;
 }
 
 export interface IRCObject {

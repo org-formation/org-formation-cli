@@ -4,7 +4,8 @@ import { IResource, IResourceRef, TemplateRoot } from '../parser';
 import { PasswordPolicyResource } from './password-policy-resource';
 import { Reference, Resource } from './resource';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
-import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
+import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
+import { ConsoleUtil } from '~util/console-util';
 
 export interface IAccountProperties {
     RootEmail?: string;
@@ -108,7 +109,12 @@ export class AccountResource extends Resource {
         }
 
         if (this.buildAccessRoleName === undefined) {
-            this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultBuildAccessRoleName;
+            if (AwsUtil.IsDevelopmentBuild()) {
+                this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultDevelopmentBuildAccessRoleName;
+                this.buildAccessRoleName ?? ConsoleUtil.LogWarning('Development role is missing, falling back to the default behavior.');
+            } else {
+                this.buildAccessRoleName = this.root.organizationSection.organizationRoot?.defaultBuildAccessRoleName;
+            }
             if (this.buildAccessRoleName === undefined) {
                 this.buildAccessRoleName = this.organizationAccessRoleName;
             }

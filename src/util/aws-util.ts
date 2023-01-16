@@ -177,6 +177,14 @@ export class AwsUtil {
         AwsUtil.isPartition = isPartition;
     }
 
+    public static IsDevelopmentBuild(): boolean {
+        return AwsUtil.isDevelopmentBuild;
+    }
+
+    public static SetIsDevelopmentBuild(isDevelopmentBuild: boolean): void {
+        AwsUtil.isDevelopmentBuild = isDevelopmentBuild;
+    }
+
     public static GetPartitionRegion(): string {
         return AwsUtil.partitionRegion;
     }
@@ -417,6 +425,7 @@ export class AwsUtil {
     private static masterAccountId: string | PromiseLike<string>;
     private static masterPartitionId: string | PromiseLike<string>;
     private static partitionProfile: string | PromiseLike<string>;
+    private static isDevelopmentBuild = false;
     private static largeTemplateBucketName: string | undefined;
     private static partitionCredentials: CredentialsOptions;
     private static buildProcessAccountId: string | PromiseLike<string>;
@@ -482,7 +491,7 @@ export class CfnUtil {
     public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackInput | UpdateStackInput | ValidateTemplateInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
         if (stackInput.TemplateBody && stackInput.TemplateBody.length > 50000) {
             const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region, binding.customRoleName);
-            const preExistingBucket = AwsUtil.GetLargeTemplateBucketName() ;
+            const preExistingBucket = AwsUtil.GetLargeTemplateBucketName();
             const bucketName = preExistingBucket ?? `org-formation-${binding.accountId}-${binding.region}-large-templates`;
             if (!preExistingBucket) {
                 try {
