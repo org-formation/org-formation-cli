@@ -190,7 +190,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
     static GetParametersAsArgument(parameters: Record<string, any>): string {
         if (!parameters) {return '';}
         const entries = Object.entries(parameters);
-        return entries.reduce((prev, curr) => prev + `--${curr[0]} "${curr[1]}" `, '');
+        return entries.reduce((prev, curr) => prev + `--param="${curr[0]}=${curr[1]}" `, '');
     }
 }
 

@@ -128,7 +128,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param="param=val"'), expect.anything(), undefined, expect.anything(), true);
     });
 
 
@@ -141,7 +141,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param="param=val"'), expect.anything(), undefined, expect.anything(), true);
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything(), true);
     });
 
@@ -204,7 +204,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--myAccountList "1232342341234|1232342341235"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param="myAccountList=1232342341234|1232342341235"'), expect.anything(), undefined, expect.anything(), true);
     });
 
     test('unresolvable expression will throw exception', async () => {
@@ -312,7 +312,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param="param=val"'), expect.anything(), undefined, expect.anything(), true);
     });
 
     test('custom deploy command can use multiple substitutions', async () => {
@@ -324,7 +324,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param="param=val"'), expect.anything(), undefined, expect.anything(), true);
         expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything(), true);
     });
 
@@ -405,7 +405,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--myAccountList "1232342341234|1232342341235"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param="myAccountList=1232342341234|1232342341235"'), expect.anything(), undefined, expect.anything(), true);
     });
 
 
