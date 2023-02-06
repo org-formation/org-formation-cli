@@ -112,6 +112,8 @@ const supportedFunctions = [
   'Fn::MD5File',
   'Fn::JsonString',
   'Fn::Include',
+  'Fn::ToJsonString',
+  'Fn::Length',
 ];
 
 const allTagTypes = [];
@@ -166,4 +168,3 @@ export const NunjucksDebugSettings = {
   debug: false,
   path: './.nunjucks-debug/',
 };
-
