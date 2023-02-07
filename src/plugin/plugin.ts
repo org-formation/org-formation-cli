@@ -4,7 +4,6 @@ import { SlsBuildTaskPlugin } from './impl/sls-build-task-plugin';
 import { CopyToS3TaskPlugin } from './impl/s3-copy-build-task-plugin';
 import { RpBuildTaskPlugin } from './impl/rp-build-task-plugin';
 import { TfBuildTaskPlugin } from './impl/tf-apply-task-plugin';
-import { StediBuildTaskPlugin } from './impl/stedi-deploy-task-plugin';
 import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { ICommandArgs } from '~commands/base-command';
 import { IPluginBinding, IPluginTask } from '~plugin/plugin-binder';
@@ -61,7 +60,6 @@ export class PluginProvider {
             new CopyToS3TaskPlugin(),
             new RpBuildTaskPlugin(),
             new TfBuildTaskPlugin(),
-            new StediBuildTaskPlugin(),
         ];
     }
 }

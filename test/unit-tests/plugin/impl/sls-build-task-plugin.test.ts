@@ -128,7 +128,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
 
@@ -141,8 +141,8 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('parameters can use GetAtt on account', async () => {
@@ -151,7 +151,7 @@ describe('when resolving attribute expressions on update', () => {
         };
         await binder.createPerformForUpdateOrCreate(binding)();
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('resolved parameters will be used in custom deploy command', async () => {
@@ -163,7 +163,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('options will be resolved in custom deploy command', async () => {
@@ -175,9 +175,9 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('foobar.yml'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('stage-arg'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--region eu-central-1'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('foobar.yml'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('stage-arg'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--region eu-central-1'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('options without value will resolved to empty string in custom deploy command', async () => {
@@ -187,9 +187,9 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--config'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--stage'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--region'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--config'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--stage'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--region'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('resolving Join or Ref to accounts can be used in custom deploy command', async () => {
@@ -204,7 +204,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--myAccountList "1232342341234|1232342341235"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--myAccountList "1232342341234|1232342341235"'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('unresolvable expression will throw exception', async () => {
@@ -236,7 +236,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('can resolve AWS::Region', async () => {
@@ -246,7 +246,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     afterEach(() => {
@@ -312,7 +312,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('custom deploy command can use multiple substitutions', async () => {
@@ -324,8 +324,8 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--param "val"'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('parameters can use GetAtt on account', async () => {
@@ -334,7 +334,7 @@ describe('when resolving attribute expressions on remove', () => {
         };
         await binder.createPerformForRemove(binding)();
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('resolved parameters will be used in custom deploy command', async () => {
@@ -346,8 +346,8 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('something'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('something'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('local variables will be resolved in custom remove command', async () => {
@@ -359,12 +359,12 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('foobar.yml'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('stage-arg'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--config'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--stage'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--region'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('foobar.yml'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('stage-arg'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--config'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--stage'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--region'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('options will be resolved in custom remove command', async () => {
@@ -376,9 +376,9 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('foobar.yml'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('stage-arg'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--region eu-central-1'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('foobar.yml'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('stage-arg'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--region eu-central-1'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('options without value will resolved to empty string in custom remove command', async () => {
@@ -387,9 +387,9 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--config'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--stage'), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--region'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--config'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.not.stringContaining('--stage'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--region'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
 
@@ -405,7 +405,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--myAccountList "1232342341234|1232342341235"'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('--myAccountList "1232342341234|1232342341235"'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
 
@@ -437,7 +437,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('can resolve AWS::Region', async () => {
@@ -447,7 +447,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     afterEach(() => {

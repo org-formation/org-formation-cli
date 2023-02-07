@@ -7,7 +7,7 @@ import { ErrorCode, OrgFormationError } from '~org-formation-error';
 
 export class ChildProcessUtility {
 
-    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount?: string, env: Record<string, string> = {}, logVerbose: boolean | undefined = undefined): Promise<void> {
+    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount?: string, stsRegion?: string, env: Record<string, string> = {}, logVerbose: boolean | undefined = undefined): Promise<void> {
         ConsoleUtil.LogInfo(`Executing command: ${command} in account ${accountId}`);
 
         if (roleInTargetAccount === undefined) {
@@ -15,7 +15,7 @@ export class ChildProcessUtility {
         }
 
         try {
-            const credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount);
+            const credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, stsRegion);
 
             const options: ExecOptions = {
                 cwd,

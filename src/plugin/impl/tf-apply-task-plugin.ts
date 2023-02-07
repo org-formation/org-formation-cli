@@ -100,7 +100,7 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const env = TfBuildTaskPlugin.GetEnvironmentVariables(target);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env, task.logVerbose);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, target.region, env, task.logVerbose);
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<ITfTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -127,7 +127,7 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
         const cwd = path.resolve(task.path);
         const env = TfBuildTaskPlugin.GetEnvironmentVariables(target);
         await this.performInit(binding);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env, task.logVerbose);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, target.region, env, task.logVerbose);
     }
 
     async performRemove(binding: IPluginBinding<ITfTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -146,7 +146,7 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
         const cwd = path.resolve(task.path);
         const env = TfBuildTaskPlugin.GetEnvironmentVariables(target);
         await this.performInit(binding);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env, task.logVerbose);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, target.region, env, task.logVerbose);
     }
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ITfTask>): Promise<void> {

@@ -137,7 +137,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
 
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, {}, task.logVerbose);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, target.region, {}, task.logVerbose);
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<ISlsTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -166,7 +166,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, {}, task.logVerbose);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, target.region, {}, task.logVerbose);
     }
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ISlsTask>): Promise<void> {

@@ -300,7 +300,7 @@ export class AwsUtil {
             roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
         }
 
-        const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, viaRoleArn, isPartition);
+        const credentialOptions: CredentialsOptions = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, config.region, viaRoleArn, isPartition);
         if (credentialOptions !== undefined) {
             config.credentials = credentialOptions;
             if (isPartition && !config.region) {
@@ -314,7 +314,7 @@ export class AwsUtil {
         return service;
     }
 
-    public static async GetCredentials(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<CredentialsOptions | undefined> {
+    public static async GetCredentials(accountId: string, roleInTargetAccount: string, stsRegion?: string, viaRoleArn?: string, isPartition?: boolean): Promise<CredentialsOptions | undefined> {
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         const useCurrentPrincipal = (masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId));
         if (useCurrentPrincipal) {
@@ -325,7 +325,11 @@ export class AwsUtil {
             let roleArn: string;
             const config: STS.ClientConfiguration = {};
             if (viaRoleArn) {
-                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, {});
+                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, stsRegion ? { region: stsRegion, stsRegionalEndpoints: 'regional' } : {});
+            }
+            if (stsRegion) {
+                config.region = stsRegion;
+                config.stsRegionalEndpoints = 'regional';
             }
 
             if (AwsUtil.isPartition || isPartition) {

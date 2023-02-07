@@ -125,7 +125,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
 
@@ -138,8 +138,8 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('parameters can use GetAtt on account', async () => {
@@ -148,7 +148,7 @@ describe('when resolving attribute expressions on update', () => {
         };
         await binder.createPerformForUpdateOrCreate(binding)();
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('resolved parameters will be used in custom deploy command', async () => {
@@ -160,7 +160,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('resolving Join or Ref to accounts can be used in custom deploy command', async () => {
@@ -175,7 +175,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('myAccountList=1232342341234|1232342341235'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('myAccountList=1232342341234|1232342341235'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('unresolvable expression will throw exception', async () => {
@@ -207,7 +207,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('can resolve AWS::Region', async () => {
@@ -217,7 +217,7 @@ describe('when resolving attribute expressions on update', () => {
         await binder.createPerformForUpdateOrCreate(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     afterEach(() => {
@@ -283,7 +283,7 @@ describe('when resolving attribute expressions on remove', () => {
 
         await binder.createPerformForRemove(binding)();
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('custom remove command can use multiple substitutions', async () => {
@@ -295,8 +295,8 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, expect.anything(), true);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('-c \'param=val\''), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' 1232342341235 '), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('parameters can use GetAtt on account', async () => {
@@ -307,7 +307,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)()
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('resolved parameters can be used in custom deploy command', async () => {
@@ -319,7 +319,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('Value 567'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
 
@@ -335,7 +335,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('myAccountList=1232342341234|1232342341235'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('myAccountList=1232342341234|1232342341235'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
 
@@ -347,7 +347,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('1232342341235'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('can resolve AWS::Region', async () => {
@@ -358,7 +358,7 @@ describe('when resolving attribute expressions on remove', () => {
         await binder.createPerformForRemove(binding)();
 
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('eu-central-1'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('can CopyValue', async () => {
@@ -372,7 +372,7 @@ describe('when resolving attribute expressions on remove', () => {
 
         expect(getExportMock).toHaveBeenCalled();
         expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
-        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('XYZ'), expect.anything(), undefined, expect.anything(), true);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining('XYZ'), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 
     test('unresolvable expression will throw exception', async () => {
