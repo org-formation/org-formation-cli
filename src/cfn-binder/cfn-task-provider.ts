@@ -230,6 +230,10 @@ export class CfnTaskProvider {
                         await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     });
                 } catch (err) {
+                    const message = err.message as string;
+                    if (-1 !== message.indexOf('cannot be deleted while TerminationProtection is enabled')) {
+                        throw err;
+                    }
                     ConsoleUtil.LogError(`unable to delete stack ${stackName} from ${binding.accountId} / ${binding.region}. Removing stack from state instead. \n${err.message}`, err);
                 }
 
