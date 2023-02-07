@@ -141,7 +141,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const env = CdkBuildTaskPlugin.GetEnvironmentVariables(target);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env, task.logVerbose);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, target.region, env, task.logVerbose);
     }
 
     async performRemove(binding: IPluginBinding<ICdkTask>, resolver: CfnExpressionResolver): Promise<void> {
@@ -167,7 +167,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const env = CdkBuildTaskPlugin.GetEnvironmentVariables(target);
-        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, env, task.logVerbose);
+        await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, target.region, env, task.logVerbose);
     }
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ICdkTask>): Promise<void> {
