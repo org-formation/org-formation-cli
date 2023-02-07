@@ -177,6 +177,14 @@ export class AwsUtil {
         AwsUtil.isPartition = isPartition;
     }
 
+    public static IsDevelopmentBuild(): boolean {
+        return AwsUtil.isDevelopmentBuild;
+    }
+
+    public static SetIsDevelopmentBuild(isDevelopmentBuild: boolean): void {
+        AwsUtil.isDevelopmentBuild = isDevelopmentBuild;
+    }
+
     public static GetPartitionRegion(): string {
         return AwsUtil.partitionRegion;
     }
@@ -421,6 +429,7 @@ export class AwsUtil {
     private static masterAccountId: string | PromiseLike<string>;
     private static masterPartitionId: string | PromiseLike<string>;
     private static partitionProfile: string | PromiseLike<string>;
+    private static isDevelopmentBuild = false;
     private static largeTemplateBucketName: string | undefined;
     private static partitionCredentials: CredentialsOptions;
     private static buildProcessAccountId: string | PromiseLike<string>;

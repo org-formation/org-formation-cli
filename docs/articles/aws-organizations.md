@@ -14,7 +14,7 @@ In the diagram above you see an example account structure split up in 3 organiza
 
 Using multiple accounts has a number of benefits:
 
--	**Data governance**: Storing data in different accounts makes it easy to control who has access to what data. Think of, for example, GDPR governed data: By only providing access to only those people that need access it easy to stay *- and demontrate you are -* in control.
+-	**Data governance**: Storing data in different accounts makes it easy to control who has access to what data. Think of, for example, GDPR governed data: By only providing access to only those people that need access it easy to stay *- and demonstrate you are -* in control.
 
 -	**Security boundaries**: Security controls (e.g. IAM permissions) typically only apply to specific types of resources. Creating and maintaining specific permissions for those resources can be a difficult task. By moving more critical resources to different accounts you can apply these controls to an entire account (or group of accounts). For more information read about: Service Control Policies
 

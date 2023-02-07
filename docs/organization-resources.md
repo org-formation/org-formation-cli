@@ -210,6 +210,7 @@ OrganizationRoot is the AWS Root Resource that functions like a top-level Organi
 |DefaultOrganizationAccessRoleName| String | Default value for the OrganizationAccessRoleName attributes of accounts within the organization.<br/><br/>For more information see the [Account](#account) resources|
 |DefaultBuildProcessAccessRoleName| String | Default value for the TaskRoleName of tasks, this value can be different from the DefaultOrganizationAccessRoleName value. OrganizationAccess is used to set up the account, BuildProcessAccess is used to deploy resources to these accounts.
 |CloseAccountsOnRemoval| boolean | If set to true, [Account](#account) resources removed from `organization.yml` will be closed.
+|DefaultDevelopmentBuildAccessRoleName| String | When configured, this value will be used instead of `DefaultBuildProcessAccessRoleName` when running using the `--dev` flag
 
 **Note** Any account (or master account) within an AWS organization that is not part of an Organizational Unit will be a member of the Organizational Root.
 

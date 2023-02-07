@@ -47,6 +47,7 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
         command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
         command.option('--match [match]', 'glob pattern used to define/filter which tasks to run.');
         command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
+        command.option('--dev', 'use development settings, e.g. DefaultDevelopmentBuildAccessRoleName instead of DefaultBuildAccessRoleName', false);
 
         command.option('--skip-storing-state', 'when set, the state will not be stored');
         super.addOptions(command);
@@ -54,6 +55,10 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
+
+        if (command.dev) {
+            AwsUtil.SetIsDevelopmentBuild(true);
+        }
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
