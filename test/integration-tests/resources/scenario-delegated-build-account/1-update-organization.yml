@@ -8,7 +8,6 @@ OrganizationFormationBuildRole:
   Type: update-stacks
   Template: ./build-role.yml
   StackName: org-formation-build-role
-  TerminationProtection: true
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
     IncludeMasterAccount: false # OrganizationFormationBuildRole must have been manually added to the build account in order to bootstrap
@@ -25,7 +24,6 @@ OrganizationFormationBuildRoleC:
   Type: update-stacks
   Template: ./build-role.yml
   StackName: org-formation-build-role-c
-  TerminationProtection: true
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
     Account: !Ref AccountC
