@@ -5,10 +5,11 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
-**unreleased**
+**version 1.0.7**
 - feat: allow a development role to be configured on the OrganizationRoot (DefaultDevelopmentBuildAccessRoleName) which will be used when running using `--dev`
 - fix: STS defaults to regional STS which allows deployments to non-default aws regions.
 - fix: support cloudformation language extensions: `Fn::ToJsonString` and `Fn::Length`
+- fix: fail the build if a task gets deleted that has TerminationProtection set to true.
 
 **version 1.0.6**
 - fix: only prevent printing/ validating stacks if an account is added to organization.yml (not prevent printing if an OU got added)
