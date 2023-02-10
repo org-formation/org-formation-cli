@@ -2,29 +2,28 @@
 
 <!-- code_chunk_output -->
 
-- [Automating deployments](#automating-deployments)
-  - [Parameters](#parameters)
-  - [Functions](#functions)
-    - [!CopyValue](#copyvalue)
-    - [!ReadFile](#readfile)
-    - [!Cmd](#cmd)
-    - [!MD5](#md5)
-    - [!JsonString](#jsonstring)
-    - [!Join](#join)
-    - [!Sub](#sub)
-    - [!Select](#select)
-    - [!FindInMap](#findinmap)
-    - [!Include](#include)
-  - [Task types](#task-types)
-    - [update-organization](#update-organization)
-    - [update-stacks](#update-stacks)
-    - [update-serverless.com](#update-serverlesscom)
-    - [copy-to-s3](#copy-to-s3)
-    - [update-cdk](#update-cdk)
-    - [register-type](#register-type)
-    - [include](#include-1)
-  - [Templating](#templating)
-    - [Example:](#example)
+- [Parameters](#-parameters-)
+- [Functions](#-functions-)
+  - [!CopyValue](#-copyvalue-)
+  - [!ReadFile](#-readfile-)
+  - [!Cmd](#-cmd-)
+  - [!MD5](#-md5-)
+  - [!JsonString](#-jsonstring-)
+  - [!Join](#-join-)
+  - [!Sub](#-sub-)
+  - [!Select](#-select-)
+  - [!FindInMap](#-findinmap-)
+  - [!Include](#-include-)
+- [Task types](#-task-types-)
+  - [update-organization](#-update-organization-)
+  - [update-stacks](#-update-stacks-)
+  - [update-serverless.com](#-update-serverlesscom-)
+  - [copy-to-s3](#-copy-to-s3-)
+  - [update-cdk](#-update-cdk-)
+  - [register-type](#-register-type-)
+  - [include](#-include--1)
+- [Templating](#-templating-)
+  - [Example:](#-example-)
 
 <!-- /code_chunk_output -->
 
@@ -387,7 +386,8 @@ The `copy-to-s3` task will upload a file from `LocalPath` to an S3 `RemotePath`.
 | LocalPath            | relative path                                                                                                                                                             | This property is required. <br/><br/>Specifies the file that needs to be uploaded.                                                                                                      |
 | RemotePath           | S3 moniker                                                                                                                                                                | This property is required. <br/><br/>Specifies the location in S3 that the file should be uploaded to.                                                                                  |
 | ServerSideEncryption | the server-side encryption algorithm used when storing this object in Amazon S3 (for example, AES256, aws:kms).                                                           | optional, default is none or                                                                                                                                                            |
-| TemplatingContext         | Dictionary | When Specifies the data for [templating](#templating) of the file specified on LocalPath.  |
+| TemplatingContext         | Dictionary | Specifies the data for [templating](#templating) of the file specified on LocalPath.  |
+| ZipBeforePut         | `true` or `false` | Compresses files in `LocalPath` into `zip` before running task  |
 | OrganizationBinding  | [OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource) | This property is required. <br/><br/>Organization binding used to specify which accounts the s3 file needs to be copied to.                                                             |
 | DependsOn            | Name of task or list of names                                                                                                                                             | The tasks listed in this attribute will be executed before this task.                                                                                                                   |
 | Skip                 | `true` or `false`                                                                                                                                                         | When `true` task (and dependent tasks) will not be executed.                                                                                                                            |
