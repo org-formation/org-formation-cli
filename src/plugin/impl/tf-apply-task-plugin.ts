@@ -14,9 +14,7 @@ import { IGenericTarget } from '~state/persisted-state';
 import { ICfnExpression, ICfnSubExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
-
 export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, ITfCommandArgs, ITfTask> {
-
 
     type = 'tf';
     typeForTask = 'apply-tf';
