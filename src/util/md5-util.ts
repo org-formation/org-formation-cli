@@ -17,7 +17,7 @@ export class Md5Util {
 
         files.forEach(file => {
             try {
-                if (file === '.serverless' || file === 'node_modules') {
+                if (file === '.serverless' || file === 'node_modules' || file === '.terraform' || file === 'terraform.tfstate' || file === 'terraform.tfstate.backup' || file === '.terraform.lock.hcl') {
                     return;
                 }
                 const filepath = path.join(fileOrDir, file);
