@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Example S3 Bucket for TF State (without lock)'
+
+Parameters:
+  PrincipalOrgID:
+    Type: String
+
+Resources:
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub ${AWS::AccountId}-${AWS::Region}-tf-state-bucket
+
+  S3BucketTerraformStateRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "terraform-state-role"
+      Description: "IAM Role used for org-formation terraform state"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              AWS: Fn::EnumTargetAccounts AssumeRoleBinding '${account}' 
+            Condition:
+              ForAnyValue:StringEquals:
+                aws:PrincipalOrgID: !Ref PrincipalOrgID
+
+  S3BucketTerraformStateRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:Get*
+              - s3:Put*   
+            Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+          -
+            Effect: Allow
+            Action:
+              - s3:Get*
+              - s3:Put* 
+              - s3:List* 
+            Resource: !Sub "arn:aws:s3:::${S3Bucket}"
+      PolicyName: S3BucketTerraformStateRole
+      Roles:
+        - !Ref S3BucketTerraformStateRole
+
+Outputs:
+  S3BucketName:
+    Value: !Ref S3Bucket
+    Export:
+      Name: !Sub '${AWS::StackName}-name'
+  S3BucketRegion:
+    Value: !Ref AWS::Region
+    Export:
+      Name: !Sub '${AWS::StackName}-region'
+  RoleArn:
+    Value: !GetAtt S3BucketTerraformStateRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-role-arn'

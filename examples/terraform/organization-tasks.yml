@@ -1,0 +1,41 @@
+# this example uses features that are part of the 1.0.8 release
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+#This is a CloudFormation stack that deploys the S3 bucket used as backend.
+#The AssumeRoleBinding grants the `OrganizationAccountAccessRole` in each targeted account to assume the role that allows S3 access
+TerraformStateBucket:
+  Type: update-stacks
+  Template: ./s3-state-bucket.yml
+  StackName: terraform-state-bucket
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+    Region: eu-central-1 
+  Parameters:
+    PrincipalOrgID: !Ref ORG::PrincipalOrgID
+  OrganizationBindings:
+    AssumeRoleBinding:
+      Account: !Ref AccountA
+
+#Example for a terraform deployment
+#./bucket folder contains terraform code with empty S3 backend configuration
+#BackendConfig is then used to configure the neccesary parameters
+TFtest:
+  DependsOn: TerraformStateBucket
+  Type: apply-tf
+  Path: ./bucket
+  OrganizationBinding:
+    IncludeMasterAccount: false
+    Region: "eu-west-1"
+    Account: !Ref AccountA
+  BackendConfig:
+    bucket: !CopyValue [ terraform-state-bucket-name, !Ref MasterAccount, "eu-central-1" ]
+    region: !CopyValue [ terraform-state-bucket-region, !Ref MasterAccount, "eu-central-1"]
+    key: !Sub TFBUCKET/${CurrentAccount}.tfstate
+    role_arn: !CopyValue [ terraform-state-bucket-role-arn, !Ref MasterAccount, "eu-central-1" ]
+  Parameters:
+    tfvarforbucketname: !Sub ${CurrentAccount}-bucket
+
