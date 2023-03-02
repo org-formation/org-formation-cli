@@ -1,0 +1,19 @@
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+TfWorkfload:
+  Type: apply-tf
+  Path: ./folder-with-terraform
+  OrganizationBinding:
+    IncludeMasterAccount: false
+    Region: "eu-central-1"
+    Account: !Ref AccountA
+  BackendConfig:
+    bucket: "my-s3-state-bucket"
+    region: "us-east-1"
+    key: !Sub ${CurrentAccount}.tfstate
+  Parameters:
+    tfvarforbucketname: !Sub ${CurrentAccount}-bucket
