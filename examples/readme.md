@@ -130,3 +130,11 @@ Serverless project that demonstrate how to customize and extern the account crea
 ![account-creation](img/account-creation.png)
 
 [automation/create-account](automation/create-account)
+
+## Terraform
+
+Example implementation for deploying infrastructure using Terraform with an S3 Bucket as backend.
+
+![terraform](img/terraform.png)
+
+[terraform](terraform)

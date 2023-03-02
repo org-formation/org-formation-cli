@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Organization:
+  MasterAccount:
+    Type: OC::ORG::MasterAccount
+    Properties:
+      AccountId: '102625093955'
+      RootEmail: org-master@olafconijn.awsapps.com
+      AccountName: Organization Master Account
+
+  AccountA:
+    Type: OC::ORG::Account
+    Properties:
+      RootEmail: account+a@olafconijn.awsapps.com
+      AccountName: Account A

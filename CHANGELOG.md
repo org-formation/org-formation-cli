@@ -5,6 +5,9 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
+**version 1.0.8**
+- feat: added `apply-tf` task for Terraform support
+
 **version 1.0.7**
 - feat: allow a development role to be configured on the OrganizationRoot (DefaultDevelopmentBuildAccessRoleName) which will be used when running using `--dev`
 - fix: STS defaults to regional STS which allows deployments to non-default aws regions.

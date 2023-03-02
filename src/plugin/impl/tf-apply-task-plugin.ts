@@ -23,26 +23,28 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'Path',
             'FailedTaskTolerance', 'MaxConcurrentTasks', 'CustomInitCommand',
-            'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters');
+            'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters', 'BackendConfig' );
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
         }
 
         const dir = path.dirname(config.FilePath);
-        const cdkPath = path.join(dir, config.Path);
+        const tfPath = path.join(dir, config.Path);
 
         return {
             ...command,
             name: config.LogicalName,
-            path: cdkPath,
+            path: tfPath,
             failedTolerance: config.FailedTaskTolerance ?? 0,
             maxConcurrent: config.MaxConcurrentTasks ?? 1,
             organizationBinding: config.OrganizationBinding,
             taskRoleName: config.TaskRoleName,
+            customInitCommand: config.CustomInitCommand,
             customDeployCommand: config.CustomDeployCommand,
             customRemoveCommand: config.CustomRemoveCommand,
             parameters: config.Parameters,
+            backendConfig: config.BackendConfig,
         };
     }
 
@@ -58,6 +60,7 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
         if (!existsSync(commandArgs.path)) {
             throw new OrgFormationError(`task ${commandArgs.name} cannot find path ${commandArgs.path}`);
         }
+
         Validator.ValidateOrganizationBinding(commandArgs.organizationBinding, commandArgs.name);
     }
 
@@ -69,6 +72,7 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
             customDeployCommand: command.customDeployCommand,
             customRemoveCommand: command.customRemoveCommand,
             parameters: command.parameters,
+            backendConfig: command.backendConfig,
         };
     }
 
@@ -79,23 +83,27 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
             path: command.path,
             hash: globalHash,
             taskRoleName: command.taskRoleName,
+            customInitCommand: command.customInitCommand,
             customDeployCommand: command.customDeployCommand,
             customRemoveCommand: command.customRemoveCommand,
             parameters: command.parameters,
+            backendConfig: command.backendConfig,
             forceDeploy: typeof command.forceDeploy === 'boolean' ? command.forceDeploy : false,
             logVerbose: typeof command.verbose === 'boolean' ? command.verbose : false,
         };
     }
 
-    async performInit(binding: IPluginBinding<ITfTask>): Promise<void> {
+    async performInit(binding: IPluginBinding<ITfTask>, resolver: CfnExpressionResolver): Promise<void> {
         const { task, target } = binding;
         let command: string;
-        if (task.customDeployCommand) {
+        if (task.customInitCommand) {
             Validator.throwForUnresolvedExpressions(task.customInitCommand, 'CustomInitCommand');
             command = task.customInitCommand as string;
         } else {
-            command = 'terraform init';
+            const commandExpression = { 'Fn::Sub': 'terraform init -reconfigure ${CurrentTask.BackendConfig}' } as ICfnSubExpression;
+            command = await resolver.resolveSingleExpression(commandExpression, 'CustomInitCommand');
         }
+
 
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
@@ -119,14 +127,14 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
             Validator.throwForUnresolvedExpressions(task.customDeployCommand, 'CustomDeployCommand');
             command = task.customDeployCommand as string;
         } else {
-            const commandExpression = { 'Fn::Sub': 'terraform apply ${CurrentTask.Parameters}' } as ICfnSubExpression;
+            const commandExpression = { 'Fn::Sub': 'terraform apply ${CurrentTask.Parameters} -auto-approve' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression, 'CustomDeployCommand');
         }
 
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const env = TfBuildTaskPlugin.GetEnvironmentVariables(target);
-        await this.performInit(binding);
+        await this.performInit(binding, resolver);
         await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, target.region, env, task.logVerbose);
     }
 
@@ -138,29 +146,31 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
             Validator.throwForUnresolvedExpressions(task.customRemoveCommand, 'CustomRemoveCommand');
             command = task.customRemoveCommand as string;
         } else {
-            const commandExpression = { 'Fn::Sub': 'terraform destroy ${CurrentTask.Parameters}' } as ICfnSubExpression;
+            const commandExpression = { 'Fn::Sub': 'terraform destroy ${CurrentTask.Parameters} -auto-approve' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression, 'CustomRemoveCommand');
         }
 
         const accountId = target.accountId;
         const cwd = path.resolve(task.path);
         const env = TfBuildTaskPlugin.GetEnvironmentVariables(target);
-        await this.performInit(binding);
+        await this.performInit(binding, resolver);
         await ChildProcessUtility.SpawnProcessForAccount(cwd, command, accountId, task.taskRoleName, target.region, env, task.logVerbose);
     }
 
     async appendResolvers(resolver: CfnExpressionResolver, binding: IPluginBinding<ITfTask>): Promise<void> {
         const { task } = binding;
         const p = await resolver.resolve(task.parameters);
+        const b = await resolver.resolve(task.backendConfig);
         const collapsed = await resolver.collapse(p);
+        const backendcollapsed = await resolver.collapse(b);
         const parametersAsString = TfBuildTaskPlugin.GetParametersAsArgument(collapsed);
-        resolver.addResourceWithAttributes('CurrentTask', { Parameters: parametersAsString });
+        const backendConfigAsString = TfBuildTaskPlugin.GetBackendConfigAsArgument(backendcollapsed);
+        resolver.addResourceWithAttributes('CurrentTask', { Parameters: parametersAsString, BackendConfig: backendConfigAsString  });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    static GetEnvironmentVariables(_: IGenericTarget<ITfTask>): Record<string, string> {
+    static GetEnvironmentVariables(target: IGenericTarget<ITfTask>): Record<string, string> {
         return {
-
+            AWS_DEFAULT_REGION : target.region,
         };
     }
 
@@ -173,8 +183,13 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
         const entries = Object.entries(parameters);
         return entries.reduce((prev, curr) => prev + ` -var "${curr[0]}=${curr[1]}"`, '');
     }
-}
 
+    static GetBackendConfigAsArgument(backendConfig: Record<string, any>): string {
+        if (!backendConfig) { return ''; }
+        const entries = Object.entries(backendConfig);
+        return entries.reduce((prev, curr) => prev + ` -backend-config=${curr[0]}=${curr[1]}`, '');
+    }
+}
 
 interface ITfBuildTaskConfig extends IBuildTaskConfiguration {
     Path: string;
@@ -185,6 +200,7 @@ interface ITfBuildTaskConfig extends IBuildTaskConfiguration {
     CustomDeployCommand?: string;
     CustomRemoveCommand?: string;
     Parameters?: Record<string, ICfnExpression>;
+    BackendConfig?: Record<string, ICfnExpression>;
 }
 
 export interface ITfCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -193,6 +209,7 @@ export interface ITfCommandArgs extends IBuildTaskPluginCommandArgs {
     customDeployCommand?: string;
     customRemoveCommand?: string;
     parameters?: Record<string, ICfnExpression>;
+    backendConfig?: Record<string, ICfnExpression>;
 }
 
 export interface ITfTask extends IPluginTask {
@@ -200,4 +217,5 @@ export interface ITfTask extends IPluginTask {
     customInitCommand?: string;
     customDeployCommand?: ICfnExpression;
     customRemoveCommand?: ICfnExpression;
+    backendConfig?: Record<string, ICfnExpression>;
 }
