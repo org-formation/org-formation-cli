@@ -21,6 +21,7 @@
     - [update-serverless.com](#update-serverlesscom)
     - [copy-to-s3](#copy-to-s3)
     - [update-cdk](#update-cdk)
+    - [apply-tf](#apply-tf)
     - [register-type](#register-type)
     - [include](#include-1)
   - [Templating](#templating)
@@ -435,6 +436,42 @@ CdkWorkload:
     resourcePrefix: my
   OrganizationBinding:
     Account: !Ref AccountA
+```
+
+### apply-tf
+
+The `apply-tf` task will apply a Terraform workload defined in the directory specified by `Path`.
+
+| Attribute| Value| Remarks|
+| :---| :---| :---| 
+| Path | relative path | This property is required. <br/><br/>Specifies which directory contains the Terraform workload |
+| OrganizationBinding | [OrganizationBinding](https://github.com/org-formation/org-formation-cli/blob/master/docs/cloudformation-resources.md#organizationbinding-where-to-create-which-resource) | This property is required. <br/><br/>Organization binding used to specify which accounts the Terraform workload needs to be deployed to. |
+| BackendConfig       | any | When specified, will be passed to the `terraform init -reconfigure` command prior to `terraform apply` (or `terraform destroy`)|
+| Parameters | any | When specified, will be passed to the `terraform apply` (or `terraform destroy`) command using `-var` |
+| CustomDeployCommand | string | When specified will override the default command used when applying the Terraform workload. <br/><br/>default command is: `terraform apply ${CurrentTask.Parameters} -auto-approve`. |
+| CustomRemoveCommand | string | When specified will override the default command used when destroying the Terraform workload. <br/><br/>default command is: `terraform destroy ${CurrentTask.Parameters} -auto-approve`. |
+| CustomInitCommand | string | When specified will override the default command used prior to applying or destroying the Terraform workload. <br/><br/>default command is: `terraform init -reconfigure ${CurrentTask.BackendConfig}`. |
+| DependsOn | Name of task or list of names | The tasks listed in this attribute will be executed before this task.|
+| Skip | `true` or `false` | When `true` task (and dependent tasks) will not be executed. |
+| TaskRoleName | string | Specifies the name of the IAM Role that must be used for cross account access. A role with this is expected to exist in the target account (and have the right AssumeRole permissions). |
+
+
+**example**
+
+```yaml
+TfWorkload:
+  Type: apply-tf
+  Path: ./folder-with-terraform
+  OrganizationBinding:
+    IncludeMasterAccount: false
+    Region: "eu-central-1"
+    Account: !Ref MyTargetAccount
+  BackendConfig:
+    bucket: "my-s3-state-bucket"
+    region: "us-east-1"
+    key: !Sub ${CurrentAccount}.tfstate
+  Parameters:
+    tfvarforbucketname: !Sub ${CurrentAccount}-bucket
 ```
 
 ### register-type
