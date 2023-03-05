@@ -28,7 +28,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName,...CommonTaskAttributeNames, 'Path',
             'FilePath', 'Stage', 'Config', 'RunNpmInstall', 'FailedTaskTolerance', 'MaxConcurrentTasks',
-            'AdditionalSlsArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters');
+            'AdditionalSlsArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters', 'SLSVersion');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -51,6 +51,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             customDeployCommand: config.CustomDeployCommand,
             customRemoveCommand: config.CustomRemoveCommand,
             parameters: config.Parameters,
+            slsVersion: config.SLSVersion,
         };
     }
     validateCommandArgs(commandArgs: ISlsCommandArgs): void {
@@ -105,6 +106,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         return {
             type: this.type,
             stage: command.stage,
+            slsVersion: typeof command.slsVersion === 'number' ? command.slsVersion : 2,
             configFile: command.configFile,
             name: command.name,
             path: command.path,
@@ -173,7 +175,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         const { task } = binding;
         const parameters = await resolver.resolve(task.parameters);
         const collapsed = await resolver.collapse(parameters);
-        const parametersAsString = SlsBuildTaskPlugin.GetParametersAsArgument(collapsed);
+        const parametersAsString = SlsBuildTaskPlugin.GetParametersAsArgument(collapsed, task.slsVersion);
         const resource  = { Parameters : parametersAsString, Stage: task.stage, StageOption: '', Config: task.configFile, ConfigOption: '', RegionOption: `--region ${binding.target.region}`};
         if (resource.Stage) {
             resource.StageOption = `--stage ${resource.Stage}`;
@@ -187,15 +189,24 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         resolver.addParameter('config', resource.Config);
     }
 
-    static GetParametersAsArgument(parameters: Record<string, any>): string {
+    static GetParametersAsArgument(parameters: Record<string, any>, slsVersion: number): string {
         if (!parameters) {return '';}
         const entries = Object.entries(parameters);
-        return entries.reduce((prev, curr) => prev + `--${curr[0]} "${curr[1]}" `, '');
+
+        return entries.reduce((prev, curr) => {
+            const [key, value] = curr;
+            if (slsVersion >= 3) {
+                return `${prev} --param="${key}=${value}"`;
+            } else {
+                return `${prev} --${key} "${value}"`;
+            }
+        }, '');
     }
 }
 
 export interface IServerlessComTaskConfig extends IBuildTaskConfiguration {
     Path: string;
+    SLSVersion?: number;
     Config?: string;
     Stage?: string;
     OrganizationBinding: IOrganizationBinding;
@@ -210,6 +221,7 @@ export interface IServerlessComTaskConfig extends IBuildTaskConfiguration {
 export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
     stage?: string;
     path: string;
+    slsVersion?: number;
     configFile?: string;
     runNpmInstall: boolean;
     customDeployCommand?: string;
@@ -219,6 +231,7 @@ export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
 
 export interface ISlsTask extends IPluginTask {
     path: string;
+    slsVersion: number;
     stage?: string;
     configFile?: string;
     runNpmInstall: boolean;
