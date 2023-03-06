@@ -18,11 +18,9 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
     type = 'serverless.com';
     typeForTask = 'update-serverless.com';
 
-
     getPhysicalIdForCleanup(): string {
         return undefined;
     }
-
 
     convertToCommandArgs(config: IServerlessComTaskConfig, command: IPerformTasksCommandArgs): ISlsCommandArgs {
 
@@ -75,7 +73,6 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
         }
 
         if (commandArgs.runNpmInstall) {
-
             const packageFilePath = path.join(commandArgs.path, 'package.json');
             if (!existsSync(packageFilePath)) {
                 throw new OrgFormationError(`task ${commandArgs.name} specifies 'RunNpmInstall' but cannot find npm package file ${packageFilePath}`);
@@ -87,6 +84,9 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             }
         }
         Validator.ValidateOrganizationBinding(commandArgs.organizationBinding, commandArgs.name);
+        if (typeof commandArgs.slsVersion !== 'number') {
+            ConsoleUtil.LogWarning(`task ${commandArgs.name} does not specify a a serverless framework version. Defaulting to 2.0.0 (which is rather old), use the SLSVersion version attribute to specify a newer version.`);
+        }
     }
 
     getValuesForEquality(command: ISlsCommandArgs): any {
@@ -231,7 +231,7 @@ export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
 
 export interface ISlsTask extends IPluginTask {
     path: string;
-    slsVersion: number;
+    slsVersion?: number;
     stage?: string;
     configFile?: string;
     runNpmInstall: boolean;
