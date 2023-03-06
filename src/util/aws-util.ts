@@ -568,12 +568,12 @@ export class CfnUtil {
                     retryAccountIsBeingInitialized = true;
                 } else if (err && (err.code === 'ValidationError' && err.message) || (err.code === 'ResourceNotReady')) {
                     const message = err.message as string;
-                    if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
-                        await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
-                        await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    if (message.indexOf('UPDATE_ROLLBACK_FAILED')) {
+                        await cfn.continueUpdateRollback({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
+                        describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                         updateStackInput.ClientRequestToken = uuid();
-                        await cfn.createStack(updateStackInput).promise();
-                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        await cfn.updateStack(updateStackInput).promise();
+                        describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     } else if (-1 !== message.indexOf('No updates are to be performed.')) {
                         describeStack = await cfn.describeStacks({ StackName: updateStackInput.StackName }).promise();
                         // ignore;
