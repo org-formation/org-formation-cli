@@ -1,12 +1,11 @@
 import { readFileSync } from 'fs';
 import { Command } from 'commander';
-import minimatch from 'minimatch';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { UpdateOrganizationCommand } from './update-organization';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ITrackedTask, PersistedState } from '~state/persisted-state';
 import { Validator } from '~parser/validator';
-import { BuildConfiguration, IBuildTask } from '~build-tasks/build-configuration';
+import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { ConsoleUtil } from '~util/console-util';
 import { S3StorageProvider } from '~state/storage-provider';
@@ -104,36 +103,6 @@ export class PerformTasksCommand extends BaseCliCommand<IPerformTasksCommandArgs
 
         await state.save();
 
-    }
-
-    private skipNonMatchingLeafTasks(tasks: IBuildTask[], taskMatcher: string, tasksPrefix: string): number {
-        let skippedTasks = 0;
-        for (const task of tasks) {
-
-            const isLeafTask = task.childTasks.length === 0;
-            const taskFullName = `${tasksPrefix}${task.name}`;
-
-            if (isLeafTask) {
-                const isMatching = task.name === taskMatcher || minimatch(taskFullName, taskMatcher);
-                task.skip = isMatching ? false : true;
-            } else {
-                const skippedChildTasks = this.skipNonMatchingLeafTasks(task.childTasks, taskMatcher, `${taskFullName}/`);
-                const isAllSkipped = task.childTasks.length === skippedChildTasks;
-                task.skip = isAllSkipped ? true : false;
-            }
-
-            if (task.skip) {
-                skippedTasks = skippedTasks + 1;
-            }
-
-            if (isLeafTask && task.skip !== true) {
-                ConsoleUtil.LogInfo(`${taskFullName} matched the '${taskMatcher}' globPattern`);
-            } else {
-                ConsoleUtil.LogDebug(`${taskFullName} did not match the '${taskMatcher}' globPattern`);
-            }
-
-        }
-        return skippedTasks;
     }
 
     public static async PublishChangedOrganizationFileIfChanged(command: IPerformTasksCommandArgs, state: PersistedState): Promise<void> {

@@ -1,8 +1,7 @@
 import { Command } from 'commander';
-import minimatch from 'minimatch';
 import { BaseCliCommand } from './base-command';
 import { IPerformTasksCommandArgs } from './perform-tasks';
-import { BuildConfiguration, IBuildTask } from '~build-tasks/build-configuration';
+import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { Validator } from '~parser/validator';
 import { AwsUtil } from '~util/aws-util';
@@ -70,33 +69,4 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         await BuildRunner.RunValidationTasks(validationTasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
     }
 
-    private skipNonMatchingLeafTasks(tasks: IBuildTask[], taskMatcher: string, tasksPrefix: string): number {
-        let skippedTasks = 0;
-        for (const task of tasks) {
-
-            const isLeafTask = task.childTasks.length === 0;
-            const taskFullName = `${tasksPrefix}${task.name}`;
-
-            if (isLeafTask) {
-                const isMatching = task.name === taskMatcher || minimatch(taskFullName, taskMatcher);
-                task.skip = isMatching ? false : true;
-            } else {
-                const skippedChildTasks = this.skipNonMatchingLeafTasks(task.childTasks, taskMatcher, `${taskFullName}/`);
-                const isAllSkipped = task.childTasks.length === skippedChildTasks;
-                task.skip = isAllSkipped ? true : false;
-            }
-
-            if (task.skip) {
-                skippedTasks = skippedTasks + 1;
-            }
-
-            if (isLeafTask && task.skip !== true) {
-                ConsoleUtil.LogInfo(`${taskFullName} matched the '${taskMatcher}' globPattern`);
-            } else {
-                ConsoleUtil.LogDebug(`${taskFullName} did not match the '${taskMatcher}' globPattern`);
-            }
-
-        }
-        return skippedTasks;
-    }
 }
