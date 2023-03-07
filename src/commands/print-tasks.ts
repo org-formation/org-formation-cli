@@ -34,12 +34,17 @@ export class PrintTasksCommand extends BaseCliCommand<IPrintTasksCommandArgs> {
         command.option('--no-print-parameters', 'will not print parameter files when printing stacks');
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
         command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
+        command.option('--dev', 'use development settings, e.g. DefaultDevelopmentBuildAccessRoleName instead of DefaultBuildAccessRoleName', false);
 
         super.addOptions(command);
     }
 
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
+
+        if (command.dev) {
+            AwsUtil.SetIsDevelopmentBuild(true);
+        }
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
