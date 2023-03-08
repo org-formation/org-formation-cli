@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: 2010-09-09-OC
+
+Resources:
+
+  FindingsByResourceType:
+    Type: 'Community::SecurityHub::Insight'
+    Properties:
+      InsightName: "0a. Findings by Resource Type" # use 0x. to ensure the insight ends up on the first page
+      GroupByAttribute: ResourceType
+      FiltersJSON: !Sub '{
+                "ComplianceStatus": [
+                    { "Value": "FAILED", "Comparison": "EQUALS" }
+                ],
+                "WorkflowStatus": [
+                    { "Value": "NEW", "Comparison": "EQUALS" },
+                    { "Value": "NOTIFIED", "Comparison": "EQUALS" }
+                ],
+                "RecordState": [
+                    { "Value": "ACTIVE", "Comparison": "EQUALS" }
+                ]
+            }'
+            

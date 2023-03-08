@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09-OC
+
+Parameters:
+  administratorAccount:
+    Type: String
+
+Resources:
+
+  SecurityHubEnableOrgAccess:
+    Type: Community::Organizations::EnableAWSServiceAccess
+    OrganizationBinding: !Ref OrganizationsServiceBinding
+    Properties:
+      ServicePrincipal: securityhub.amazonaws.com
+      ResourceId: enable-securityhub
+
+  SecurityHubDelegatedAdmin:
+    Type: Community::Organizations::DelegatedAdmin
+    DependsOn: SecurityHubEnableOrgAccess
+    OrganizationBinding: !Ref OrganizationsServiceBinding
+    Properties:
+      ServicePrincipal: securityhub.amazonaws.com
+      AccountId: !Ref administratorAccount
+      
+  Hub:
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Type: Community::SecurityHub::Hub
+    OrganizationBinding: !Ref AllBinding
+    Properties:
+      EnableDefaultStandards: false
+
+  Standards:
+    Type: Community::SecurityHub::Standards
+    DependsOn: Hub
+    OrganizationBinding: !Ref AllBinding
+    Properties:
+      CIS14: ENABLED
+      AFSBP: ENABLED
+      CIS12: DISABLED
+      PCIDSS: DISABLED
+

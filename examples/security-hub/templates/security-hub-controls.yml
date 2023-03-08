@@ -1,0 +1,155 @@
+OrganizationBindings:
+  AllExceptLoggingAccountPrimaryRegion:
+  AllAccountsAllRegions:
+
+# for a reference on which controls make sense to disable: https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+Resources:
+
+  # About the use of DependsOn: this ensures the security hub rules get updated 1 by 1 within each account (as they otherwise get throttled).
+  # Whether we could do 1 at a time or 10 doesn't really matter for the time it takes to do a full deployment,
+  # the main thing we end up waiting on is determined by the number of accounts we update in parallel.
+
+  
+  # Ensure CloudTrail logs are encrypted at rest using KMS CMKs
+  StandardsControl1:
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllExceptLoggingAccountPrimaryRegion
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '3.7'
+      ControlStatus: 'DISABLED'
+      DisabledReason: this control is disabled in all non-logging accounts
+
+# Ensure a log metric filter and alarm exist for IAM policy changes
+  StandardsControl2:
+    DependsOn: StandardsControl1
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.4'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for CloudTrail configuration changes
+  StandardsControl3:
+    DependsOn: StandardsControl2
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.5'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for AWS Management Console authentication failures
+  StandardsControl4:
+    DependsOn: StandardsControl3
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.6'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs
+  StandardsControl5:
+    DependsOn: StandardsControl4
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.7'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for S3 bucket policy changes
+  StandardsControl6:
+    DependsOn: StandardsControl5
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.8'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for AWS Config configuration changes
+  StandardsControl7:
+    DependsOn: StandardsControl6
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.9'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for security group changes
+  StandardsControl8:
+    DependsOn: StandardsControl7
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.10'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL)
+  StandardsControl10:
+    DependsOn: StandardsControl9
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.11'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for changes to network gateways
+  StandardsControl12:
+    DependsOn: StandardsControl11
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.12'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for route table changes
+  StandardsControl14:
+    DependsOn: StandardsControl13
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.13'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
+
+# Ensure a log metric filter and alarm exist for VPC changes
+  StandardsControl15:
+    DependsOn: StandardsControl14
+    Type: 'Community::SecurityHub::StandardsControl'
+    OrganizationBinding: !Ref AllAccountsAllRegions
+    Properties:
+      SuppressCurrentFindingsOnDisabled: true
+      StandardCode: 'CIS1.4' # (or CIS1.2 or AFSBP)
+      ControlId: '4.14'
+      ControlStatus: 'DISABLED'
+      DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
