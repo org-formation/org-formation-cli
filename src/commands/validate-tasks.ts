@@ -5,6 +5,7 @@ import { BuildConfiguration } from '~build-tasks/build-configuration';
 import { BuildRunner } from '~build-tasks/build-runner';
 import { Validator } from '~parser/validator';
 import { AwsUtil } from '~util/aws-util';
+import { ConsoleUtil } from '~util/console-util';
 
 const commandName = 'validate-tasks <tasksFile>';
 const commandDescription = 'Will validate the tasks file, including configured tasks';
@@ -32,12 +33,18 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
         command.option('--templating-context-file [templating-context-file]', 'json file used as context for nunjuck text templating of organization and tasks file');
         command.option('--debug-templating [debug-templating]', 'when set to true the output of text templating processes will be stored on disk', false);
         command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
+        command.option('--dev', 'use development settings, e.g. DefaultDevelopmentBuildAccessRoleName instead of DefaultBuildAccessRoleName', false);
+        command.option('--match [match]', 'glob pattern used to define/filter which tasks to run.');
 
         super.addOptions(command);
     }
 
     public async performCommand(command: IPerformTasksCommandArgs): Promise<void> {
         const tasksFile = command.tasksFile;
+
+        if (command.dev) {
+            AwsUtil.SetIsDevelopmentBuild(true);
+        }
 
         Validator.validatePositiveInteger(command.maxConcurrentStacks, 'maxConcurrentStacks');
         Validator.validatePositiveInteger(command.failedStacksTolerance, 'failedStacksTolerance');
@@ -51,6 +58,15 @@ export class ValidateTasksCommand extends BaseCliCommand<IPerformTasksCommandArg
 
         await config.fixateOrganizationFile(command);
         const validationTasks = config.enumValidationTasks(command);
+
+        if (command.match) {
+            const skippedTasks = this.skipNonMatchingLeafTasks(validationTasks, command.match, '');
+            if (skippedTasks === validationTasks.length) {
+                ConsoleUtil.LogWarning(`--match parameter glob '${command.match}' did not match any tasks. Use --verbose to see the tasks it did not match`);
+            }
+        }
+
         await BuildRunner.RunValidationTasks(validationTasks, command.verbose === true, command.maxConcurrentTasks, command.failedTasksTolerance);
     }
+
 }

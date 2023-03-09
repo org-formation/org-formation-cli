@@ -2,6 +2,7 @@ import path from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { Organizations } from 'aws-sdk';
 import { Command } from 'commander';
+import minimatch from 'minimatch';
 import RC from 'rc';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AwsUtil, DEFAULT_ROLE_FOR_ORG_ACCESS } from '../util/aws-util';
@@ -22,6 +23,7 @@ import { CfnParameters } from '~core/cfn-parameters';
 import { Validator } from '~parser/validator';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { NunjucksDebugSettings } from '~yaml-cfn/index';
+import { IBuildTask } from '~build-tasks/build-configuration';
 
 const DEFAULT_STATE_OBJECT = 'state.json';
 
@@ -284,6 +286,36 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         }
 
         return {};
+    }
+
+    protected skipNonMatchingLeafTasks(tasks: IBuildTask[], taskMatcher: string, tasksPrefix: string): number {
+        let skippedTasks = 0;
+        for (const task of tasks) {
+
+            const isLeafTask = task.childTasks.length === 0;
+            const taskFullName = `${tasksPrefix}${task.name}`;
+
+            if (isLeafTask) {
+                const isMatching = task.name === taskMatcher || minimatch(taskFullName, taskMatcher);
+                task.skip = isMatching ? false : true;
+            } else {
+                const skippedChildTasks = this.skipNonMatchingLeafTasks(task.childTasks, taskMatcher, `${taskFullName}/`);
+                const isAllSkipped = task.childTasks.length === skippedChildTasks;
+                task.skip = isAllSkipped ? true : false;
+            }
+
+            if (task.skip) {
+                skippedTasks = skippedTasks + 1;
+            }
+
+            if (isLeafTask && task.skip !== true) {
+                ConsoleUtil.LogInfo(`${taskFullName} matched the '${taskMatcher}' globPattern`);
+            } else {
+                ConsoleUtil.LogDebug(`${taskFullName} did not match the '${taskMatcher}' globPattern`);
+            }
+
+        }
+        return skippedTasks;
     }
 
     protected async initialize(command: ICommandArgs): Promise<void> {
