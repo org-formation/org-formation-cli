@@ -67,7 +67,7 @@ Resources:
       RecordingGroup:
         AllSupported: true
         IncludeGlobalResourceTypes: !If [IsPrimaryRegion, true, false]
-      RoleARN: !GetAtt ConfigurationRecorderRole.Arn
+      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig"
 
   DeliveryChannel:
     Type: 'AWS::Config::DeliveryChannel'
@@ -75,31 +75,3 @@ Resources:
       ConfigSnapshotDeliveryProperties:
         DeliveryFrequency: One_Hour
       S3BucketName: !Ref ConfigAuditBucket
-
-  ConfigurationRecorderRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      ManagedPolicyArns:
-      - 'arn:aws:iam::aws:policy/service-role/AWSConfigRole'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Sid: AssumeRole1
-          Effect: Allow
-          Principal:
-            Service: 'config.amazonaws.com'
-          Action: 'sts:AssumeRole'
-      Policies:
-      - PolicyName: 's3-policy'
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action: 's3:PutObject'
-            Resource: !Sub '${ConfigAuditBucket.Arn}/*'
-            Condition:
-              StringLike:
-                's3:x-amz-acl': 'bucket-owner-full-control'
-          - Effect: Allow
-            Action: 's3:GetBucketAcl'
-            Resource: !GetAtt ConfigAuditBucket.Arn
