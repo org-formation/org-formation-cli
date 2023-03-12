@@ -442,6 +442,9 @@ CdkWorkload:
 
 The `apply-tf` task will apply a Terraform workload defined in the directory specified by `Path`.
 
+> **Note**
+> This task currently requires Terraform to already be installed at runtime.
+
 | Attribute| Value| Remarks|
 | :---| :---| :---| 
 | Path | relative path | This property is required. <br/><br/>Specifies which directory contains the Terraform workload |
