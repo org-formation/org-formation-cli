@@ -15,9 +15,15 @@ export class SubExpression {
                 throw new OrgFormationError('!Sub Value must not be empty array');
             }
             if (typeof subValue[0] !== 'string') {
-                throw new OrgFormationError('!Sub first element must be string');
+                if (typeof subValue[0] === 'object') {
+                    // probably a !Cmd or !ReadFile or Similar
+                    this.expression = '';
+                } else {
+                    throw new OrgFormationError('!Sub first element must be string');
+                }
+            } else {
+                this.expression = subValue[0];
             }
-            this.expression = subValue[0];
             if (subValue.length > 1) {
                 this.locals = subValue[1];
             }

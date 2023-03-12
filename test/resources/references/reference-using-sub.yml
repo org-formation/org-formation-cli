@@ -119,3 +119,10 @@ Resources:
       OtherAccountResourcesGetAtt: !GetAtt Account1.Resources.Topic.Arn
       OtherAccountResourcesSubRef: !Sub '${Account1.Resources.Topic}'
       OtherAccountResourcesSubGetAtt: !Sub '${Account1.Resources.Topic.Arn}'
+
+  S3Bucket15:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+      - !ReadFile "reference-to-multiple.yml"
+      - { var: "x" }
