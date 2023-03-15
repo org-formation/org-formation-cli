@@ -13,6 +13,12 @@ Parameters:
       - us-east-1
       - eu-central-1
 
+  nonPrimaryRegions:
+    Type: String
+    Default:
+      - eu-central-1
+
+
 OrganizationUpdate:
   Type: update-organization
   Skip: true
@@ -75,8 +81,13 @@ SecurityHub:
       IncludeMasterAccount: true
       Account: "*"
       Region: !Ref allRegions
+    PrimaryRegionBinding:
+      IncludeMasterAccount: true
+      Account: "*"
+      Region: !Ref primaryRegion
   Parameters:
     administratorAccount: !Ref SecurityAccount
+    aggregationRegions: !Ref nonPrimaryRegions
 
 SecurityHubControls:
   Type: update-stacks

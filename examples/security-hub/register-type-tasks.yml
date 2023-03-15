@@ -67,6 +67,16 @@ SecurityHubHub:
     Account: "*"
     IncludeMasterAccount: true
 
+SecurityHubFindingAggregation:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-securityhub-findingaggregation-0.1.0.zip
+  ResourceType: 'Community::SecurityHub::FindingAggregation'
+  MaxConcurrentTasks: 500
+  OrganizationBinding:
+    Region: !Ref primaryRegion
+    Account: "*"
+    IncludeMasterAccount: true
+
 SecurityHubMemberInsight:
   Type: register-type
   SchemaHandlerPackage: s3://community-resource-provider-catalog/community-securityhub-insight-0.1.2.zip
