@@ -25,7 +25,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Build and publish container
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           build-args: RELEASE_VERSION=${{ env.RELEASE_VERSION }}
           platforms: linux/amd64,linux/arm64
