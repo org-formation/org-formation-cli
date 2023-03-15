@@ -28,6 +28,8 @@ Resources:
     OrganizationBinding: !Ref AllBinding
     Properties:
       EnableDefaultStandards: false
+      ControlFindingGenerator: SECURITY_CONTROL #change to STANDARD_CONTROL to turn off consolidated findings.
+      
 
   Standards:
     Type: Community::SecurityHub::Standards

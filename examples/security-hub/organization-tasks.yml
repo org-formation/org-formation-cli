@@ -10,22 +10,40 @@ Parameters:
   allRegions:
     Type: String
     Default:
-    - us-east-1
-    - eu-central-1
+      - us-east-1
+      - eu-central-1
 
 OrganizationUpdate:
   Type: update-organization
   Skip: true
-  Template: ../organization.yml
+  Template: ./organization.yml
 
 # include that contains the tasks for registering cloudformation types.
 # registering a type takes long, hence the 'MaxConcurrentTasks: 100'
 RegisterTypes:
   Type: include
   Path: register-type-tasks.yml
+  MaxConcurrentTasks: 10
   Parameters:
-    region: !Ref primaryRegion
+    region: !Ref region
     allRegions: !Ref allRegions
+
+SecureDefaults:
+  Type: update-stacks
+  Template: templates/secure-defaults.yml
+  StackName: secure-defaults
+  StackDescription: Ensures AWS services are configured to be secure by default
+  MaxConcurrentStacks: 10
+  DisableStackRollbacks: true
+  OrganizationBindings:
+    AllRegionsBinding:
+      IncludeMasterAccount: true
+      Account: "*"
+      Region: !Ref allRegions
+    PrimaryRegionBinding:
+      IncludeMasterAccount: true
+      Account: "*"
+      Region: !Ref primaryRegion
 
 AwsConfig:
   Type: update-stacks

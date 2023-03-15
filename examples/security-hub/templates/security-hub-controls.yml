@@ -107,8 +107,8 @@ Resources:
       DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
 
 # Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL)
-  StandardsControl10:
-    DependsOn: StandardsControl9
+  StandardsControl9:
+    DependsOn: StandardsControl8
     Type: 'Community::SecurityHub::StandardsControl'
     OrganizationBinding: !Ref AllAccountsAllRegions
     Properties:
@@ -119,8 +119,8 @@ Resources:
       DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
 
 # Ensure a log metric filter and alarm exist for changes to network gateways
-  StandardsControl12:
-    DependsOn: StandardsControl11
+  StandardsControl10:
+    DependsOn: StandardsControl9
     Type: 'Community::SecurityHub::StandardsControl'
     OrganizationBinding: !Ref AllAccountsAllRegions
     Properties:
@@ -131,8 +131,8 @@ Resources:
       DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
 
 # Ensure a log metric filter and alarm exist for route table changes
-  StandardsControl14:
-    DependsOn: StandardsControl13
+  StandardsControl11:
+    DependsOn: StandardsControl10
     Type: 'Community::SecurityHub::StandardsControl'
     OrganizationBinding: !Ref AllAccountsAllRegions
     Properties:
@@ -143,8 +143,8 @@ Resources:
       DisabledReason: Example - this control can be diabled if you use GuardDuty. see https://docs.aws.amazon.com/securityhub/latest/userguide/controls-to-disable.html
 
 # Ensure a log metric filter and alarm exist for VPC changes
-  StandardsControl15:
-    DependsOn: StandardsControl14
+  StandardsControl12:
+    DependsOn: StandardsControl11
     Type: 'Community::SecurityHub::StandardsControl'
     OrganizationBinding: !Ref AllAccountsAllRegions
     Properties:
