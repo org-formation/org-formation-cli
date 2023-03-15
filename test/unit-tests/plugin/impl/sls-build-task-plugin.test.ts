@@ -274,6 +274,7 @@ describe('when resolving attribute expressions on remove', () => {
             name: 'taskName',
             type: 'sls',
             path: './',
+            slsVersion: 2,
             runNpmInstall: false,
             hash: '123123123',
             logVerbose: true,
@@ -452,6 +453,81 @@ describe('when resolving attribute expressions on remove', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+});
+
+
+
+describe('when resolving parameters on using different versions of the SLS framework', () => {
+    let spawnProcessForAccountSpy: jest.SpyInstance;
+    let binding: IPluginBinding<ISlsTask>;
+    let task: ISlsTask;
+    let plugin: SlsBuildTaskPlugin;
+    let template: TemplateRoot;
+    let state: PersistedState;
+    let binder: PluginBinder<ISlsTask>;
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    beforeEach(() => {
+        template = TestTemplates.createBasicTemplate();
+        state = TestTemplates.createState(template);
+        plugin = new SlsBuildTaskPlugin();
+        spawnProcessForAccountSpy = jest.spyOn(ChildProcessUtility, 'SpawnProcessForAccount').mockImplementation();
+
+        task = {
+            name: 'taskName',
+            type: 'sls',
+            path: './',
+            parameters: {"key": "value", "n": "42"},
+            runNpmInstall: false,
+            hash: '123123123',
+            logVerbose: true,
+            forceDeploy: true,
+        };
+
+        binding = {
+            action: 'UpdateOrCreate',
+            target: {
+                targetType: 'sls',
+                organizationLogicalName: 'default',
+                logicalAccountId: 'Account',
+                accountId: '1232342341235',
+                region: 'eu-central-1',
+                lastCommittedHash: '123123123',
+                logicalName: 'taskName',
+                definition: task,
+            },
+            task,
+            previousBindingLocalHash: 'abcdef'
+        };
+        binder = new PluginBinder<ISlsTask>(task, 'default', undefined, state, template, undefined, plugin);
+    });
+
+    test('version 3 of the tasks uses --param', async () => {
+        task.slsVersion = 3;
+        await binder.createPerformForUpdateOrCreate(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).lastCalledWith(expect.anything(), expect.stringContaining(' --param="key=value" --param="n=42" '), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+    });
+
+    test('version 2 of the tasks uses --key=value', async () => {
+        task.slsVersion = 2;
+        await binder.createPerformForUpdateOrCreate(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining(' --key "value" --n "42"  '), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
+    });
+
+    test('not specifying version uses --key=value', async () => {
+        task.slsVersion = undefined;
+        await binder.createPerformForUpdateOrCreate(binding)();
+
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledTimes(1);
+        expect(spawnProcessForAccountSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining(' --key "value" --n "42"  '), expect.anything(), undefined, "eu-central-1", expect.anything(), true);
     });
 });
 
