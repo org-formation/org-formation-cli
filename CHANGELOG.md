@@ -5,6 +5,11 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
+**version 1.0.9**
+- feat: support `--match` and `--dev` on print & validate commands
+- feat: support serverless.com V3, by setting the `SLSVersion` attribute to `3` in the task file
+- fix: allow sub-expression to be a `!ReadFile`, `!Cmd` or other expression
+
 **version 1.0.8**
 - feat: added Terraform support task support (task type: `apply-tf`)
 
