@@ -1,0 +1,118 @@
+Parameters:
+
+  # template uses region in various tasks.
+  # - primaryRegion used for those tasks that need to be deployed only to 1 region.
+  # - allRegions used for those tasks that need to be deployed only to all regions.
+  primaryRegion:
+    Type: String
+    Default: us-east-1
+
+  allRegions:
+    Type: String
+    Default:
+      - us-east-1
+      - eu-central-1
+
+  nonPrimaryRegions:
+    Type: String
+    Default:
+      - eu-central-1
+
+
+OrganizationUpdate:
+  Type: update-organization
+  Skip: true
+  Template: ./organization.yml
+
+# include that contains the tasks for registering cloudformation types.
+# registering a type takes long, hence the 'MaxConcurrentTasks: 100'
+RegisterTypes:
+  Type: include
+  Path: register-type-tasks.yml
+  MaxConcurrentTasks: 10
+  Parameters:
+    region: !Ref region
+    allRegions: !Ref allRegions
+
+SecureDefaults:
+  Type: update-stacks
+  Template: templates/secure-defaults.yml
+  StackName: secure-defaults
+  StackDescription: Ensures AWS services are configured to be secure by default
+  MaxConcurrentStacks: 10
+  DisableStackRollbacks: true
+  OrganizationBindings:
+    AllRegionsBinding:
+      IncludeMasterAccount: true
+      Account: "*"
+      Region: !Ref allRegions
+    PrimaryRegionBinding:
+      IncludeMasterAccount: true
+      Account: "*"
+      Region: !Ref primaryRegion
+
+AwsConfig:
+  Type: update-stacks
+  Template: ./templates/aws-config.yml
+  StackName: aws-config
+  StackDescription: AWS Config - Base
+  TerminationProtection: false
+  DefaultOrganizationBindingRegion: !Ref primaryRegion
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+    Account: '*'
+  OrganizationBindings:
+    LogArchiveBinding:
+      Account: !Ref LogArchiveAccount
+  Parameters:
+    bucketName: !Sub 'aws-config-${CurrentAccount.AccountId}'
+
+SecurityHub:
+  Type: update-stacks
+  DependsOn: [RegisterTypes, AwsConfig]
+  Template: ./templates/security-hub.yml
+  StackName: "security-hub"
+  StackDescription: SecurityHub
+  OrganizationBindings:
+    OrganizationsServiceBinding:
+      IncludeMasterAccount: true
+      Region: us-east-1
+    AllBinding:
+      IncludeMasterAccount: true
+      Account: "*"
+      Region: !Ref allRegions
+    PrimaryRegionBinding:
+      IncludeMasterAccount: true
+      Account: "*"
+      Region: !Ref primaryRegion
+  Parameters:
+    administratorAccount: !Ref SecurityAccount
+    aggregationRegions: !Ref nonPrimaryRegions
+
+SecurityHubControls:
+  Type: update-stacks
+  DependsOn: [RegisterTypes, SecurityHub]
+  Template: ./templates/security-hub-controls.yml
+  StackName: "security-hub-controls"
+  StackDescription: SecurityHub Controls
+  OrganizationBindings:
+    AllExceptLoggingAccountPrimaryRegion:
+      IncludeMasterAccount: true
+      Account: "*" 
+      ExcludeAccount: !Ref LogArchiveAccount
+      Region: !Ref primaryRegion
+    AllAccountsAllRegions:
+      IncludeMasterAccount: true
+      Account: "*"
+      Region: !Ref allRegions
+
+SecurityHubInsights:
+  Type: update-stacks
+  DependsOn: [RegisterTypes, SecurityHub]
+  Template: ./templates/security-hub-insights.yml
+  StackName: "security-hub-insights"
+  StackDescription: SecurityHub Insights
+  DefaultOrganizationBindingRegion: !Ref primaryRegion
+  DefaultOrganizationBinding:
+    Account: !Ref SecurityAccount
+  

@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+
+  bucketName:
+    Type: String
+    Description: 'Name of the central S3 bucket containing AWS Config resources'
+
+Conditions:
+  IsPrimaryRegion: !Equals [!Ref AWS::Region, us-east-1]
+
+Resources:
+  ConfigAuditBucket:
+    OrganizationBinding: !Ref LogArchiveBinding
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref bucketName
+      AccessControl: BucketOwnerFullControl
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  ConfigAuditBucketPolicy:
+    OrganizationBinding: !Ref LogArchiveBinding
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ConfigAuditBucket
+      PolicyDocument: # Taken from https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-policy.html#granting-access-in-another-account
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AWSConfigBucketPermissionsCheck
+            Effect: Allow
+            Principal:
+              Service:
+                - config.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !GetAtt ConfigAuditBucket.Arn
+          - Sid: AWSConfigBucketExistenceCheck
+            Effect: Allow
+            Principal:
+              Service:
+                - config.amazonaws.com
+            Action: s3:ListBucket
+            Resource: !GetAtt ConfigAuditBucket.Arn
+          - Sid: AWSConfigBucketDelivery
+            Effect: Allow
+            Principal:
+              Service:
+                - config.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub '${ConfigAuditBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                's3:x-amz-acl': 'bucket-owner-full-control'
+
+  ConfigurationRecorder:
+    Type: 'AWS::Config::ConfigurationRecorder'
+    Properties:
+      RecordingGroup:
+        AllSupported: true
+        IncludeGlobalResourceTypes: !If [IsPrimaryRegion, true, false]
+      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig"
+
+  DeliveryChannel:
+    Type: 'AWS::Config::DeliveryChannel'
+    Properties:
+      ConfigSnapshotDeliveryProperties:
+        DeliveryFrequency: One_Hour
+      S3BucketName: !Ref ConfigAuditBucket

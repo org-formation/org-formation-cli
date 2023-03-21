@@ -1,0 +1,125 @@
+# note: register-type task is only supported in AWS Organization Formation v. 0.9.10 (or higher)
+
+Parameters:
+  primaryRegion:
+    Type: String
+    Default: us-east-1
+
+  allRegions: 
+    Type: List<String>
+    Default: []
+
+  #####
+  ## Community Organizations Types
+  #####
+
+OrganizationsDelegatedAdminRP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-organizations-delegatedadmin-0.1.0.zip
+  ResourceType: "Community::Organizations::DelegatedAdmin"
+  MaxConcurrentTasks: 500
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: us-east-1 # Organization policies are only ever compatible with us-east-1
+
+OrganizationsEnableAWSServiceRP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-organizations-enableawsserviceaccess-0.1.0.zip
+  ResourceType: "Community::Organizations::EnableAWSServiceAccess"
+  MaxConcurrentTasks: 500
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Region: us-east-1 # Organization policies are only ever compatible with us-east-1
+
+#####
+## Community SecurityHub Types
+#####
+  
+CommunityStandardsControl:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-securityhub-standardscontrol-0.2.5.zip
+  ResourceType: 'Community::SecurityHub::StandardsControl'
+  MaxConcurrentTasks: 500
+  OrganizationBinding:
+    Region: !Ref allRegions
+    Account: "*"
+    IncludeMasterAccount: true
+
+# the standards control allows you to specify which standards to enable
+SecurityHubStandards:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-securityhub-standards-0.1.4.zip
+  ResourceType: 'Community::SecurityHub::Standards'
+  MaxConcurrentTasks: 500
+  OrganizationBinding:
+    Region: !Ref allRegions
+    Account: "*"
+    IncludeMasterAccount: true
+
+# the regular SecurityHub::Hub resource will enable CIS 1.2, if you want to automatically enable CIS1.4 this becomes a problem. this resource fixes that.
+SecurityHubHub:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-securityhub-hub-0.1.3.zip
+  ResourceType: 'Community::SecurityHub::Hub'
+  MaxConcurrentTasks: 500
+  OrganizationBinding:
+    Region: !Ref allRegions
+    Account: "*"
+    IncludeMasterAccount: true
+
+SecurityHubFindingAggregation:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-securityhub-findingaggregation-0.1.0.zip
+  ResourceType: 'Community::SecurityHub::FindingAggregation'
+  MaxConcurrentTasks: 500
+  OrganizationBinding:
+    Region: !Ref primaryRegion
+    Account: "*"
+    IncludeMasterAccount: true
+
+SecurityHubMemberInsight:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-securityhub-insight-0.1.2.zip
+  ResourceType: 'Community::SecurityHub::Insight'
+  MaxConcurrentTasks: 500
+  OrganizationBinding:
+    Region: !Ref allRegions
+    Account: "*"
+    IncludeMasterAccount: true
+
+  #####
+  ## Secure default types
+  #####
+
+# registration of Community::Organizations::NoDefaultVPC
+NoDefaultVpcRP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-organizations-nodefaultvpc-0.1.0.zip
+  ResourceType: "Community::Organizations::NoDefaultVPC"
+  MaxConcurrentTasks: 1000
+  OrganizationBinding:
+    Region: !Ref allRegions
+    Account: "*"
+    IncludeMasterAccount: true
+
+# registration of Community::Organizations::EbsEncryptionDefaults
+EbsEncryptionDefaultsRP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-organizations-ebsencryptiondefaults-0.2.2.zip
+  ResourceType: "Community::Organizations::EbsEncryptionDefaults"
+  MaxConcurrentTasks: 1000
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Account: "*"
+    Region: !Ref allRegions # Ebs Encryption Defaults need to be set in all regions.
+    
+# registration of Community::S3::PublicAccessBlock
+AccountPublicAccessBlockRP:
+  Type: register-type
+  SchemaHandlerPackage: s3://community-resource-provider-catalog/community-s3-publicaccessblock-0.2.2.zip
+  ResourceType: "Community::S3::PublicAccessBlock"
+  MaxConcurrentTasks: 1000
+  OrganizationBinding:
+    IncludeMasterAccount: true
+    Account: "*"
+    Region: !Ref primaryRegion # Public Access Block is an account wide setting. This only needs to be installed to the primary region
