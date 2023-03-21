@@ -317,7 +317,7 @@ Resources:
       Artifacts: { Type: NO_ARTIFACTS }
       Environment:
         Type: LINUX_CONTAINER
-        Image: aws/codebuild/standard:4.0
+        Image: aws/codebuild/standard:6.0
         ComputeType: BUILD_GENERAL1_SMALL
         ImagePullCredentialsType: CODEBUILD
       QueuedTimeoutInMinutes: 480
