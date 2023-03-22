@@ -24,7 +24,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'Path',
             'FilePath', 'RunNpmInstall', 'RunNpmBuild', 'FailedTaskTolerance', 'MaxConcurrentTasks',
-            'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters');
+            'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters','HashFilesToIgnore');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -46,6 +46,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             customDeployCommand: config.CustomDeployCommand,
             customRemoveCommand: config.CustomRemoveCommand,
             parameters: config.Parameters,
+            hashFilesToIgnore: Array.isArray(config.HashFilesToIgnore) ? config.HashFilesToIgnore : typeof config.HashFilesToIgnore === 'string' ? [config.HashFilesToIgnore] : [],
         };
     }
 
@@ -82,7 +83,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
     }
 
     getValuesForEquality(command: ICdkCommandArgs): any {
-        const hashOfCdkDirectory = Md5Util.Md5OfPath(command.path);
+        const hashOfCdkDirectory = Md5Util.Md5OfPath(command.path, command.hashFilesToIgnore);
         return {
             runNpmInstall: command.runNpmInstall,
             path: hashOfCdkDirectory,
@@ -212,6 +213,7 @@ interface ICdkBuildTaskConfig extends IBuildTaskConfiguration {
     CustomDeployCommand?: string;
     CustomRemoveCommand?: string;
     Parameters?: Record<string, ICfnExpression>;
+    HashFilesToIgnore?: string | string[];
 }
 
 export interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -221,6 +223,7 @@ export interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
     customDeployCommand?: string;
     customRemoveCommand?: string;
     parameters?: Record<string, ICfnExpression>;
+    hashFilesToIgnore?: string[];
 }
 
 export interface ICdkTask extends IPluginTask {
