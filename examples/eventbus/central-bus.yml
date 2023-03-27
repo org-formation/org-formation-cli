@@ -1,0 +1,61 @@
+  TargetEventBus:
+    OrganizationBinding: !Ref CentralAccountBinding
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: central-account-bus
+
+  TargetEventBusPolicy:
+    Type: AWS::Events::EventBusPolicy
+    OrganizationBinding: !Ref CentralAccountBinding
+    Properties:
+      StatementId: allow_all_accounts_from_organization_to_put_events
+      EventBusName: !Ref TargetEventBus
+      Action: events:PutEvents
+      Principal: "*"
+      Condition:
+        Type: StringEquals
+        Key: aws:PrincipalOrgID
+        Value: !Ref principalOrgId
+
+  SourceRule:
+    Type: AWS::Events::Rule
+    OrganizationBinding: !Ref SourceAccountsBinding
+    Properties:
+      Description: Forward all events to the central account
+      EventPattern: # TODO: Specify the pattern you are interested in 
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail: 
+          readOnly:
+            - false
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt TargetEventBus.Arn
+          Id: Forward
+          RoleArn: !GetAtt SourceRuleRole.Arn
+
+  SourceRuleRole:
+    Type: AWS::IAM::Role
+    OrganizationBinding: !Ref SourceAccountsBinding
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+        Version: "2012-10-17"
+
+  SourceRuleRolePolicy:
+    OrganizationBinding: !Ref SourceAccountsBinding
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: RuleEventsRoleDefaultPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: events:PutEvents
+            Effect: Allow
+            Resource: !GetAtt TargetEventBus.Arn
+      Roles:
+        - !Ref SourceRuleRole
