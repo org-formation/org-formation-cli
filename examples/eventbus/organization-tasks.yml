@@ -1,0 +1,13 @@
+CentralBusExample:
+  Type: update-stacks
+  Template: ./central-bus.yml
+  StackName:  central-bus
+  Parameters:
+    principalOrgId: !Ref ORG::PrincipalOrgID
+  DefaultOrganizationBindingRegion: us-east-1
+  OrganizationBindings:
+    CentralAccountBinding:
+      Account: !Ref CentralAccount
+    SourceAccountsBinding:
+      Account: "*"
+      ExcludeAccount: !Ref CentralAccount
