@@ -54,10 +54,6 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             throw new OrgFormationError(`task ${commandArgs.name} does not have required attribute OrganizationBinding`);
         }
 
-        if (commandArgs.maxConcurrent > 1) {
-            throw new OrgFormationError(`task ${commandArgs.name} does not support a MaxConcurrentTasks higher than 1`);
-        }
-
         if (!existsSync(commandArgs.path)) {
             throw new OrgFormationError(`task ${commandArgs.name} cannot find path ${commandArgs.path}`);
         }
@@ -98,6 +94,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             name: command.name,
             path: command.path,
             hash: globalHash,
+            maxConcurrent: command.maxConcurrent,
             runNpmInstall: command.runNpmInstall,
             runNpmBuild: command.runNpmBuild,
             taskRoleName: command.taskRoleName,
@@ -136,6 +133,10 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);
             }
+
+            if (task.maxConcurrent > 1) {
+                command = command + `--output cdk.out/${target.accountId}`;
+            }
         }
 
         const accountId = target.accountId;
@@ -162,6 +163,10 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             if (task.runNpmInstall) {
                 command = PluginUtil.PrependNpmInstall(task.path, command);
             }
+
+            if (task.maxConcurrent > 1) {
+                command = command + `--output cdk.out/${target.accountId}`;
+            }
         }
 
         const accountId = target.accountId;
@@ -175,7 +180,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const p = await resolver.resolve(task.parameters);
         const collapsed = await resolver.collapse(p);
         const parametersAsString = CdkBuildTaskPlugin.GetParametersAsArgument(collapsed);
-        resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString });
+        resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString, AccountId : binding.target.accountId });
     }
 
     static GetEnvironmentVariables(target: IGenericTarget<ICdkTask>): Record<string, string> {
@@ -227,6 +232,8 @@ export interface ICdkTask extends IPluginTask {
     path: string;
     runNpmInstall: boolean;
     runNpmBuild: boolean;
+    maxConcurrent?: number;
     customDeployCommand?: ICfnExpression;
     customRemoveCommand?: ICfnExpression;
 }
+
