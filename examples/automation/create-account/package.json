@@ -9,7 +9,7 @@
   "author": "Olaf Conijn",
   "license": "MIT",
   "devDependencies": {
-    "aws-sdk": "^2.614.0",
+    "aws-sdk": "^2.1354.0",
     "serverless-step-functions": "^2.29.0"
   }
 }
