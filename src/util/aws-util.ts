@@ -1,16 +1,15 @@
 import { existsSync, readFileSync } from 'fs';
 // import { inspect } from 'util'; // or directly
-import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations, EnvironmentCredentials, EC2 } from 'aws-sdk';
-import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials';
-import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
-import * as ini from 'ini';
-import AWS from 'aws-sdk';
 import { SingleSignOnCredentials } from '@mhlabs/aws-sdk-sso';
-import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
-import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackInput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
+import AWS, { CloudFormation, CredentialProviderChain, EC2, EnvironmentCredentials, IAM, Organizations, S3, STS, Support } from 'aws-sdk';
+import { CreateStackInput, DescribeStacksOutput, ListExportsInput, UpdateStackInput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
+import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
+import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
+import * as ini from 'ini';
 import { v4 as uuid } from 'uuid';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
@@ -568,12 +567,14 @@ export class CfnUtil {
                     retryAccountIsBeingInitialized = true;
                 } else if (err && (err.code === 'ValidationError' && err.message) || (err.code === 'ResourceNotReady')) {
                     const message = err.message as string;
-                    if (-1 !== message.indexOf('ROLLBACK_COMPLETE') || -1 !== message.indexOf('ROLLBACK_FAILED') || -1 !== message.indexOf('DELETE_FAILED')) {
+                    if (message.includes('ROLLBACK_COMPLETE') || message.includes('DELETE_FAILED')) {
                         await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
                         await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                         updateStackInput.ClientRequestToken = uuid();
                         await cfn.createStack(updateStackInput).promise();
                         describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    } else if (message.includes('ROLLBACK_FAILED')) {
+                        throw new OrgFormationError(`Stack ${updateStackInput.StackName} is in ROLLBACK_FAILED state and needs manual attention.`);
                     } else if (-1 !== message.indexOf('No updates are to be performed.')) {
                         describeStack = await cfn.describeStacks({ StackName: updateStackInput.StackName }).promise();
                         // ignore;
