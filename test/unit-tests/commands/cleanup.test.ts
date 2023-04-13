@@ -159,7 +159,7 @@ describe('when executing cleanup command', () => {
 
     test('logs success on INFO', async () => {
         await command.performCommand(commandArgs);
-        expect(consoleInfo).toBeCalledWith(expect.stringContaining('Workload my-task in 111111111111/eu-central-1 deleted successful.'));
+        expect(consoleInfo).toBeCalledWith(expect.stringContaining('Workload my-task in 111111111111/eu-central-1 delete successful.'));
     });
 
 });
