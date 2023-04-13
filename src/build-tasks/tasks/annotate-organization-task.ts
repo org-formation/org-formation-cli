@@ -61,7 +61,7 @@ export class AnnotateOrganizationTask extends BaseOrganizationTask {
 }
 
 export class ValidateAnnotateOrganizationTask extends BaseOrganizationTask {
-    protected async innerPerform(commandArgs: IAnnotateOrganizationCommandArgs): Promise<void> {
+    protected async innerPerform(/* commandArgs: IAnnotateOrganizationCommandArgs */): Promise<void> {
         ConsoleUtil.LogInfo(`Executing: ${this.config.Type} ${this.templatePath}.`);
         return;// todo: ValidateOrganizationCommand.Perform(commandArgs);
     }

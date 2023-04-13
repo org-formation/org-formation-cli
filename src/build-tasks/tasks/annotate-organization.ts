@@ -1,8 +1,7 @@
 import { Command } from 'commander';
 import { ConsoleUtil } from '../../util/console-util';
-import { AwsUtil } from '../../util/aws-util';
 
-import { BaseCliCommand, ICommandArgs } from '../../commands/base-command';
+import { BaseCliCommand } from '../../commands/base-command';
 import { TaskRunner } from '~org-binder/org-task-runner';
 import { TemplateRoot } from '~parser/parser';
 import { PersistedState } from '~state/persisted-state';
