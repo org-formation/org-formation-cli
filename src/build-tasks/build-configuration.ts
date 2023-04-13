@@ -4,8 +4,9 @@ import md5 from 'md5';
 import { S3 } from 'aws-sdk';
 import { OrgFormationError } from '../org-formation-error';
 import { BuildTaskProvider } from './build-task-provider';
-import { IUpdateOrganizationTaskConfiguration } from './tasks/organization-task';
+import { IUpdateOrganizationTaskConfiguration } from './tasks/update-organization-task';
 import { IUpdateStacksBuildTask } from './tasks/update-stacks-task';
+import { IAnnotateOrganizationTaskConfiguration } from './tasks/annotate-organization-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { CfnMappingsSection } from '~core/cfn-functions/cfn-find-in-map';
@@ -16,6 +17,8 @@ import { nunjucksParseWithIncludes } from '~yaml-cfn/nunjucks-parse-includes';
 import { AwsUtil } from '~util/aws-util';
 import { nunjucksRender } from '~yaml-cfn/index';
 import { Validator } from '~parser/validator';
+import { DefaultTemplateWriter } from '~writer/default-template-writer';
+import { AwsOrganizationReader } from '~aws-provider/aws-organization-reader';
 
 export class BuildConfiguration {
     public tasks: IBuildTaskConfiguration[];
@@ -75,7 +78,7 @@ export class BuildConfiguration {
         const stackNames = updateStackTasks.map(x => x.StackName);
         this.throwForDuplicateVal(stackNames, x => new OrgFormationError(`found more than 1 update-stacks with stackName ${x}.`));
 
-        const updateOrgTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-organization');
+        const updateOrgTasks = BuildTaskProvider.recursivelyFilter(tasks, x => x.type === 'update-organization' || x.type === 'annotate-organization');
         if (updateOrgTasks.length > 1) {
             throw new OrgFormationError('multiple update-organization tasks found');
         }
@@ -84,36 +87,73 @@ export class BuildConfiguration {
     public async fixateOrganizationFile(command: IPerformTasksCommandArgs): Promise<TemplateRoot> {
 
         if (command.organizationFile === undefined) {
-            const updateOrgTasks = this.tasks.filter(x => x.Type === 'update-organization');
+            const updateOrgTasks = this.tasks.filter(x => x.Type === 'update-organization' || x.Type === 'annotate-organization');
             if (updateOrgTasks.length === 0) {
-                throw new OrgFormationError('tasks file does not contain a task with type update-organization and no --organization-file was provided on the cli.');
+                throw new OrgFormationError('tasks file does not contain a task with type update-organization (or annotate-organization) and no --organization-file was provided on the cli.');
             }
             if (updateOrgTasks.length > 1) {
-                throw new OrgFormationError('tasks file has multiple tasks with type update-organization');
+                throw new OrgFormationError('tasks file has multiple tasks with type update-organization or annotate-organization');
             }
-            const updateOrgTask = updateOrgTasks[0] as IUpdateOrganizationTaskConfiguration;
-            if (updateOrgTask.Template === undefined) {
-                throw new OrgFormationError('update-organization task does not contain required Template attribute');
-            }
+            if (updateOrgTasks[0].Type === 'update-organization') {
+                const updateOrgTask = updateOrgTasks[0] as IUpdateOrganizationTaskConfiguration;
+                if (updateOrgTask.Template === undefined) {
+                    throw new OrgFormationError('update-organization task does not contain required Template attribute');
+                }
 
-            const dir = path.dirname(this.file);
-            command.organizationFile = path.resolve(dir, updateOrgTask.Template);
-            command.TemplatingContext = updateOrgTask.TemplatingContext;
+                const dir = path.dirname(this.file);
+                command.organizationFile = path.resolve(dir, updateOrgTask.Template);
+                command.TemplatingContext = updateOrgTask.TemplatingContext;
+            } else if (updateOrgTasks[0].Type === 'annotate-organization') {
+                const annotateTaskConfig = updateOrgTasks[0] as IAnnotateOrganizationTaskConfiguration;
+                AwsOrganizationReader.excludeAccountIds = annotateTaskConfig.ExcludeAccounts ?? [];
+                const defaultTemplate = await DefaultTemplateWriter.CreateDefaultTemplateFromAws(
+                    annotateTaskConfig.DefaultOrganizationAccessRoleName,
+                    {
+                        preserveAwsAccountNames: true,
+                        throwIfPredefinedAccountIsMissing: true,
+                        predefinedAccounts: Object.entries((annotateTaskConfig.AccountMapping ?? {})).map(x=> ({
+                            logicalName: x[0],
+                            id: String(x[1]),
+                            properties: undefined,
+                        })),
+                        predefinedOUs: Object.entries((annotateTaskConfig.OrganizationalUnitMapping ?? {})).map(x => ({
+                            logicalName: x[0],
+                            id: String(x[1]),
+                            properties: undefined,
+                        })),
+                    }
+                );
+                command.organizationFileContents = defaultTemplate.template;
+                command.organizationFileHash = md5(command.organizationFileContents);
+                command.organizationState = defaultTemplate.state;
+            }
+        }
+        if (!command.organizationFileContents) {
+            const organizationFileContents = await this.readOrganizationFileContents(command.organizationFile, command.TemplatingContext);
+            const pathDirname = path.dirname(command.organizationFile);
+            const pathFile = path.basename(command.organizationFile);
+            const templateRoot = TemplateRoot.createFromContents(organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
+
+            if (templateRoot.source) {
+                command.organizationFileContents = templateRoot.source;
+                command.organizationFileHash = md5(organizationFileContents);
+            }
+            this.resolver.setTemplateRoot(templateRoot);
+            return templateRoot;
+        } else {
+            const pathDirname = path.dirname(command.tasksFile);
+            const pathFile = path.basename(command.tasksFile);
+            const templateRoot = TemplateRoot.createFromContents(command.organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
+
+            if (templateRoot.source) {
+                command.organizationFileContents = templateRoot.source;
+                command.organizationFileHash = md5(command.organizationFileContents);
+            }
+            this.resolver.setTemplateRoot(templateRoot);
+            return templateRoot;
         }
 
-        const organizationFileContents = await this.readOrganizationFileContents(command.organizationFile, command.TemplatingContext);
-        const pathDirname = path.dirname(command.organizationFile);
-        const pathFile = path.basename(command.organizationFile);
-        const templateRoot = TemplateRoot.createFromContents(organizationFileContents, pathDirname, pathFile, {}, command.organizationFileHash);
 
-        if (templateRoot.source) {
-            command.organizationFileContents = templateRoot.source;
-            command.organizationFileHash = md5(organizationFileContents);
-        }
-
-        this.resolver.setTemplateRoot(templateRoot);
-
-        return templateRoot;
     }
 
     private async readOrganizationFileContents(organizationFileLocation: string, textTemplatingContext?: any): Promise<string> {
@@ -287,6 +327,7 @@ export interface IBuildTaskConfiguration {
     TaskViaRoleArn?: string;
     ForceDeploy?: boolean;
     LogVerbose?: boolean;
+    OUMapping?: Record<string, string>;
 }
 
 

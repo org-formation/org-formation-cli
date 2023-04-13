@@ -13,7 +13,7 @@ export class DefaultTaskRunner {
         }
         const delegate: ITaskRunnerDelegates<IGenericTask> = {
             getName: task => `Workload ${task.logicalName} in ${task.accountId}/${task.region}`,
-            getVerb: task => `${task.action === 'Delete' ? 'deleted' : 'updated'}`,
+            getVerb: task => `${task.action === 'Delete' ? 'delete' : 'update'}`,
             maxConcurrentTasks,
             failedTasksTolerance,
             logVerbose,

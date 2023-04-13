@@ -1,8 +1,9 @@
 import { OrgFormationError } from '../org-formation-error';
 import { IBuildTask, IBuildTaskConfiguration } from './build-configuration';
-import { UpdateOrganizationTaskProvider } from './tasks/organization-task';
+import { UpdateOrganizationTaskProvider } from './tasks/update-organization-task';
 import { UpdateStacksBuildTaskProvider } from './tasks/update-stacks-task';
 import { IncludeTaskProvider } from './tasks/include-task';
+import { AnnotatedOrganizationTaskProvider } from './tasks/annotate-organization-task';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { ITrackedTask } from '~state/persisted-state';
 import { PluginProvider } from '~plugin/plugin';
@@ -24,6 +25,7 @@ export class BuildTaskProvider {
 
         const buildTaskProviders: IBuildTaskProvider<any>[] = [
             new UpdateStacksBuildTaskProvider(),
+            new AnnotatedOrganizationTaskProvider(),
             new UpdateOrganizationTaskProvider(),
             new IncludeTaskProvider(),
         ];
@@ -96,12 +98,12 @@ export class BuildTaskProvider {
 
     public static createIsDependency(buildTaskConfig: IBuildTaskConfiguration): (task: IBuildTask) => boolean {
         return (task: IBuildTask): boolean => {
-            if (task.type === 'update-organization') {
+            if (task.type === 'update-organization' || task.type === 'annotate-organization') {
                 return true;
             }
             if (task.childTasks && task.childTasks.length > 0) {
                 if (buildTaskConfig.Type !== task.type || buildTaskConfig.LogicalName !== task.name) {
-                    const updateOrgTasks = this.recursivelyFilter(task.childTasks, t => t.type === 'update-organization');
+                    const updateOrgTasks = this.recursivelyFilter(task.childTasks, t => t.type === 'update-organization' || t.type === 'annotate-organization');
                     if (updateOrgTasks.length > 0) {
                         return true;
                     }

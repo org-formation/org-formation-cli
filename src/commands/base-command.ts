@@ -1,11 +1,10 @@
 import path from 'path';
 import { existsSync, readFileSync } from 'fs';
-import { Organizations } from 'aws-sdk';
 import { Command } from 'commander';
 import minimatch from 'minimatch';
 import RC from 'rc';
 import { CredentialsOptions } from 'aws-sdk/lib/credentials';
-import { AwsUtil, DEFAULT_ROLE_FOR_ORG_ACCESS } from '../util/aws-util';
+import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { IPerformTasksCommandArgs } from './perform-tasks';
@@ -94,34 +93,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     public async generateDefaultTemplate(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
-        const organizations = new Organizations({ region: 'us-east-1' });
-        const partitionCredentials = await AwsUtil.GetPartitionCredentials();
-
-        // configure default Organization/Reader
-        const awsReader: AwsOrganizationReader = new AwsOrganizationReader(organizations);
-        const awsOrganization = new AwsOrganization(awsReader);
-        await awsOrganization.initialize();
-
-        // configure partition Organization/Reader
-        let partitionReader: AwsOrganizationReader;
-        let partitionOrganization: AwsOrganization;
-        if (partitionCredentials) {
-            const masterAccountId = await AwsUtil.GetPartitionMasterAccountId();
-            const accessRoleName = (defaultBuildAccessRoleName) ? defaultBuildAccessRoleName : DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName;
-            const crossAccountConfig = { masterAccountId, masterAccountRoleName: accessRoleName, isPartition: true };
-            const partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
-            partitionReader = new AwsOrganizationReader(partitionOrgService, crossAccountConfig);
-            partitionOrganization = new AwsOrganization(partitionReader);
-            await partitionOrganization.initialize();
-        }
-
-        const writer = new DefaultTemplateWriter(awsOrganization, partitionOrganization);
-        writer.DefaultBuildProcessAccessRoleName = defaultBuildAccessRoleName;
-        const template = await writer.generateDefaultTemplate(templateGenerationSettings);
-        template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
-        const parsedTemplate = TemplateRoot.createFromContents(template.template, './');
-        template.state.setPreviousTemplate(parsedTemplate.source);
-        return template;
+       return DefaultTemplateWriter.CreateDefaultTemplateFromAws(defaultBuildAccessRoleName, templateGenerationSettings);
     }
 
     public async getState(command: ICommandArgs): Promise<PersistedState> {
@@ -136,7 +108,9 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         try {
             const state = await PersistedState.Load(storageProvider, accountId);
-            if (command.organizationStateObject !== undefined) {
+            if (command.organizationState !== undefined) {
+                state.setReadonlyOrganizationState(command.organizationState);
+            } else if (command.organizationStateObject !== undefined) {
                 const orgStorageProvider = await this.getOrganizationStateStorageProvider(command);
                 const orgState = await PersistedState.Load(orgStorageProvider, accountId);
                 state.setReadonlyOrganizationState(orgState);
@@ -291,7 +265,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected skipNonMatchingLeafTasks(tasks: IBuildTask[], taskMatcher: string, tasksPrefix: string): number {
         let skippedTasks = 0;
         for (const task of tasks) {
-
             const isLeafTask = task.childTasks.length === 0;
             const taskFullName = `${tasksPrefix}${task.name}`;
 
@@ -472,41 +445,42 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 }
 
 export interface ICommandArgs {
+    color?: boolean;
+    debugTemplating?: boolean;
+    dev?: boolean;
+    excludeAccounts?: string;
+    initialized?: boolean;
+    isPartition?: boolean;
     masterAccountId?: string;
+    organizationState?: PersistedState;
+    organizationStateBucketName?: string;
+    organizationStateObject?: string;
+    partitionKeys?: boolean;
+    partitionProfile?: string;
+    partitionRegion?: string;
+    printStack?: boolean;
+    profile?: string;
+    resolver?: CfnExpressionResolver;
+    state?: PersistedState;
     stateBucketName: string;
     stateObject: string;
-    organizationStateObject?: string;
-    organizationStateBucketName?: string;
-    profile?: string;
-    partitionProfile?: string;
-    state?: PersistedState;
-    debugTemplating?: boolean;
-    initialized?: boolean;
-    printStack?: boolean;
     verbose?: boolean;
-    color?: boolean;
-    isPartition?: boolean;
-    partitionKeys?: boolean;
-    resolver?: CfnExpressionResolver;
-    partitionRegion?: string;
-    excludeAccounts?: string;
-    dev?: boolean;
 }
 
 export interface IRCObject {
-    printStacksOutputPath?: string;
-    organizationFile?: string;
-    templatingContext?: string;
-    masterAccountId?: string;
-    stateBucketName?: string;
-    stateObject?: string;
-    organizationStateObject?: string;
-    organizationStateBucketName?: string;
+    config: string;
+    configs: string[];
     debugTemplating?: boolean;
-    profile?: string;
+    excludeAccounts?: string;
+    masterAccountId?: string;
+    organizationFile?: string;
+    organizationStateBucketName?: string;
+    organizationStateObject?: string;
     partitionProfile?: string;
     partitionRegion?: string;
-    excludeAccounts?: string;
-    configs: string[];
-    config: string;
+    printStacksOutputPath?: string;
+    profile?: string;
+    stateBucketName?: string;
+    stateObject?: string;
+    templatingContext?: string;
 }

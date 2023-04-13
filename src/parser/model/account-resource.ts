@@ -71,7 +71,7 @@ export class AccountResource extends Resource {
             this.accountId = '' + this.accountId;
         }
         if (this.accountId && !/\d{12}/.test(this.accountId)) {
-            throw new OrgFormationError(`AccountId is expected to be 12 digits on Account ${id}`);
+            throw new OrgFormationError(`AccountId is expected to be 12 digits on Account ${id}. found: ${this.accountId}, did you forget to quote the value?`);
         }
         this.tags = this.props.Tags;
         this.alias = this.props.Alias;
