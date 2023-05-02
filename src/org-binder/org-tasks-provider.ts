@@ -567,48 +567,49 @@ export class TaskProvider {
         const that = this;
         const tasks: IBuildTask[] = [];
         const previous = this.previousTemplate.organizationSection.organizationalUnits.find(x=>x.logicalId === binding.logicalId);
+        if (previous) {
+            const fnGetPhysicalId = (): string => {
+                return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, previous.logicalId).physicalId;
+            };
+            const fnGetPartitionId = (): string => {
+                return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, previous.logicalId).partitionId;
+            };
 
-        const fnGetPhysicalId = (): string => {
-            return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, previous.logicalId).physicalId;
-        };
-        const fnGetPartitionId = (): string => {
-            return this.state.getBinding(OrgResourceTypes.OrganizationalUnit, previous.logicalId).partitionId;
-        };
 
-
-        const previousSCPs = this.resolveIDs(previous.serviceControlPolicies);
-        for (const detachedSCP of previousSCPs.physicalIds) {
-            const detachSCPTask: IBuildTask = this.createDetachSCPTask(previous, previousSCPs.mapping[detachedSCP], that, fnGetPhysicalId, IS_COMMERCIAL);
-            tasks.push(detachSCPTask);
-        }
-        if (mirror) {
-            for (const detachedSCP of previousSCPs.partitionIds) {
-                const detachSCPTask: IBuildTask = this.createDetachSCPTask(previous, previousSCPs.mapping[detachedSCP], that, fnGetPartitionId, IS_PARTITION);
+            const previousSCPs = this.resolveIDs(previous.serviceControlPolicies);
+            for (const detachedSCP of previousSCPs.physicalIds) {
+                const detachSCPTask: IBuildTask = this.createDetachSCPTask(previous, previousSCPs.mapping[detachedSCP], that, fnGetPhysicalId, IS_COMMERCIAL);
                 tasks.push(detachSCPTask);
             }
-        }
+            if (mirror) {
+                for (const detachedSCP of previousSCPs.partitionIds) {
+                    const detachSCPTask: IBuildTask = this.createDetachSCPTask(previous, previousSCPs.mapping[detachedSCP], that, fnGetPartitionId, IS_PARTITION);
+                    tasks.push(detachSCPTask);
+                }
+            }
 
-        const previousAccounts = this.resolveIDs(previous.accounts);
-        for (const detachedAccount of previousAccounts.physicalIds) {
-            const detachAccountTask: IBuildTask = this.createDetachAccountTask(previous, previousAccounts.mapping[detachedAccount], that, fnGetPhysicalId, IS_COMMERCIAL);
-            tasks.push(detachAccountTask);
-        }
-        if (mirror) {
-            for (const detachedAccount of previousAccounts.partitionIds) {
-                const detachAccountTask: IBuildTask = this.createDetachAccountTask(previous, previousAccounts.mapping[detachedAccount], that, fnGetPartitionId, IS_PARTITION);
+            const previousAccounts = this.resolveIDs(previous.accounts);
+            for (const detachedAccount of previousAccounts.physicalIds) {
+                const detachAccountTask: IBuildTask = this.createDetachAccountTask(previous, previousAccounts.mapping[detachedAccount], that, fnGetPhysicalId, IS_COMMERCIAL);
                 tasks.push(detachAccountTask);
             }
-        }
+            if (mirror) {
+                for (const detachedAccount of previousAccounts.partitionIds) {
+                    const detachAccountTask: IBuildTask = this.createDetachAccountTask(previous, previousAccounts.mapping[detachedAccount], that, fnGetPartitionId, IS_PARTITION);
+                    tasks.push(detachAccountTask);
+                }
+            }
 
-        const previousChildOUs = this.resolveIDs(previous.organizationalUnits);
-        for (const detachedChildOu of previousChildOUs.physicalIds) {
-            const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(previous, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId, IS_COMMERCIAL);
-            tasks.push(detachChildOuTask);
-        }
-        if (mirror) {
-            for (const detachedChildOu of previousChildOUs.partitionIds) {
-                const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(previous, previousChildOUs.mapping[detachedChildOu], that, fnGetPartitionId, IS_PARTITION);
+            const previousChildOUs = this.resolveIDs(previous.organizationalUnits);
+            for (const detachedChildOu of previousChildOUs.physicalIds) {
+                const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(previous, previousChildOUs.mapping[detachedChildOu], that, fnGetPhysicalId, IS_COMMERCIAL);
                 tasks.push(detachChildOuTask);
+            }
+            if (mirror) {
+                for (const detachedChildOu of previousChildOUs.partitionIds) {
+                    const detachChildOuTask: IBuildTask = this.createDetachChildOUTask(previous, previousChildOUs.mapping[detachedChildOu], that, fnGetPartitionId, IS_PARTITION);
+                    tasks.push(detachChildOuTask);
+                }
             }
         }
 
