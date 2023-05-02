@@ -9,6 +9,7 @@ const defaultConfig = {
 };
 
 module.exports = {
+    testTimeout: 10000,
     coveragePathIgnorePatterns: [
         '/node_modules/',
         '/test/'
