@@ -8,7 +8,7 @@ import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AW
 import { IAccountProperties, IOrganizationalUnitProperties, OrgResourceTypes, Resource } from '~parser/model';
 import { TemplateRoot } from '~parser/parser';
 import { IBinding, PersistedState } from '~state/persisted-state';
-import { DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
+import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS, DEFAULT_ROLE_FOR_ORG_ACCESS } from '~util/aws-util';
 
 
 export class DefaultTemplateWriter {
@@ -17,7 +17,7 @@ export class DefaultTemplateWriter {
     public logicalNames: LogicalNames;
     public DefaultBuildProcessAccessRoleName: string;
 
-    constructor(organizationModel?: AwsOrganization, partitionOrganizationModel?: AwsOrganization) {
+    constructor(organizationModel?: AwsOrganization, partitionOrganizationModel?: AwsOrganization, templateGenerationSettings?: ITemplateGenerationSettings) {
         if (organizationModel) {
             this.organizationModel = organizationModel;
         } else {
@@ -27,7 +27,38 @@ export class DefaultTemplateWriter {
         }
 
         this.partitionOrganizationModel = partitionOrganizationModel;
-        this.logicalNames = new LogicalNames();
+        this.logicalNames = new LogicalNames(!!templateGenerationSettings?.preserveAwsAccountNames);
+    }
+
+    public static async CreateDefaultTemplateFromAws(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
+        const organizations = new Organizations({ region: 'us-east-1' });
+        const partitionCredentials = await AwsUtil.GetPartitionCredentials();
+
+        // configure default Organization/Reader
+        const awsReader: AwsOrganizationReader = new AwsOrganizationReader(organizations);
+        const awsOrganization = new AwsOrganization(awsReader);
+        await awsOrganization.initialize();
+
+        // configure partition Organization/Reader
+        let partitionReader: AwsOrganizationReader;
+        let partitionOrganization: AwsOrganization;
+        if (partitionCredentials) {
+            const masterAccountId = await AwsUtil.GetPartitionMasterAccountId();
+            const accessRoleName = (defaultBuildAccessRoleName) ? defaultBuildAccessRoleName : DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName;
+            const crossAccountConfig = { masterAccountId, masterAccountRoleName: accessRoleName, isPartition: true };
+            const partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
+            partitionReader = new AwsOrganizationReader(partitionOrgService, crossAccountConfig);
+            partitionOrganization = new AwsOrganization(partitionReader);
+            await partitionOrganization.initialize();
+        }
+
+        const writer = new DefaultTemplateWriter(awsOrganization, partitionOrganization, templateGenerationSettings);
+        writer.DefaultBuildProcessAccessRoleName = defaultBuildAccessRoleName;
+        const template = await writer.generateDefaultTemplate(templateGenerationSettings);
+        template.template = template.template.replace(/( *)-\n\1 {2}/g, '$1- ');
+        const parsedTemplate = TemplateRoot.createFromContents(template.template, './');
+        template.state.setPreviousTemplate(parsedTemplate.source);
+        return template;
     }
 
     public async generateDefaultTemplate(templateGenerationSettings: ITemplateGenerationSettings = { predefinedAccounts: [], predefinedOUs: [] }): Promise<DefaultTemplate> {
@@ -72,7 +103,7 @@ export class DefaultTemplateWriter {
                 partitionId: (partitionRoot) ? partitionRoot[0].Id : '',
             });
         }
-        for (const predefinedOu of templateGenerationSettings.predefinedOUs) {
+        for (const predefinedOu of templateGenerationSettings.predefinedOUs.sort((a, b) => a.logicalName < b.logicalName ? -1 : 1)) {
             const ou = this.organizationModel.organizationalUnits.find(x => x.Id === predefinedOu.id);
             const ouResource = this.generatePredefinedOU(lines, predefinedOu, templateGenerationSettings, ou);
             bindings.push({
@@ -84,7 +115,7 @@ export class DefaultTemplateWriter {
             });
 
         }
-        for (const organizationalUnit of this.organizationModel.organizationalUnits) {
+        for (const organizationalUnit of this.organizationModel.organizationalUnits.sort((a, b) => a.Name < b.Name ? -1 : 1)) {
             const wasPredefined = templateGenerationSettings.predefinedOUs.some(x => x.id === organizationalUnit.Id);
             if (wasPredefined) { continue; }
             const organizationalUnitResource = this.generateOrganizationalUnit(lines, organizationalUnit);
@@ -98,8 +129,11 @@ export class DefaultTemplateWriter {
             });
         }
 
-        for (const predefinedAccount of templateGenerationSettings.predefinedAccounts) {
-            const acct = this.organizationModel.accounts.find(x => x.Id === predefinedAccount.id);
+        for (const predefinedAccount of templateGenerationSettings.predefinedAccounts.sort((a, b) => a.logicalName < b.logicalName ? -1 : 1)) {
+            const acct = this.organizationModel.accounts.find(x => x.Id === String(predefinedAccount.id));
+            if (!acct && templateGenerationSettings.throwIfPredefinedAccountIsMissing) {
+                throw new Error(`cannot find account with Id ${predefinedAccount.id} in organization`);
+            }
             const accountResource = this.generatePredefinedAccount(lines, predefinedAccount, acct);
             bindings.push({
                 type: accountResource.type,
@@ -109,7 +143,7 @@ export class DefaultTemplateWriter {
             });
         }
 
-        for (const account of this.organizationModel.accounts) {
+        for (const account of this.organizationModel.accounts.sort((a, b) => a.Name < b.Name ? -1 : 1)) {
             const wasPredefined = templateGenerationSettings.predefinedAccounts.some(x => x.id === account.Id);
             if (wasPredefined) { continue; }
 
@@ -132,7 +166,7 @@ export class DefaultTemplateWriter {
 
             bindings.push(accountBinding);
         }
-        for (const scp of this.organizationModel.policies) {
+        for (const scp of this.organizationModel.policies.sort((a, b) => a.Name < b.Name ? -1 : 1)) {
             if (scp.PolicySummary && scp.PolicySummary.AwsManaged) { continue; }
             const policyResource = this.generateSCP(lines, scp);
             const partitionPolicy: AWSPolicy = this.partitionOrganizationModel?.policies?.find(x => x.Name === scp.Name);
@@ -252,17 +286,17 @@ export class DefaultTemplateWriter {
         lines.push(new Line(logicalName, '', 2));
         lines.push(new Line('Type', OrgResourceTypes.Account, 4));
         lines.push(new Line('Properties', '', 4));
-        lines.push(new Line('AccountName', preExistingAccount ? preExistingAccount.Name : predefined.properties.AccountName, 6));
+        lines.push(new Line('AccountName', preExistingAccount ? preExistingAccount.Name : predefined.properties?.AccountName, 6));
         lines.push(new Line('AccountId', predefined.id, 6));
-        const rootEmail = preExistingAccount?.Email ?? predefined.properties.RootEmail;
+        const rootEmail = preExistingAccount?.Email ?? predefined.properties?.RootEmail;
         if (rootEmail) {
             lines.push(new Line('RootEmail', rootEmail, 6));
         }
-        const alias = preExistingAccount?.Alias ?? predefined.properties.Alias;
+        const alias = preExistingAccount?.Alias ?? predefined.properties?.Alias;
         if (alias) {
             lines.push(new Line('Alias', alias, 6));
         }
-        const combinedTags = { ...(predefined.properties.Tags ?? {}), ...(preExistingAccount?.Tags ?? {}) };
+        const combinedTags = { ...(predefined.properties?.Tags ?? {}), ...(preExistingAccount?.Tags ?? {}) };
         if (combinedTags) {
             const tags = Object.entries(combinedTags);
             if (tags.length > 0) {
@@ -278,6 +312,7 @@ export class DefaultTemplateWriter {
             logicalName,
         };
     }
+
     private generateAccount(lines: YamlLine[], account: AWSAccount): WriterResource {
         const logicalName = this.logicalNames.getName(account);
         const policiesList = account.Policies.filter(x => !x.PolicySummary!.AwsManaged).map(x => '!Ref ' + this.logicalNames.getName(x));
@@ -420,6 +455,11 @@ export class DefaultTemplate {
 class LogicalNames {
     public names: Record<string, string> = {};
     public takenNames: string[] = [];
+
+    constructor(readonly preserveNames: boolean) {
+
+    }
+
     public setName(element: IAWSObject, name: string): string {
         const key = this.getKey(element);
         this.names[key] = name;
@@ -442,17 +482,18 @@ class LogicalNames {
     }
     private createName(element: IAWSObject): string {
         let name = element.Name;
-        let postFix = this.getPostFix(element);
+        if (!this.preserveNames) {
+            let postFix = this.getPostFix(element);
 
-        name = pascalCase(name);
-        name = name[0].toUpperCase() + name.substring(1);
+            name = pascalCase(name);
+            name = name[0].toUpperCase() + name.substring(1);
 
-        if (name.endsWith(postFix)) {
-            postFix = '';
+            if (name.endsWith(postFix)) {
+                postFix = '';
+            }
+
+            name = name + postFix;
         }
-
-        name = name + postFix;
-
         let result = name;
         let i = 2;
         while (this.takenNames.includes(result)) {
@@ -574,17 +615,19 @@ interface WriterResource {
 }
 
 export interface ITemplateGenerationSettings {
+    preserveAwsAccountNames?: true;
     predefinedAccounts: IPredefinedAccount[];
     predefinedOUs: IPredefinedOU[];
+    throwIfPredefinedAccountIsMissing?: true;
 }
 
 export interface IPredefinedAccount {
     logicalName: string;
     id: string;
-    properties: IAccountProperties;
+    properties?: IAccountProperties;
 }
 export interface IPredefinedOU {
     logicalName: string;
     id: string;
-    properties: IOrganizationalUnitProperties;
+    properties?: IOrganizationalUnitProperties;
 }

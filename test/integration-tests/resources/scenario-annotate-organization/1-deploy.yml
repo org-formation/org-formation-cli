@@ -1,0 +1,13 @@
+
+OrganizationUpdate:
+  Type: annotate-organization
+  AccountMapping:
+    SecurityAccount: 152091636325
+
+AnchorsAndAliases:
+  Type: update-stacks
+  DefaultOrganizationBinding:
+    Account: !Ref SecurityAccount
+    Region: us-east-1
+  StackName: anchors-and-aliases
+  Template: ./buckets.yml

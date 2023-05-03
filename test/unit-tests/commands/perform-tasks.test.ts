@@ -6,8 +6,7 @@ import { BuildRunner } from '~build-tasks/build-runner';
 import { BuildTaskProvider } from '~build-tasks/build-task-provider';
 import { ConsoleUtil } from '~util/console-util';
 import { DeleteStacksCommand, BaseCliCommand } from '~commands/index';
-import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/organization-task';
-import minimatch from "minimatch";
+import { IUpdateOrganizationTaskConfiguration } from '~build-tasks/tasks/update-organization-task';
 
 describe('when creating perform-tasks command', () => {
     let command: PerformTasksCommand;
