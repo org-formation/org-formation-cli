@@ -24,7 +24,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'Path',
             'FilePath', 'RunNpmInstall', 'RunNpmBuild', 'FailedTaskTolerance', 'MaxConcurrentTasks',
-            'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters','HashFilesToIgnore');
+            'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters','IgnoreFileChanges');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -46,7 +46,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             customDeployCommand: config.CustomDeployCommand,
             customRemoveCommand: config.CustomRemoveCommand,
             parameters: config.Parameters,
-            hashFilesToIgnore: Array.isArray(config.HashFilesToIgnore) ? config.HashFilesToIgnore : typeof config.HashFilesToIgnore === 'string' ? [config.HashFilesToIgnore] : [],
+            ignoreFileChanges: Array.isArray(config.IgnoreFileChanges) ? config.IgnoreFileChanges : typeof config.IgnoreFileChanges === 'string' ? [config.IgnoreFileChanges] : [],
         };
     }
 
@@ -83,7 +83,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
     }
 
     getValuesForEquality(command: ICdkCommandArgs): any {
-        const hashOfCdkDirectory = Md5Util.Md5OfPath(command.path, command.hashFilesToIgnore);
+        const hashOfCdkDirectory = Md5Util.Md5OfPath(command.path, command.ignoreFileChanges);
         return {
             runNpmInstall: command.runNpmInstall,
             path: hashOfCdkDirectory,
@@ -213,7 +213,7 @@ interface ICdkBuildTaskConfig extends IBuildTaskConfiguration {
     CustomDeployCommand?: string;
     CustomRemoveCommand?: string;
     Parameters?: Record<string, ICfnExpression>;
-    HashFilesToIgnore?: string | string[];
+    IgnoreFileChanges?: string | string[];
 }
 
 export interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -223,7 +223,7 @@ export interface ICdkCommandArgs extends IBuildTaskPluginCommandArgs {
     customDeployCommand?: string;
     customRemoveCommand?: string;
     parameters?: Record<string, ICfnExpression>;
-    hashFilesToIgnore?: string[];
+    ignoreFileChanges?: string[];
 }
 
 export interface ICdkTask extends IPluginTask {

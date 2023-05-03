@@ -23,7 +23,7 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'Path',
             'FailedTaskTolerance', 'MaxConcurrentTasks', 'CustomInitCommand',
-            'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters', 'BackendConfig', 'HashFilesToIgnore' );
+            'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters', 'BackendConfig', 'IgnoreFileChanges' );
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -45,7 +45,7 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
             customRemoveCommand: config.CustomRemoveCommand,
             parameters: config.Parameters,
             backendConfig: config.BackendConfig,
-            hashFilesToIgnore: Array.isArray(config.HashFilesToIgnore) ? config.HashFilesToIgnore : typeof config.HashFilesToIgnore === 'string' ? [config.HashFilesToIgnore] : [],
+            ignoreFileChanges: Array.isArray(config.IgnoreFileChanges) ? config.IgnoreFileChanges : typeof config.IgnoreFileChanges === 'string' ? [config.IgnoreFileChanges] : [],
         };
     }
 
@@ -66,7 +66,7 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
     }
 
     getValuesForEquality(command: ITfCommandArgs): any {
-        const hashOfTfDirectory = Md5Util.Md5OfPath(command.path, command.hashFilesToIgnore);
+        const hashOfTfDirectory = Md5Util.Md5OfPath(command.path, command.ignoreFileChanges);
         return {
             path: hashOfTfDirectory,
             customInitCommand: command.customInitCommand,
@@ -202,7 +202,7 @@ interface ITfBuildTaskConfig extends IBuildTaskConfiguration {
     CustomRemoveCommand?: string;
     Parameters?: Record<string, ICfnExpression>;
     BackendConfig?: Record<string, ICfnExpression>;
-    HashFilesToIgnore?: string | string[];
+    IgnoreFileChanges?: string | string[];
 }
 
 export interface ITfCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -212,7 +212,7 @@ export interface ITfCommandArgs extends IBuildTaskPluginCommandArgs {
     customRemoveCommand?: string;
     parameters?: Record<string, ICfnExpression>;
     backendConfig?: Record<string, ICfnExpression>;
-    hashFilesToIgnore: string[];
+    ignoreFileChanges: string[];
 }
 
 export interface ITfTask extends IPluginTask {
