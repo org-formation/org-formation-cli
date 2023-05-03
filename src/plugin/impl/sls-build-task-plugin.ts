@@ -26,7 +26,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName,...CommonTaskAttributeNames, 'Path',
             'FilePath', 'Stage', 'Config', 'RunNpmInstall', 'FailedTaskTolerance', 'MaxConcurrentTasks',
-            'AdditionalSlsArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters', 'SLSVersion');
+            'AdditionalSlsArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters', 'SLSVersion', 'IgnoreFileChanges');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -50,6 +50,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
             customRemoveCommand: config.CustomRemoveCommand,
             parameters: config.Parameters,
             slsVersion: config.SLSVersion,
+            ignoreFileChanges: Array.isArray(config.IgnoreFileChanges) ? config.IgnoreFileChanges : typeof config.IgnoreFileChanges === 'string' ? [config.IgnoreFileChanges] : [],
         };
     }
     validateCommandArgs(commandArgs: ISlsCommandArgs): void {
@@ -90,7 +91,7 @@ export class SlsBuildTaskPlugin implements IBuildTaskPlugin<IServerlessComTaskCo
     }
 
     getValuesForEquality(command: ISlsCommandArgs): any {
-        const hashOfServerlessDirectory = Md5Util.Md5OfPath(command.path);
+        const hashOfServerlessDirectory = Md5Util.Md5OfPath(command.path, command.ignoreFileChanges);
         return {
             runNpmInstall: command.runNpmInstall,
             configFile: command.configFile,
@@ -216,6 +217,7 @@ export interface IServerlessComTaskConfig extends IBuildTaskConfiguration {
     CustomDeployCommand?: string;
     CustomRemoveCommand?: string;
     Parameters?: Record<string, ICfnExpression>;
+    IgnoreFileChanges?: string | string[];
 }
 
 export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
@@ -227,6 +229,7 @@ export interface ISlsCommandArgs extends IBuildTaskPluginCommandArgs {
     customDeployCommand?: string;
     customRemoveCommand?: string;
     parameters?: Record<string, ICfnExpression>;
+    ignoreFileChanges?: string[];
 }
 
 export interface ISlsTask extends IPluginTask {
