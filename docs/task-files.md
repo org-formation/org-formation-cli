@@ -17,6 +17,7 @@
     - [!Include](#include)
   - [Task types](#task-types)
     - [update-organization](#update-organization)
+    - [annotate-organization](#annotate-organization)
     - [update-stacks](#update-stacks)
     - [update-serverless.com](#update-serverlesscom)
     - [copy-to-s3](#copy-to-s3)
@@ -281,6 +282,28 @@ The `update-organization` task will update all the organization resources based 
 | Template          | relative path     | This property is required.                                   |
 | Skip              | `true` or `false` | When `true` task (and dependent tasks) will not be executed. |
 | TemplatingContext | Dictionary        | Specifies the data for [templating](#templating).            |
+
+### annotate-organization
+
+The `annotate-organization` task will will allow you to use a different account factory (e.g. AWS Control Tower) while using org-formation to provision resources across the AWS Organization. If you use `annotate-organization`, you must use this *instead of* `update-organization`.
+
+| Attribute         | Value             | Remarks                                                      |
+| :---------------- | :---------------- | :----------------------------------------------------------- |
+| DefaultOrganizationAccessRoleName   | string     | The name of the Role used for cross account access (default is: `OrganizationAccountAccessRole`).                                   |
+| ExcludeAccounts   | List<string> | A list (array) of AWS Account Ids (string) that will be excluded from the org-formation provisioning process. These accounts will not be addressable using `!Ref AccountName` or bindings, such as `Account: *` |
+| AccountMapping    | Dictionary<string, string> | Dictionary where the AttributeName will be used as the Logical Name of the account, specified as Attribute value. When not specified, the account name is used as Logical Name.|
+
+example:
+``` yml
+AnnotateOrganization:
+  Type: annotate-organization
+  DefaultOrganizationAccessRoleName: OrganizationAccountAccessRole
+  ExcludeAccounts: ["123123123123", "123123123124"]
+  AccountMapping:
+    AccountA: "234234234234" # these mappings are optional, when specified the account can be referenced using `!Ref AccountA`
+    AccountB: "234234234235" # when not specified the account can be referenced using `!Ref My Account B` (or whatever the account name is)
+                             # regardless of this, accounts will always be included in bindings like `Account: *`
+```
 
 ### update-stacks
 
