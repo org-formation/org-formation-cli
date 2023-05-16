@@ -5,13 +5,13 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
-**version 1.0.11-beta.1**
+**version 1.0.11**
 - feat: support MaxConcurrentTasks > 0 on update-cdk tasks
 - feat: support IgnoreFileChanges on update-cdk, update-serverless.com and apply-tf tasks (allows the task to be skipped if certain files got changed)
 - fix: stacks in UPDATE_ROLLBACK_FAILED wont get deleted when attempting to recover from a failed update
 - feat: Control Tower (or any other account factory solution) support using the annotate-organization task
 
-**version 1.0.9**
+**version 1.0.9** / **version 1.0.10** (redeploy of 1.0.9)
 - feat: support `--match` and `--dev` on print & validate commands
 - feat: support serverless.com V3, by setting the `SLSVersion` attribute to `3` in the task file
 - fix: allow sub-expression to be a `!ReadFile`, `!Cmd` or other expression
