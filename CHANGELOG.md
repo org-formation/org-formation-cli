@@ -5,6 +5,9 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
+**unreleased**
+- fix: deleting stacks without explicit concurrency settings will default to settings passed to the CLI (instead of 1)
+
 **version 1.0.11**
 - feat: support MaxConcurrentTasks > 0 on update-cdk tasks
 - feat: support IgnoreFileChanges on update-cdk, update-serverless.com and apply-tf tasks (allows the task to be skipped if certain files got changed)
