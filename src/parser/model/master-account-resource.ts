@@ -1,6 +1,7 @@
 import { OrgFormationError } from '../../org-formation-error';
 import { IResource, TemplateRoot } from '../parser';
 import { AccountResource } from './account-resource';
+import { ConsoleUtil } from '~util/console-util';
 
 export class MasterAccountResource extends AccountResource {
 
@@ -11,6 +12,9 @@ export class MasterAccountResource extends AccountResource {
         }
         if (!this.accountId) {
             throw new OrgFormationError(`AccountId is missing on MasterAccount ${id}`);
+        }
+        if (this.serviceControlPolicies.length) {
+            ConsoleUtil.LogWarning('ServiceControlPolicies can be attached on your MasterAccount, though SCPs don\'t affect users or roles in the management account. see: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html#');
         }
     }
 
