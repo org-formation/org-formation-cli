@@ -124,7 +124,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             Validator.throwForUnresolvedExpressions(task.customDeployCommand, 'CustomDeployCommand');
             command = task.customDeployCommand as string;
         } else {
-            const commandExpression = { 'Fn::Sub': 'npx cdk deploy --all --require-approval=never ${CurrentTask.Parameters}' } as ICfnSubExpression;
+            const commandExpression = { 'Fn::Sub': 'npx cdk deploy --all --require-approval=never ${CurrentTask.Parameters} --output cdk.out/${CurrentTask.AccountId}-${CurrentTask.Region}' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression, 'CustomDeployCommand');
 
             if (task.runNpmBuild) {
@@ -181,7 +181,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const p = await resolver.resolve(task.parameters);
         const collapsed = await resolver.collapse(p);
         const parametersAsString = CdkBuildTaskPlugin.GetParametersAsArgument(collapsed);
-        resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString, AccountId : binding.target.accountId });
+        resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString, AccountId : binding.target.accountId, Region: binding.target.region });
     }
 
     static GetEnvironmentVariables(target: IGenericTarget<ICdkTask>): Record<string, string> {
