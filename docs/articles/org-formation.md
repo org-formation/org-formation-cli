@@ -206,9 +206,13 @@ This command will create an initial commit with the following files:
 
 ```bash
 <repository root>
-├── templates
+├── 000-organization-build
 │   └── org-formation-build.yml
+│   └── org-formation-role.yml
+│   └── organization-tasks.yml
+├── .org-formationrc
 ├── buildspec.yml
+├── organization-parameters.yml
 ├── organization-tasks.yml
 └── organization.yml
 ```
