@@ -34,6 +34,9 @@ Resources:
               Service: codebuild.amazonaws.com
             Action:
               - sts:AssumeRole
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${resourcePrefix}-build"
       Path: /
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AdministratorAccess' # see: https://github.com/org-formation/org-formation-cli/blob/master/docs/least-priviledge.md
@@ -278,6 +281,9 @@ Resources:
                 - events.amazonaws.com
             Action:
               - sts:AssumeRole
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${resourcePrefix}-pipeline-event-rule"
       Description: !Sub Used to trigger the pipeline attached to the ${OrgRepo.Name} repository
       Path: /
       Policies:
