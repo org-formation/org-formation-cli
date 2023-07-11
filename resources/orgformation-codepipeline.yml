@@ -16,23 +16,6 @@ Parameters:
 
 Resources:
 
-  StateBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref stateBucketName
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: AccessFromAccount
-            Principal:
-              AWS: !Ref 'AWS::AccountId'
-            Effect: Allow
-            Action:
-              - s3:*
-            Resource:
-              - !Sub 'arn:aws:s3:::${stateBucketName}'
-              - !Sub 'arn:aws:s3:::${stateBucketName}/*'
-
   OrgBuildLogGroup:
     Type: 'AWS::Logs::LogGroup'
     Properties:
