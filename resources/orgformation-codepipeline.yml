@@ -46,6 +46,16 @@ Resources:
             Version: 2012-10-17
             Statement:
             - Effect: Allow
+              Action:
+                - "ec2:DescribeRegions"
+              Resource:
+                - "*"
+            - Effect: Allow
+              Action:
+                - "sts:AssumeRole"
+              Resource:
+                - "arn:aws:iam::*:role/OrganizationFormationBuildAccessRole"
+            - Effect: Allow
               Resource:
               - !GetAtt OrgBuildLogGroup.Arn
               - !Sub '${OrgBuildLogGroup.Arn}:*'
