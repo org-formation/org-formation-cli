@@ -52,6 +52,11 @@ Resources:
                 - "*"
             - Effect: Allow
               Action:
+                - "events:PutEvents"
+              Resource:
+                - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default'
+            - Effect: Allow
+              Action:
                 - "sts:AssumeRole"
               Resource:
                 - "arn:aws:iam::*:role/OrganizationFormationBuildAccessRole"
