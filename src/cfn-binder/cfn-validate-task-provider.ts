@@ -1,5 +1,5 @@
-import { ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { v4 as uuid } from 'uuid';
+import { ValidateTemplateCommandInput } from '@aws-sdk/client-cloudformation';
 import { OrgFormationError } from '../org-formation-error';
 import { ICfnBinding } from './cfn-binder';
 import { ICfnTask } from './cfn-task-provider';
@@ -54,7 +54,7 @@ export class CfnValidateTaskProvider {
                     const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver, true);
                     const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
-                    const validateInput: ValidateTemplateInput = {
+                    const validateInput: ValidateTemplateCommandInput = {
                         TemplateBody: templateBody,
                     };
 

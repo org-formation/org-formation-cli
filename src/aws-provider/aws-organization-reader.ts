@@ -1,8 +1,6 @@
-import { IAM, Organizations, Support } from 'aws-sdk/clients/all';
-import { Account, ListAccountsForParentRequest, ListAccountsResponse, ListOrganizationalUnitsForParentRequest,
-    ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest,
-    ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse,
-    Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
+import * as IAM from '@aws-sdk/client-iam';
+import * as Organizations from '@aws-sdk/client-organizations';
+import * as Support from '@aws-sdk/client-support';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
@@ -54,22 +52,24 @@ interface IObjectWithPolicies {
 }
 
 interface IPolicyTargets {
-    Targets: PolicyTargetSummary[];
+    Targets: Organizations.PolicyTargetSummary[];
 }
 
-export type AWSPolicy = Policy & IPolicyTargets & IAWSObject;
-export type AWSAccount = Account & IAWSAccountWithTags & IAWSAccountWithSupportLevel & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject & IAWSObjectWithPartition;
-export type AWSOrganizationalUnit = OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject & IObjectWitOrganizationalUnits & IAWSObjectWithPartition;
-export type AWSRoot = Root & IObjectWithPolicies & IObjectWitOrganizationalUnits;
+export type AWSPolicy = Organizations.Policy & IPolicyTargets & IAWSObject;
+export type AWSAccount = Organizations.Account & IAWSAccountWithTags & IAWSAccountWithSupportLevel & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject & IAWSObjectWithPartition;
+export type AWSOrganizationalUnit = Organizations.OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject & IObjectWitOrganizationalUnits & IAWSObjectWithPartition;
+export type AWSRoot = Organizations.Root & IObjectWithPolicies & IObjectWitOrganizationalUnits;
 
-const GetPoliciesForTarget = (list: AWSPolicy[], targetId: string, targetType: TargetType): AWSPolicy[] => {
+const GetPoliciesForTarget = (list: AWSPolicy[], targetId: string, targetType: Organizations.TargetType): AWSPolicy[] => {
     return list.filter(x => x.Targets.find(y => y.TargetId === targetId && y.Type === targetType));
 };
 
 export class AwsOrganizationReader {
 
-    private static async getOrganization(that: AwsOrganizationReader): Promise<Organization> {
-        const resp = await performAndRetryIfNeeded(() => that.organizationService.describeOrganization().promise());
+    private static async getOrganization(that: AwsOrganizationReader): Promise<Organizations.Organization> {
+
+        const describeOrgCommand = new Organizations.DescribeOrganizationCommand({});
+        const resp = await performAndRetryIfNeeded(() => that.organizationsService.send(describeOrgCommand));
         if (resp.Organization.Arn.split(':')[1] === 'aws-us-gov') {
             that.isPartition = true;
         }
@@ -79,37 +79,45 @@ export class AwsOrganizationReader {
     private static async listPolicies(that: AwsOrganizationReader): Promise<AWSPolicy[]> {
         try {
             const result: AWSPolicy[] = [];
-            const req: ListPoliciesRequest = {
+
+            const listPoliciesReq: Organizations.ListPoliciesCommandInput = {
                 Filter: 'SERVICE_CONTROL_POLICY',
             };
-            let resp: ListPoliciesResponse;
+
+            let resp: Organizations.ListPoliciesCommandOutput;
             do {
-                resp = await performAndRetryIfNeeded(() => that.organizationService.listPolicies(req).promise());
+                const listPoliciesCommand = new Organizations.ListPoliciesCommand(listPoliciesReq);
+                resp = await performAndRetryIfNeeded(() => that.organizationsService.send(listPoliciesCommand));
                 for (const policy of resp.Policies) {
 
-                    const describedPolicy = await performAndRetryIfNeeded(() => that.organizationService.describePolicy({ PolicyId: policy.Id }).promise());
+                    const describePolicyCommand = new Organizations.DescribePolicyCommand({
+                        PolicyId: policy.Id,
+                    });
+
+                    const describedPolicy = await performAndRetryIfNeeded(() => that.organizationsService.send(describePolicyCommand));
 
                     const awsPolicy = {
                         ...describedPolicy.Policy,
                         Type: 'Policy',
                         Name: policy.Name,
                         Id: policy.Id,
-                        Targets: [] as PolicyTargetSummary[],
+                        Targets: [] as Organizations.PolicyTargetSummary[],
                     };
 
                     result.push(awsPolicy);
 
-                    const listTargetsReq: ListTargetsForPolicyRequest = {
+                    const listTargetsReq: Organizations.ListTargetsForPolicyCommandInput ={
                         PolicyId: policy.Id,
                     };
-                    let listTargetsResp: ListTargetsForPolicyResponse;
+                    let listTargetsResp: Organizations.ListTargetsForPolicyCommandOutput;
                     do {
-                        listTargetsResp = await performAndRetryIfNeeded(() => that.organizationService.listTargetsForPolicy(listTargetsReq).promise());
+                        const listTargetsCommand = new Organizations.ListTargetsForPolicyCommand(listTargetsReq);
+                        listTargetsResp = await performAndRetryIfNeeded(() => that.organizationsService.send(listTargetsCommand));
                         awsPolicy.Targets.push(...listTargetsResp.Targets);
                         listTargetsReq.NextToken = listTargetsResp.NextToken;
                     } while (listTargetsReq.NextToken);
                 }
-                req.NextToken = resp.NextToken;
+                listPoliciesReq.NextToken = resp.NextToken;
             } while (resp.NextToken);
 
             return result;
@@ -123,11 +131,12 @@ export class AwsOrganizationReader {
         try {
             const policies: AWSPolicy[] = await that.policies.getValue();
             const result: AWSRoot[] = [];
-            let resp: ListRootsResponse;
-            const req: ListRootsRequest = {};
+            let resp: Organizations.ListRootsCommandOutput;
+            const req: Organizations.ListRootsCommandInput = {};
 
             do {
-                resp = await performAndRetryIfNeeded(() => that.organizationService.listRoots(req).promise());
+                const command = new Organizations.ListRootsCommand(req);
+                resp = await performAndRetryIfNeeded(() => that.organizationsService.send(command));
                 req.NextToken = resp.NextToken;
                 for (const root of resp.Roots) {
                     const item: AWSRoot = {
@@ -155,12 +164,13 @@ export class AwsOrganizationReader {
             rootsIds.push(...roots.map(x => x.Id!));
 
             do {
-                const req: ListOrganizationalUnitsForParentRequest = {
+                const req: Organizations.ListOrganizationalUnitsForParentCommandInput = {
                     ParentId: rootsIds.pop(),
                 };
-                let resp: ListOrganizationalUnitsForParentResponse;
+                let resp: Organizations.ListOrganizationalUnitsForParentCommandOutput;
                 do {
-                    resp = await performAndRetryIfNeeded(() => that.organizationService.listOrganizationalUnitsForParent(req).promise());
+                    const command = new Organizations.ListOrganizationalUnitsForParentCommand(req);
+                    resp = await performAndRetryIfNeeded(() => that.organizationsService.send(command));
                     req.NextToken = resp.NextToken;
                     if (!resp.OrganizationalUnits) { continue; }
 
@@ -217,16 +227,17 @@ export class AwsOrganizationReader {
             parentIds.push(...rootIds);
 
             do {
-                const req: ListAccountsForParentRequest = {
+                const req: Organizations.ListAccountsForParentCommandInput = {
                     ParentId: parentIds.pop(),
                 };
-                let resp: ListAccountsResponse;
+                let resp: Organizations.ListAccountsCommandOutput;
                 do {
-                    resp = await performAndRetryIfNeeded(() => that.organizationService.listAccountsForParent(req).promise());
+                    const command = new Organizations.ListAccountsForParentCommand(req);
+                    resp = await performAndRetryIfNeeded(() => that.organizationsService.send(command));
                     req.NextToken = resp.NextToken;
                     const accounts = resp.Accounts?.filter(x=>!excludeAccountIds.includes(x.Id));
 
-                    const getAccount = async (acc: Account): Promise<void> => {
+                    const getAccount = async (acc: Organizations.Account): Promise<void> => {
                         if (acc.Status === 'SUSPENDED') {
                             return;
                         }
@@ -289,9 +300,9 @@ export class AwsOrganizationReader {
         try {
             await that.organization.getValue();
             const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
-            const supportService: Support = await AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
+            const supportClient: Support.SupportClient = await AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 
-            const severityLevels = await supportService.describeSeverityLevels().promise();
+            const severityLevels = await supportClient.send( new Support.DescribeSeverityLevelsCommand({}));
             const critical = severityLevels.severityLevels.find(x => x.code === 'critical');
             if (critical !== undefined) {
                 return 'enterprise';
@@ -313,9 +324,9 @@ export class AwsOrganizationReader {
         try {
             await that.organization.getValue();
             const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
-            const iamService: IAM = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
+            const iamService: IAM.IAMClient = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 
-            const response = await iamService.listAccountAliases({ MaxItems: 1 }).promise();
+            const response = await iamService.send(new IAM.ListAccountAliasesCommand({ MaxItems: 1 }));
             if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
                 return response.AccountAliases[0];
             } else {
@@ -331,10 +342,10 @@ export class AwsOrganizationReader {
         try {
             await that.organization.getValue();
             const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
-            const iamService: IAM = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
+            const iamService: IAM.IAMClient = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 
             try {
-                const response = await iamService.getAccountPasswordPolicy().promise();
+                const response = await iamService.send(new IAM.GetAccountPasswordPolicyCommand({}));
                 return response.PasswordPolicy;
             } catch (err) {
                 if (err && err.code === 'NoSuchEntity') {
@@ -350,10 +361,10 @@ export class AwsOrganizationReader {
 
     private static async getTagsForAccount(that: AwsOrganizationReader, accountId: string): Promise<IAWSTags> {
         try {
-            const request: ListTagsForResourceRequest = {
+            const listTagsForResourceCommand = new Organizations.ListTagsForResourceCommand({
                 ResourceId: accountId,
-            };
-            const response = await performAndRetryIfNeeded(() => that.organizationService.listTagsForResource(request).promise());
+            });
+            const response = await performAndRetryIfNeeded(() => that.organizationsService.send(listTagsForResourceCommand));
             const tags: IAWSTags = {};
             for (const tag of response.Tags) {
                 tags[tag.Key] = tag.Value;
@@ -368,15 +379,15 @@ export class AwsOrganizationReader {
     public readonly policies: Lazy<AWSPolicy[]>;
     public readonly accounts: Lazy<AWSAccount[]>;
     public readonly organizationalUnits: Lazy<AWSOrganizationalUnit[]>;
-    public readonly organization: Lazy<Organization>;
+    public readonly organization: Lazy<Organizations.Organization>;
     public static excludeAccountIds: string[] = [];
     public readonly roots: Lazy<AWSRoot[]>;
-    private readonly organizationService: Organizations;
+    private readonly organizationsService: Organizations.OrganizationsClient;
     private isPartition: boolean;
 
-    constructor(organizationService: Organizations, private readonly crossAccountConfig?: ICrossAccountConfig) {
+    constructor(organizationsService: Organizations.OrganizationsClient, private readonly crossAccountConfig?: ICrossAccountConfig) {
 
-        this.organizationService = organizationService;
+        this.organizationsService = organizationsService;
         this.policies = new Lazy(this, AwsOrganizationReader.listPolicies);
         this.organizationalUnits = new Lazy(this, AwsOrganizationReader.listOrganizationalUnits);
         this.accounts = new Lazy(this, x=> AwsOrganizationReader.listAccounts(x, AwsOrganizationReader.excludeAccountIds));

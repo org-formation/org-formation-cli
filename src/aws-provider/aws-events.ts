@@ -1,6 +1,4 @@
-import * as AWS from 'aws-sdk';
-
-import { PutEventsRequest } from 'aws-sdk/clients/cloudwatchevents';
+import { PutEventsCommand, CloudWatchEventsClient } from '@aws-sdk/client-cloudwatch-events';
 import { ConsoleUtil } from '../util/console-util';
 
 const eventSource = 'oc.org-formation';
@@ -9,7 +7,7 @@ const eventDetailType = 'events.org-formation.com';
 export class AwsEvents {
     public static async putAccountCreatedEvent(accountId: string): Promise<void> {
         try {
-            const putEventsRequest: PutEventsRequest = {Entries: [
+            const putEventsRequest = new PutEventsCommand({Entries: [
                 {
                     Time: new Date(),
                     Resources: [accountId],
@@ -20,7 +18,8 @@ export class AwsEvents {
                         accountId,
                     }),
                 },
-            ]};
+            ]});
+
             await AwsEvents.PutEvent(putEventsRequest);
         } catch (err) {
             ConsoleUtil.LogError(`unable to put event AccountCreated for account ${accountId}`, err);
@@ -29,7 +28,7 @@ export class AwsEvents {
 
     public static async putOrganizationChangedEvent(bucketName: string, objectKey: string): Promise<void> {
         try {
-            const putEventsRequest: PutEventsRequest = {Entries: [
+            const putEventsRequest = new PutEventsCommand({Entries: [
                 {
                     Time: new Date(),
                     Resources: [],
@@ -41,15 +40,15 @@ export class AwsEvents {
                         objectKey,
                     }),
                 },
-            ]};
+            ]});
             await AwsEvents.PutEvent(putEventsRequest);
         } catch (err) {
             ConsoleUtil.LogError('unable to put event OrganizationChanged', err);
         }
     }
 
-    public static async PutEvent(request: PutEventsRequest): Promise<void> {
-        const events = new AWS.CloudWatchEvents({region: 'us-east-1'});
-        await events.putEvents(request).promise();
+    public static async PutEvent(command: PutEventsCommand): Promise<void> {
+        const events = new CloudWatchEventsClient({region: 'us-east-1'});
+        await events.send(command);
     }
 }

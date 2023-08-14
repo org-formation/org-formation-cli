@@ -1,17 +1,23 @@
 import { existsSync, readFileSync } from 'fs';
 // import { inspect } from 'util'; // or directly
-import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, Organizations, EnvironmentCredentials, EC2 } from 'aws-sdk';
-import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials';
+import * as Organizations from '@aws-sdk/client-organizations';
+import * as EC2 from '@aws-sdk/client-ec2';
+import { CloudFormation, IAM, S3, STS, Support, CredentialProviderChain, EnvironmentCredentials } from 'aws-sdk';
+import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AssumeRoleRequest } from 'aws-sdk/clients/sts';
 import * as ini from 'ini';
 import AWS from 'aws-sdk';
 import { SingleSignOnCredentials } from '@mhlabs/aws-sdk-sso';
 import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
-import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, CreateStackInput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
+import { IAMClient } from '@aws-sdk/client-iam';
+import { CloudFormationClient, CreateStackCommand, CreateStackCommandInput, DeleteStackCommand, DescribeStacksCommand, DescribeStacksCommandOutput, UpdateStackCommand, UpdateStackCommandInput, waitUntilStackCreateComplete, waitUntilStackDeleteComplete, waitUntilStackUpdateComplete } from '@aws-sdk/client-cloudformation';
+import { ListExportsInput, UpdateStackInput, DescribeStacksOutput, ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { DescribeOrganizationResponse } from 'aws-sdk/clients/organizations';
 import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import { v4 as uuid } from 'uuid';
+import { SupportClient } from '@aws-sdk/client-support';
+import { S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
@@ -22,7 +28,6 @@ type CredentialProviderOptions = ConstructorParameters<typeof AWS.SharedIniFileC
 
 export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
-
 
 export class AwsUtil {
 
@@ -43,16 +48,18 @@ export class AwsUtil {
             return this.organization.Organization.Id;
         }
         const region = (this.isPartition) ? this.partitionRegion : 'us-east-1';
-        const organizationService = new Organizations({ region });
-        this.organization = await organizationService.describeOrganization().promise();
+        const organizationService = new Organizations.OrganizationsClient({ region });
+        const command = new Organizations.DescribeOrganizationCommand({});
+        this.organization = await organizationService.send(command);
         return this.organization.Organization.Id;
 
     }
 
     public static async SetEnabledRegions(): Promise<void> {
         const region = (this.isPartition) ? this.partitionRegion : 'us-east-1';
-        const ec2Client = new EC2({ region });
-        const enabledRegions = await ec2Client.describeRegions().promise();
+        const ec2Client = new EC2.EC2Client({ region });
+        const command = new EC2.DescribeRegionsCommand({});
+        const enabledRegions = await ec2Client.send(command);
         this.enabledRegions = enabledRegions.Regions.map(output => output.RegionName);
     }
 
@@ -247,14 +254,14 @@ export class AwsUtil {
     }
 
 
-    public static async GetOrganizationsService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<Organizations> {
+    public static async GetOrganizationsService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<Organizations.OrganizationsClient> {
         const region = (isPartition) ? this.partitionRegion : 'us-east-1';
-        return await AwsUtil.GetOrCreateService<Organizations>(Organizations, AwsUtil.OrganizationsServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
+        return await AwsUtil.GetOrCreateService<Organizations.OrganizationsClient>(Organization, AwsUtil.OrganizationsServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
     }
 
     public static async GetSupportService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<Support> {
         const region = (isPartition) ? this.partitionRegion : 'us-east-1';
-        return await AwsUtil.GetOrCreateService<Support>(Support, AwsUtil.SupportServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
+        return await AwsUtil.GetOrCreateService<SupportClient>(SupportClient, AwsUtil.SupportServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
     }
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
@@ -265,17 +272,17 @@ export class AwsUtil {
         return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
-    public static async GetS3Service(accountId: string, region?: string, roleInTargetAccount?: string): Promise<S3> {
-        const config: ServiceConfigurationOptions = {};
+    public static async GetS3Service(accountId: string, region?: string, roleInTargetAccount?: string): Promise<S3Client> {
+        const config: S3ClientConfig = {};
         if (region !== undefined) {
             config.region = region;
         }
 
-        return await AwsUtil.GetOrCreateService<S3>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, config, roleInTargetAccount);
+        return AwsUtil.GetOrCreateService<S3Client>(S3, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, config, roleInTargetAccount);
     }
 
-    public static async GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): Promise<IAM> {
-        return await AwsUtil.GetOrCreateService<IAM>(IAM, AwsUtil.IamServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, {}, roleInTargetAccount, viaRoleArn, isPartition);
+    public static async GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): Promise<IAMClient> {
+        return await AwsUtil.GetOrCreateService<IAMClient>(IAM, AwsUtil.IamServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, {}, roleInTargetAccount, viaRoleArn, isPartition);
     }
 
     public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): Promise<CloudFormation> {
@@ -323,7 +330,7 @@ export class AwsUtil {
 
         try {
             let roleArn: string;
-            const config: STS.ClientConfiguration = {};
+            const config: ClientConfiguration = {};
             if (viaRoleArn) {
                 config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, stsRegion ? { region: stsRegion, stsRegionalEndpoints: 'regional' } : {});
             }
@@ -492,7 +499,7 @@ export const passwordPolicyEquals = (pwdPolicyResourceA: Reference<PasswordPolic
 
 export class CfnUtil {
 
-    public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackInput | UpdateStackInput | ValidateTemplateInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
+    public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackCommandInput | UpdateStackCommandInput | ValidateTemplateInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
         if (stackInput.TemplateBody && stackInput.TemplateBody.length > 50000) {
             const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region, binding.customRoleName);
             const preExistingBucket = AwsUtil.GetLargeTemplateBucketName();
@@ -533,8 +540,8 @@ export class CfnUtil {
     }
 
 
-    public static async UpdateOrCreateStack(cfn: CloudFormation, updateStackInput: UpdateStackInput): Promise<DescribeStacksOutput> {
-        let describeStack: DescribeStacksOutput;
+    public static async UpdateOrCreateStack(cfn: CloudFormationClient, updateStackInput: UpdateStackInput): Promise<DescribeStacksOutput> {
+        let describeStack: DescribeStacksCommandOutput;
         let retryStackIsBeingUpdated = false;
         let retryStackIsBeingUpdatedCount = 0;
         let retryAccountIsBeingInitialized = false;
@@ -546,13 +553,33 @@ export class CfnUtil {
             try {
                 try {
                     updateStackInput.ClientRequestToken = uuid();
-                    await cfn.updateStack(updateStackInput).promise();
-                    describeStack = await cfn.waitFor('stackUpdateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                    await cfn.send(new UpdateStackCommand(updateStackInput));
+                    await waitUntilStackUpdateComplete({
+                        client: cfn,
+                        maxDelay: 1,
+                        maxWaitTime: 60 * 30,
+                        minDelay: 1,
+                    }, {
+                        StackName: updateStackInput.StackName,
+                    });
+                    describeStack = await cfn.send(new DescribeStacksCommand({
+                        StackName: updateStackInput.StackName,
+                    }));
                 } catch (innerErr) {
                     if (innerErr && innerErr.code === 'ValidationError' && innerErr.message && innerErr.message.indexOf('does not exist') !== -1) {
                         updateStackInput.ClientRequestToken = uuid();
-                        await cfn.createStack(updateStackInput).promise();
-                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        await cfn.send(new CreateStackCommand(updateStackInput));
+                        await waitUntilStackCreateComplete({
+                            client: cfn,
+                            maxDelay: 1,
+                            maxWaitTime: 60 * 30,
+                            minDelay: 1,
+                        }, {
+                            StackName: updateStackInput.StackName,
+                        });
+                        describeStack = await cfn.send(new DescribeStacksCommand({
+                            StackName: updateStackInput.StackName,
+                        }));
                     } else {
                         throw innerErr;
                     }
@@ -569,15 +596,41 @@ export class CfnUtil {
                 } else if (err && (err.code === 'ValidationError' && err.message) || (err.code === 'ResourceNotReady')) {
                     const message = err.message as string;
                     if (message.includes('ROLLBACK_COMPLETE') || message.includes('DELETE_FAILED')) {
-                        await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
-                        await cfn.waitFor('stackDeleteComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        // await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
+                        await cfn.send(new DeleteStackCommand({
+                            StackName: updateStackInput.StackName,
+                            RoleARN: updateStackInput.RoleARN,
+                        }));
+                        await waitUntilStackDeleteComplete({
+                            client: cfn,
+                            maxWaitTime: 60 * 30,
+                            minDelay: 1,
+                            maxDelay: 1,
+                        }, {
+                            StackName: updateStackInput.StackName,
+                        });
+                        describeStack = await cfn.send(new DescribeStacksCommand({
+                            StackName: updateStackInput.StackName,
+                        }));
                         updateStackInput.ClientRequestToken = uuid();
-                        await cfn.createStack(updateStackInput).promise();
-                        describeStack = await cfn.waitFor('stackCreateComplete', { StackName: updateStackInput.StackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        await cfn.send(new CreateStackCommand(updateStackInput));
+                        await waitUntilStackCreateComplete({
+                            client: cfn,
+                            maxWaitTime: 60 * 30,
+                            minDelay: 1,
+                            maxDelay: 1,
+                        }, {
+                            StackName: updateStackInput.StackName,
+                        });
+                        describeStack = await cfn.send(new DescribeStacksCommand({
+                            StackName: updateStackInput.StackName,
+                        }));
                     } else if (message.includes('ROLLBACK_FAILED')) {
                         throw new OrgFormationError(`Stack ${updateStackInput.StackName} is in ROLLBACK_FAILED state and needs manual attention.`);
                     } else if (-1 !== message.indexOf('No updates are to be performed.')) {
-                        describeStack = await cfn.describeStacks({ StackName: updateStackInput.StackName }).promise();
+                        describeStack = await cfn.send(new DescribeStacksCommand({
+                            StackName: updateStackInput.StackName,
+                        }));
                         // ignore;
                     } else if (
                         (-1 !== message.indexOf('is in UPDATE_ROLLBACK_IN_PROGRESS state and can not be updated.')) ||

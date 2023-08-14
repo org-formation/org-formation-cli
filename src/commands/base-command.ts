@@ -253,7 +253,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected parseCfnParameters(commandParameters?: string | undefined | {}): Record<string, string> {
 
         if (typeof commandParameters === 'object') {
-            return commandParameters;
+            return commandParameters as Record<string, string>;
         }
         if (typeof commandParameters === 'string') {
             return CfnParameters.ParseParameterValues(commandParameters);

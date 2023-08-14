@@ -1,4 +1,4 @@
-import CloudFormation, { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
+import { CreateStackCommandInput, DeleteStackCommand, DeleteStackCommandInput, Tag, UpdateStackCommandInput } from '@aws-sdk/client-cloudformation';
 import { AwsUtil, CfnUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../../src/org-formation-error';
@@ -7,6 +7,7 @@ import { PersistedState } from '~state/persisted-state';
 import { ICfnExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { TemplateRoot } from '~parser/parser';
+
 
 export class CfnTaskProvider {
     constructor(private readonly template: TemplateRoot, private readonly state: PersistedState, private readonly logVerbose: boolean) {
@@ -65,7 +66,7 @@ export class CfnTaskProvider {
                 if (cloudFormationRoleName) {
                     roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                 }
-                const stackInput: CreateStackInput | UpdateStackInput = {
+                const stackInput: CreateStackCommandInput | UpdateStackCommandInput = {
                     StackName: stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM', 'CAPABILITY_AUTO_EXPAND'],
@@ -81,7 +82,7 @@ export class CfnTaskProvider {
                 }
 
                 const entries = Object.entries(binding.tags ?? {});
-                stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as CloudFormation.Tag));
+                stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as Tag));
                 stackInput.DisableRollback = !!binding.disableStackRollbacks;
                 for (const dependency of dependencies) {
 
@@ -222,11 +223,11 @@ export class CfnTaskProvider {
                             roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                         }
 
-                        const deleteStackInput: DeleteStackInput = {
+                        const deleteStackInput: DeleteStackCommandInput = {
                             StackName: stackName,
                             RoleARN: roleArn,
                         };
-                        await cfn.deleteStack(deleteStackInput).promise();
+                        await cfn.send(new DeleteStackCommand(deleteStackInput));
                         await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
                     });
                 } catch (err) {
