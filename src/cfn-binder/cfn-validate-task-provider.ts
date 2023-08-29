@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { ValidateTemplateCommandInput } from '@aws-sdk/client-cloudformation';
+import { ValidateTemplateCommand, ValidateTemplateCommandInput } from '@aws-sdk/client-cloudformation';
 import { OrgFormationError } from '../org-formation-error';
 import { ICfnBinding } from './cfn-binder';
 import { ICfnTask } from './cfn-task-provider';
@@ -61,7 +61,7 @@ export class CfnValidateTaskProvider {
                     await CfnUtil.UploadTemplateToS3IfTooLarge(validateInput, binding, stackName, this.template.hash);
 
 
-                    const result = await cfn.validateTemplate(validateInput).promise();
+                    const result = await cfn.send(new ValidateTemplateCommand(validateInput));
                     const missingParameters: string[] = [];
                     for (const param of result.Parameters) {
 

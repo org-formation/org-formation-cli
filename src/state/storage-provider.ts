@@ -35,10 +35,13 @@ export class S3StorageProvider implements IStorageProvider {
         if (!stateObject || stateObject === '') {
             throw new OrgFormationError('stateObject cannot be undefined or empty');
         }
+
+        const defaultRegion = AwsUtil.GetDefaultRegion(BaseCliCommand.CliCommandArgs.profile);
+
         this.bucketName = stateBucketName;
         this.objectKey = stateObject;
         this.credentials = credentials ? credentials : AWS.config.credentials;
-        this.region = region ? region : 'us-east-1';
+        this.region = region ? region : defaultRegion;
     }
 
     public async create(region: string, throwOnAccessDenied = false): Promise<void> {

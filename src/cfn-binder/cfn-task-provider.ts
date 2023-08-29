@@ -1,4 +1,4 @@
-import { CreateStackCommandInput, DeleteStackCommand, DeleteStackCommandInput, Tag, UpdateStackCommandInput } from '@aws-sdk/client-cloudformation';
+import * as CFN from '@aws-sdk/client-cloudformation';
 import { AwsUtil, CfnUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../../src/org-formation-error';
@@ -7,7 +7,6 @@ import { PersistedState } from '~state/persisted-state';
 import { ICfnExpression } from '~core/cfn-expression';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { TemplateRoot } from '~parser/parser';
-
 
 export class CfnTaskProvider {
     constructor(private readonly template: TemplateRoot, private readonly state: PersistedState, private readonly logVerbose: boolean) {
@@ -66,13 +65,12 @@ export class CfnTaskProvider {
                 if (cloudFormationRoleName) {
                     roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                 }
-                const stackInput: CreateStackCommandInput | UpdateStackCommandInput = {
+                const stackInput: CFN.CreateStackCommandInput | CFN.UpdateStackCommandInput = {
                     StackName: stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM', 'CAPABILITY_AUTO_EXPAND'],
                     RoleARN: roleArn,
                     Parameters: [],
-
                 };
 
                 await CfnUtil.UploadTemplateToS3IfTooLarge(stackInput, binding, stackName, this.template.hash);
@@ -82,7 +80,7 @@ export class CfnTaskProvider {
                 }
 
                 const entries = Object.entries(binding.tags ?? {});
-                stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as Tag));
+                stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as CFN.Tag));
                 stackInput.DisableRollback = !!binding.disableStackRollbacks;
                 for (const dependency of dependencies) {
 
@@ -136,17 +134,23 @@ export class CfnTaskProvider {
                     await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
                     if (binding.state === undefined && binding.terminationProtection === true) {
                         ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
-                        await cfn.updateTerminationProtection({ StackName: stackName, EnableTerminationProtection: true }).promise();
+                        await cfn.send(
+                            new CFN.UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: true })
+                        );
                     } else if (binding.state !== undefined) {
                         if (binding.terminationProtection) {
                             if (!binding.state.terminationProtection) {
                                 ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
-                                await cfn.updateTerminationProtection({ StackName: stackName, EnableTerminationProtection: true }).promise();
+                                await cfn.send(
+                                    new CFN.UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: true })
+                                );
                             }
                         } else {
                             if (binding.state.terminationProtection) {
                                 ConsoleUtil.LogDebug(`Disabling termination protection for stack ${stackName}`, this.logVerbose);
-                                await cfn.updateTerminationProtection({ StackName: stackName, EnableTerminationProtection: false }).promise();
+                                await cfn.send(
+                                    new CFN.UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: false })
+                                );
                             }
                         }
                     }
@@ -167,7 +171,7 @@ export class CfnTaskProvider {
                         ConsoleUtil.LogError(`error updating CloudFormation stack ${stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
                     }
                     try {
-                        const stackEvents = await cfn.describeStackEvents({ StackName: stackName }).promise();
+                        const stackEvents = await cfn.send(new CFN.DescribeStackEventsCommand({ StackName: stackName }));
                         for (const event of stackEvents.StackEvents) {
                             const failureStates = ['CREATE_FAILED', 'DELETE_FAILED', 'UPDATE_FAILED'];
                             if (event.ClientRequestToken === stackInput.ClientRequestToken) {
@@ -223,12 +227,21 @@ export class CfnTaskProvider {
                             roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                         }
 
-                        const deleteStackInput: DeleteStackCommandInput = {
+                        const deleteStackInput: CFN.DeleteStackCommandInput = {
                             StackName: stackName,
                             RoleARN: roleArn,
                         };
-                        await cfn.send(new DeleteStackCommand(deleteStackInput));
-                        await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        await cfn.send(new CFN.DeleteStackCommand(deleteStackInput));
+
+                        await CFN.waitUntilStackDeleteComplete({
+                            client: cfn,
+                            maxWaitTime: 1000 * 60 * 30,
+                            maxDelay: 1000 * 60 * 5,
+                            minDelay: 1000 * 1,
+                        }, {
+                            NextToken: undefined,
+                            StackName: stackName,
+                        });
                     });
                 } catch (err) {
                     const message = err.message as string;

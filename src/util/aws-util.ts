@@ -16,6 +16,7 @@ import * as S3 from '@aws-sdk/client-s3';
 import { AwsCredentialIdentity } from '@smithy/types';
 import { OrgFormationError } from '../org-formation-error';
 import { ClientCredentialsConfig, DefaultClientConfig } from './aws-types';
+import { AWSConfig } from './aws-config';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
@@ -97,7 +98,9 @@ export class AwsUtil {
                 const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
                 callback(null, token);
             };
-            AWS.config.region = AwsUtil.GetPartitionRegion();
+            const config = AWSConfig.shared();
+            config.region = AwsUtil.GetPartitionRegion();
+
             return await this.Initialize([
                 (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'),
                 (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
@@ -322,7 +325,7 @@ export class AwsUtil {
         return service;
     }
 
-    public static async GetCredentials(accountId: string, roleInTargetAccount: string, stsRegion?: string, viaRoleArn?: string, isPartition?: boolean): Promise<ClientCredentialsConfig | undefined> {
+    public static async GetCredentials(accountId: string, roleInTargetAccount: string, stsRegion?: string, viaRoleArn?: string, isPartition?: boolean): Promise<AwsCredentialIdentity | undefined> {
         const masterAccountId = await AwsUtil.GetMasterAccountId();
         const useCurrentPrincipal = (masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId));
         if (useCurrentPrincipal) {
@@ -367,7 +370,7 @@ export class AwsUtil {
         }
     }
 
-    private static async GetCredentialsForRole(roleArn: string, config: DefaultClientConfig): Promise<ClientCredentialsConfig> {
+    private static async GetCredentialsForRole(roleArn: string, config: DefaultClientConfig): Promise<AwsCredentialIdentity> {
         const sts = new STS.STSClient(config);
         const response = await sts.send(new STS.AssumeRoleCommand({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }));
         const credentialOptions: ClientCredentialsConfig = {
@@ -588,6 +591,10 @@ export class CfnUtil {
                         }, {
                             StackName: updateStackInput.StackName,
                         });
+                        describeStack = await cfn.send(new CFN.DescribeStacksCommand({
+                            StackName: updateStackInput.StackName,
+                        }));
+                    } else if(innerErr && innerErr.message && innerErr.message.indexOf('No updates are to be performed') !== -1) {
                         describeStack = await cfn.send(new CFN.DescribeStacksCommand({
                             StackName: updateStackInput.StackName,
                         }));
