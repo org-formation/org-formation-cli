@@ -1,11 +1,11 @@
 import { readFileSync, writeFileSync } from 'fs';
-import AWS, { S3 } from 'aws-sdk';
-import { CreateBucketRequest, GetObjectRequest, PutObjectRequest } from 'aws-sdk/clients/s3';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import AWS from 'aws-sdk';
+import * as S3 from '@aws-sdk/client-s3';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../util/console-util';
 import { AwsUtil } from '~util/aws-util';
 import { BaseCliCommand } from '~commands/base-command';
+import { ClientCredentialsConfig } from '~util/aws-types';
 
 export interface IStorageProvider {
     get(): Promise<string | undefined>;
@@ -18,17 +18,17 @@ export class S3StorageProvider implements IStorageProvider {
      * Primary changes here have just been adding the ability for a region to get passed in.
      */
 
-    public static Create(bucketName: string, objectKey: string, credentials?: CredentialsOptions, region?: string): S3StorageProvider {
+    public static Create(bucketName: string, objectKey: string, credentials?: ClientCredentialsConfig, region?: string): S3StorageProvider {
         return new S3StorageProvider(bucketName, objectKey, credentials, region);
     }
 
     public readonly bucketName: string;
     public readonly objectKey: string;
-    private readonly credentials: CredentialsOptions;
+    private readonly credentials: ClientCredentialsConfig;
     private readonly region: string;
     public dontPut = false;
 
-    private constructor(stateBucketName: string, stateObject: string, credentials?: CredentialsOptions, region?: string) {
+    private constructor(stateBucketName: string, stateObject: string, credentials?: ClientCredentialsConfig, region?: string) {
         if (!stateBucketName || stateBucketName === '') {
             throw new OrgFormationError('stateBucketName cannot be undefined or empty');
         }
@@ -42,29 +42,29 @@ export class S3StorageProvider implements IStorageProvider {
     }
 
     public async create(region: string, throwOnAccessDenied = false): Promise<void> {
-        const request: CreateBucketRequest = {
+        const request: S3.CreateBucketCommandInput = {
             Bucket: this.bucketName,
         };
         if (!region) {
             region = AwsUtil.GetDefaultRegion(BaseCliCommand.CliCommandArgs.profile);
         }
 
-        const s3client = new S3({ region, credentials: this.credentials });
+        const s3client = new S3.S3Client({ region, credentials: this.credentials });
         try {
-            await s3client.createBucket(request).promise();
-            await s3client.putPublicAccessBlock({
+            await s3client.send(new S3.CreateBucketCommand(request));
+            await s3client.send(new S3.PutPublicAccessBlockCommand({
                 Bucket: this.bucketName, PublicAccessBlockConfiguration: {
                     BlockPublicAcls: true,
                     IgnorePublicAcls: true,
                     BlockPublicPolicy: true,
                     RestrictPublicBuckets: true,
                 },
-            }).promise();
-            await s3client.putBucketEncryption({
+            }));
+            await s3client.send(new S3.PutBucketEncryptionCommand({
                 Bucket: this.bucketName, ServerSideEncryptionConfiguration: {
                     Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }],
                 },
-            }).promise();
+            }));
         } catch (err) {
             if (err && err.code === 'IllegalLocationConstraintException') {
                 throw new OrgFormationError(`Unable to create bucket in region ${region}. Is the region spelled correctly?\nIf a bucket with the same name was recently deleted from a different region it could take up to a couple of hours for you to be able to create the same bucket in a different region.`);
@@ -89,16 +89,16 @@ export class S3StorageProvider implements IStorageProvider {
 
     public async get(): Promise<string | undefined> {
 
-        const s3client = new S3({ credentials: this.credentials });
-        const request: GetObjectRequest = {
+        const s3client = new S3.S3Client({ credentials: this.credentials });
+        const request: S3.GetObjectCommandInput = {
             Bucket: this.bucketName,
             Key: this.objectKey,
         };
 
         try {
-            const response = await s3client.getObject(request).promise();
+            const response = await s3client.send(new S3.GetObjectCommand(request));
             if (!response.Body) { return undefined; }
-            const contents = response.Body.toString();
+            const contents = response.Body.transformToString();
             return contents;
         } catch (err) {
             if (err && err.code === 'NoSuchKey') {
@@ -124,8 +124,8 @@ export class S3StorageProvider implements IStorageProvider {
         }
 
         try {
-            const s3client = new S3({ credentials: this.credentials, region: this.region });
-            const putObjectRequest: PutObjectRequest = {
+            const s3client = new S3.S3Client({ credentials: this.credentials, region: this.region });
+            const putObjectRequest: S3.PutObjectCommandInput = {
                 Bucket: this.bucketName,
                 Key: this.objectKey,
                 Body: contents,
@@ -142,10 +142,10 @@ export class S3StorageProvider implements IStorageProvider {
             do {
                 retry = false;
                 try {
-                    await s3client.putObject(putObjectRequest).promise();
+                    await s3client.send(new S3.PutObjectCommand(putObjectRequest));
                 } catch (err) {
                     if (err.code === 'NoSuchBucket' && tryCreateBucket) {
-                        await this.create(s3client.config.region);
+                        await this.create(this.region);
                         tryCreateBucket = false;
                         retry = true;
                         continue;

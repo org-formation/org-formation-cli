@@ -13,8 +13,9 @@ import * as CFN from '@aws-sdk/client-cloudformation';
 import { v4 as uuid } from 'uuid';
 import { SupportClient } from '@aws-sdk/client-support';
 import * as S3 from '@aws-sdk/client-s3';
-import { AwsCredentialIdentity, Provider } from '@smithy/types';
+import { AwsCredentialIdentity } from '@smithy/types';
 import { OrgFormationError } from '../org-formation-error';
+import { ClientCredentialsConfig, DefaultClientConfig } from './aws-types';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
@@ -22,13 +23,6 @@ import { ICfnBinding } from '~cfn-binder/cfn-binder';
 
 
 type CredentialProviderOptions = ConstructorParameters<typeof AWS.SharedIniFileCredentials>[0];
-
-type ClientCredentialsConfig = AwsCredentialIdentity | Provider<AwsCredentialIdentity>;
-interface DefaultClientConfig {
-    credentials?: ClientCredentialsConfig;
-    region?: string;
-    stsRegionalEndpoints?: 'legacy' | 'regional';
-}
 
 export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };

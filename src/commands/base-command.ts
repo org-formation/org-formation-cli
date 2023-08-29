@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from 'fs';
 import { Command } from 'commander';
 import minimatch from 'minimatch';
 import RC from 'rc';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -23,6 +22,7 @@ import { Validator } from '~parser/validator';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { NunjucksDebugSettings } from '~yaml-cfn/index';
 import { IBuildTask } from '~build-tasks/build-configuration';
+import { ClientCredentialsConfig } from '~util/aws-types';
 
 const DEFAULT_STATE_OBJECT = 'state.json';
 
@@ -197,7 +197,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return binder;
     }
 
-    protected async createOrGetStateBucket(command: ICommandArgs, region: string, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
+    protected async createOrGetStateBucket(command: ICommandArgs, region: string, accountId?: string, credentials?: ClientCredentialsConfig): Promise<S3StorageProvider> {
         const storageProvider = await this.getStateStorageProvider(command, accountId, credentials);
         try {
             await storageProvider.create(region);
@@ -210,7 +210,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return storageProvider;
     }
 
-    protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
+    protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: ClientCredentialsConfig): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName, accountId);
         let storageProvider;

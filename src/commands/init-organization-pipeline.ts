@@ -1,17 +1,18 @@
 import archiver = require('archiver');
 import { existsSync, readFileSync } from 'fs';
-import { Organizations, S3 } from 'aws-sdk';
-import { CreateStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
-import { PutObjectRequest } from 'aws-sdk/clients/s3';
+import * as S3 from '@aws-sdk/client-s3';
+import * as CFN from '@aws-sdk/client-cloudformation';
+import { Upload } from '@aws-sdk/lib-storage';
+import * as Organizations from '@aws-sdk/client-organizations';
 import { Command } from 'commander';
 import { WritableStream } from 'memory-streams';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AwsUtil, CfnUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS, DEFAULT_ROLE_FOR_ORG_ACCESS } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { DefaultTemplate, ITemplateGenerationSettings } from '~writer/default-template-writer';
 import { ExtractedTemplate, InitialCommitUtil } from '~util/initial-commit-util';
+import { ClientCredentialsConfig } from '~util/aws-types';
 
 
 const commandName = 'init-pipeline';
@@ -20,7 +21,7 @@ const commandDescription = 'initializes organization and created codecommit repo
 export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs> {
     private currentAccountId: string;
     private buildAccountId: string;
-    private s3credentials: CredentialsOptions;
+    private s3credentials: ClientCredentialsConfig;
 
     constructor(command: Command) {
         super(command, commandName, commandDescription);
@@ -184,23 +185,27 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     public uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string, organizationTasksContents: string, cloudformationTemplateContents: string, orgParametersInclude: string, buildAccessRoleTemplateContents: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                const s3client = new S3({ ...(this.s3credentials ? { credentials: this.s3credentials } : {}) });
+                const s3client = new S3.S3Client({ ...(this.s3credentials ? { credentials: this.s3credentials } : {}) });
                 const output = new WritableStream();
                 const archive = archiver('zip');
 
                 archive.on('error', reject);
 
                 archive.on('end', () => {
-                    const uploadRequest: PutObjectRequest = {
+                    const uploadRequest: S3.PutObjectCommandInput = {
                         Body: output.toBuffer(),
                         Key: 'initial-commit.zip',
                         Bucket: stateBucketName,
                     };
 
-                    s3client.upload(uploadRequest)
-                        .promise()
-                        .then(() => resolve())
-                        .catch(reject);
+                    new Upload({
+                      client: s3client,
+                      params: uploadRequest,
+                    })
+                      .done()
+                      .then(() => resolve())
+                      .catch(reject);
+
                 });
 
                 archive.pipe(output);
@@ -224,7 +229,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     public async executeOrgFormationRoleStack(targetAccountId: string, buildAccountId: string, cfnTemplate: string, region: string, stackName: string): Promise<void> {
         try {
             const cfn = await AwsUtil.GetCloudFormation(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
-            const stackInput: CreateStackInput | UpdateStackInput = {
+            const stackInput: CFN.CreateStackCommandInput | CFN.UpdateStackCommandInput = {
                 StackName: stackName,
                 TemplateBody: cfnTemplate,
                 Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
@@ -242,7 +247,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     public async executePipelineStack(targetAccountId: string, cfnTemplate: string, region: string, stateBucketName: string, resourcePrefix: string, stackName: string, repositoryName: string): Promise<void> {
         try {
             const cfn = await AwsUtil.GetCloudFormation(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
-            const stackInput: CreateStackInput | UpdateStackInput = {
+            const stackInput: CFN.CreateStackCommandInput | CFN.UpdateStackCommandInput = {
                 StackName: stackName,
                 TemplateBody: cfnTemplate,
                 Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM'],
@@ -296,8 +301,8 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
     public async checkRunInMasterAccount(): Promise<void> {
         try {
-            const org = new Organizations({ region: 'us-east-1' });
-            const result = await org.describeOrganization().promise();
+            const org = new Organizations.OrganizationsClient({ region: 'us-east-1' });
+            const result = await org.send(new Organizations.DescribeOrganizationCommand({}));
             if (result.Organization.MasterAccountId !== this.currentAccountId) {
                 throw new OrgFormationError('init-pipeline command must be ran from organization master account');
             }

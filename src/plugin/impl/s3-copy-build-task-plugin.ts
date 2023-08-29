@@ -1,9 +1,10 @@
 import path from 'path';
 import { existsSync, statSync } from 'fs';
 import * as fs from 'fs';
-import S3, { PutObjectRequest, DeleteObjectRequest, ServerSideEncryption } from 'aws-sdk/clients/s3';
+import * as S3 from '@aws-sdk/client-s3';
 import archiver from 'archiver';
 import { WritableStream } from 'memory-streams';
+import { StreamingBlobPayloadInputTypes } from '@smithy/types';
 import { IPluginTask, IPluginBinding } from '../plugin-binder';
 import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin, CommonTaskAttributeNames } from '../plugin';
 import { OrgFormationError } from '../../../src/org-formation-error';
@@ -105,11 +106,11 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         Validator.throwForUnresolvedExpressions(task.localPath, 'LocalPath');
 
         const s3client = await AwsUtil.GetS3Service(target.accountId, target.region, task.taskRoleName);
-        const request: DeleteObjectRequest = {
+        const request: S3.DeleteObjectCommandInput = {
             ...CopyToS3TaskPlugin.getBucketAndKey(task),
         };
 
-        await s3client.deleteObject(request).promise();
+        await s3client.send(new S3.DeleteObjectCommand(request));
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<IS3CopyTask>): Promise<void> {
@@ -119,7 +120,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         Validator.throwForUnresolvedExpressions(task.localPath, 'LocalPath');
 
         const s3client = await AwsUtil.GetS3Service(target.accountId, target.region, task.taskRoleName);
-        const request: PutObjectRequest = {
+        const request: S3.PutObjectCommandInput = {
             ...CopyToS3TaskPlugin.getBucketAndKey(task),
             ACL: 'bucket-owner-full-control',
         };
@@ -128,10 +129,10 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         }
         request.Body = await this.createBody(task);
 
-        await s3client.putObject(request).promise();
+        await s3client.send(new S3.PutObjectCommand(request));
     }
 
-    private async createBody(task: IS3CopyTask): Promise<S3.Body> {
+    private async createBody(task: IS3CopyTask): Promise<StreamingBlobPayloadInputTypes> {
         if (!task.zipBeforePut) {
             const fileContent = fs.readFileSync(task.localPath);
             const debugFilename = path.basename(task.localPath);
@@ -145,8 +146,8 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         }
     }
 
-    private createZip(directory: string): Promise<S3.Body> {
-        return new Promise<S3.Body>((resolve, reject) => {
+    private createZip(directory: string): Promise<StreamingBlobPayloadInputTypes> {
+        return new Promise<StreamingBlobPayloadInputTypes>((resolve, reject) => {
             const output = new WritableStream();
             const archive = archiver('zip');
 
@@ -192,7 +193,7 @@ export interface IS3CopyBuildTaskConfig extends IBuildTaskConfiguration {
     RemotePath: string;
     ZipBeforePut?: true;
     OrganizationBinding: IOrganizationBinding;
-    ServerSideEncryption?: ServerSideEncryption;
+    ServerSideEncryption?: S3.ServerSideEncryption | string;
     TemplatingContext?: Record<string, unknown>;
 }
 
@@ -200,7 +201,7 @@ export interface IS3CopyCommandArgs extends IBuildTaskPluginCommandArgs {
     localPath: string;
     remotePath: string;
     zipBeforePut: boolean;
-    serverSideEncryption?: ServerSideEncryption;
+    serverSideEncryption?: S3.ServerSideEncryption | string;
     templatingContext?: Record<string, unknown>;
 }
 
@@ -208,6 +209,6 @@ export interface IS3CopyTask extends IPluginTask {
     localPath: string;
     remotePath: string;
     zipBeforePut: boolean;
-    serverSideEncryption?: ServerSideEncryption;
+    serverSideEncryption?: S3.ServerSideEncryption | string;
     templatingContext?: Record<string, unknown>;
 }

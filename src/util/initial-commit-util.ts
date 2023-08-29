@@ -7,9 +7,10 @@ import fetch from 'node-fetch';
 import unzipper from 'unzipper';
 import tmp from 'tmp';
 import { renderString } from 'nunjucks';
-import { S3 } from 'aws-sdk';
+import * as S3 from '@aws-sdk/client-s3';
 import archiver from 'archiver';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { Upload } from '@aws-sdk/lib-storage';
+import { ClientCredentialsConfig } from './aws-types';
 import { DefaultTemplate, ITemplateGenerationSettings } from '~writer/default-template-writer';
 
 interface TemplateDefinition {
@@ -46,7 +47,7 @@ export class InitialCommitUtil {
   }
 
 
-  static async parameterizeAndUpload(extractedTemplate: ExtractedTemplate, params: Record<string, any>, template: DefaultTemplate, stateBucketName: string, s3credentials?: CredentialsOptions): Promise<void> {
+  static async parameterizeAndUpload(extractedTemplate: ExtractedTemplate, params: Record<string, any>, template: DefaultTemplate, stateBucketName: string, s3credentials?: ClientCredentialsConfig): Promise<void> {
     const { definition: templateDefinition, tempDir } = extractedTemplate;
     for (const declaredParam of templateDefinition.parameters) {
       if ((declaredParam.required) && (params[declaredParam.name] === undefined)) {
@@ -83,11 +84,14 @@ export class InitialCommitUtil {
 
 }
 
-const uploadStream = (bucket: string, key: string, credentials?: CredentialsOptions): { writeStream: stream.PassThrough; promise: Promise<any> } => {
-  const s3 = new S3(credentials);
+const uploadStream = (bucket: string, key: string, credentials?: ClientCredentialsConfig): { writeStream: stream.PassThrough; promise: Promise<any> } => {
+  const s3 = new S3.S3Client(credentials);
   const pass = new stream.PassThrough();
   return {
     writeStream: pass,
-    promise: s3.upload({ Bucket: bucket, Key: key, Body: pass }).promise(),
+    promise: new Upload({
+      client: s3,
+      params: { Bucket: bucket, Key: key, Body: pass },
+    }).done(),
   };
 };
