@@ -45,6 +45,7 @@
     "@aws-sdk/client-sts": "^3.387.0",
     "@aws-sdk/client-support": "^3.387.0",
     "@aws-sdk/credential-providers": "^3.387.0",
+    "@aws-sdk/lib-storage": "^3.400.0",
     "@mhlabs/aws-sdk-sso": "^0.0.15",
     "@smithy/types": "^2.1.0",
     "@types/node-fetch": "^2.5.8",
