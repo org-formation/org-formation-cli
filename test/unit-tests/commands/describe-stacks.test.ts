@@ -4,7 +4,6 @@ import { BaseCliCommand } from '~commands/base-command';
 import { DescribeStacksCommand, IDescribeStackCommandArgs } from '~commands/describe-stacks';
 import { ConsoleUtil } from '~util/console-util';
 import { PersistedState } from '~state/persisted-state';
-import { GlobalState } from '~util/global-state';
 
 describe('when creating describe stacks command', () => {
     let command: DescribeStacksCommand;
