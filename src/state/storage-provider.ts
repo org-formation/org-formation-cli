@@ -1,5 +1,4 @@
 import { readFileSync, writeFileSync } from 'fs';
-import AWS from 'aws-sdk';
 import * as S3 from '@aws-sdk/client-s3';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../util/console-util';
@@ -36,11 +35,11 @@ export class S3StorageProvider implements IStorageProvider {
             throw new OrgFormationError('stateObject cannot be undefined or empty');
         }
 
-        const defaultRegion = AwsUtil.GetDefaultRegion(BaseCliCommand.CliCommandArgs.profile);
+        const defaultRegion = AwsUtil.GetDefaultRegion();
 
         this.bucketName = stateBucketName;
         this.objectKey = stateObject;
-        this.credentials = credentials ? credentials : AWS.config.credentials;
+        this.credentials = credentials;
         this.region = region ? region : defaultRegion;
     }
 
@@ -49,7 +48,7 @@ export class S3StorageProvider implements IStorageProvider {
             Bucket: this.bucketName,
         };
         if (!region) {
-            region = AwsUtil.GetDefaultRegion(BaseCliCommand.CliCommandArgs.profile);
+            region = AwsUtil.GetDefaultRegion();
         }
 
         const s3client = new S3.S3Client({ region, credentials: this.credentials });

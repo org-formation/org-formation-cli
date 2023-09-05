@@ -93,7 +93,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     public async generateDefaultTemplate(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
-       return DefaultTemplateWriter.CreateDefaultTemplateFromAws(defaultBuildAccessRoleName, templateGenerationSettings);
+        return DefaultTemplateWriter.CreateDefaultTemplateFromAws(defaultBuildAccessRoleName, templateGenerationSettings);
     }
 
     public async getState(command: ICommandArgs): Promise<PersistedState> {
@@ -307,7 +307,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         this.loadRuntimeConfiguration(command);
 
         if (command.excludeAccounts) {
-            const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x => x.trim());;
+            const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x => x.trim());
             ConsoleUtil.LogInfo(`excluding the following accounts: ${exclude.join(', ')}`);
             AwsOrganizationReader.excludeAccountIds = exclude;
         }
@@ -322,34 +322,31 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             ConsoleUtil.colorizeLogs = false;
         }
 
-        if (command.partitionProfile !== undefined) {
-            AwsUtil.SetPartitionProfile(command.partitionProfile);
-            await AwsUtil.SetPartitionCredentials(command.partitionProfile);
+        if (command.masterAccountId !== undefined) {
+            AwsUtil.SetMasterAccountId(command.masterAccountId);
         }
 
         if (command.isPartition) {
             AwsUtil.SetIsPartition(true);
+            if (command.partitionProfile !== undefined) {
+                AwsUtil.SetPartitionProfile(command.partitionProfile);
+            }
+            if (command.partitionRegion) {
+                AwsUtil.SetPartitionRegion(command.partitionRegion);
+            }
+            if (command.partitionKeys) {
+                AwsUtil.SetPartitionCredentials();
+            }
         }
 
-        if (command.partitionRegion) {
-            AwsUtil.SetPartitionRegion(command.partitionRegion);
-        }
-
-        if (command.partitionKeys) {
-            await AwsUtil.SetPartitionCredentials();
-        }
-
-        await AwsUtil.InitializeWithProfile(command.profile, command.isPartition);
-
-        if (command.masterAccountId !== undefined) {
-            AwsUtil.SetMasterAccountId(command.masterAccountId);
-        }
+        AwsUtil.SetProfile(command.profile);
 
         if (command.debugTemplating) {
             NunjucksDebugSettings.debug = true;
         }
 
-        await Promise.all([AwsUtil.InitializeWithCurrentPartition(), AwsUtil.SetEnabledRegions()]);
+        await AwsUtil.Initialize();
+        await Promise.all([AwsUtil.GetPartitionFromCurrentSession(), AwsUtil.SetEnabledRegions()]);
 
         command.initialized = true;
     }

@@ -271,7 +271,7 @@ export class AwsOrganizationWriter {
         return await performAndRetryIfNeeded(async () => {
             if (parentId === undefined) {
                 parentId = await this.ensureRoot();
-            };
+            }
 
             const existingOu = this.organization.organizationalUnits.find(x => x.ParentId === parentId && x.Name === resource.organizationalUnitName);
             if (existingOu) {

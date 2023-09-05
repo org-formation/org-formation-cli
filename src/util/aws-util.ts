@@ -1,33 +1,33 @@
-import { existsSync, readFileSync } from 'fs';
-// import { inspect } from 'util'; // or directly
-import * as Organizations from '@aws-sdk/client-organizations';
-import * as EC2 from '@aws-sdk/client-ec2';
-import { CredentialProviderChain, EnvironmentCredentials } from 'aws-sdk';
-import * as STS from '@aws-sdk/client-sts';
+import { readFileSync } from 'fs';
 import * as ini from 'ini';
-import AWS from 'aws-sdk';
-import { SingleSignOnCredentials } from '@mhlabs/aws-sdk-sso';
-import { provider } from 'aws-sdk/lib/credentials/credential_provider_chain';
-import { IAMClient } from '@aws-sdk/client-iam';
-import * as CFN from '@aws-sdk/client-cloudformation';
+import { IAMClient, IAMClientConfig } from '@aws-sdk/client-iam';
 import { v4 as uuid } from 'uuid';
-import { SupportClient } from '@aws-sdk/client-support';
-import * as S3 from '@aws-sdk/client-s3';
+import { SupportClient, SupportClientConfig } from '@aws-sdk/client-support';
 import { AwsCredentialIdentity } from '@smithy/types';
+import { FromTemporaryCredentialsOptions, fromTemporaryCredentials } from '@aws-sdk/credential-providers';
+import { DescribeOrganizationCommand, DescribeOrganizationCommandOutput, OrganizationsClient, OrganizationsClientConfig } from '@aws-sdk/client-organizations';
+import { DescribeRegionsCommand, EC2Client } from '@aws-sdk/client-ec2';
+import { AssumeRoleCommand, GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
+import { CreateBucketCommand, DeleteObjectCommand, PutBucketEncryptionCommand, PutBucketOwnershipControlsCommand, PutObjectCommand, PutObjectCommandInput, PutPublicAccessBlockCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
+import { CloudFormationClient, CloudFormationClientConfig, CreateStackCommandInput, UpdateStackCommandInput, ValidateTemplateCommandInput, DescribeStacksCommandOutput, UpdateStackCommand, waitUntilStackUpdateComplete, DescribeStacksCommand, CreateStackCommand, waitUntilStackCreateComplete, DeleteStackCommand, waitUntilStackDeleteComplete, paginateListExports } from '@aws-sdk/client-cloudformation';
 import { OrgFormationError } from '../org-formation-error';
 import { ClientCredentialsConfig, DefaultClientConfig } from './aws-types';
-import { AWSConfig } from './aws-config';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 import { ICfnBinding } from '~cfn-binder/cfn-binder';
 
-
-type CredentialProviderOptions = ConstructorParameters<typeof AWS.SharedIniFileCredentials>[0];
-
 export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 
+/**
+ * Singleton utility class that is used througout this project to obtain, hold and serve AWS service clients in a cache.
+ *
+ * This class supports different modes of authentication, including SSO, MFA as well as GovCloud (partitions).
+ *
+ * GovCloud is a separate partition, where accounts mirror the account in the commercial partition. If we are running in GovCloud mode
+ * as indicated in various places by `isPartition`, then we need to authenticate both in the commercial region as well as in the govcloud region.
+ */
 export class AwsUtil {
 
     public static ClearCache(): void {
@@ -41,110 +41,83 @@ export class AwsUtil {
         AwsUtil.S3ServiceCache = {};
     }
 
-    private static organization: Organizations.DescribeOrganizationCommandOutput;
+    private static organization: DescribeOrganizationCommandOutput;
+
+    /**
+     * Populate singleton with the organizationId
+     */
     public static async GetPrincipalOrgId(): Promise<string> {
         if (this.organization !== undefined) {
             return this.organization.Organization.Id;
         }
         const region = (this.isPartition) ? this.partitionRegion : 'us-east-1';
-        const organizationService = new Organizations.OrganizationsClient({ region });
-        const command = new Organizations.DescribeOrganizationCommand({});
+        const organizationService = new OrganizationsClient({ region });
+        const command = new DescribeOrganizationCommand({});
         this.organization = await organizationService.send(command);
         return this.organization.Organization.Id;
-
     }
 
+    /**
+     * Uses the EC2 client to set enabled regions
+     */
     public static async SetEnabledRegions(): Promise<void> {
         const region = (this.isPartition) ? this.partitionRegion : 'us-east-1';
-        const ec2Client = new EC2.EC2Client({ region });
-        const command = new EC2.DescribeRegionsCommand({});
+        const ec2Client = new EC2Client({ region });
+        const command = new DescribeRegionsCommand({});
         const enabledRegions = await ec2Client.send(command);
         this.enabledRegions = enabledRegions.Regions.map(output => output.RegionName);
     }
 
+    /**
+     * Returns an empty list until SetEnabledRegions is invoked
+     */
     public static GetEnabledRegions(): string[] {
         return AwsUtil.enabledRegions;
     }
 
-    public static async InitializeWithProfile(profile?: string, partition?: boolean): Promise<AWS.Credentials> {
-        if (profile) {
+    /**
+     * Sets userId based on getCallerIdentity which will be used in the sessionName of all
+     * assumeRole calls for traceability.
+     *
+     * If profile is provided, then partition will be ignored.
+     */
+    public static async Initialize(): Promise<void> {
+        let stsClient = new STSClient();
+        // running with a profile in the commercial region
+        if (this.profile) {
             process.env.AWS_SDK_LOAD_CONFIG = '1';
-            const params: CredentialProviderOptions = { profile };
-            if (process.env.AWS_SHARED_CREDENTIALS_FILE) {
-                params.filename = process.env.AWS_SHARED_CREDENTIALS_FILE;
+            process.env.AWS_PROFILE = this.profile;
+            const caller = await stsClient.send(new GetCallerIdentityCommand({}));
+            this.userId = caller.UserId.replace(':', '-').substring(0, 60);
+            return;
+        }
+        // targeting a partition
+        if (this.isPartition) {
+            // if targeting partition with a profile
+            if (this.partitionProfile) {
+                process.env.AWS_SDK_LOAD_CONFIG = '1';
+                process.env.AWS_PROFILE = this.partitionProfile;
             }
-
-            // Setup a MFA callback to ask the code from user
-            params.tokenCodeFn = async (mfaSerial: string, callback: any): Promise<void> => {
-                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
-                callback(null, token);
-            };
-
-            return await this.Initialize([
-                (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
-                (): AWS.Credentials => new SingleSignOnCredentials(params),
-                (): AWS.Credentials => new AWS.ProcessCredentials(params),
-            ]);
+            stsClient = new STSClient({ region: this.partitionRegion });
         }
-        if (partition) {
-            process.env.AWS_SDK_LOAD_CONFIG = '1';
-            const params: CredentialProviderOptions = { profile: await AwsUtil.partitionProfile };
-            if (process.env.AWS_SHARED_CREDENTIALS_FILE) {
-                params.filename = process.env.AWS_SHARED_CREDENTIALS_FILE;
-            }
-
-            // Setup a MFA callback to ask the code from user
-            params.tokenCodeFn = async (mfaSerial: string, callback: any): Promise<void> => {
-                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
-                callback(null, token);
-            };
-            const config = AWSConfig.shared();
-            config.region = AwsUtil.GetPartitionRegion();
-
-            return await this.Initialize([
-                (): AWS.Credentials => new EnvironmentCredentials('GOV_AWS'),
-                (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
-                (): AWS.Credentials => new SingleSignOnCredentials(params),
-                (): AWS.Credentials => new AWS.ProcessCredentials(params),
-            ]);
-        }
-
-        const defaultProviders = CredentialProviderChain.defaultProviders;
-        defaultProviders.splice(5, 0, (): AWS.Credentials => new SingleSignOnCredentials());
-
-        return await this.Initialize(defaultProviders);
-    }
-
-    public static async InitializeWithGovProfile(profile?: string): Promise<AWS.Credentials> {
-        if (profile) {
-            process.env.AWS_SDK_LOAD_CONFIG = '1';
-            const params: CredentialProviderOptions = { profile };
-
-            params.tokenCodeFn = async (mfaSerial: string, callback: any): Promise<void> => {
-                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${mfaSerial}`);
-                callback(null, token);
-            };
-
-            const govCreds = new CredentialProviderChain([
-                (): AWS.Credentials => new AWS.SharedIniFileCredentials(params),
-                (): AWS.Credentials => new SingleSignOnCredentials(params),
-                (): AWS.Credentials => new AWS.ProcessCredentials(params),
-            ]);
-
-            return await govCreds.resolvePromise();
-        }
-    }
-
-    public static async Initialize(providers: provider[]): Promise<AWS.Credentials> {
-        const chainProvider = new CredentialProviderChain(providers);
-        return AWS.config.credentials = await chainProvider.resolvePromise();
+        const caller = await stsClient.send(new GetCallerIdentityCommand({}));
+        this.userId = caller.UserId.replace(':', '-').substring(0, 60);
+        return;
     }
 
     public static SetMasterAccountId(masterAccountId: string): void {
         AwsUtil.masterAccountId = masterAccountId;
     }
 
-    public static async GetPartitionProfile(): Promise<string> {
+    public static SetProfile(profile: string): void {
+        AwsUtil.profile = profile;
+    }
+
+    public static GetProfile(): string {
+        return AwsUtil.profile;
+    }
+
+    public static GetPartitionProfile(): string {
         return AwsUtil.partitionProfile;
     }
 
@@ -160,17 +133,18 @@ export class AwsUtil {
         return AwsUtil.largeTemplateBucketName;
     }
 
-    public static async SetPartitionCredentials(partitionProfile?: string): Promise<void> {
-        if (partitionProfile) {
-            const partitionCredentials = await this.InitializeWithGovProfile(partitionProfile);
-            AwsUtil.partitionCredentials = partitionCredentials;
-        } else {
-            const partitionChainProvider = new CredentialProviderChain([(): AWS.Credentials => new EnvironmentCredentials('GOV_AWS')]);
-            const partitionCreds = await partitionChainProvider.resolvePromise();
-            if (partitionCreds) {
-                AwsUtil.partitionCredentials = partitionCreds;
-            }
-        }
+    /**
+     * Look for GOV_AWS_ACCESS_KEY_ID and GOV_AWS_SECRET_ACCESS_KEY from the environment to set
+     * the credentials for the GovCloud partition.
+     */
+    public static SetPartitionCredentials(): void {
+        AwsUtil.partitionCredentials = {
+            accessKeyId: process.env.GOV_AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.GOV_AWS_SECRET_ACCESS_KEY,
+        };
+        // this is a bit of a hack - leaving it up to the SDK to pick these up and give precedence
+        process.env.AWS_ACCESS_KEY_ID = process.env.GOV_AWS_ACCESS_KEY_ID;
+        process.env.AWS_SECRET_ACCESS_KEY = process.env.GOV_AWS_SECRET_ACCESS_KEY;
     }
 
     public static async GetPartitionCredentials(): Promise<ClientCredentialsConfig> {
@@ -209,33 +183,30 @@ export class AwsUtil {
         if (AwsUtil.masterAccountId !== undefined) {
             return AwsUtil.masterAccountId;
         }
-        const stsClient = new STS.STSClient(); // if not set, assume build process runs in master
-        const caller = await stsClient.send(new STS.GetCallerIdentityCommand({}));
-        if (caller.Arn) {
-            const partition = caller.Arn.match(/arn\:([^:]*)\:/)[1];
-            AwsUtil.partition = partition;
-        }
+        const stsClient = new STSClient(); // if not set, assume build process runs in master
+        const caller = await stsClient.send(new GetCallerIdentityCommand({}));
         AwsUtil.masterAccountId = caller.Account;
         return AwsUtil.masterAccountId;
     }
 
-    public static async InitializeWithCurrentPartition(): Promise<string> {
+    public static async GetPartitionFromCurrentSession(): Promise<string> {
         if (AwsUtil.partition) {
             return AwsUtil.partition;
         }
-        const stsClient = new STS.STSClient();
-        const caller = await stsClient.send(new STS.GetCallerIdentityCommand({}));
+        const stsClient = new STSClient();
+        const caller = await stsClient.send(new GetCallerIdentityCommand({}));
         const partition = caller.Arn.match(/arn\:([^:]*)\:/)[1];
         AwsUtil.partition = partition;
         return partition;
     }
+
     public static async GetPartitionMasterAccountId(): Promise<string> {
         if (AwsUtil.masterPartitionId !== undefined) {
             return AwsUtil.masterPartitionId;
         }
         const partitionCredentials = await AwsUtil.GetPartitionCredentials();
-        const stsClient = new STS.STSClient({ credentials: partitionCredentials, region: this.partitionRegion }); // if not set, assume build process runs in master
-        const caller = await stsClient.send(new STS.GetCallerIdentityCommand({}));
+        const stsClient = new STSClient({ credentials: partitionCredentials, region: this.partitionRegion }); // if not set, assume build process runs in master
+        const caller = await stsClient.send(new GetCallerIdentityCommand({}));
         AwsUtil.masterPartitionId = caller.Account;
         return AwsUtil.masterPartitionId;
     }
@@ -244,8 +215,8 @@ export class AwsUtil {
         if (AwsUtil.buildProcessAccountId !== undefined) {
             return AwsUtil.buildProcessAccountId;
         }
-        const stsClient = new STS.STSClient();
-        const caller = await stsClient.send(new STS.GetCallerIdentityCommand({}));
+        const stsClient = new STSClient();
+        const caller = await stsClient.send(new GetCallerIdentityCommand({}));
         AwsUtil.buildProcessAccountId = caller.Account;
         return AwsUtil.buildProcessAccountId;
     }
@@ -255,14 +226,71 @@ export class AwsUtil {
     }
 
 
-    public static async GetOrganizationsService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<Organizations.OrganizationsClient> {
+    public static GetOrganizationsService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): OrganizationsClient {
         const region = (isPartition) ? this.partitionRegion : 'us-east-1';
-        return await AwsUtil.GetOrCreateService(Organizations.OrganizationsClient, AwsUtil.OrganizationsServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
+        const cacheKey = `${accountId}/${roleInTargetAccount}/${region}`;
+        if (this.OrganizationsServiceCache[cacheKey]) {
+            return this.OrganizationsServiceCache[cacheKey];
+        }
+
+        const clientParams: OrganizationsClientConfig = {
+            region,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+
+        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
+        if (viaRoleArn) {
+            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
+                params: { RoleArn: viaRoleArn },
+            });
+        }
+        if (roleInTargetAccount) {
+            clientParams.credentials = fromTemporaryCredentials({
+                ...tempCredsProviderOptions,
+                params: {
+                    RoleArn: roleInTargetAccount,
+                    RoleSessionName: `OFN-${AwsUtil.userId}`,
+                    DurationSeconds: 900,
+                },
+            });
+        }
+        this.OrganizationsServiceCache[cacheKey] = new OrganizationsClient(clientParams);
+        return this.OrganizationsServiceCache[cacheKey];
     }
 
-    public static async GetSupportService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<SupportClient> {
+    public static GetSupportService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): SupportClient {
         const region = (isPartition) ? this.partitionRegion : 'us-east-1';
-        return await AwsUtil.GetOrCreateService(SupportClient, AwsUtil.SupportServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
+        const cacheKey = `${accountId}/${roleInTargetAccount}/${region}`;
+        if (this.SupportServiceCache[cacheKey]) {
+            return this.SupportServiceCache[cacheKey];
+        }
+
+        const clientParams: SupportClientConfig = {
+            region,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
+        if (viaRoleArn) {
+            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
+                params: { RoleArn: viaRoleArn },
+            });
+        }
+        if (roleInTargetAccount) {
+            clientParams.credentials = fromTemporaryCredentials({
+                ...tempCredsProviderOptions,
+                params: {
+                    RoleArn: roleInTargetAccount,
+                    RoleSessionName: `OFN-${AwsUtil.userId}`,
+                    DurationSeconds: 900,
+                },
+            });
+        }
+        this.SupportServiceCache[cacheKey] = new SupportClient(clientParams);
+        return this.SupportServiceCache[cacheKey];
     }
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
@@ -273,56 +301,106 @@ export class AwsUtil {
         return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
-    public static async GetS3Service(accountId: string, region?: string, roleInTargetAccount?: string): Promise<S3.S3Client> {
-        const config: DefaultClientConfig = {};
-        if (region !== undefined) {
-            config.region = region;
+    public static GetS3Service(accountId: string, region?: string, roleInTargetAccount?: string): S3Client {
+        const cacheKey = `${accountId}/${roleInTargetAccount}/${region}`;
+        if (this.S3ServiceCache[cacheKey]) {
+            return this.S3ServiceCache[cacheKey];
         }
 
-        return AwsUtil.GetOrCreateService(S3.S3Client, AwsUtil.S3ServiceCache, accountId, `${accountId}/${roleInTargetAccount}`, config, roleInTargetAccount);
+        const clientParams: S3ClientConfig = {
+            region,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
+        if (roleInTargetAccount) {
+            clientParams.credentials = fromTemporaryCredentials({
+                ...tempCredsProviderOptions,
+                params: {
+                    RoleArn: roleInTargetAccount,
+                    RoleSessionName: `OFN-${AwsUtil.userId}`,
+                    DurationSeconds: 900,
+                },
+            });
+        }
+        this.S3ServiceCache[cacheKey] = new S3Client(clientParams);
+        return this.S3ServiceCache[cacheKey];
     }
 
-    public static async GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): Promise<IAMClient> {
-        return await AwsUtil.GetOrCreateService<IAMClient>(IAMClient, AwsUtil.IamServiceCache, accountId, `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, {}, roleInTargetAccount, viaRoleArn, isPartition);
+    public static GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): IAMClient {
+        const cacheKey = `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`;
+        if (this.IamServiceCache[cacheKey]) {
+            return this.IamServiceCache[cacheKey];
+        }
+
+        const clientParams: IAMClientConfig = {
+            region: isPartition ? this.partitionRegion : AwsUtil.GetDefaultRegion(),
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
+        if (viaRoleArn) {
+            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
+                params: { RoleArn: viaRoleArn },
+            });
+        }
+        if (roleInTargetAccount) {
+            clientParams.credentials = fromTemporaryCredentials({
+                ...tempCredsProviderOptions,
+                params: {
+                    RoleArn: roleInTargetAccount,
+                    RoleSessionName: `OFN-${AwsUtil.userId}`,
+                    DurationSeconds: 900,
+                },
+            });
+        }
+        this.IamServiceCache[cacheKey] = new IAMClient(clientParams);
+        return this.IamServiceCache[cacheKey];
     }
 
-    public static async GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): Promise<CFN.CloudFormationClient> {
-        return await AwsUtil.GetOrCreateService(CFN.CloudFormationClient, AwsUtil.CfnServiceCache, accountId, `${accountId}/${region}/${roleInTargetAccount}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`, { region }, roleInTargetAccount, viaRoleArn, isPartition);
+    /**
+     * Returns an authenticated CloudFormationClient in the provided accountId and region assuming the role provided.
+     *
+     * If also a `viaRoleArn` is provided, then that roleArn is assumed first using Role Chaining
+     * If partion is true, then the given region is ignored and partitionRegion is used.
+     */
+    public static GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): CloudFormationClient {
+        const cacheKey = `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`;
+        if (this.CfnServiceCache[cacheKey]) {
+            return this.CfnServiceCache[cacheKey];
+        }
+
+        const clientParams: CloudFormationClientConfig = {
+            region: isPartition ? this.partitionRegion : region,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
+        if (viaRoleArn) {
+            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
+                params: { RoleArn: viaRoleArn },
+            });
+        }
+        if (roleInTargetAccount) {
+            clientParams.credentials = fromTemporaryCredentials({
+                ...tempCredsProviderOptions,
+                params: {
+                    RoleArn: roleInTargetAccount,
+                    RoleSessionName: `OFN-${AwsUtil.userId}`,
+                    DurationSeconds: 900,
+                },
+            });
+        }
+        this.CfnServiceCache[cacheKey] = new CloudFormationClient(clientParams);
+        return this.CfnServiceCache[cacheKey];
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string, credentials: ClientCredentialsConfig = undefined): Promise<void> {
-        const s3client = new S3.S3Client(credentials ? { credentials } : {});
-        await s3client.send(new S3.DeleteObjectCommand({ Bucket: bucketName, Key: objectKey }));
-    }
-
-
-    private static async GetOrCreateService<TService, TServiceConfig extends DefaultClientConfig = DefaultClientConfig>(ctr: new (args: TServiceConfig) => TService, cache: Record<string, TService>, accountId: string, cacheKey: string = accountId, clientConfig: TServiceConfig, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): Promise<TService> {
-
-
-        const cachedService = cache[cacheKey];
-        if (cachedService) {
-            return cachedService;
-        }
-
-        const config = clientConfig;
-
-
-        if (typeof roleInTargetAccount !== 'string') {
-            roleInTargetAccount = GlobalState.GetCrossAccountRoleName(accountId);
-        }
-
-        const credentialOptions: ClientCredentialsConfig = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, config.region, viaRoleArn, isPartition);
-        if (credentialOptions !== undefined) {
-            config.credentials = credentialOptions;
-            if (isPartition && !config.region) {
-                config.region = this.partitionRegion;
-            }
-        }
-
-        const service = new ctr(config);
-
-        cache[cacheKey] = service;
-        return service;
+        const s3client = new S3Client(credentials ? { credentials } : {});
+        await s3client.send(new DeleteObjectCommand({ Bucket: bucketName, Key: objectKey }));
     }
 
     public static async GetCredentials(accountId: string, roleInTargetAccount: string, stsRegion?: string, viaRoleArn?: string, isPartition?: boolean): Promise<AwsCredentialIdentity | undefined> {
@@ -371,8 +449,8 @@ export class AwsUtil {
     }
 
     private static async GetCredentialsForRole(roleArn: string, config: DefaultClientConfig): Promise<AwsCredentialIdentity> {
-        const sts = new STS.STSClient(config);
-        const response = await sts.send(new STS.AssumeRoleCommand({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }));
+        const sts = new STSClient(config);
+        const response = await sts.send(new AssumeRoleCommand({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }));
         const credentialOptions: ClientCredentialsConfig = {
             accessKeyId: response.Credentials.AccessKeyId,
             secretAccessKey: response.Credentials.SecretAccessKey,
@@ -387,33 +465,30 @@ export class AwsUtil {
         const cachedVal = this.CfnExportsCache[cacheKey];
         if (cachedVal !== undefined) { return cachedVal; }
 
-        const cfnRetrieveExport = await AwsUtil.GetCloudFormation(accountId, region, customRoleName, customViaRoleArn);
-        const listExportsRequest: CFN.ListExportsCommandInput = {};
-        do {
-            let throttled = false;
-            let throttledCount = 0;
-            do {
-                throttled = false;
-                try {
-                    const listExportsResponse = await cfnRetrieveExport.send(new CFN.ListExportsCommand(listExportsRequest));
-                    listExportsRequest.NextToken = listExportsResponse.NextToken;
-                    const foundExport = listExportsResponse.Exports.find(x => x.Name === exportName);
-                    if (foundExport) {
-                        this.CfnExportsCache[cacheKey] = foundExport.Value;
-                        return foundExport.Value;
+        const cfnClient = AwsUtil.GetCloudFormation(accountId, region, customRoleName, customViaRoleArn);
+
+        for await (const page of paginateListExports({ client: cfnClient }, {})) {
+            if (page.Exports !== undefined) {
+                for (const cfnExport of page.Exports) {
+                    const key = `${cfnExport.Name}|${accountId}|${region}|${customRoleName}${customViaRoleArn}`;
+                    this.CfnExportsCache[key] = cfnExport.Value;
+                    if (cfnExport.Name === exportName) {
+                        return cfnExport.Value;
                     }
-                } catch (err) {
-                    if (err.code === 'Throttling') {
-                        throttledCount += 1;
-                        await sleep(throttledCount * (1.5 * Math.random()));
-                        throttled = true;
-                    } else { throw err; }
                 }
-            } while (throttled);
-        } while (listExportsRequest.NextToken);
+            }
+        }
+
         return undefined;
     }
 
+    /**
+     * Obtains the default AWS Region in order:
+     * 1. AWS_DEFAULT_REGION
+     * 2. looks for the profile in aws/config whether that specifies a region
+     * 3. AWS_REGION
+     * 4. defaults to us-east-1
+     */
     public static GetDefaultRegion(profileName?: string): string {
         const defaultRegionFromEnv = process.env.AWS_DEFAULT_REGION;
         if (defaultRegionFromEnv) { return defaultRegionFromEnv; }
@@ -439,19 +514,21 @@ export class AwsUtil {
     private static partitionRegion = 'us-gov-west-1';
     private static masterAccountId: string | PromiseLike<string>;
     private static masterPartitionId: string | PromiseLike<string>;
-    private static partitionProfile: string | PromiseLike<string>;
+    private static partitionProfile?: string;
+    private static profile?: string;
     private static isDevelopmentBuild = false;
     private static largeTemplateBucketName: string | undefined;
-    private static partitionCredentials: ClientCredentialsConfig;
+    private static partitionCredentials: AwsCredentialIdentity | undefined;
     private static buildProcessAccountId: string | PromiseLike<string>;
     private static IamServiceCache: Record<string, IAMClient> = {};
     private static SupportServiceCache: Record<string, SupportClient> = {};
-    private static OrganizationsServiceCache: Record<string, Organizations.OrganizationsClient> = {};
-    private static CfnServiceCache: Record<string, CFN.CloudFormationClient> = {};
-    private static S3ServiceCache: Record<string, S3.S3Client> = {};
+    private static OrganizationsServiceCache: Record<string, OrganizationsClient> = {};
+    private static CfnServiceCache: Record<string, CloudFormationClient> = {};
+    private static S3ServiceCache: Record<string, S3Client> = {};
     private static CfnExportsCache: Record<string, string> = {};
     private static isPartition = false;
     private static enabledRegions: string[];
+    private static userId: string;
 }
 
 export const passwordPolicyEquals = (pwdPolicyResourceA: Reference<PasswordPolicyResource>, pwdPolicyResourceB: Reference<PasswordPolicyResource>): boolean => {
@@ -503,38 +580,38 @@ export const passwordPolicyEquals = (pwdPolicyResourceA: Reference<PasswordPolic
 
 export class CfnUtil {
 
-    public static async UploadTemplateToS3IfTooLarge(stackInput: CFN.CreateStackCommandInput | CFN.UpdateStackCommandInput | CFN.ValidateTemplateCommandInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
+    public static async UploadTemplateToS3IfTooLarge(stackInput: CreateStackCommandInput | UpdateStackCommandInput | ValidateTemplateCommandInput, binding: ICfnBinding, stackName: string, templateHash: string): Promise<void> {
         if (stackInput.TemplateBody && stackInput.TemplateBody.length > 50000) {
-            const s3Service = await AwsUtil.GetS3Service(binding.accountId, binding.region, binding.customRoleName);
+            const s3Service = AwsUtil.GetS3Service(binding.accountId, binding.region, binding.customRoleName);
             const preExistingBucket = AwsUtil.GetLargeTemplateBucketName();
             const bucketName = preExistingBucket ?? `org-formation-${binding.accountId}-${binding.region}-large-templates`;
             if (!preExistingBucket) {
                 try {
-                    await s3Service.send(new S3.CreateBucketCommand({ Bucket: bucketName }));
+                    await s3Service.send(new CreateBucketCommand({ Bucket: bucketName }));
                     await s3Service.send(
-                      new S3.PutBucketOwnershipControlsCommand({
-                        Bucket: bucketName,
-                        OwnershipControls: { Rules: [{ ObjectOwnership: 'BucketOwnerPreferred' }] },
-                      })
+                        new PutBucketOwnershipControlsCommand({
+                            Bucket: bucketName,
+                            OwnershipControls: { Rules: [{ ObjectOwnership: 'BucketOwnerPreferred' }] },
+                        })
                     );
                     await s3Service.send(
-                      new S3.PutPublicAccessBlockCommand({
-                        Bucket: bucketName,
-                        PublicAccessBlockConfiguration: {
-                          BlockPublicAcls: true,
-                          IgnorePublicAcls: true,
-                          BlockPublicPolicy: true,
-                          RestrictPublicBuckets: true,
-                        },
-                      })
+                        new PutPublicAccessBlockCommand({
+                            Bucket: bucketName,
+                            PublicAccessBlockConfiguration: {
+                                BlockPublicAcls: true,
+                                IgnorePublicAcls: true,
+                                BlockPublicPolicy: true,
+                                RestrictPublicBuckets: true,
+                            },
+                        })
                     );
                     await s3Service.send(
-                      new S3.PutBucketEncryptionCommand({
-                        Bucket: bucketName,
-                        ServerSideEncryptionConfiguration: {
-                          Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }],
-                        },
-                      })
+                        new PutBucketEncryptionCommand({
+                            Bucket: bucketName,
+                            ServerSideEncryptionConfiguration: {
+                                Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }],
+                            },
+                        })
                     );
                 } catch (err) {
                     if (err && (err.code !== 'BucketAlreadyOwnedByYou')) {
@@ -542,20 +619,20 @@ export class CfnUtil {
                     }
                 }
             }
-            const putObjectRequest: S3.PutObjectCommandInput = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
-            await s3Service.send(new S3.PutObjectCommand(putObjectRequest));
+            const putObjectRequest: PutObjectCommandInput = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
+            await s3Service.send(new PutObjectCommand(putObjectRequest));
             if (binding.region.includes('us-gov')) {
                 stackInput.TemplateURL = `https://${bucketName}.s3-${binding.region}.amazonaws.com/${putObjectRequest.Key}`;
             } else {
-                stackInput.TemplateURL = `https://${bucketName}.s3.amazonaws.com/${putObjectRequest.Key}`;
+                stackInput.TemplateURL = `https://${bucketName}.amazonaws.com/${putObjectRequest.Key}`;
             }
             delete stackInput.TemplateBody;
         }
     }
 
 
-    public static async UpdateOrCreateStack(cfn: CFN.CloudFormationClient, updateStackInput: CFN.UpdateStackCommandInput): Promise<CFN.DescribeStacksCommandOutput> {
-        let describeStack: CFN.DescribeStacksCommandOutput;
+    public static async UpdateOrCreateStack(cfn: CloudFormationClient, updateStackInput: UpdateStackCommandInput): Promise<DescribeStacksCommandOutput> {
+        let describeStack: DescribeStacksCommandOutput;
         let retryStackIsBeingUpdated = false;
         let retryStackIsBeingUpdatedCount = 0;
         let retryAccountIsBeingInitialized = false;
@@ -567,8 +644,8 @@ export class CfnUtil {
             try {
                 try {
                     updateStackInput.ClientRequestToken = uuid();
-                    await cfn.send(new CFN.UpdateStackCommand(updateStackInput));
-                    await CFN.waitUntilStackUpdateComplete({
+                    await cfn.send(new UpdateStackCommand(updateStackInput));
+                    await waitUntilStackUpdateComplete({
                         client: cfn,
                         maxDelay: 1,
                         maxWaitTime: 60 * 30,
@@ -576,14 +653,14 @@ export class CfnUtil {
                     }, {
                         StackName: updateStackInput.StackName,
                     });
-                    describeStack = await cfn.send(new CFN.DescribeStacksCommand({
+                    describeStack = await cfn.send(new DescribeStacksCommand({
                         StackName: updateStackInput.StackName,
                     }));
                 } catch (innerErr) {
                     if (innerErr && innerErr.code === 'ValidationError' && innerErr.message && innerErr.message.indexOf('does not exist') !== -1) {
                         updateStackInput.ClientRequestToken = uuid();
-                        await cfn.send(new CFN.CreateStackCommand(updateStackInput));
-                        await CFN.waitUntilStackCreateComplete({
+                        await cfn.send(new CreateStackCommand(updateStackInput));
+                        await waitUntilStackCreateComplete({
                             client: cfn,
                             maxDelay: 1,
                             maxWaitTime: 60 * 30,
@@ -591,11 +668,11 @@ export class CfnUtil {
                         }, {
                             StackName: updateStackInput.StackName,
                         });
-                        describeStack = await cfn.send(new CFN.DescribeStacksCommand({
+                        describeStack = await cfn.send(new DescribeStacksCommand({
                             StackName: updateStackInput.StackName,
                         }));
-                    } else if(innerErr && innerErr.message && innerErr.message.indexOf('No updates are to be performed') !== -1) {
-                        describeStack = await cfn.send(new CFN.DescribeStacksCommand({
+                    } else if (innerErr && innerErr.message && innerErr.message.indexOf('No updates are to be performed') !== -1) {
+                        describeStack = await cfn.send(new DescribeStacksCommand({
                             StackName: updateStackInput.StackName,
                         }));
                     } else {
@@ -614,12 +691,12 @@ export class CfnUtil {
                 } else if (err && (err.code === 'ValidationError' && err.message) || (err.code === 'ResourceNotReady')) {
                     const message = err.message as string;
                     if (message.includes('ROLLBACK_COMPLETE') || message.includes('DELETE_FAILED')) {
-                        // await cfn.deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
-                        await cfn.send(new CFN.DeleteStackCommand({
+                        // await deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
+                        await cfn.send(new DeleteStackCommand({
                             StackName: updateStackInput.StackName,
                             RoleARN: updateStackInput.RoleARN,
                         }));
-                        await CFN.waitUntilStackDeleteComplete({
+                        await waitUntilStackDeleteComplete({
                             client: cfn,
                             maxWaitTime: 60 * 30,
                             minDelay: 1,
@@ -627,12 +704,12 @@ export class CfnUtil {
                         }, {
                             StackName: updateStackInput.StackName,
                         });
-                        describeStack = await cfn.send(new CFN.DescribeStacksCommand({
+                        describeStack = await cfn.send(new DescribeStacksCommand({
                             StackName: updateStackInput.StackName,
                         }));
                         updateStackInput.ClientRequestToken = uuid();
-                        await cfn.send(new CFN.CreateStackCommand(updateStackInput));
-                        await CFN.waitUntilStackCreateComplete({
+                        await cfn.send(new CreateStackCommand(updateStackInput));
+                        await waitUntilStackCreateComplete({
                             client: cfn,
                             maxWaitTime: 60 * 30,
                             minDelay: 1,
@@ -640,13 +717,13 @@ export class CfnUtil {
                         }, {
                             StackName: updateStackInput.StackName,
                         });
-                        describeStack = await cfn.send(new CFN.DescribeStacksCommand({
+                        describeStack = await cfn.send(new DescribeStacksCommand({
                             StackName: updateStackInput.StackName,
                         }));
                     } else if (message.includes('ROLLBACK_FAILED')) {
                         throw new OrgFormationError(`Stack ${updateStackInput.StackName} is in ROLLBACK_FAILED state and needs manual attention.`);
                     } else if (-1 !== message.indexOf('No updates are to be performed.')) {
-                        describeStack = await cfn.send(new CFN.DescribeStacksCommand({
+                        describeStack = await cfn.send(new DescribeStacksCommand({
                             StackName: updateStackInput.StackName,
                         }));
                         // ignore;
@@ -678,75 +755,6 @@ export class CfnUtil {
         } while (retryStackIsBeingUpdated || retryAccountIsBeingInitialized);
         return describeStack;
     }
-}
-
-export class CustomMFACredentials extends AWS.Credentials {
-    profile: string;
-
-    constructor(profile: string) {
-        super(undefined);
-        this.profile = profile;
-    }
-
-    refresh(callback: (err: AWS.AWSError) => void): void {
-        const that = this;
-        this.innerRefresh()
-            .then(creds => {
-                that.accessKeyId = creds.accessKeyId;
-                that.secretAccessKey = creds.secretAccessKey;
-                that.sessionToken = creds.sessionToken;
-                callback(undefined);
-            })
-            .catch(err => { callback(err); });
-    };
-
-    async innerRefresh(): Promise<AwsCredentialIdentity> {
-        const profileName = this.profile ? this.profile : 'default';
-        const homeDir = require('os').homedir();
-
-        // todo: add support for windows?
-        if (!existsSync(homeDir + '/.aws/config')) {
-            return;
-        }
-
-        const awsconfig = readFileSync(homeDir + '/.aws/config').toString('utf8');
-        const contents = ini.parse(awsconfig);
-        const profileKey = contents['profile ' + profileName];
-
-        if (profileKey && profileKey.source_profile) {
-            const awssecrets = readFileSync(homeDir + '/.aws/credentials').toString('utf8');
-            const secrets = ini.parse(awssecrets);
-            const creds = secrets[profileKey.source_profile];
-            const sts = new STS.STSClient({ credentials: {
-                accessKeyId: creds.aws_access_key_id,
-                secretAccessKey: creds.aws_secret_access_key,
-                ...(creds.aws_session_token && { sessionToken: creds.aws_session_token }),
-            }, region: AwsUtil.GetPartitionRegion() });
-
-            const assumeRoleReq: STS.AssumeRoleCommandInput = {
-                RoleArn: profileKey.role_arn,
-                RoleSessionName: 'organization-build',
-            };
-
-            if (profileKey.mfa_serial !== undefined) {
-                const token = await ConsoleUtil.Readline(`👋 Enter MFA code for ${profileKey.mfa_serial}`);
-                assumeRoleReq.SerialNumber = profileKey.mfa_serial;
-                assumeRoleReq.TokenCode = token;
-            }
-
-            try {
-                const tokens = await sts.send(new STS.AssumeRoleCommand(assumeRoleReq));
-                return { accessKeyId: tokens.Credentials.AccessKeyId, secretAccessKey: tokens.Credentials.SecretAccessKey, sessionToken: tokens.Credentials.SessionToken };
-            } catch (err) {
-                throw new OrgFormationError(`unable to assume role, error: \n${err}`);
-            }
-        }
-
-        else if (process.env.GOV_AWS_ACCESS_KEY_ID && process.env.GOV_AWS_SECRET_ACCESS_KEY) {
-            return { accessKeyId: process.env.GOV_AWS_ACCESS_KEY_ID, secretAccessKey: process.env.GOV_AWS_SECRET_ACCESS_KEY };
-        }
-    }
-
 }
 
 const sleep = (seconds: number): Promise<void> => {

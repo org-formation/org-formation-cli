@@ -41,7 +41,7 @@ export class ChildProcessUtility {
         } catch (err) {
             throw new OrgFormationError(`error invoking external command ${command}.\n error: ${err}`, ErrorCode.FailureToRemove);
         }
-    };
+    }
 
     public static SpawnProcess(command: string, options: ExecOptions, logVerbose: boolean | undefined = undefined): Promise<void> {
         // options.shell = '/bin/bash';
@@ -75,5 +75,5 @@ export class ChildProcessUtility {
                 }
             });
         });
-    };
+    }
 }

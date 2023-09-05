@@ -6,4 +6,4 @@ export interface DefaultClientConfig {
   credentials?: ClientCredentialsConfig;
   region?: string;
   stsRegionalEndpoints?: 'legacy' | 'regional';
-};
+}
