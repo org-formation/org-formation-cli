@@ -327,7 +327,7 @@ export class AwsOrganizationWriter {
             try {
                 await this.updateAccount(resource, accountId);
             } catch (err) {
-                if (err.code === 'AccessDenied' && retryCountAccessDenied < 3) {
+                if ((err.code === 'AccessDenied' || err.code === 'InvalidClientTokenId') && retryCountAccessDenied < 3) {
                     shouldRetry = true;
                     retryCountAccessDenied = retryCountAccessDenied + 1;
                     await sleep(3000);
@@ -366,7 +366,7 @@ export class AwsOrganizationWriter {
                 await this.updateAccount(resource, result.AccountId);
                 await partitionWriter.updateAccount(resource, result.GovCloudAccountId);
             } catch (err) {
-                if (err.code === 'AccessDenied' && retryCountAccessDenied < 3) {
+                if ((err.code === 'AccessDenied' || err.code === 'InvalidClientTokenId') && retryCountAccessDenied < 3) {
                     shouldRetry = true;
                     retryCountAccessDenied = retryCountAccessDenied + 1;
                     await sleep(3000);
