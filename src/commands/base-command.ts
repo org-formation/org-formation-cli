@@ -93,7 +93,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     public async generateDefaultTemplate(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
-       return DefaultTemplateWriter.CreateDefaultTemplateFromAws(defaultBuildAccessRoleName, templateGenerationSettings);
+        return DefaultTemplateWriter.CreateDefaultTemplateFromAws(defaultBuildAccessRoleName, templateGenerationSettings);
     }
 
     public async getState(command: ICommandArgs): Promise<PersistedState> {
@@ -253,7 +253,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected parseCfnParameters(commandParameters?: string | undefined | {}): Record<string, string> {
 
         if (typeof commandParameters === 'object') {
-            return commandParameters;
+            return commandParameters as Record<string, string>;
         }
         if (typeof commandParameters === 'string') {
             return CfnParameters.ParseParameterValues(commandParameters);
