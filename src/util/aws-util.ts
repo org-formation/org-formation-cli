@@ -627,7 +627,7 @@ export class CustomMFACredentials extends AWS.Credentials {
                 callback(undefined);
             })
             .catch(err => { callback(err); });
-    };
+    }
 
     async innerRefresh(): Promise<CredentialsOptions> {
         const profileName = this.profile ? this.profile : 'default';

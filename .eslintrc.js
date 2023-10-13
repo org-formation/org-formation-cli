@@ -123,6 +123,7 @@ module.exports = {
         "no-caller": "error",
         "no-cond-assign": "error",
         "no-console": "off",
+        
         "no-debugger": "error",
         "no-empty": "error",
         "no-eval": "error",
@@ -130,12 +131,6 @@ module.exports = {
         "no-invalid-this": "off",
         "no-multiple-empty-lines": "error",
         "no-new-wrappers": "error",
-        "no-shadow": [
-            "error",
-            {
-                "hoist": "all"
-            }
-        ],
         "no-throw-literal": "error",
         "no-trailing-spaces": "error",
         "no-undef-init": "error",
@@ -165,6 +160,8 @@ module.exports = {
         ],
         "spaced-comment": "error",
         "use-isnan": "error",
-        "valid-typeof": "off"
+        "valid-typeof": "off",
+        "@typescript-eslint/ban-types": "off",
+        "@typescript-eslint/class-name-casing": "off"
     }
 };

@@ -247,7 +247,7 @@ export class CfnTaskProvider {
 
 }
 
-export const performAndRetryIfNeeded = async <T extends unknown>(fn: () => Promise<T>): Promise<T> => {
+export const performAndRetryIfNeeded = async <T>(fn: () => Promise<T>): Promise<T> => {
     let shouldRetry = false;
     let retryCount = 0;
     do {

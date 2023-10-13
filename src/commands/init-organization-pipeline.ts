@@ -1,5 +1,5 @@
-import archiver = require('archiver');
 import { existsSync, readFileSync } from 'fs';
+import archiver = require('archiver');
 import { Organizations, S3 } from 'aws-sdk';
 import { CreateStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
 import { PutObjectRequest } from 'aws-sdk/clients/s3';

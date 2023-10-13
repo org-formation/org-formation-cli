@@ -307,7 +307,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         this.loadRuntimeConfiguration(command);
 
         if (command.excludeAccounts) {
-            const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x => x.trim());;
+            const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x => x.trim());
             ConsoleUtil.LogInfo(`excluding the following accounts: ${exclude.join(', ')}`);
             AwsOrganizationReader.excludeAccountIds = exclude;
         }

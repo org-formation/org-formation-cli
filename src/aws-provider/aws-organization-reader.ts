@@ -1,8 +1,10 @@
 import { IAM, Organizations, Support } from 'aws-sdk/clients/all';
-import { Account, ListAccountsForParentRequest, ListAccountsResponse, ListOrganizationalUnitsForParentRequest,
+import {
+    Account, ListAccountsForParentRequest, ListAccountsResponse, ListOrganizationalUnitsForParentRequest,
     ListOrganizationalUnitsForParentResponse, ListPoliciesRequest, ListPoliciesResponse, ListRootsRequest,
     ListRootsResponse, ListTagsForResourceRequest, ListTargetsForPolicyRequest, ListTargetsForPolicyResponse,
-    Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType } from 'aws-sdk/clients/organizations';
+    Organization, OrganizationalUnit, Policy, PolicyTargetSummary, Root, TargetType,
+} from 'aws-sdk/clients/organizations';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
@@ -224,7 +226,7 @@ export class AwsOrganizationReader {
                 do {
                     resp = await performAndRetryIfNeeded(() => that.organizationService.listAccountsForParent(req).promise());
                     req.NextToken = resp.NextToken;
-                    const accounts = resp.Accounts?.filter(x=>!excludeAccountIds.includes(x.Id));
+                    const accounts = resp.Accounts?.filter(x => !excludeAccountIds.includes(x.Id));
 
                     const getAccount = async (acc: Account): Promise<void> => {
                         if (acc.Status === 'SUSPENDED') {
@@ -379,7 +381,7 @@ export class AwsOrganizationReader {
         this.organizationService = organizationService;
         this.policies = new Lazy(this, AwsOrganizationReader.listPolicies);
         this.organizationalUnits = new Lazy(this, AwsOrganizationReader.listOrganizationalUnits);
-        this.accounts = new Lazy(this, x=> AwsOrganizationReader.listAccounts(x, AwsOrganizationReader.excludeAccountIds));
+        this.accounts = new Lazy(this, x => AwsOrganizationReader.listAccounts(x, AwsOrganizationReader.excludeAccountIds));
         this.organization = new Lazy(this, AwsOrganizationReader.getOrganization);
         this.roots = new Lazy(this, AwsOrganizationReader.listRoots);
         this.isPartition = false;
@@ -393,8 +395,8 @@ class Lazy<T> {
     private obtainValueFn: (that: AwsOrganizationReader) => Promise<T>;
     private that: AwsOrganizationReader;
 
-    constructor(that: AwsOrganizationReader, obtainValueFn: (that: AwsOrganizationReader) => Promise<T>) {
-        this.that = that;
+    constructor(inst: AwsOrganizationReader, obtainValueFn: (that: AwsOrganizationReader) => Promise<T>) {
+        this.that = inst;
         this.obtainValueFn = obtainValueFn;
     }
 

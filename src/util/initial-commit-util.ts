@@ -16,7 +16,7 @@ interface TemplateDefinition {
   parameters: { name: string; required: boolean }[];
   organizationFilePath: string;
   templateGenerationSettings?: ITemplateGenerationSettings;
-};
+}
 
 export interface ExtractedTemplate {
   definition: TemplateDefinition;

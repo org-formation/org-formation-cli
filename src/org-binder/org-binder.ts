@@ -160,7 +160,7 @@ export class OrganizationBinding {
 
 type BindingAction = 'Create' | 'Update' | 'Delete' | 'None';
 
-class Binding<TResource extends Resource> {
+class Binding<TTemplate extends Resource> {
 
     public static getBindingOnType<TResource extends Resource>(state: PersistedState, templateResource: TResource): Binding<TResource> {
         if (!templateResource) { return undefined; }
@@ -236,7 +236,8 @@ class Binding<TResource extends Resource> {
         }
         return result;
     }
-    public template?: TResource;
+
+    public template?: TTemplate;
     public state?: IBinding;
     public action: BindingAction;
     public templateHash?: string;
