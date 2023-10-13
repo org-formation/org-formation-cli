@@ -1,11 +1,6 @@
 const defaultConfig = {
     preset: 'ts-jest',
     testEnvironment: 'node',
-    globals: {
-        'ts-jest': {
-            compiler: 'ttypescript'
-        }
-    },
 };
 
 module.exports = {

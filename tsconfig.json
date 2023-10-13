@@ -1,8 +1,5 @@
 {
     "compileOnSave": true,
-    "ts-node": {
-        "compiler": "ttypescript"
-    },
     "compilerOptions": {
         "allowJs": true,
         "declaration": true,
