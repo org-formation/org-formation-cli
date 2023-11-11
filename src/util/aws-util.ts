@@ -246,27 +246,25 @@ export class AwsUtil {
                 params: { RoleArn: viaRoleArn },
             });
         }
-        if (roleInTargetAccount) {
-            clientParams.credentials = fromTemporaryCredentials({
-                ...tempCredsProviderOptions,
-                params: {
-                    RoleArn: roleInTargetAccount,
-                    RoleSessionName: `OFN-${AwsUtil.userId}`,
-                    DurationSeconds: 900,
-                },
-            });
-        }
+        clientParams.credentials = fromTemporaryCredentials({
+            ...tempCredsProviderOptions,
+            params: {
+                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleInTargetAccount, isPartition),
+                RoleSessionName: `OFN-${AwsUtil.userId}`,
+                DurationSeconds: 900,
+            },
+        });
         this.OrganizationsServiceCache[cacheKey] = new OrganizationsClient(clientParams);
         return this.OrganizationsServiceCache[cacheKey];
     }
 
     public static GetSupportService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): SupportClient {
+        const roleToAssume = roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
         const region = (isPartition) ? this.partitionRegion : 'us-east-1';
-        const cacheKey = `${accountId}/${roleInTargetAccount}/${region}`;
+        const cacheKey = `${accountId}/${roleToAssume}/${region}`;
         if (this.SupportServiceCache[cacheKey]) {
             return this.SupportServiceCache[cacheKey];
         }
-
         const clientParams: SupportClientConfig = {
             region,
             defaultsMode: 'standard',
@@ -279,18 +277,23 @@ export class AwsUtil {
                 params: { RoleArn: viaRoleArn },
             });
         }
-        if (roleInTargetAccount) {
-            clientParams.credentials = fromTemporaryCredentials({
-                ...tempCredsProviderOptions,
-                params: {
-                    RoleArn: roleInTargetAccount,
-                    RoleSessionName: `OFN-${AwsUtil.userId}`,
-                    DurationSeconds: 900,
-                },
-            });
-        }
+        clientParams.credentials = fromTemporaryCredentials({
+            ...tempCredsProviderOptions,
+            params: {
+                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleToAssume, isPartition),
+                RoleSessionName: `OFN-${AwsUtil.userId}`,
+                DurationSeconds: 900,
+            },
+        });
         this.SupportServiceCache[cacheKey] = new SupportClient(clientParams);
         return this.SupportServiceCache[cacheKey];
+    }
+
+    public static GetRoleToAssumeArn(accountId: string, roleInTargetAccount: string, partition = false): string {
+        if (partition) {
+            return AwsUtil.GetPartitionRoleArn(accountId, roleInTargetAccount);
+        }
+        return AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
     }
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
@@ -302,7 +305,8 @@ export class AwsUtil {
     }
 
     public static GetS3Service(accountId: string, region?: string, roleInTargetAccount?: string): S3Client {
-        const cacheKey = `${accountId}/${roleInTargetAccount}/${region}`;
+        const roleToAssume = roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
+        const cacheKey = `${accountId}/${roleToAssume}/${region}`;
         if (this.S3ServiceCache[cacheKey]) {
             return this.S3ServiceCache[cacheKey];
         }
@@ -314,22 +318,22 @@ export class AwsUtil {
             maxAttempts: 6,
         };
         let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
-        if (roleInTargetAccount) {
-            clientParams.credentials = fromTemporaryCredentials({
-                ...tempCredsProviderOptions,
-                params: {
-                    RoleArn: roleInTargetAccount,
-                    RoleSessionName: `OFN-${AwsUtil.userId}`,
-                    DurationSeconds: 900,
-                },
-            });
-        }
+        clientParams.credentials = fromTemporaryCredentials({
+            ...tempCredsProviderOptions,
+            params: {
+                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleToAssume),
+                RoleSessionName: `OFN-${AwsUtil.userId}`,
+                DurationSeconds: 900,
+            },
+        });
+
         this.S3ServiceCache[cacheKey] = new S3Client(clientParams);
         return this.S3ServiceCache[cacheKey];
     }
 
     public static GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): IAMClient {
-        const cacheKey = `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`;
+        const roleToAssume = roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
+        const cacheKey = `${accountId}/${roleToAssume}/${viaRoleArn}/${isPartition}`;
         if (this.IamServiceCache[cacheKey]) {
             return this.IamServiceCache[cacheKey];
         }
@@ -346,16 +350,14 @@ export class AwsUtil {
                 params: { RoleArn: viaRoleArn },
             });
         }
-        if (roleInTargetAccount) {
-            clientParams.credentials = fromTemporaryCredentials({
-                ...tempCredsProviderOptions,
-                params: {
-                    RoleArn: roleInTargetAccount,
-                    RoleSessionName: `OFN-${AwsUtil.userId}`,
-                    DurationSeconds: 900,
-                },
-            });
-        }
+        clientParams.credentials = fromTemporaryCredentials({
+            ...tempCredsProviderOptions,
+            params: {
+                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleToAssume, isPartition),
+                RoleSessionName: `OFN-${AwsUtil.userId}`,
+                DurationSeconds: 900,
+            },
+        });
         this.IamServiceCache[cacheKey] = new IAMClient(clientParams);
         return this.IamServiceCache[cacheKey];
     }
@@ -367,7 +369,8 @@ export class AwsUtil {
      * If partion is true, then the given region is ignored and partitionRegion is used.
      */
     public static GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): CloudFormationClient {
-        const cacheKey = `${accountId}/${roleInTargetAccount}/${viaRoleArn}/${isPartition}`;
+        const roleToAssume = roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
+        const cacheKey = `${accountId}/${region}/${roleToAssume}/${viaRoleArn}/${isPartition}`;
         if (this.CfnServiceCache[cacheKey]) {
             return this.CfnServiceCache[cacheKey];
         }
@@ -376,7 +379,7 @@ export class AwsUtil {
             region: isPartition ? this.partitionRegion : region,
             defaultsMode: 'standard',
             retryMode: 'standard',
-            maxAttempts: 6,
+            maxAttempts: 8,
         };
         let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
         if (viaRoleArn) {
@@ -384,16 +387,14 @@ export class AwsUtil {
                 params: { RoleArn: viaRoleArn },
             });
         }
-        if (roleInTargetAccount) {
-            clientParams.credentials = fromTemporaryCredentials({
-                ...tempCredsProviderOptions,
-                params: {
-                    RoleArn: roleInTargetAccount,
-                    RoleSessionName: `OFN-${AwsUtil.userId}`,
-                    DurationSeconds: 900,
-                },
-            });
-        }
+        clientParams.credentials = fromTemporaryCredentials({
+            ...tempCredsProviderOptions,
+            params: {
+                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleToAssume, isPartition),
+                RoleSessionName: `OFN-${AwsUtil.userId}`,
+                DurationSeconds: 900,
+            },
+        });
         this.CfnServiceCache[cacheKey] = new CloudFormationClient(clientParams);
         return this.CfnServiceCache[cacheKey];
     }
@@ -449,7 +450,10 @@ export class AwsUtil {
     }
 
     private static async GetCredentialsForRole(roleArn: string, config: DefaultClientConfig): Promise<AwsCredentialIdentity> {
-        const sts = new STSClient(config);
+        const sts = new STSClient({
+            ...config,
+            maxAttempts: 6,
+        });
         const response = await sts.send(new AssumeRoleCommand({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }));
         const credentialOptions: ClientCredentialsConfig = {
             accessKeyId: response.Credentials.AccessKeyId,
@@ -460,8 +464,14 @@ export class AwsUtil {
 
     }
 
+    /**
+     * Uses aws cloudformation list-exports to paginate through the exports of an account-region (binding)
+     *
+     * Results are cached globally, this can lead to staleness if there is one task that uses a CopyValue causing the cache to be populated
+     * then a second task updates the export and a third task depends on the updated value. That is then fetched from the cache and therefore stale
+     */
     public static async GetCloudFormationExport(exportName: string, accountId: string, region: string, customRoleName: string, customViaRoleArn?: string): Promise<string | undefined> {
-        const cacheKey = `${exportName}|${accountId}|${region}|${customRoleName}${customViaRoleArn}`;
+        const cacheKey = `${exportName}|${accountId}|${region}`;
         const cachedVal = this.CfnExportsCache[cacheKey];
         if (cachedVal !== undefined) { return cachedVal; }
 
@@ -470,7 +480,7 @@ export class AwsUtil {
         for await (const page of paginateListExports({ client: cfnClient }, {})) {
             if (page.Exports !== undefined) {
                 for (const cfnExport of page.Exports) {
-                    const key = `${cfnExport.Name}|${accountId}|${region}|${customRoleName}${customViaRoleArn}`;
+                    const key = `${cfnExport.Name}|${accountId}|${region}`;
                     this.CfnExportsCache[key] = cfnExport.Value;
                     if (cfnExport.Name === exportName) {
                         return cfnExport.Value;
