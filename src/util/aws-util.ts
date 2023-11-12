@@ -495,7 +495,9 @@ export class AwsUtil {
     /**
      * Obtains the default AWS Region in order:
      * 1. AWS_DEFAULT_REGION
-     * 2. looks for the profile in aws/config whether that specifies a region
+     * 2. looks for the profile passed in aws/config whether that specifies a region
+     * 2. looks for the profile set on AwsUtil in aws/config whether that specifies a region
+     * 2. looks for the default in aws/config whether that specifies a region
      * 3. AWS_REGION
      * 4. defaults to us-east-1
      */
@@ -504,14 +506,17 @@ export class AwsUtil {
         if (defaultRegionFromEnv) { return defaultRegionFromEnv; }
 
         const homeDir = require('os').homedir();
-        const config = readFileSync(homeDir + '/.aws/config').toString('utf8');
-        const contents = ini.parse(config);
-        const profileKey = profileName ?
-            contents[profileName] ?? contents['profile ' + profileName] :
-            contents.default;
+        const awsConfigString = readFileSync(homeDir + '/.aws/config').toString('utf8');
+        const awsConfig = ini.parse(awsConfigString);
 
-        if (profileKey.region) {
-            return profileKey.region;
+        if (profileName && awsConfig[`profile ${profileName}`]?.region) {
+            return awsConfig[`profile ${profileName}`].region
+        }
+        if (this.profile && awsConfig[`profile ${this.profile}`]?.region) {
+            return awsConfig[`profile ${this.profile}`].region
+        }
+        if (awsConfig.default?.region) {
+            return awsConfig.default.region;
         }
 
         const regionFromEnv = process.env.AWS_REGION;
