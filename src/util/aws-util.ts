@@ -3,7 +3,7 @@ import * as ini from 'ini';
 import { IAMClient, IAMClientConfig } from '@aws-sdk/client-iam';
 import { v4 as uuid } from 'uuid';
 import { SupportClient, SupportClientConfig } from '@aws-sdk/client-support';
-import { AwsCredentialIdentity } from '@smithy/types';
+import { AwsCredentialIdentity, Provider } from '@smithy/types';
 import { FromTemporaryCredentialsOptions, fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import { DescribeOrganizationCommand, DescribeOrganizationCommandOutput, OrganizationsClient, OrganizationsClientConfig } from '@aws-sdk/client-organizations';
 import { DescribeRegionsCommand, EC2Client } from '@aws-sdk/client-ec2';
@@ -16,6 +16,7 @@ import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 import { ICfnBinding } from '~cfn-binder/cfn-binder';
+import { defaultProvider } from '@aws-sdk/credential-provider-node';
 
 export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
@@ -81,28 +82,25 @@ export class AwsUtil {
      *
      * If profile is provided, then partition will be ignored.
      */
-    public static async Initialize(): Promise<void> {
-        let stsClient = new STSClient();
-        // running with a profile in the commercial region
-        if (this.profile) {
-            process.env.AWS_SDK_LOAD_CONFIG = '1';
-            process.env.AWS_PROFILE = this.profile;
-            const caller = await stsClient.send(new GetCallerIdentityCommand({}));
-            this.userId = caller.UserId.replace(':', '-').substring(0, 60);
-            return;
-        }
-        // targeting a partition
-        if (this.isPartition) {
-            // if targeting partition with a profile
-            if (this.partitionProfile) {
-                process.env.AWS_SDK_LOAD_CONFIG = '1';
-                process.env.AWS_PROFILE = this.partitionProfile;
-            }
-            stsClient = new STSClient({ region: this.partitionRegion });
-        }
+    public static async Initialize(credentials?: Provider<AwsCredentialIdentity>): Promise<void> {
+
+        // if no credentials(provider) was passed in this method, we use the default
+        const provider = credentials ?? defaultProvider({
+            profile: this.isPartition ? this.partitionProfile : this.profile,
+        });
+
+        // save the credentialsProvider for any of the services we initialize
+        AwsUtil.credentialsProvider = provider;
+
+        // oc: not sure if this is needed, my guess is not
+        process.env.AWS_SDK_LOAD_CONFIG = '1';
+
+        // oc: lets think about this some more
+        const stsClient = new STSClient({ credentials: provider, ...(this.isPartition ? { region: this.partitionRegion } : {}) });
         const caller = await stsClient.send(new GetCallerIdentityCommand({}));
         this.userId = caller.UserId.replace(':', '-').substring(0, 60);
         return;
+
     }
 
     public static SetMasterAccountId(masterAccountId: string): void {
@@ -533,6 +531,7 @@ export class AwsUtil {
     private static masterPartitionId: string | PromiseLike<string>;
     private static partitionProfile?: string;
     private static profile?: string;
+    public static credentialsProvider: Provider<AwsCredentialIdentity>;
     private static isDevelopmentBuild = false;
     private static largeTemplateBucketName: string | undefined;
     private static partitionCredentials: AwsCredentialIdentity | undefined;
