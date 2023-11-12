@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import * as ini from 'ini';
 import { IAMClient, IAMClientConfig } from '@aws-sdk/client-iam';
 import { v4 as uuid } from 'uuid';
@@ -506,19 +506,21 @@ export class AwsUtil {
         if (defaultRegionFromEnv) { return defaultRegionFromEnv; }
 
         const homeDir = require('os').homedir();
-        const awsConfigString = readFileSync(homeDir + '/.aws/config').toString('utf8');
-        const awsConfig = ini.parse(awsConfigString);
+        const configFilePath = homeDir + '/.aws/config';
+        if (existsSync(configFilePath)) {
+            const awsConfigString = readFileSync(homeDir + '/.aws/config').toString('utf8');
+            const awsConfig = ini.parse(awsConfigString);
 
-        if (profileName && awsConfig[`profile ${profileName}`]?.region) {
-            return awsConfig[`profile ${profileName}`].region;
+            if (profileName && awsConfig[`profile ${profileName}`]?.region) {
+                return awsConfig[`profile ${profileName}`].region;
+            }
+            if (this.profile && awsConfig[`profile ${this.profile}`]?.region) {
+                return awsConfig[`profile ${this.profile}`].region;
+            }
+            if (awsConfig.default?.region) {
+                return awsConfig.default.region;
+            }
         }
-        if (this.profile && awsConfig[`profile ${this.profile}`]?.region) {
-            return awsConfig[`profile ${this.profile}`].region;
-        }
-        if (awsConfig.default?.region) {
-            return awsConfig.default.region;
-        }
-
         const regionFromEnv = process.env.AWS_REGION;
         if (regionFromEnv) { return regionFromEnv; }
 
