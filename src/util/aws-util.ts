@@ -510,10 +510,10 @@ export class AwsUtil {
         const awsConfig = ini.parse(awsConfigString);
 
         if (profileName && awsConfig[`profile ${profileName}`]?.region) {
-            return awsConfig[`profile ${profileName}`].region
+            return awsConfig[`profile ${profileName}`].region;
         }
         if (this.profile && awsConfig[`profile ${this.profile}`]?.region) {
-            return awsConfig[`profile ${this.profile}`].region
+            return awsConfig[`profile ${this.profile}`].region;
         }
         if (awsConfig.default?.region) {
             return awsConfig.default.region;
