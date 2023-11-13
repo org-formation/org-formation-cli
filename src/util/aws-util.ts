@@ -96,7 +96,7 @@ export class AwsUtil {
         process.env.AWS_SDK_LOAD_CONFIG = '1';
 
         // oc: lets think about this some more
-        const stsClient = new STSClient({ credentials: provider, ...(this.isPartition ? { region: this.partitionRegion } : {}) });
+        const stsClient = new STSClient({ credentials: provider, ...(this.isPartition ? { region: this.partitionRegion } : { region: this.GetDefaultRegion(this.profile) }) });
         const caller = await stsClient.send(new GetCallerIdentityCommand({}));
         this.userId = caller.UserId.replace(':', '-').substring(0, 60);
         return;
