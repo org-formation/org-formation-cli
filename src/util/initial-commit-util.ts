@@ -11,6 +11,7 @@ import * as S3 from '@aws-sdk/client-s3';
 import archiver from 'archiver';
 import { Upload } from '@aws-sdk/lib-storage';
 import { ClientCredentialsConfig } from './aws-types';
+import { AwsUtil } from './aws-util';
 import { DefaultTemplate, ITemplateGenerationSettings } from '~writer/default-template-writer';
 
 interface TemplateDefinition {
@@ -85,7 +86,7 @@ export class InitialCommitUtil {
 }
 
 const uploadStream = (bucket: string, key: string, credentials?: ClientCredentialsConfig): { writeStream: stream.PassThrough; promise: Promise<any> } => {
-  const s3 = new S3.S3Client({ credentials });
+  const s3 = new S3.S3Client({ credentials, region: AwsUtil.GetDefaultRegion(), followRegionRedirects: true });
   const pass = new stream.PassThrough();
   return {
     writeStream: pass,

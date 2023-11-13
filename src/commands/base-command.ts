@@ -314,6 +314,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
 
         if (command.printStack === true) {
             ConsoleUtil.printStacktraces = true;
+            Error.stackTraceLimit = 50;
         }
         if (command.verbose === true) {
             ConsoleUtil.verbose = true;

@@ -24,7 +24,7 @@ export class FileUtil {
         if (this.IsS3Object(filePath)) {
             try{
                 const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
-                const s3client = await AwsUtil.GetS3Service(buildAccountId, undefined);
+                const s3client = AwsUtil.GetS3Service(buildAccountId, undefined);
 
                 const bucketAndKey = filePath.substring(5);
                 const bucketAndKeySplit = bucketAndKey.split('/');

@@ -160,7 +160,10 @@ export class BuildConfiguration {
         try {
             if (organizationFileLocation.startsWith('s3://')) {
                 if (textTemplatingContext) { throw new Error('Text templating context is not supported on s3 hosted organization files'); }
-                const s3client = new S3Client(); // we don't know which role to assume yet....
+                const s3client = new S3Client({
+                    region: AwsUtil.GetDefaultRegion(),
+                    followRegionRedirects: true,
+                }); // we don't know which role to assume yet....
                 const bucketAndKey = organizationFileLocation.substring(5);
                 const bucketAndKeySplit = bucketAndKey.split('/');
                 const response = await s3client.send(

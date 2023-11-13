@@ -105,7 +105,7 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         Validator.throwForUnresolvedExpressions(task.remotePath, 'RemotePath');
         Validator.throwForUnresolvedExpressions(task.localPath, 'LocalPath');
 
-        const s3client = await AwsUtil.GetS3Service(target.accountId, target.region, task.taskRoleName);
+        const s3client = AwsUtil.GetS3Service(target.accountId, target.region, task.taskRoleName);
         const request: S3.DeleteObjectCommandInput = {
             ...CopyToS3TaskPlugin.getBucketAndKey(task),
         };
@@ -119,13 +119,13 @@ export class CopyToS3TaskPlugin implements IBuildTaskPlugin<IS3CopyBuildTaskConf
         Validator.throwForUnresolvedExpressions(task.remotePath, 'RemotePath');
         Validator.throwForUnresolvedExpressions(task.localPath, 'LocalPath');
 
-        const s3client = await AwsUtil.GetS3Service(target.accountId, target.region, task.taskRoleName);
+        const s3client = AwsUtil.GetS3Service(target.accountId, target.region, task.taskRoleName);
         const request: S3.PutObjectCommandInput = {
             ...CopyToS3TaskPlugin.getBucketAndKey(task),
             ACL: 'bucket-owner-full-control',
         };
         if (task.serverSideEncryption) {
-            request.ServerSideEncryption = task.serverSideEncryption;
+            request.ServerSideEncryption = task.serverSideEncryption as S3.ServerSideEncryption;
         }
         request.Body = await this.createBody(task);
 

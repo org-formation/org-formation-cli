@@ -52,7 +52,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
         if (command.delegateToBuildAccount) {
             command.buildProcessRoleName = 'OrganizationFormationBuildAccessRole';
             this.buildAccountId = command.buildAccountId;
-            this.s3credentials = await AwsUtil.GetCredentials(command.buildAccountId, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
+            this.s3credentials = await AwsUtil.GetCredentials(command.buildAccountId, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName, AwsUtil.GetDefaultRegion());
         }
         if (command.crossAccountRoleName) {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;
@@ -185,7 +185,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     public uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string, organizationTasksContents: string, cloudformationTemplateContents: string, orgParametersInclude: string, buildAccessRoleTemplateContents: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                const s3client = new S3.S3Client({ ...(this.s3credentials ? { credentials: this.s3credentials } : {}) });
+                const s3client = new S3.S3Client({ ...(this.s3credentials ? { credentials: this.s3credentials } : {}), region: AwsUtil.GetDefaultRegion(), followRegionRedirects: true });
                 const output = new WritableStream();
                 const archive = archiver('zip');
 

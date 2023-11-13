@@ -51,7 +51,7 @@ export class S3StorageProvider implements IStorageProvider {
             region = AwsUtil.GetDefaultRegion();
         }
 
-        const s3client = new S3.S3Client({ region, credentials: this.credentials });
+        const s3client = new S3.S3Client({ region, credentials: this.credentials, followRegionRedirects: true });
         try {
             await s3client.send(new S3.CreateBucketCommand(request));
             await s3client.send(new S3.PutPublicAccessBlockCommand({
@@ -91,7 +91,7 @@ export class S3StorageProvider implements IStorageProvider {
 
     public async get(): Promise<string | undefined> {
 
-        const s3client = new S3.S3Client({ credentials: this.credentials });
+        const s3client = new S3.S3Client({ credentials: this.credentials, region: AwsUtil.GetDefaultRegion(), followRegionRedirects: true });
         const request: S3.GetObjectCommandInput = {
             Bucket: this.bucketName,
             Key: this.objectKey,
@@ -126,7 +126,7 @@ export class S3StorageProvider implements IStorageProvider {
         }
 
         try {
-            const s3client = new S3.S3Client({ credentials: this.credentials, region: this.region });
+            const s3client = new S3.S3Client({ credentials: this.credentials, region: this.region, followRegionRedirects: true });
             const putObjectRequest: S3.PutObjectCommandInput = {
                 Bucket: this.bucketName,
                 Key: this.objectKey,
