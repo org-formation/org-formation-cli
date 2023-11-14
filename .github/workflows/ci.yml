@@ -24,7 +24,7 @@ jobs:
       - name: Run Tests
         id: testing
         run: |
-          # npm run lint
+          npm run lint
           npm run test:ci
       - name: Add Coverage Report
         if: github.event_name == 'pull_request'
