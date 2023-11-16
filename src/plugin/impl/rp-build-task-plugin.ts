@@ -80,7 +80,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     async performRemove(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver*/): Promise<void> {
-        const cfn = await AwsUtil.GetCloudFormation(binding.target.accountId, binding.target.region, binding.task.taskRoleName, null, AwsUtil.GetIsPartition());
+        const cfn = AwsUtil.GetCloudFormationService(binding.target.accountId, binding.target.region, binding.task.taskRoleName, null, AwsUtil.GetIsPartition());
         let listVersionsResponse: CFN.ListTypeVersionsCommandOutput;
         do {
             listVersionsResponse = await cfn.send(
@@ -117,7 +117,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
 
         const catalog = this.getCatalogBucket(AwsUtil.GetIsPartition());
 
-        const cfn = await AwsUtil.GetCloudFormation(target.accountId, target.region, task.taskRoleName, task.taskViaRoleArn, AwsUtil.GetIsPartition());
+        const cfn = AwsUtil.GetCloudFormationService(target.accountId, target.region, task.taskRoleName, task.taskViaRoleArn, AwsUtil.GetIsPartition());
 
         let roleArn = task.executionRole;
         const schemaHandlerPackage = task.schemaHandlerPackage;

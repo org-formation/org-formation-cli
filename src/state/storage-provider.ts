@@ -39,7 +39,7 @@ export class S3StorageProvider implements IStorageProvider {
 
         this.bucketName = stateBucketName;
         this.objectKey = stateObject;
-        this.credentials = credentials;
+        this.credentials = credentials ?? AwsUtil.credentialsProvider;
         this.region = region ? region : defaultRegion;
     }
 
@@ -51,7 +51,7 @@ export class S3StorageProvider implements IStorageProvider {
             region = AwsUtil.GetDefaultRegion();
         }
 
-        const s3client = new S3.S3Client({ region, credentials: this.credentials, followRegionRedirects: true });
+        const s3client = AwsUtil.GetS3Service(undefined, region);
         try {
             await s3client.send(new S3.CreateBucketCommand(request));
             await s3client.send(new S3.PutPublicAccessBlockCommand({
@@ -91,7 +91,7 @@ export class S3StorageProvider implements IStorageProvider {
 
     public async get(): Promise<string | undefined> {
 
-        const s3client = new S3.S3Client({ credentials: this.credentials, region: AwsUtil.GetDefaultRegion(), followRegionRedirects: true });
+        const s3client = AwsUtil.GetS3Service(undefined, this.region);
         const request: S3.GetObjectCommandInput = {
             Bucket: this.bucketName,
             Key: this.objectKey,
@@ -126,7 +126,8 @@ export class S3StorageProvider implements IStorageProvider {
         }
 
         try {
-            const s3client = new S3.S3Client({ credentials: this.credentials, region: this.region, followRegionRedirects: true });
+            const s3client = AwsUtil.GetS3Service(undefined, this.region);
+
             const putObjectRequest: S3.PutObjectCommandInput = {
                 Bucket: this.bucketName,
                 Key: this.objectKey,
@@ -146,7 +147,7 @@ export class S3StorageProvider implements IStorageProvider {
                 try {
                     await s3client.send(new S3.PutObjectCommand(putObjectRequest));
                 } catch (err) {
-                    if (err.code === 'NoSuchBucket' && tryCreateBucket) {
+                    if (err.name === 'NoSuchBucket' && tryCreateBucket) {
                         await this.create(this.region);
                         tryCreateBucket = false;
                         retry = true;

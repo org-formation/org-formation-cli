@@ -168,7 +168,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             roleInMasterAccount = template.organizationSection.masterAccount.buildAccessRoleName;
         }
         const masterAccountId = await AwsUtil.GetMasterAccountId();
-        const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
+        const organizations = AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
         const partitionCredentials = await AwsUtil.GetPartitionCredentials();
         const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount };
 
@@ -198,7 +198,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     protected async createOrGetStateBucket(command: ICommandArgs, region: string, accountId?: string, credentials?: ClientCredentialsConfig): Promise<S3StorageProvider> {
-        const storageProvider = await this.getStateStorageProvider(command, accountId, credentials);
+        const storageProvider = await this.getStateStorageProvider(command, accountId, credentials, region);
         try {
             await storageProvider.create(region);
         } catch (err) {
@@ -210,14 +210,14 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return storageProvider;
     }
 
-    protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: ClientCredentialsConfig): Promise<S3StorageProvider> {
+    protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: ClientCredentialsConfig, region?: string): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName, accountId);
         let storageProvider;
         if (command.isPartition) {
             storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials, AwsUtil.GetPartitionRegion());
         } else {
-            storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials);
+            storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials, region);
         }
         if (BaseCliCommand.CliCommandArgs && (BaseCliCommand.CliCommandArgs as IPerformTasksCommandArgs).skipStoringState) {
             storageProvider.dontPut = true;
@@ -228,14 +228,14 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected async getOrganizationStateStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.organizationStateObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.organizationStateBucketName || command.stateBucketName);
-        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+        const storageProvider = S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 
     protected async getOrganizationFileStorageProvider(command: IPerformTasksCommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.organizationObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
-        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+        const storageProvider = S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 

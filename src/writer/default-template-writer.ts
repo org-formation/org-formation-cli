@@ -19,7 +19,7 @@ export class DefaultTemplateWriter {
         if (organizationModel) {
             this.organizationModel = organizationModel;
         } else {
-            const org = new OrganizationsClient({ region: 'us-east-1' });
+            const org = AwsUtil.GetOrganizationsService();
             const reader = new AwsOrganizationReader(org);
             this.organizationModel = new AwsOrganization(reader);
         }
@@ -29,7 +29,7 @@ export class DefaultTemplateWriter {
     }
 
     public static async CreateDefaultTemplateFromAws(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
-        const organizations = new OrganizationsClient({ region: 'us-east-1' });
+        const organizations = AwsUtil.GetOrganizationsService();
         const partitionCredentials = await AwsUtil.GetPartitionCredentials();
 
         // configure default Organization/Reader

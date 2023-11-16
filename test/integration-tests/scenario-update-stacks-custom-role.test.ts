@@ -17,7 +17,7 @@ describe('when calling org-formation perform tasks', () => {
     beforeAll(async () => {
 
         context = await baseBeforeAll();
-        cfnClient = await AwsUtil.GetCloudFormation('340381375986', 'eu-west-1');
+        cfnClient = AwsUtil.GetCloudFormationService('340381375986', 'eu-west-1');
         await context.prepareStateBucket(basePathForScenario + '../state.json');
         const command = context.command;
 

@@ -228,7 +228,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
     public async executeOrgFormationRoleStack(targetAccountId: string, buildAccountId: string, cfnTemplate: string, region: string, stackName: string): Promise<void> {
         try {
-            const cfn = AwsUtil.GetCloudFormation(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
+            const cfn = AwsUtil.GetCloudFormationService(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
             const stackInput: CFN.CreateStackCommandInput | CFN.UpdateStackCommandInput = {
                 StackName: stackName,
                 TemplateBody: cfnTemplate,
@@ -246,7 +246,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
 
     public async executePipelineStack(targetAccountId: string, cfnTemplate: string, region: string, stateBucketName: string, resourcePrefix: string, stackName: string, repositoryName: string): Promise<void> {
         try {
-            const cfn = AwsUtil.GetCloudFormation(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
+            const cfn = AwsUtil.GetCloudFormationService(targetAccountId, region, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName);
             const stackInput: CFN.CreateStackCommandInput | CFN.UpdateStackCommandInput = {
                 StackName: stackName,
                 TemplateBody: cfnTemplate,

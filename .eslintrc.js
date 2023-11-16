@@ -147,7 +147,7 @@ module.exports = {
             "error",
             "never"
         ],
-        "prefer-arrow/prefer-arrow-functions": "error",
+        "prefer-arrow/prefer-arrow-functions": "warn",
         "prefer-const": "error",
         "quote-props": [
             "error",

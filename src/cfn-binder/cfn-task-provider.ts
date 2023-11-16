@@ -1,4 +1,4 @@
-import * as CFN from '@aws-sdk/client-cloudformation';
+import { CreateStackCommandInput, DeleteStackCommand, DeleteStackCommandInput, DescribeStackEventsCommand, Tag, UpdateStackCommandInput, UpdateTerminationProtectionCommand, waitUntilStackDeleteComplete } from '@aws-sdk/client-cloudformation';
 import { AwsUtil, CfnUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../../src/org-formation-error';
@@ -59,13 +59,13 @@ export class CfnTaskProvider {
                 const customViaRoleArn = await expressionResolver.resolveSingleExpression(binding.customViaRoleArn, 'CustomViaRoleArn');
 
                 const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
-                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
+                const cfn = AwsUtil.GetCloudFormationService(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
                 let roleArn: string;
                 if (cloudFormationRoleName) {
                     roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                 }
-                const stackInput: CFN.CreateStackCommandInput | CFN.UpdateStackCommandInput = {
+                const stackInput: CreateStackCommandInput | UpdateStackCommandInput = {
                     StackName: stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM', 'CAPABILITY_AUTO_EXPAND'],
@@ -80,7 +80,7 @@ export class CfnTaskProvider {
                 }
 
                 const entries = Object.entries(binding.tags ?? {});
-                stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as CFN.Tag));
+                stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as Tag));
                 stackInput.DisableRollback = !!binding.disableStackRollbacks;
                 for (const dependency of dependencies) {
 
@@ -135,21 +135,21 @@ export class CfnTaskProvider {
                     if (binding.state === undefined && binding.terminationProtection === true) {
                         ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
                         await cfn.send(
-                            new CFN.UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: true })
+                            new UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: true })
                         );
                     } else if (binding.state !== undefined) {
                         if (binding.terminationProtection) {
                             if (!binding.state.terminationProtection) {
                                 ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
                                 await cfn.send(
-                                    new CFN.UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: true })
+                                    new UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: true })
                                 );
                             }
                         } else {
                             if (binding.state.terminationProtection) {
                                 ConsoleUtil.LogDebug(`Disabling termination protection for stack ${stackName}`, this.logVerbose);
                                 await cfn.send(
-                                    new CFN.UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: false })
+                                    new UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: false })
                                 );
                             }
                         }
@@ -171,7 +171,7 @@ export class CfnTaskProvider {
                         ConsoleUtil.LogError(`error updating CloudFormation stack ${stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
                     }
                     try {
-                        const stackEvents = await cfn.send(new CFN.DescribeStackEventsCommand({ StackName: stackName }));
+                        const stackEvents = await cfn.send(new DescribeStackEventsCommand({ StackName: stackName }));
                         for (const event of stackEvents.StackEvents) {
                             const failureStates = ['CREATE_FAILED', 'DELETE_FAILED', 'UPDATE_FAILED'];
                             if (event.ClientRequestToken === stackInput.ClientRequestToken) {
@@ -219,7 +219,7 @@ export class CfnTaskProvider {
                 const cloudFormationRoleName = await expressionResolver.resolveSingleExpression(binding.cloudFormationRoleName, 'CloudFormationRoleName');
 
                 try {
-                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
+                    const cfn = await AwsUtil.GetCloudFormationService(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
                     await performAndRetryIfNeeded(async () => {
                         let roleArn: string;
@@ -227,17 +227,17 @@ export class CfnTaskProvider {
                             roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                         }
 
-                        const deleteStackInput: CFN.DeleteStackCommandInput = {
+                        const deleteStackInput: DeleteStackCommandInput = {
                             StackName: stackName,
                             RoleARN: roleArn,
                         };
-                        await cfn.send(new CFN.DeleteStackCommand(deleteStackInput));
+                        await cfn.send(new DeleteStackCommand(deleteStackInput));
 
-                        await CFN.waitUntilStackDeleteComplete({
+                        await waitUntilStackDeleteComplete({
                             client: cfn,
-                            maxWaitTime: 1000 * 60 * 30,
-                            maxDelay: 1000 * 60 * 5,
-                            minDelay: 1000 * 1,
+                            maxDelay: 1,
+                            maxWaitTime: 60 * 30,
+                            minDelay: 1,
                         }, {
                             NextToken: undefined,
                             StackName: stackName,

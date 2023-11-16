@@ -256,7 +256,7 @@ export class AwsOrganizationReader {
                             ]);
 
                         } catch (err) {
-                            if (err.code === 'AccessDenied') {
+                            if (err.name === 'AccessDenied') {
                                 ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot:`
                                     + '\nhttps://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md');
                             } else {
@@ -300,7 +300,7 @@ export class AwsOrganizationReader {
         try {
             await that.organization.getValue();
             const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
-            const supportClient: Support.SupportClient = await AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
+            const supportClient: Support.SupportClient = AwsUtil.GetSupportService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 
             const severityLevels = await supportClient.send( new Support.DescribeSeverityLevelsCommand({}));
             const critical = severityLevels.severityLevels.find(x => x.code === 'critical');
@@ -313,7 +313,7 @@ export class AwsOrganizationReader {
             }
             return 'developer';
         } catch (err) {
-            if (err.code === 'SubscriptionRequiredException') {
+            if (err.name === 'SubscriptionRequiredException') {
                 return 'basic';
             }
             throw err;
@@ -324,7 +324,7 @@ export class AwsOrganizationReader {
         try {
             await that.organization.getValue();
             const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
-            const iamService: IAM.IAMClient = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
+            const iamService: IAM.IAMClient = AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 
             const response = await iamService.send(new IAM.ListAccountAliasesCommand({ MaxItems: 1 }));
             if (response && response.AccountAliases && response.AccountAliases.length >= 1) {
@@ -342,13 +342,13 @@ export class AwsOrganizationReader {
         try {
             await that.organization.getValue();
             const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
-            const iamService: IAM.IAMClient = await AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
+            const iamService: IAM.IAMClient = AwsUtil.GetIamService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
 
             try {
                 const response = await iamService.send(new IAM.GetAccountPasswordPolicyCommand({}));
                 return response.PasswordPolicy;
             } catch (err) {
-                if (err && err.code === 'NoSuchEntity') {
+                if (err instanceof IAM.NoSuchEntityException) {
                     return undefined;
                 }
                 throw err;

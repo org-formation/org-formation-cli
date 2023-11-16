@@ -6,20 +6,40 @@ import { SupportClient, SupportClientConfig } from '@aws-sdk/client-support';
 import { AwsCredentialIdentity, Provider } from '@smithy/types';
 import { FromTemporaryCredentialsOptions, fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import { DescribeOrganizationCommand, DescribeOrganizationCommandOutput, OrganizationsClient, OrganizationsClientConfig } from '@aws-sdk/client-organizations';
-import { DescribeRegionsCommand, EC2Client } from '@aws-sdk/client-ec2';
-import { AssumeRoleCommand, GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
+import { DescribeRegionsCommand, EC2Client, EC2ClientConfig } from '@aws-sdk/client-ec2';
+import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import { CreateBucketCommand, DeleteObjectCommand, PutBucketEncryptionCommand, PutBucketOwnershipControlsCommand, PutObjectCommand, PutObjectCommandInput, PutPublicAccessBlockCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
-import { CloudFormationClient, CloudFormationClientConfig, CreateStackCommandInput, UpdateStackCommandInput, ValidateTemplateCommandInput, DescribeStacksCommandOutput, UpdateStackCommand, waitUntilStackUpdateComplete, DescribeStacksCommand, CreateStackCommand, waitUntilStackCreateComplete, DeleteStackCommand, waitUntilStackDeleteComplete, paginateListExports } from '@aws-sdk/client-cloudformation';
+import { CloudFormationClient, CreateStackCommandInput, UpdateStackCommandInput, ValidateTemplateCommandInput, DescribeStacksCommandOutput, UpdateStackCommand, waitUntilStackUpdateComplete, DescribeStacksCommand, CreateStackCommand, waitUntilStackCreateComplete, DeleteStackCommand, waitUntilStackDeleteComplete, paginateListExports, CloudFormationServiceException, CloudFormationClientConfig } from '@aws-sdk/client-cloudformation';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
+import { chain } from '@smithy/property-provider';
 import { OrgFormationError } from '../org-formation-error';
-import { ClientCredentialsConfig, DefaultClientConfig } from './aws-types';
+import { ClientCredentialsConfig } from './aws-types';
 import { ConsoleUtil } from './console-util';
 import { GlobalState } from './global-state';
+import { partitionFromEnv } from './credentials-provider-partition';
 import { PasswordPolicyResource, Reference } from '~parser/model';
 import { ICfnBinding } from '~cfn-binder/cfn-binder';
 
 export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
+
+interface ServiceClientConfig {
+    accountId?: string;
+    region?: string;
+    roleInTargetAccount?: string;
+    viaRoleArn?: string;
+    isPartition?: boolean;
+}
+
+type ServiceCacheKey = string;
+
+interface AwsUtilConfig {
+    isPartition: boolean;
+    partitionProfile?: string;
+    partitionRegion?: string;
+    profile?: string;
+    masterAccountId: string;
+}
 
 /**
  * Singleton utility class that is used througout this project to obtain, hold and serve AWS service clients in a cache.
@@ -40,6 +60,7 @@ export class AwsUtil {
         AwsUtil.IamServiceCache = {};
         AwsUtil.SupportServiceCache = {};
         AwsUtil.S3ServiceCache = {};
+        AwsUtil.EC2ServiceCache = {};
     }
 
     private static organization: DescribeOrganizationCommandOutput;
@@ -51,8 +72,7 @@ export class AwsUtil {
         if (this.organization !== undefined) {
             return this.organization.Organization.Id;
         }
-        const region = (this.isPartition) ? this.partitionRegion : 'us-east-1';
-        const organizationService = new OrganizationsClient({ region });
+        const organizationService = AwsUtil.GetOrganizationsService();
         const command = new DescribeOrganizationCommand({});
         this.organization = await organizationService.send(command);
         return this.organization.Organization.Id;
@@ -62,8 +82,7 @@ export class AwsUtil {
      * Uses the EC2 client to set enabled regions
      */
     public static async SetEnabledRegions(): Promise<void> {
-        const region = (this.isPartition) ? this.partitionRegion : 'us-east-1';
-        const ec2Client = new EC2Client({ region });
+        const ec2Client = AwsUtil.GetEc2Service();
         const command = new DescribeRegionsCommand({});
         const enabledRegions = await ec2Client.send(command);
         this.enabledRegions = enabledRegions.Regions.map(output => output.RegionName);
@@ -84,22 +103,23 @@ export class AwsUtil {
      */
     public static async Initialize(credentials?: Provider<AwsCredentialIdentity>): Promise<void> {
 
-        // if no credentials(provider) was passed in this method, we use the default
-        const provider = credentials ?? defaultProvider({
-            profile: this.isPartition ? this.partitionProfile : this.profile,
-        });
-
-        // save the credentialsProvider for any of the services we initialize
-        AwsUtil.credentialsProvider = provider;
+        if (credentials) {
+            AwsUtil.credentialsProvider = credentials;
+        } else {
+            const defaultWithPartitionSupport = chain(partitionFromEnv(this.isPartition), defaultProvider({
+                profile: this.isPartition ? this.partitionProfile : this.profile,
+            }));
+            AwsUtil.credentialsProvider = defaultWithPartitionSupport;
+        }
 
         // oc: not sure if this is needed, my guess is not
-        process.env.AWS_SDK_LOAD_CONFIG = '1';
+        // process.env.AWS_SDK_LOAD_CONFIG = '1';
 
         // oc: lets think about this some more
-        this.stsClient = new STSClient({ credentials: provider, ...(this.isPartition ? { region: this.partitionRegion } : { region: this.GetDefaultRegion(this.profile) }) });
+        this.stsClient = new STSClient({ credentials: AwsUtil.credentialsProvider, ...(this.isPartition ? { region: this.partitionRegion } : { region: this.GetDefaultRegion(this.profile) }) });
         const caller = await this.stsClient.send(new GetCallerIdentityCommand({}));
         this.userId = caller.UserId.replace(':', '-').substring(0, 60);
-        return;
+        this.initialized = true;
     }
 
     public static SetMasterAccountId(masterAccountId: string): void {
@@ -156,7 +176,12 @@ export class AwsUtil {
         return AwsUtil.isPartition;
     }
 
-    public static SetIsPartition(isPartition: boolean): void {
+    public static SetIsPartition(isPartition: boolean, partitionProfile?: string): void {
+        if (isPartition === true && !partitionProfile && !AwsUtil.GetPartitionProfile()) {
+            if (!process.env.GOV_AWS_ACCESS_KEY_ID || !process.env.GOV_AWS_SECRET_ACCESS_KEY) {
+                throw new OrgFormationError('GOV_AWS_ACCESS_KEY_ID and GOV_AWS_SECRET_ACCESS_KEY must be set on the environment or a `partitionProfile` must be provided');
+            }
+        }
         AwsUtil.isPartition = isPartition;
     }
 
@@ -204,7 +229,7 @@ export class AwsUtil {
         if (AwsUtil.masterPartitionId !== undefined) {
             return AwsUtil.masterPartitionId;
         }
-        ConsoleUtil.LogWarning('Partition master account Id not set, assuming org-formation is running in the master account');
+        ConsoleUtil.LogWarning('Partition master account Id not set, assuming org-formation is running in the partition master account');
         const caller = await this.stsClient.send(new GetCallerIdentityCommand({}));
         AwsUtil.masterPartitionId = caller.Account;
         return AwsUtil.masterPartitionId;
@@ -215,80 +240,13 @@ export class AwsUtil {
             return AwsUtil.buildProcessAccountId;
         }
         const caller = await this.stsClient.send(new GetCallerIdentityCommand({}));
+        ConsoleUtil.LogWarning('Build process account Id not set, assuming org-formation is running in the build process account');
         AwsUtil.buildProcessAccountId = caller.Account;
         return AwsUtil.buildProcessAccountId;
     }
 
     public static async GetBuildRunningOnMasterAccount(): Promise<boolean> {
         return (await this.GetMasterAccountId()) === (await this.GetBuildProcessAccountId());
-    }
-
-
-    public static GetOrganizationsService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): OrganizationsClient {
-        const region = (isPartition) ? this.partitionRegion : 'us-east-1';
-        const cacheKey = `${accountId}/${roleInTargetAccount}/${region}`;
-        if (this.OrganizationsServiceCache[cacheKey]) {
-            return this.OrganizationsServiceCache[cacheKey];
-        }
-
-        const clientParams: OrganizationsClientConfig = {
-            region,
-            defaultsMode: 'standard',
-            retryMode: 'standard',
-            maxAttempts: 6,
-        };
-
-        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
-        if (viaRoleArn) {
-            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
-                clientConfig: { region },
-                params: { RoleArn: viaRoleArn },
-            });
-        }
-        clientParams.credentials = fromTemporaryCredentials({
-            ...tempCredsProviderOptions,
-            clientConfig: { region },
-            params: {
-                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleInTargetAccount, isPartition),
-                RoleSessionName: `OFN-${AwsUtil.userId}`,
-                DurationSeconds: 900,
-            },
-        });
-        this.OrganizationsServiceCache[cacheKey] = new OrganizationsClient(clientParams);
-        return this.OrganizationsServiceCache[cacheKey];
-    }
-
-    public static GetSupportService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): SupportClient {
-        const roleToAssume = roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
-        const region = (isPartition) ? this.partitionRegion : 'us-east-1';
-        const cacheKey = `${accountId}/${roleToAssume}/${region}`;
-        if (this.SupportServiceCache[cacheKey]) {
-            return this.SupportServiceCache[cacheKey];
-        }
-        const clientParams: SupportClientConfig = {
-            region,
-            defaultsMode: 'standard',
-            retryMode: 'standard',
-            maxAttempts: 6,
-        };
-        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
-        if (viaRoleArn) {
-            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
-                clientConfig: { region },
-                params: { RoleArn: viaRoleArn },
-            });
-        }
-        clientParams.credentials = fromTemporaryCredentials({
-            ...tempCredsProviderOptions,
-            clientConfig: { region },
-            params: {
-                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleToAssume, isPartition),
-                RoleSessionName: `OFN-${AwsUtil.userId}`,
-                DurationSeconds: 900,
-            },
-        });
-        this.SupportServiceCache[cacheKey] = new SupportClient(clientParams);
-        return this.SupportServiceCache[cacheKey];
     }
 
     public static GetRoleToAssumeArn(accountId: string, roleInTargetAccount: string, partition = false): string {
@@ -302,65 +260,122 @@ export class AwsUtil {
         return 'arn:aws:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
-    public static GetPartitionRoleArn(accountId: string, roleInTargetAccount: string): string {
+    private static GetPartitionRoleArn(accountId: string, roleInTargetAccount: string): string {
         return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
     }
 
-    public static GetS3Service(accountId: string, region: string, roleInTargetAccount?: string): S3Client {
-        const roleToAssume = roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
-        const cacheKey = `${accountId}/${roleToAssume}/${region}`;
+    private static throwIfNowInitiazized() {
+        if (AwsUtil.initialized !== true) {
+            throw new OrgFormationError('AwsUtil must be initialized first');
+        }
+    }
+
+    public static GetOrganizationsService(accountId?: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): OrganizationsClient {
+        AwsUtil.throwIfNowInitiazized();
+        const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+            accountId,
+            roleInTargetAccount,
+            viaRoleArn,
+            isPartition,
+        });
+        const config: OrganizationsClientConfig = {
+            region: (isPartition) ? this.partitionRegion : 'us-east-1',
+            credentials: provider,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+        if (this.OrganizationsServiceCache[cacheKey]) {
+            return this.OrganizationsServiceCache[cacheKey];
+        }
+        this.OrganizationsServiceCache[cacheKey] = new OrganizationsClient(config);
+        return this.OrganizationsServiceCache[cacheKey];
+    }
+
+    public static GetEc2Service(accountId?: string, region?: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): OrganizationsClient {
+        AwsUtil.throwIfNowInitiazized();
+        const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+            accountId,
+            roleInTargetAccount,
+            viaRoleArn,
+            isPartition,
+        });
+        const config: EC2ClientConfig = {
+            region: (isPartition) ? this.partitionRegion : region ?? 'us-east-1',
+            credentials: provider,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+        if (this.EC2ServiceCache[cacheKey]) {
+            return this.EC2ServiceCache[cacheKey];
+        }
+        this.EC2ServiceCache[cacheKey] = new EC2Client(config);
+        return this.EC2ServiceCache[cacheKey];
+    }
+
+    public static GetS3Service(accountId?: string, region?: string, roleInTargetAccount?: string): S3Client {
+        AwsUtil.throwIfNowInitiazized();
+        const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+            accountId,
+            roleInTargetAccount,
+        });
+        const config: S3ClientConfig = {
+            region: region ?? 'us-east-1',
+            followRegionRedirects: true,
+            credentials: provider,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
         if (this.S3ServiceCache[cacheKey]) {
             return this.S3ServiceCache[cacheKey];
         }
-
-        const clientParams: S3ClientConfig = {
-            region,
-            followRegionRedirects: true,
-            defaultsMode: 'standard',
-            retryMode: 'standard',
-            maxAttempts: 6,
-        };
-        clientParams.credentials = fromTemporaryCredentials({
-            clientConfig: { region },
-            params: {
-                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleToAssume),
-                RoleSessionName: `OFN-${AwsUtil.userId}`,
-                DurationSeconds: 900,
-            },
-        });
-
-        this.S3ServiceCache[cacheKey] = new S3Client(clientParams);
+        this.S3ServiceCache[cacheKey] = new S3Client(config);
         return this.S3ServiceCache[cacheKey];
     }
 
-    public static GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): IAMClient {
-        const roleToAssume = roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
-        const cacheKey = `${accountId}/${roleToAssume}/${viaRoleArn}/${isPartition}`;
-        if (this.IamServiceCache[cacheKey]) {
-            return this.IamServiceCache[cacheKey];
-        }
-
-        const clientParams: IAMClientConfig = {
-            region: isPartition ? this.partitionRegion : AwsUtil.GetDefaultRegion(),
+    public static GetSupportService(accountId: string, roleInTargetAccount: string, viaRoleArn?: string, isPartition?: boolean): SupportClient {
+        AwsUtil.throwIfNowInitiazized();
+        const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+            accountId,
+            roleInTargetAccount,
+            viaRoleArn,
+            isPartition,
+        });
+        const config: SupportClientConfig = {
+            region: (isPartition) ? this.partitionRegion : 'us-east-1',
+            credentials: provider,
             defaultsMode: 'standard',
             retryMode: 'standard',
             maxAttempts: 6,
         };
-        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
-        if (viaRoleArn) {
-            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
-                params: { RoleArn: viaRoleArn },
-            });
+        if (this.SupportServiceCache[cacheKey]) {
+            return this.SupportServiceCache[cacheKey];
         }
-        clientParams.credentials = fromTemporaryCredentials({
-            ...tempCredsProviderOptions,
-            params: {
-                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleToAssume, isPartition),
-                RoleSessionName: `OFN-${AwsUtil.userId}`,
-                DurationSeconds: 900,
-            },
+        this.SupportServiceCache[cacheKey] = new SupportClient(config);
+        return this.SupportServiceCache[cacheKey];
+    }
+
+    public static GetIamService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): IAMClient {
+        AwsUtil.throwIfNowInitiazized();
+        const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+            accountId,
+            roleInTargetAccount,
+            viaRoleArn,
+            isPartition,
         });
-        this.IamServiceCache[cacheKey] = new IAMClient(clientParams);
+        const config: IAMClientConfig = {
+            region: (isPartition) ? this.partitionRegion : 'us-east-1',
+            credentials: provider,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+        if (this.IamServiceCache[cacheKey]) {
+            return this.IamServiceCache[cacheKey];
+        }
+        this.IamServiceCache[cacheKey] = new IAMClient(config);
         return this.IamServiceCache[cacheKey];
     }
 
@@ -370,102 +385,93 @@ export class AwsUtil {
      * If also a `viaRoleArn` is provided, then that roleArn is assumed first using Role Chaining
      * If partion is true, then the given region is ignored and partitionRegion is used.
      */
-    public static GetCloudFormation(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): CloudFormationClient {
-        const roleToAssume = roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
-        const cacheKey = `${accountId}/${region}/${roleToAssume}/${viaRoleArn}/${isPartition}`;
+    public static GetCloudFormationService(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): CloudFormationClient {
+        AwsUtil.throwIfNowInitiazized();
+        const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+            accountId,
+            region,
+            roleInTargetAccount,
+            viaRoleArn,
+            isPartition,
+        });
+        const config: CloudFormationClientConfig = {
+            region: (isPartition) ? this.partitionRegion : region,
+            credentials: provider,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
         if (this.CfnServiceCache[cacheKey]) {
             return this.CfnServiceCache[cacheKey];
         }
-
-        const clientParams: CloudFormationClientConfig = {
-            region: isPartition ? this.partitionRegion : region,
-            defaultsMode: 'standard',
-            retryMode: 'standard',
-            maxAttempts: 8,
-        };
-        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
-        if (viaRoleArn) {
-            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
-                clientConfig: { region },
-                params: { RoleArn: viaRoleArn },
-            });
-        }
-        clientParams.credentials = fromTemporaryCredentials({
-            ...tempCredsProviderOptions,
-            clientConfig: { region },
-            params: {
-                RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleToAssume, isPartition),
-                RoleSessionName: `OFN-${AwsUtil.userId}`,
-                DurationSeconds: 900,
-            },
-        });
-        this.CfnServiceCache[cacheKey] = new CloudFormationClient(clientParams);
+        this.CfnServiceCache[cacheKey] = new CloudFormationClient(config);
         return this.CfnServiceCache[cacheKey];
     }
 
+    /**
+     * we don't assume a role if we are running the master account AND the roleInTarget account is OrganizationAccessRoleName
+     */
+    private static UseCurrentPrincipal(accountId: string, roleInTargetAccount?: string): boolean {
+        if (AwsUtil.masterAccountId !== accountId && AwsUtil.masterAccountId !== undefined) {
+            return false;
+        }
+        // if AwsUtil.masterAccountId is undefined, we assume we are running in the master account so we only need to check the role
+        if (roleInTargetAccount && roleInTargetAccount !== GlobalState.GetOrganizationAccessRoleName(accountId)) {
+            return false;
+        }
+        return true;
+    }
+
     public static async DeleteObject(bucketName: string, objectKey: string, credentials: ClientCredentialsConfig = undefined): Promise<void> {
-        const s3client = new S3Client({ ...(credentials ? { credentials } : {}), region: AwsUtil.GetDefaultRegion(), followRegionRedirects: true });
+        const s3client = new S3Client({ ...(credentials ? { credentials } : { credentials: AwsUtil.credentialsProvider }), region: AwsUtil.GetDefaultRegion(), followRegionRedirects: true });
         await s3client.send(new DeleteObjectCommand({ Bucket: bucketName, Key: objectKey }));
     }
 
-    public static async GetCredentials(accountId: string, roleInTargetAccount: string, stsRegion: string, viaRoleArn?: string, isPartition?: boolean): Promise<AwsCredentialIdentity | undefined> {
-        const masterAccountId = await AwsUtil.GetMasterAccountId();
-        const useCurrentPrincipal = (masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId));
-        if (useCurrentPrincipal) {
-            return undefined;
-        }
-
-        try {
-            let roleArn: string;
-            const config: DefaultClientConfig = {
-                region: stsRegion,
-                stsRegionalEndpoints: 'regional',
-            };
-
-            if (viaRoleArn) {
-                config.credentials = await AwsUtil.GetCredentialsForRole(viaRoleArn, { region: stsRegion, stsRegionalEndpoints: 'regional' });
-            }
-
-            if (AwsUtil.isPartition || isPartition) {
-                roleArn = AwsUtil.GetPartitionRoleArn(accountId, roleInTargetAccount);
-                config.credentials = await AwsUtil.GetPartitionCredentials();
-                config.region = this.partitionRegion;
-            } else {
-                roleArn = AwsUtil.GetRoleArn(accountId, roleInTargetAccount);
-            }
-
-            return await AwsUtil.GetCredentialsForRole(roleArn, config);
-
-        } catch (err) {
-            const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
-            if (accountId === buildAccountId) {
-                ConsoleUtil.LogWarning('======================================');
-                ConsoleUtil.LogWarning('Hi there!');
-                ConsoleUtil.LogWarning(`You just ran into an error when assuming the role ${roleInTargetAccount} in account ${buildAccountId}.`);
-                ConsoleUtil.LogWarning('Possibly, this is due a breaking change in org-formation v0.9.15.');
-                ConsoleUtil.LogWarning('From v0.9.15 onwards the org-formation cli will assume a role in every account it deploys tasks to.');
-                ConsoleUtil.LogWarning('This will make permission management and SCPs to deny / allow org-formation tasks easier.');
-                ConsoleUtil.LogWarning('More information: https://github.com/org-formation/org-formation-cli/tree/master/docs/0.9.15-permission-change.md');
-                ConsoleUtil.LogWarning('Thanks!');
-                ConsoleUtil.LogWarning('======================================');
-            }
-            throw err;
-        }
+    /**
+     * Returns temporary credentials. This is not used by the service clients, but by spawned processes used by plugins
+     */
+    public static async GetCredentials(accountId: string, roleInTargetAccount: string, stsRegion: string, viaRoleArn?: string, isPartition?: boolean): Promise<AwsCredentialIdentity> {
+        const { provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+            accountId,
+            roleInTargetAccount,
+            viaRoleArn,
+            isPartition,
+        });
+        return await provider();
     }
 
-    private static async GetCredentialsForRole(roleArn: string, config: DefaultClientConfig): Promise<AwsCredentialIdentity> {
-        const sts = new STSClient({
-            ...config,
-            maxAttempts: 6,
-        });
-        const response = await sts.send(new AssumeRoleCommand({ RoleArn: roleArn, RoleSessionName: 'OrganizationFormationBuild' }));
-        const credentialOptions: ClientCredentialsConfig = {
-            accessKeyId: response.Credentials.AccessKeyId,
-            secretAccessKey: response.Credentials.SecretAccessKey,
-            sessionToken: response.Credentials.SessionToken,
-        };
-        return credentialOptions;
+    private static GetCredentialProviderWithRoleAssumptions(clientConfig: ServiceClientConfig): { cacheKey: ServiceCacheKey; provider: Provider<AwsCredentialIdentity> } {
+        let providerToReturn = AwsUtil.credentialsProvider;
+        const { isPartition, accountId, roleInTargetAccount, viaRoleArn } = clientConfig;
 
+        // Determine which role to assume, if any
+        const roleNameToAssume = AwsUtil.UseCurrentPrincipal(accountId, roleInTargetAccount) ? undefined : roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
+        // fall back to default region if none is provided. for STS commercial partition we always select us-east-1 because it's a global service
+        const region = (isPartition) ? this.partitionRegion : 'us-east-1';
+
+        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
+        if (viaRoleArn) {
+            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
+                clientConfig: { credentials: this.credentialsProvider, region },
+                params: { RoleArn: viaRoleArn },
+            });
+        }
+
+        if (roleNameToAssume) {
+            providerToReturn = fromTemporaryCredentials({
+                ...tempCredsProviderOptions,
+                clientConfig: { credentials: this.credentialsProvider, region },
+                params: {
+                    RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleNameToAssume, isPartition),
+                    RoleSessionName: `OFN-${AwsUtil.userId}`,
+                    DurationSeconds: 900,
+                },
+            });
+        }
+        return {
+            cacheKey: `${accountId}/${region}/${roleNameToAssume}/${viaRoleArn}/${isPartition}`,
+            provider: providerToReturn,
+        };
     }
 
     /**
@@ -479,7 +485,7 @@ export class AwsUtil {
         const cachedVal = this.CfnExportsCache[cacheKey];
         if (cachedVal !== undefined) { return cachedVal; }
 
-        const cfnClient = AwsUtil.GetCloudFormation(accountId, region, customRoleName, customViaRoleArn);
+        const cfnClient = AwsUtil.GetCloudFormationService(accountId, region, customRoleName, customViaRoleArn);
 
         for await (const page of paginateListExports({ client: cfnClient }, {})) {
             if (page.Exports !== undefined) {
@@ -533,22 +539,24 @@ export class AwsUtil {
 
     public static partition: string | undefined;
     private static partitionRegion = 'us-gov-west-1';
-    private static masterAccountId: string | PromiseLike<string>;
-    private static masterPartitionId: string | PromiseLike<string>;
+    private static masterAccountId: string;
+    private static masterPartitionId: string;
     private static partitionProfile?: string;
     private static profile?: string;
     public static credentialsProvider: Provider<AwsCredentialIdentity>;
     private static isDevelopmentBuild = false;
     private static largeTemplateBucketName: string | undefined;
     private static partitionCredentials: AwsCredentialIdentity | undefined;
-    private static buildProcessAccountId: string | PromiseLike<string>;
+    private static buildProcessAccountId: string;
     private static IamServiceCache: Record<string, IAMClient> = {};
     private static SupportServiceCache: Record<string, SupportClient> = {};
     private static OrganizationsServiceCache: Record<string, OrganizationsClient> = {};
     private static CfnServiceCache: Record<string, CloudFormationClient> = {};
     private static S3ServiceCache: Record<string, S3Client> = {};
+    private static EC2ServiceCache: Record<string, EC2Client> = {};
     private static CfnExportsCache: Record<string, string> = {};
     private static isPartition = false;
+    private static initialized = false;
     private static enabledRegions: string[];
     private static userId: string;
     private static stsClient: STSClient;
@@ -680,7 +688,7 @@ export class CfnUtil {
                         StackName: updateStackInput.StackName,
                     }));
                 } catch (innerErr) {
-                    if (innerErr && innerErr.code === 'ValidationError' && innerErr.message && innerErr.message.indexOf('does not exist') !== -1) {
+                    if (innerErr instanceof CloudFormationServiceException && innerErr.name === 'ValidationError' && innerErr.message && innerErr.message.indexOf('does not exist') !== -1) {
                         updateStackInput.ClientRequestToken = uuid();
                         await cfn.send(new CreateStackCommand(updateStackInput));
                         await waitUntilStackCreateComplete({

@@ -52,7 +52,7 @@ export class CfnValidateTaskProvider {
                     const customViaRoleArn = await expressionResolver.resolveSingleExpression(binding.customViaRoleArn, 'CustomViaRoleArn');
 
                     const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver, true);
-                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
+                    const cfn = AwsUtil.GetCloudFormationService(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
                     const validateInput: ValidateTemplateCommandInput = {
                         TemplateBody: templateBody,

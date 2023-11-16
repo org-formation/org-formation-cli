@@ -1,4 +1,4 @@
-import { CloudFormation } from "aws-sdk";
+import { CloudFormationClient } from "@aws-sdk/client-cloudformation";
 import { AwsUtil } from "~util/aws-util";
 
 const stressExportsParallel = async () => {
@@ -22,5 +22,5 @@ const stressExports = async () => {
   await AwsUtil.GetCloudFormationExport("xxxxxxxx", "ccccccc", "eu-central-1", "");
 }
 
-AwsUtil.GetCloudFormation = () => { return Promise.resolve(new CloudFormation({ region: "eu-central-1" })); }
+AwsUtil.GetCloudFormationService = () => { return new CloudFormationClient({ region: "eu-central-1" }); }
 stressExportsParallel().then(x => console.log("done"));

@@ -22,6 +22,8 @@ describe('when creating create change set command', () => {
         commanderCommand = new Command('root');
         command = new CreateChangeSetCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
+        // @ts-ignore
+        AwsUtil.initialized = true
     });
 
     test('create change set command is created', () => {
@@ -74,6 +76,8 @@ describe('when executing execute change set command', () => {
         command = new CreateChangeSetCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
 
+        // @ts-ignore
+        AwsUtil.initialized = true
         sandbox.stub(AwsUtil, 'GetMasterAccountId').returns(Promise.resolve('123456789012'));
         sandbox.stub(AwsUtil, 'GetBuildProcessAccountId').returns(Promise.resolve('123456789012'));
 

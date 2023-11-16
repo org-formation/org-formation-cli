@@ -453,7 +453,7 @@ export class AwsOrganizationWriter {
                     try {
                         const targetAccountId = this.organization.masterAccount.Id;
                         const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, targetAccountId);
-                        const support = await AwsUtil.GetSupportService(targetAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, (account.Type === 'PartitionAccount'));
+                        const support = AwsUtil.GetSupportService(targetAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, (account.Type === 'PartitionAccount'));
                         const createCaseCommand = new CreateCaseCommand({
                             subject: `Enable ${resource.supportLevel} Support for account: ${accountId}`,
                             communicationBody: `Hi AWS,
@@ -667,7 +667,7 @@ export class AwsOrganizationWriter {
 
         await this.organizationsService.send(inviteAccountToOrgCommand);
         const assumeRoleConfig = await GetOrganizationAccessRoleInTargetAccount(this.crossAccountConfig, accountCreationStatus.GovCloudAccountId);
-        const org = await AwsUtil.GetOrganizationsService(accountCreationStatus.GovCloudAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, true);
+        const org = AwsUtil.GetOrganizationsService(accountCreationStatus.GovCloudAccountId, assumeRoleConfig.role, assumeRoleConfig.viaRole, true);
 
         const handshakeList = await org.send(new Organizations.ListHandshakesForAccountCommand({}));
         await org.send(new Organizations.AcceptHandshakeCommand({ HandshakeId: handshakeList.Handshakes[0].Id }));
