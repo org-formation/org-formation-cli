@@ -1,18 +1,16 @@
 import { PerformTasksCommand, ValidateTasksCommand, UpdateOrganizationCommand } from '~commands/index';
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from './base-integration-test';
-import { readFileSync } from 'fs';
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from './base-integration-test';
 import { AwsUtil } from '~util/aws-util';
-import { CloudFormation } from 'aws-sdk';
-import { Stack, ListStacksOutput } from 'aws-sdk/clients/cloudformation';
+import { CloudFormationClient, DescribeStacksCommand, ListStacksCommand, ListStacksCommandOutput, Stack } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-update-stacks-custom-role/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let cfnClient: CloudFormation;
+    let cfnClient: CloudFormationClient;
 
     let stackAfterUpdateWithCustomRole: Stack;
-    let listStacksResponseAfterCleanup: ListStacksOutput;
+    let listStacksResponseAfterCleanup: ListStacksCommandOutput;
 
     beforeAll(async () => {
 
@@ -26,12 +24,12 @@ describe('when calling org-formation perform tasks', () => {
         await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-stacks-custom-roles.yml', failedTasksTolerance: 99 })
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-stacks-custom-roles.yml' });
-        const responseAfterUpdate = await cfnClient.describeStacks({ StackName: 'integration-test-custom-role' }).promise();
+        const responseAfterUpdate = await cfnClient.send(new DescribeStacksCommand({ StackName: 'integration-test-custom-role' }));
         stackAfterUpdateWithCustomRole = responseAfterUpdate.Stacks[0];
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '2-cleanup-stacks-custom-roles.yml', performCleanup: true });
         await sleepForTest(200);
-        listStacksResponseAfterCleanup = await cfnClient.listStacks({ StackStatusFilter: ['CREATE_COMPLETE'] }).promise();
+        listStacksResponseAfterCleanup = await cfnClient.send(new ListStacksCommand({ StackStatusFilter: ['CREATE_COMPLETE'] }));
 
     });
 

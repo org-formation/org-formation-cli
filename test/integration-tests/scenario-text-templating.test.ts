@@ -1,14 +1,14 @@
-import { PerformTasksCommand, RemoveCommand, ValidateTasksCommand } from "~commands/index";
+import { PerformTasksCommand, ValidateTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
-import { GetObjectOutput } from "aws-sdk/clients/s3";
 import { PrintTasksCommand } from "~commands/print-tasks";
+import { GetObjectCommandOutput, GetObjectCommand } from "@aws-sdk/client-s3";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-text-templating/';
 
 
 describe('when cleaning up stacks', () => {
     let context: IIntegrationTestContext;
-    let stateAfterPerformTasks: GetObjectOutput;
+    let stateAfterPerformTasks: GetObjectCommandOutput;
 
     beforeAll(async () => {
         try{
@@ -20,23 +20,23 @@ describe('when cleaning up stacks', () => {
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'organization-tasks.yml'});
 
             await sleepForTest(500);
-            stateAfterPerformTasks = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+            stateAfterPerformTasks = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
         }
         catch(err) {
             expect(err.message).toBe('');
         }
     });
 
-    test('expect state to both deployed stacks (without include)', () => {
-        const str = stateAfterPerformTasks.Body.toString();
+    test('expect state to both deployed stacks (without include)', async () => {
+        const str = await stateAfterPerformTasks.Body.transformToString('utf-8');
         const obj = JSON.parse(str);
         expect(obj.stacks).toBeDefined();
         expect(obj.stacks["nunjucks-template"]).toBeDefined();
         expect(Object.entries(obj.stacks["nunjucks-template"]).length).toBe(2);
     });
 
-    test('expect state to both deployed stacks (with include)', () => {
-        const str = stateAfterPerformTasks.Body.toString();
+    test('expect state to both deployed stacks (with include)', async () => {
+        const str = await stateAfterPerformTasks.Body.transformToString('utf-8');
         const obj = JSON.parse(str);
         expect(obj.stacks).toBeDefined();
         expect(obj.stacks["nunjucks-template2"]).toBeDefined();

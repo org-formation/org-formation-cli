@@ -1,15 +1,15 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
-import { DescribeStacksOutput, ListStacksOutput } from "aws-sdk/clients/cloudformation";
 import { PrintTasksCommand } from "~commands/print-tasks";
+import { DescribeStacksCommand, DescribeStacksCommandOutput, ListStacksCommand, ListStacksCommandOutput } from "@aws-sdk/client-cloudformation";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cfn-parameter-expressions/';
 
 describe('when importing value from another stack', () => {
     let context: IIntegrationTestContext;
-    let describedBucketStack: DescribeStacksOutput;
-    let describeBucketRoleStack: DescribeStacksOutput;
-    let stacksAfterCleanup: ListStacksOutput;
+    let describedBucketStack: DescribeStacksCommandOutput;
+    let describeBucketRoleStack: DescribeStacksCommandOutput;
+    let stacksAfterCleanup: ListStacksCommandOutput;
 
     beforeAll(async () => {
         try {
@@ -22,13 +22,13 @@ describe('when importing value from another stack', () => {
             await PrintTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' })
             await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' });
 
-            describedBucketStack = await cfnClient.describeStacks({ StackName: 'my-scenario-export-bucket' }).promise();
-            describeBucketRoleStack = await cfnClient.describeStacks({ StackName: 'my-scenario-export-bucket-role' }).promise();
+            describedBucketStack = await cfnClient.send(new DescribeStacksCommand({ StackName: 'my-scenario-export-bucket' }));
+            describeBucketRoleStack = await cfnClient.send(new DescribeStacksCommand({ StackName: 'my-scenario-export-bucket-role' }));
 
             await sleepForTest(2000);
 
             await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '2-cleanup-update-stacks-with-param-expressions.yml', performCleanup: true });
-            stacksAfterCleanup = await cfnClient.listStacks({ StackStatusFilter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE'] }).promise();
+            stacksAfterCleanup = await cfnClient.send(new ListStacksCommand({ StackStatusFilter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE'] }));
         } catch (err) {
             expect(err.message).toBeUndefined();
         }

@@ -81,7 +81,8 @@
     ],
     "exclude": [
         "node_modules",
-        "dist"
+        "dist",
+        "test/integration-tests/resources/**/*"
     ],
     "typeRoots": [
         "node_modules/@types"

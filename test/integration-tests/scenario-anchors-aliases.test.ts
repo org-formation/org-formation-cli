@@ -1,13 +1,13 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll } from './base-integration-test';
 import { PrintTasksCommand } from '~commands/print-tasks';
-import { DescribeStacksCommand, DescribeStacksOutput } from '@aws-sdk/client-cloudformation';
+import { DescribeStacksCommand, DescribeStacksCommandOutput } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-anchors-aliases/';
 
 describe('when calling org-formation perform tasks', () => {
   let context: IIntegrationTestContext;
-  let anchorsAndAliases: DescribeStacksOutput;
+  let anchorsAndAliases: DescribeStacksCommandOutput;
 
   beforeAll(async () => {
 

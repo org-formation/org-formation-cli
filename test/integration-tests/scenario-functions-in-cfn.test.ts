@@ -1,14 +1,14 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
-import { DescribeStacksOutput, GetStackPolicyOutput } from 'aws-sdk/clients/cloudformation';
+import { DescribeStacksCommand, DescribeStacksCommandOutput } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-functions-in-cfn/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let lambdaUsingReadFile: DescribeStacksOutput;
-    let permissionSetWithInlinePolicy1: DescribeStacksOutput;
-    let permissionSetWithInlinePolicy2: DescribeStacksOutput;
+    let lambdaUsingReadFile: DescribeStacksCommandOutput;
+    let permissionSetWithInlinePolicy1: DescribeStacksCommandOutput;
+    let permissionSetWithInlinePolicy2: DescribeStacksCommandOutput;
 
     beforeAll(async () => {
 
@@ -20,9 +20,9 @@ describe('when calling org-formation perform tasks', () => {
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-cfn-with-functions.yml' })
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-cfn-with-functions.yml' });
 
-        lambdaUsingReadFile = await cfnClient.describeStacks({StackName: 'lambda-using-read-file'}).promise();
-        permissionSetWithInlinePolicy1 = await cfnClient.describeStacks({StackName: 'permission-set-using-json-string-1'}).promise();
-        permissionSetWithInlinePolicy2 = await cfnClient.describeStacks({StackName: 'permission-set-using-json-string-2'}).promise();
+        lambdaUsingReadFile = await cfnClient.send(new DescribeStacksCommand({StackName: 'lambda-using-read-file'}));
+        permissionSetWithInlinePolicy1 = await cfnClient.send(new DescribeStacksCommand({StackName: 'permission-set-using-json-string-1'}));
+        permissionSetWithInlinePolicy2 = await cfnClient.send(new DescribeStacksCommand({StackName: 'permission-set-using-json-string-2'}));
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-cfn-with-functions.yml', performCleanup: true });
 

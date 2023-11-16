@@ -1,28 +1,28 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from './base-integration-test';
-import { ListTypeVersionsOutput, DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
-import { GetObjectOutput } from 'aws-sdk/clients/s3';
+import { GetObjectCommand, GetObjectCommandOutput } from '@aws-sdk/client-s3';
+import { DeleteStackCommand, DescribeStacksCommand, DescribeStacksCommandOutput, ListTypeVersionsCommand, ListTypeVersionsCommandOutput } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-register-type/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let typesAfterRegister: ListTypeVersionsOutput;
-    let typesAfterSecondRegister: ListTypeVersionsOutput;
-    let typesAfterThirdRegister: ListTypeVersionsOutput;
-    let typesAfterMoveTypesToInclude: ListTypeVersionsOutput;
-    let typesAfterCleanup: ListTypeVersionsOutput;
-    let stateAfterRegister: GetObjectOutput;
-    let stateAfterThirdRegister: GetObjectOutput;
-    let stateAfterMoveTypesToInclude: GetObjectOutput;
-    let stateAfterCleanup: GetObjectOutput;
-    let describeStacksOutput: DescribeStacksOutput;
+    let typesAfterRegister: ListTypeVersionsCommandOutput;
+    let typesAfterSecondRegister: ListTypeVersionsCommandOutput;
+    let typesAfterThirdRegister: ListTypeVersionsCommandOutput;
+    let typesAfterMoveTypesToInclude: ListTypeVersionsCommandOutput;
+    let typesAfterCleanup: ListTypeVersionsCommandOutput;
+    let stateAfterRegister: GetObjectCommandOutput;
+    let stateAfterThirdRegister: GetObjectCommandOutput;
+    let stateAfterMoveTypesToInclude: GetObjectCommandOutput;
+    let stateAfterCleanup: GetObjectCommandOutput;
+    let describeStacksOutput: DescribeStacksCommandOutput;
 
     beforeAll(async () => {
         context = await baseBeforeAll();
 
         try {
-            await context.cfnClient.deleteStack({ StackName: 'community-servicequotas-s3-resource-role' }).promise();
+            await context.cfnClient.send(new DeleteStackCommand({ StackName: 'community-servicequotas-s3-resource-role' }));
         } catch {
 
         }
@@ -32,33 +32,33 @@ describe('when calling org-formation perform tasks', () => {
 
         await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-register-type.yml' });
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-register-type.yml' });
-        typesAfterRegister = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
-        describeStacksOutput = await cfnClient.describeStacks({ StackName: 'community-servicequotas-s3-resource-role' }).promise();
+        typesAfterRegister = await cfnClient.send(new ListTypeVersionsCommand({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }));
+        describeStacksOutput = await cfnClient.send(new DescribeStacksCommand({ StackName: 'community-servicequotas-s3-resource-role' }));
 
 
         await sleepForTest(1000);
-        stateAfterRegister = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+        stateAfterRegister = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '2-register-type-changed-org.yml' });
-        typesAfterSecondRegister = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
+        typesAfterSecondRegister = await cfnClient.send(new ListTypeVersionsCommand({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }));
 
         await sleepForTest(1000);
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '3-register-type-added-account.yml' });
-        typesAfterThirdRegister = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
+        typesAfterThirdRegister = await cfnClient.send(new ListTypeVersionsCommand({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }));
 
         await sleepForTest(1000);
-        stateAfterThirdRegister = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+        stateAfterThirdRegister = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '4-move-register-type-to-include.yml', performCleanup: true });
-        typesAfterMoveTypesToInclude = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
+        typesAfterMoveTypesToInclude = await cfnClient.send(new ListTypeVersionsCommand({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }));
 
         await sleepForTest(1000);
-        stateAfterMoveTypesToInclude = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+        stateAfterMoveTypesToInclude = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup.yml', performCleanup: true });
-        typesAfterCleanup = await cfnClient.listTypeVersions({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }).promise();
-        stateAfterCleanup = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+        typesAfterCleanup = await cfnClient.send(new ListTypeVersionsCommand({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }));
+        stateAfterCleanup = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
     });
 
     test('types after register contains registered type', () => {
@@ -66,8 +66,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(foundType).toBeDefined();
     });
 
-    test('state after register contains targets', () => {
-        const stateAsString = stateAfterRegister.Body.toString();
+    test('state after register contains targets', async () => {
+        const stateAsString = await stateAfterRegister.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
@@ -90,8 +90,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(executionRole).toBeDefined();
     })
 
-    test('resource role is deployed when deploying resource provider', () => {
-        const stateAsString = stateAfterRegister.Body.toString();
+    test('resource role is deployed when deploying resource provider', async () => {
+        const stateAsString = await stateAfterRegister.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.trackedTasks).toBeDefined();
@@ -104,8 +104,8 @@ describe('when calling org-formation perform tasks', () => {
 
 
 
-    test('state after adding account to organization ', () => {
-        const stateAsString = stateAfterThirdRegister.Body.toString();
+    test('state after adding account to organization ', async () => {
+        const stateAsString = await stateAfterThirdRegister.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
@@ -135,12 +135,12 @@ describe('when calling org-formation perform tasks', () => {
         expect(foundType1).toBeDefined();
     });
 
-    test('physical id of type doesnt change after move to include', () => {
-        const stateAsStringAfterRegister = stateAfterThirdRegister.Body.toString();
+    test('physical id of type doesnt change after move to include', async () => {
+        const stateAsStringAfterRegister = await stateAfterThirdRegister.Body.transformToString('utf-8');
         const stateAfterRegister = JSON.parse(stateAsStringAfterRegister);
         const stringifiedTrackedTasksAfterRegister = JSON.stringify(stateAfterRegister.trackedTasks);
 
-        const stateAsStringAfterMove = stateAfterMoveTypesToInclude.Body.toString();
+        const stateAsStringAfterMove = await stateAfterMoveTypesToInclude.Body.transformToString('utf-8');
         const stateAfterMove = JSON.parse(stateAsStringAfterMove);
         const stringifiedTrackedTasksAfterMove = JSON.stringify(stateAfterMove.trackedTasks);
 
@@ -148,8 +148,8 @@ describe('when calling org-formation perform tasks', () => {
     });
 
 
-    test('concurrency gets recorded in tracked task', () => {
-        const stateAsStringAfterRegister = stateAfterThirdRegister.Body.toString();
+    test('concurrency gets recorded in tracked task', async () => {
+        const stateAsStringAfterRegister = await stateAfterThirdRegister.Body.transformToString('utf-8');
         const stateAfterRegister = JSON.parse(stateAsStringAfterRegister);
 
         expect(stateAfterRegister.trackedTasks.default[0].concurrencyForCleanup).toBe(5);
@@ -161,8 +161,8 @@ describe('when calling org-formation perform tasks', () => {
     });
 
 
-    test('state after cleanup does not contain any', () => {
-        const stateAsString = stateAfterCleanup.Body.toString();
+    test('state after cleanup does not contain any', async () => {
+        const stateAsString = await stateAfterCleanup.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
 
         expect(Object.keys(state.targets).length).toBe(0);
@@ -170,6 +170,6 @@ describe('when calling org-formation perform tasks', () => {
 
     afterAll(async () => {
         await baseAfterAll(context);
-        await context.cfnClient.deleteStack({ StackName: 'community-servicequotas-s3-resource-role' }).promise();
+        await context.cfnClient.send(new DeleteStackCommand({ StackName: 'community-servicequotas-s3-resource-role' }));
     });
 });

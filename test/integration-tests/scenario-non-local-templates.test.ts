@@ -1,15 +1,14 @@
-import { GetObjectOutput } from 'aws-sdk/clients/s3';
 import { AwsEvents } from '~aws-provider/aws-events';
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { PersistedState } from '~state/persisted-state';
-import { yamlParse } from '~yaml-cfn/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from './base-integration-test';
+import { GetObjectCommand, GetObjectCommandOutput } from '@aws-sdk/client-s3';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-non-local-templates/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let stateAfterUpdate: GetObjectOutput;
+    let stateAfterUpdate: GetObjectCommandOutput;
     let putOrganizationChangedEvent: jest.SpyInstance;
 
     beforeAll(async () => {
@@ -24,13 +23,13 @@ describe('when calling org-formation perform tasks', () => {
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-tasks.yml', masterAccountId: '102625093955'});
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-tasks.yml', masterAccountId: '102625093955'});
         await sleepForTest(500);
-        stateAfterUpdate = await s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterUpdate = await s3client.send(new GetObjectCommand({Bucket: command.stateBucketName, Key: command.stateObject}));
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-tasks.yml', masterAccountId: '102625093955'});
     });
 
-    it('template is deployed successfully over s3', ()=> {
-        const str = stateAfterUpdate.Body.toString();
+    it('template is deployed successfully over s3', async ()=> {
+        const str = await stateAfterUpdate.Body.transformToString('utf-8');
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
@@ -38,8 +37,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(target).toBeDefined();
     })
 
-    it('template is deployed successfully over https', ()=> {
-        const str = stateAfterUpdate.Body.toString();
+    it('template is deployed successfully over https', async ()=> {
+        const str = await stateAfterUpdate.Body.transformToString('utf-8');
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();

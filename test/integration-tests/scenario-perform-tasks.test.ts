@@ -1,14 +1,14 @@
-import { GetObjectOutput } from 'aws-sdk/clients/s3';
 import { AwsEvents } from '~aws-provider/aws-events';
 import { PerformTasksCommand } from '~commands/index';
 import { yamlParse } from '~yaml-cfn/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from './base-integration-test';
+import { GetObjectCommand, GetObjectCommandOutput } from '@aws-sdk/client-s3';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-perform-tasks/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let organizationFileAfterPerformTasks: GetObjectOutput;
+    let organizationFileAfterPerformTasks: GetObjectCommandOutput;
     let putOrganizationChangedEvent: jest.SpyInstance;
 
     beforeAll(async () => {
@@ -22,7 +22,7 @@ describe('when calling org-formation perform tasks', () => {
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-tasks.yml', masterAccountId: '102625093955'});
         await sleepForTest(500);
-        organizationFileAfterPerformTasks = await s3client.getObject({Bucket: command.stateBucketName, Key: 'organization.yml'}).promise();
+        organizationFileAfterPerformTasks = await s3client.send(new GetObjectCommand({Bucket: command.stateBucketName, Key: 'organization.yml'}));
     });
 
     test('organization file was uploaded to s3', ()=> {
@@ -30,8 +30,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(organizationFileAfterPerformTasks.Body).toBeDefined();
     })
 
-    test('can load organization file as yaml', ()=> {
-        const str = organizationFileAfterPerformTasks.Body.toString();
+    test('can load organization file as yaml', async ()=> {
+        const str = await organizationFileAfterPerformTasks.Body.transformToString('utf-8');
         const x = yamlParse(str);
         expect(x).toBeDefined();
         expect(x.Organization).toBeDefined();

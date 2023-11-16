@@ -1,15 +1,15 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
-import { GetObjectOutput } from "aws-sdk/clients/s3";
+import { GetObjectCommand, GetObjectCommandOutput } from "@aws-sdk/client-s3";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-global-params/';
 
 describe('when using parameters in template', () => {
     let context: IIntegrationTestContext;
-    let stateAfterFirstPerform: GetObjectOutput;
-    let stateAfterSecondPerform: GetObjectOutput;
-    let stateAfterOverriddenParameter: GetObjectOutput;
-    let stateAfterOverriddenParameterCleanup: GetObjectOutput;
+    let stateAfterFirstPerform: GetObjectCommandOutput;
+    let stateAfterSecondPerform: GetObjectCommandOutput;
+    let stateAfterOverriddenParameter: GetObjectCommandOutput;
+    let stateAfterOverriddenParameterCleanup: GetObjectCommandOutput;
 
     beforeAll(async () => {
         try{
@@ -22,28 +22,28 @@ describe('when using parameters in template', () => {
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-include.yml' });
 
             await sleepForTest(500);
-            stateAfterFirstPerform = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+            stateAfterFirstPerform = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
 
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-include.yml', parameters: 'includeMasterAccount=false'});
             await sleepForTest(500);
-            stateAfterSecondPerform = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+            stateAfterSecondPerform = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
 
             await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-spread-operator.yml' })
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-spread-operator.yml' });
             await sleepForTest(500);
-            stateAfterOverriddenParameter = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+            stateAfterOverriddenParameter = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
 
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-spread-operator.yml', parameters: 'includeMasterAccount=false'});
             await sleepForTest(500);
-            stateAfterOverriddenParameterCleanup = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+            stateAfterOverriddenParameterCleanup = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
         }
         catch(err) {
             expect(err.message).toBe('');
         }
     });
 
-    test('first perform deploys both stacks', () => {
-        const stateJSON = stateAfterFirstPerform.Body.toString();
+    test('first perform deploys both stacks', async () => {
+        const stateJSON = await stateAfterFirstPerform.Body.transformToString('utf-8');
         const state = JSON.parse(stateJSON);
         expect(state).toBeDefined();
         expect(state.stacks).toBeDefined();
@@ -51,8 +51,8 @@ describe('when using parameters in template', () => {
         expect(state.targets).toBeUndefined();
     });
 
-    test('after second perform both stacks are gone', () => {
-        const stateJSON = stateAfterSecondPerform.Body.toString();
+    test('after second perform both stacks are gone', async () => {
+        const stateJSON = await stateAfterSecondPerform.Body.transformToString('utf-8');
         const state = JSON.parse(stateJSON);
         expect(state).toBeDefined();
         expect(state.stacks).toBeDefined();
@@ -60,8 +60,8 @@ describe('when using parameters in template', () => {
         expect(state.targets).toBeUndefined();
     });
 
-    test('after overriding parameter is used', () => {
-        const stateJSON = stateAfterOverriddenParameter.Body.toString();
+    test('after overriding parameter is used', async () => {
+        const stateJSON = await stateAfterOverriddenParameter.Body.transformToString('utf-8');
         const state = JSON.parse(stateJSON);
         expect(state).toBeDefined();
         expect(state.stacks).toBeDefined();
@@ -72,8 +72,8 @@ describe('when using parameters in template', () => {
         expect(state.targets).toBeUndefined();
     });
 
-    test('after overriding parameter both stacks are gone', () => {
-        const stateJSON = stateAfterOverriddenParameterCleanup.Body.toString();
+    test('after overriding parameter both stacks are gone', async () => {
+        const stateJSON = await stateAfterOverriddenParameterCleanup.Body.transformToString('utf-8');
         const state = JSON.parse(stateJSON);
         expect(state).toBeDefined();
         expect(state.stacks).toBeDefined();

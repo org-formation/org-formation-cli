@@ -1,18 +1,18 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
-import { ListStacksOutput, GetStackPolicyOutput } from 'aws-sdk/clients/cloudformation';
 import { ConsoleUtil } from '~util/console-util';
+import { GetStackPolicyCommand, GetStackPolicyCommandOutput, ListStacksCommand, ListStacksCommandOutput } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-update-stacks-stack-policy/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let stackPolicy: GetStackPolicyOutput;
-    let stackPolicyAfterUpdate: GetStackPolicyOutput;
-    let stackPolicyAfterUpdateWithFlagTrue: GetStackPolicyOutput;
-    let stackPolicyAfterUpdateWithFlagFalse: GetStackPolicyOutput;
-    let stackPolicyAfterUpdateClearingPolicy: GetStackPolicyOutput;
-    let listStacksResponseAfterCleanup: ListStacksOutput;
+    let stackPolicy: GetStackPolicyCommandOutput;
+    let stackPolicyAfterUpdate: GetStackPolicyCommandOutput;
+    let stackPolicyAfterUpdateWithFlagTrue: GetStackPolicyCommandOutput;
+    let stackPolicyAfterUpdateWithFlagFalse: GetStackPolicyCommandOutput;
+    let stackPolicyAfterUpdateClearingPolicy: GetStackPolicyCommandOutput;
+    let listStacksResponseAfterCleanup: ListStacksCommandOutput;
     let errorAfterUpdating: Error;
 
     beforeAll(async () => {
@@ -24,26 +24,26 @@ describe('when calling org-formation perform tasks', () => {
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-stacks-with-stack-policy.yml' })
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-stacks-with-stack-policy.yml' });
-        stackPolicy = await cfnClient.getStackPolicy({StackName: 'test-with-stack-policy'}).promise();
+        stackPolicy = await cfnClient.send(new GetStackPolicyCommand({StackName: 'test-with-stack-policy'}));
         try {
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-update-stacks-with-stack-policy.yml' });
         } catch(err) {
             errorAfterUpdating = err;
         }
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-update-stack-policy.yml' });
-        stackPolicyAfterUpdate = await cfnClient.getStackPolicy({StackName: 'test-with-stack-policy'}).promise();
+        stackPolicyAfterUpdate = await cfnClient.send(new GetStackPolicyCommand({StackName: 'test-with-stack-policy'}));
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '4-update-stack-policy-using-flag.yml' });
-        stackPolicyAfterUpdateWithFlagTrue = await cfnClient.getStackPolicy({StackName: 'test-with-stack-policy'}).promise();
+        stackPolicyAfterUpdateWithFlagTrue = await cfnClient.send(new GetStackPolicyCommand({StackName: 'test-with-stack-policy'}));
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '5-update-stack-policy-using-flag-false.yml' });
-        stackPolicyAfterUpdateWithFlagFalse = await cfnClient.getStackPolicy({StackName: 'test-with-stack-policy'}).promise();
+        stackPolicyAfterUpdateWithFlagFalse = await cfnClient.send(new GetStackPolicyCommand({StackName: 'test-with-stack-policy'}));
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '6-update-stack-policy-clearing-policy.yml' });
-        stackPolicyAfterUpdateClearingPolicy = await cfnClient.getStackPolicy({StackName: 'test-with-stack-policy'}).promise();
+        stackPolicyAfterUpdateClearingPolicy = await cfnClient.send(new GetStackPolicyCommand({StackName: 'test-with-stack-policy'}));
 
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-stacks-with-stack-policy.yml', performCleanup: true });
-        listStacksResponseAfterCleanup = await cfnClient.listStacks({StackStatusFilter: ['CREATE_COMPLETE']}).promise();
+        listStacksResponseAfterCleanup = await cfnClient.send(new ListStacksCommand({StackStatusFilter: ['CREATE_COMPLETE']}));
     });
 
     test('stack has Stack Policy', () => {
