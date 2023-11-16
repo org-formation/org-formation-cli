@@ -134,7 +134,8 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             ResourcePrefix: resourcePrefix,
             ...additionalParameters,
         };
-        await InitialCommitUtil.parameterizeAndUpload(templateDefinition, parameters, template, stateBucketName, this.s3credentials);
+        const s3client = AwsUtil.GetS3Service(this.buildAccountId);
+        await InitialCommitUtil.parameterizeAndUpload(templateDefinition, parameters, template, stateBucketName, s3client);
 
     }
     private async createInitialCommitFromResources(path: string, template: DefaultTemplate, resourcePrefix: string, stateBucketName: string, stackName: string, repositoryName: string, region: string, command: IInitPipelineCommandArgs): Promise<void> {
@@ -185,7 +186,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
     public uploadInitialCommit(stateBucketName: string, initialCommitPath: string, templateContents: string, buildSpecContents: string, organizationTasksContents: string, cloudformationTemplateContents: string, orgParametersInclude: string, buildAccessRoleTemplateContents: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                const s3client = new S3.S3Client({ ...(this.s3credentials ? { credentials: this.s3credentials } : {}), region: AwsUtil.GetDefaultRegion(), followRegionRedirects: true });
+                const s3client = AwsUtil.GetS3Service(this.buildAccountId);
                 const output = new WritableStream();
                 const archive = archiver('zip');
 

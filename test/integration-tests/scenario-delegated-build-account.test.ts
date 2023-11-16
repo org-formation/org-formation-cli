@@ -1,17 +1,17 @@
-import { GetObjectOutput } from 'aws-sdk/clients/s3';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AwsOrganizationReader } from '~aws-provider/aws-organization-reader';
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { PersistedState } from '~state/persisted-state';
 import { AwsUtil } from '~util/aws-util';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from './base-integration-test';
+import { GetObjectCommand, GetObjectCommandOutput } from '@aws-sdk/client-s3';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-delegated-build-account/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let stateAfterUpdate: GetObjectOutput;
-    let stateAfterCleanup: GetObjectOutput;
+    let stateAfterUpdate: GetObjectCommandOutput;
+    let stateAfterCleanup: GetObjectCommandOutput;
     let orgAfterUpdate: AwsOrganization;
     let orgAfterCleanup: AwsOrganization;
 
@@ -21,14 +21,14 @@ describe('when calling org-formation perform tasks', () => {
         await context.prepareStateBucket(basePathForScenario + '../state.json');
         const command = context.command;
         const s3client = context.s3client;
-        const orgClient = await AwsUtil.GetOrganizationsService('102625093955', 'OrganizationFormationBuildRole')
+        const orgClient = AwsUtil.GetOrganizationsService('102625093955', 'OrganizationFormationBuildRole')
 
         AwsUtil.SetMasterAccountId('102625093955');
 
         await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-update-organization.yml', masterAccountId: '102625093955'});
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '0-update-organization.yml', masterAccountId: '102625093955'});
         await sleepForTest(500);
-        stateAfterUpdate = await s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterUpdate = await s3client.send(new GetObjectCommand({Bucket: command.stateBucketName, Key: command.stateObject}));
 
         await sleepForTest(500);
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-update-organization.yml', masterAccountId: '102625093955'});
@@ -39,14 +39,14 @@ describe('when calling org-formation perform tasks', () => {
         await sleepForTest(500);
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '9-cleanup-organization.yml', masterAccountId: '102625093955', performCleanup: true});
         await sleepForTest(500);
-        stateAfterCleanup = await s3client.getObject({Bucket: command.stateBucketName, Key: command.stateObject}).promise();
+        stateAfterCleanup = await s3client.send(new GetObjectCommand({Bucket: command.stateBucketName, Key: command.stateObject}));
         await sleepForTest(500);
         orgAfterCleanup = new AwsOrganization(new AwsOrganizationReader(orgClient, { masterAccountId: '102625093955', masterAccountRoleName: 'OrganizationFormationBuildRole' }));
         await orgAfterCleanup.initialize();
     });
 
-    test('role was created in another account', () => {
-        const str = stateAfterUpdate.Body.toString();
+    test('role was created in another account', async () => {
+        const str = await stateAfterUpdate.Body.transformToString('utc-8');
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
@@ -54,8 +54,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(target).toBeDefined();
     })
 
-    test('role was created in account b', () => {
-        const str = stateAfterUpdate.Body.toString();
+    test('role was created in account b', async () => {
+        const str = await stateAfterUpdate.Body.transformToString('utc-8');
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
@@ -63,8 +63,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(target).toBeDefined();
     })
 
-    test('role was created in account c', () => {
-        const str = stateAfterUpdate.Body.toString();
+    test('role was created in account c', async () => {
+        const str = await stateAfterUpdate.Body.transformToString('utc-8');
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
@@ -113,8 +113,8 @@ describe('when calling org-formation perform tasks', () => {
         const anotherAccount = orgAfterUpdate.accounts.find(x=>x.Id === '549476213961')
         expect(anotherAccount.PasswordPolicy).toBeDefined();
     })
-    test('bucket was created in all accounts', () => {
-        const str = stateAfterUpdate.Body.toString();
+    test('bucket was created in all accounts', async () => {
+        const str = await stateAfterUpdate.Body.transformToString('utc-8');
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
@@ -169,8 +169,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(anotherAccount.PasswordPolicy).toBeUndefined();
     })
 
-    test('roles where cleaned up', () => {
-        const str = stateAfterCleanup.Body.toString();
+    test('roles where cleaned up', async () => {
+        const str = await stateAfterCleanup.Body.transformToString('utc-8');
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
@@ -178,8 +178,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(target).toBeUndefined();
     })
 
-    test('buckets where cleaned up', () => {
-        const str = stateAfterCleanup.Body.toString();
+    test('buckets where cleaned up', async () => {
+        const str = await stateAfterCleanup.Body.transformToString('utc-8');
         const obj = JSON.parse(str);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();

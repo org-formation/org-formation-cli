@@ -23,7 +23,6 @@ export class S3StorageProvider implements IStorageProvider {
 
     public readonly bucketName: string;
     public readonly objectKey: string;
-    private readonly credentials: ClientCredentialsConfig;
     private readonly region: string;
     public dontPut = false;
 
@@ -39,7 +38,6 @@ export class S3StorageProvider implements IStorageProvider {
 
         this.bucketName = stateBucketName;
         this.objectKey = stateObject;
-        this.credentials = credentials ?? AwsUtil.credentialsProvider;
         this.region = region ? region : defaultRegion;
     }
 
@@ -91,7 +89,7 @@ export class S3StorageProvider implements IStorageProvider {
 
     public async get(): Promise<string | undefined> {
 
-        const s3client = AwsUtil.GetS3Service(undefined, this.region);
+        const s3client = AwsUtil.GetS3Service();
         const request: S3.GetObjectCommandInput = {
             Bucket: this.bucketName,
             Key: this.objectKey,
@@ -109,7 +107,7 @@ export class S3StorageProvider implements IStorageProvider {
             if (err && err.code === 'NoSuchBucket') {
                 return undefined;
             }
-            throw err;
+                        throw err;
         }
 
     }

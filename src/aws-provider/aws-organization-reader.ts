@@ -1,6 +1,7 @@
 import * as IAM from '@aws-sdk/client-iam';
 import * as Organizations from '@aws-sdk/client-organizations';
 import * as Support from '@aws-sdk/client-support';
+import * as STS from '@aws-sdk/client-sts';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
@@ -256,7 +257,7 @@ export class AwsOrganizationReader {
                             ]);
 
                         } catch (err) {
-                            if (err.name === 'AccessDenied') {
+                            if (err instanceof STS.STSServiceException) {
                                 ConsoleUtil.LogWarning(`AccessDenied: unable to log into account ${acc.Id}. This might have various causes, to troubleshoot:`
                                     + '\nhttps://github.com/OlafConijn/AwsOrganizationFormation/blob/master/docs/access-denied.md');
                             } else {
@@ -313,7 +314,7 @@ export class AwsOrganizationReader {
             }
             return 'developer';
         } catch (err) {
-            if (err.name === 'SubscriptionRequiredException') {
+            if (err instanceof Support.SupportServiceException) {
                 return 'basic';
             }
             throw err;

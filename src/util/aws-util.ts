@@ -279,7 +279,7 @@ export class AwsUtil {
             isPartition,
         });
         const config: OrganizationsClientConfig = {
-            region: (isPartition) ? this.partitionRegion : 'us-east-1',
+            region: (isPartition) ? this.partitionRegion : AwsUtil.GetDefaultRegion(),
             credentials: provider,
             defaultsMode: 'standard',
             retryMode: 'standard',
@@ -301,7 +301,7 @@ export class AwsUtil {
             isPartition,
         });
         const config: EC2ClientConfig = {
-            region: (isPartition) ? this.partitionRegion : region ?? 'us-east-1',
+            region: (isPartition) ? this.partitionRegion : region ?? AwsUtil.GetDefaultRegion(),
             credentials: provider,
             defaultsMode: 'standard',
             retryMode: 'standard',
@@ -320,8 +320,8 @@ export class AwsUtil {
             accountId,
             roleInTargetAccount,
         });
-        const config: S3ClientConfig = {
-            region: region ?? 'us-east-1',
+                const config: S3ClientConfig = {
+            region: region ?? AwsUtil.GetDefaultRegion(),
             followRegionRedirects: true,
             credentials: provider,
             defaultsMode: 'standard',
@@ -344,7 +344,7 @@ export class AwsUtil {
             isPartition,
         });
         const config: SupportClientConfig = {
-            region: (isPartition) ? this.partitionRegion : 'us-east-1',
+            region: (isPartition) ? this.partitionRegion : AwsUtil.GetDefaultRegion(),
             credentials: provider,
             defaultsMode: 'standard',
             retryMode: 'standard',
@@ -366,7 +366,7 @@ export class AwsUtil {
             isPartition,
         });
         const config: IAMClientConfig = {
-            region: (isPartition) ? this.partitionRegion : 'us-east-1',
+            region: (isPartition) ? this.partitionRegion : AwsUtil.GetDefaultRegion(),
             credentials: provider,
             defaultsMode: 'standard',
             retryMode: 'standard',
@@ -395,7 +395,7 @@ export class AwsUtil {
             isPartition,
         });
         const config: CloudFormationClientConfig = {
-            region: (isPartition) ? this.partitionRegion : region,
+            region: (isPartition) ? this.partitionRegion : region ?? AwsUtil.GetDefaultRegion(),
             credentials: provider,
             defaultsMode: 'standard',
             retryMode: 'standard',
@@ -412,14 +412,20 @@ export class AwsUtil {
      * we don't assume a role if we are running the master account AND the roleInTarget account is OrganizationAccessRoleName
      */
     private static UseCurrentPrincipal(accountId: string, roleInTargetAccount?: string): boolean {
-        if (AwsUtil.masterAccountId !== accountId && AwsUtil.masterAccountId !== undefined) {
-            return false;
+        // simplest case: if there is not account given, we must use current principal
+        // because we don't know where to assume and we don't make assumptions about the target account.
+        if (accountId === undefined) {
+            return true;
         }
-        // if AwsUtil.masterAccountId is undefined, we assume we are running in the master account so we only need to check the role
-        if (roleInTargetAccount && roleInTargetAccount !== GlobalState.GetOrganizationAccessRoleName(accountId)) {
-            return false;
+        // if we are in the master account and we don't provide a role then we must also use the current principal
+        if (AwsUtil.masterAccountId === accountId && roleInTargetAccount === undefined) {
+            return true;
         }
-        return true;
+        // if we are in the master account and the role is the default role, we also skip assuming. This is a special case
+        if (AwsUtil.masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId)) {
+            return true;
+        }
+        return false;
     }
 
     public static async DeleteObject(bucketName: string, objectKey: string, credentials: ClientCredentialsConfig = undefined): Promise<void> {
@@ -447,7 +453,7 @@ export class AwsUtil {
         // Determine which role to assume, if any
         const roleNameToAssume = AwsUtil.UseCurrentPrincipal(accountId, roleInTargetAccount) ? undefined : roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
         // fall back to default region if none is provided. for STS commercial partition we always select us-east-1 because it's a global service
-        const region = (isPartition) ? this.partitionRegion : 'us-east-1';
+        const region = (isPartition) ? this.partitionRegion : AwsUtil.GetDefaultRegion();
 
         let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
         if (viaRoleArn) {

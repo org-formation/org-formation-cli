@@ -185,7 +185,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (partitionCredentials) {
             const partitionMasterAccountId = await AwsUtil.GetPartitionMasterAccountId();
             const partitionCrossAccountConfig = { masterAccountId: partitionMasterAccountId, masterAccountRoleName: roleInMasterAccount };
-            const partitionOrgService = await AwsUtil.GetOrganizationsService(partitionMasterAccountId, roleInMasterAccount, null, true);
+            const partitionOrgService = AwsUtil.GetOrganizationsService(partitionMasterAccountId, roleInMasterAccount, null, true);
             partitionReader = new AwsOrganizationReader(partitionOrgService, partitionCrossAccountConfig);
             partitionOrganization = new AwsOrganization(partitionReader);
             await partitionOrganization.initialize();
