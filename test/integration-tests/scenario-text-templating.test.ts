@@ -8,7 +8,7 @@ const basePathForScenario = './test/integration-tests/resources/scenario-text-te
 
 describe('when cleaning up stacks', () => {
     let context: IIntegrationTestContext;
-    let stateAfterPerformTasks: GetObjectCommandOutput;
+    let stateAfterPerformTasks: string;
 
     beforeAll(async () => {
         try{
@@ -20,7 +20,8 @@ describe('when cleaning up stacks', () => {
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'organization-tasks.yml'});
 
             await sleepForTest(500);
-            stateAfterPerformTasks = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
+            const stateAfterPerformTasksResponse = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
+            stateAfterPerformTasks = await stateAfterPerformTasksResponse.Body.transformToString('utf-8');
         }
         catch(err) {
             expect(err.message).toBe('');
@@ -28,16 +29,14 @@ describe('when cleaning up stacks', () => {
     });
 
     test('expect state to both deployed stacks (without include)', async () => {
-        const str = await stateAfterPerformTasks.Body.transformToString('utf-8');
-        const obj = JSON.parse(str);
+        const obj = JSON.parse(stateAfterPerformTasks);
         expect(obj.stacks).toBeDefined();
         expect(obj.stacks["nunjucks-template"]).toBeDefined();
         expect(Object.entries(obj.stacks["nunjucks-template"]).length).toBe(2);
     });
 
     test('expect state to both deployed stacks (with include)', async () => {
-        const str = await stateAfterPerformTasks.Body.transformToString('utf-8');
-        const obj = JSON.parse(str);
+        const obj = JSON.parse(stateAfterPerformTasks);
         expect(obj.stacks).toBeDefined();
         expect(obj.stacks["nunjucks-template2"]).toBeDefined();
         expect(Object.entries(obj.stacks["nunjucks-template2"]).length).toBe(2);

@@ -12,10 +12,10 @@ describe('when calling org-formation perform tasks', () => {
     let typesAfterThirdRegister: ListTypeVersionsCommandOutput;
     let typesAfterMoveTypesToInclude: ListTypeVersionsCommandOutput;
     let typesAfterCleanup: ListTypeVersionsCommandOutput;
-    let stateAfterRegister: GetObjectCommandOutput;
-    let stateAfterThirdRegister: GetObjectCommandOutput;
-    let stateAfterMoveTypesToInclude: GetObjectCommandOutput;
-    let stateAfterCleanup: GetObjectCommandOutput;
+    let stateAfterRegister: string;
+    let stateAfterThirdRegister: string;
+    let stateAfterMoveTypesToInclude: string;
+    let stateAfterCleanup: string;
     let describeStacksOutput: DescribeStacksCommandOutput;
 
     beforeAll(async () => {
@@ -37,7 +37,8 @@ describe('when calling org-formation perform tasks', () => {
 
 
         await sleepForTest(1000);
-        stateAfterRegister = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
+        const stateAfterRegisterResponse = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
+        stateAfterRegister = await stateAfterRegisterResponse.Body.transformToString('utf-8')
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '2-register-type-changed-org.yml' });
         typesAfterSecondRegister = await cfnClient.send(new ListTypeVersionsCommand({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }));
@@ -48,17 +49,21 @@ describe('when calling org-formation perform tasks', () => {
         typesAfterThirdRegister = await cfnClient.send(new ListTypeVersionsCommand({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }));
 
         await sleepForTest(1000);
-        stateAfterThirdRegister = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
+        const stateAfterThirdRegisterResponse = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
+        stateAfterThirdRegister = await stateAfterThirdRegisterResponse.Body.transformToString('utf-8')
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '4-move-register-type-to-include.yml', performCleanup: true });
         typesAfterMoveTypesToInclude = await cfnClient.send(new ListTypeVersionsCommand({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }));
 
         await sleepForTest(1000);
-        stateAfterMoveTypesToInclude = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
+        const stateAfterMoveTypesToIncludeResponse = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
+        stateAfterMoveTypesToInclude = await stateAfterMoveTypesToIncludeResponse.Body.transformToString('utf-8')
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup.yml', performCleanup: true });
         typesAfterCleanup = await cfnClient.send(new ListTypeVersionsCommand({ Type: 'RESOURCE', TypeName: 'Community::ServiceQuotas::S3' }));
-        stateAfterCleanup = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
+        const stateAfterCleanupResponse = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
+        stateAfterCleanup = await stateAfterCleanupResponse.Body.transformToString('utf-8')
+
     });
 
     test('types after register contains registered type', () => {
@@ -67,8 +72,7 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     test('state after register contains targets', async () => {
-        const stateAsString = await stateAfterRegister.Body.transformToString('utf-8');
-        const state = JSON.parse(stateAsString);
+        const state = JSON.parse(stateAfterRegister);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
         expect(state.targets['register-type']).toBeDefined();
@@ -91,8 +95,7 @@ describe('when calling org-formation perform tasks', () => {
     })
 
     test('resource role is deployed when deploying resource provider', async () => {
-        const stateAsString = await stateAfterRegister.Body.transformToString('utf-8');
-        const state = JSON.parse(stateAsString);
+        const state = JSON.parse(stateAfterRegister);
         expect(state).toBeDefined();
         expect(state.trackedTasks).toBeDefined();
         expect(state.trackedTasks.default).toBeDefined();
@@ -105,8 +108,7 @@ describe('when calling org-formation perform tasks', () => {
 
 
     test('state after adding account to organization ', async () => {
-        const stateAsString = await stateAfterThirdRegister.Body.transformToString('utf-8');
-        const state = JSON.parse(stateAsString);
+        const state = JSON.parse(stateAfterThirdRegister);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
         expect(state.targets['register-type']).toBeDefined();
@@ -136,12 +138,10 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     test('physical id of type doesnt change after move to include', async () => {
-        const stateAsStringAfterRegister = await stateAfterThirdRegister.Body.transformToString('utf-8');
-        const stateAfterRegister = JSON.parse(stateAsStringAfterRegister);
+        const stateAfterRegister = JSON.parse(stateAfterThirdRegister);
         const stringifiedTrackedTasksAfterRegister = JSON.stringify(stateAfterRegister.trackedTasks);
 
-        const stateAsStringAfterMove = await stateAfterMoveTypesToInclude.Body.transformToString('utf-8');
-        const stateAfterMove = JSON.parse(stateAsStringAfterMove);
+        const stateAfterMove = JSON.parse(stateAfterMoveTypesToInclude);
         const stringifiedTrackedTasksAfterMove = JSON.stringify(stateAfterMove.trackedTasks);
 
         expect(stringifiedTrackedTasksAfterRegister).toBe(stringifiedTrackedTasksAfterMove);
@@ -149,8 +149,7 @@ describe('when calling org-formation perform tasks', () => {
 
 
     test('concurrency gets recorded in tracked task', async () => {
-        const stateAsStringAfterRegister = await stateAfterThirdRegister.Body.transformToString('utf-8');
-        const stateAfterRegister = JSON.parse(stateAsStringAfterRegister);
+        const stateAfterRegister = JSON.parse(stateAfterThirdRegister);
 
         expect(stateAfterRegister.trackedTasks.default[0].concurrencyForCleanup).toBe(5);
     });
@@ -162,8 +161,7 @@ describe('when calling org-formation perform tasks', () => {
 
 
     test('state after cleanup does not contain any', async () => {
-        const stateAsString = await stateAfterCleanup.Body.transformToString('utf-8');
-        const state = JSON.parse(stateAsString);
+        const state = JSON.parse(stateAfterCleanup);
 
         expect(Object.keys(state.targets).length).toBe(0);
     });
