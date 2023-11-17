@@ -122,6 +122,7 @@ export class AwsUtil {
 
         // if the master accountId wasn't set before, then populate it with the current caller
         await AwsUtil.GetMasterAccountId();
+        await AwsUtil.GetPartitionFromCurrentSession();
 
         this.initialized = true;
     }
