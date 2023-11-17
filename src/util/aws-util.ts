@@ -3,8 +3,8 @@ import * as ini from 'ini';
 import { IAMClient, IAMClientConfig } from '@aws-sdk/client-iam';
 import { v4 as uuid } from 'uuid';
 import { SupportClient, SupportClientConfig } from '@aws-sdk/client-support';
-import { AwsCredentialIdentity, Provider } from '@smithy/types';
-import { FromTemporaryCredentialsOptions, fromTemporaryCredentials } from '@aws-sdk/credential-providers';
+import { AwsCredentialIdentity, AwsCredentialIdentityProvider, Provider } from '@smithy/types';
+import { fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import { DescribeOrganizationCommand, DescribeOrganizationCommandOutput, OrganizationsClient, OrganizationsClientConfig } from '@aws-sdk/client-organizations';
 import { DescribeRegionsCommand, EC2Client, EC2ClientConfig } from '@aws-sdk/client-ec2';
 import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
@@ -101,7 +101,7 @@ export class AwsUtil {
      *
      * If profile is provided, then partition will be ignored.
      */
-    public static async Initialize(credentials?: Provider<AwsCredentialIdentity>): Promise<void> {
+    public static async Initialize(credentials?: AwsCredentialIdentityProvider): Promise<void> {
 
         if (credentials) {
             AwsUtil.credentialsProvider = credentials;
@@ -112,13 +112,15 @@ export class AwsUtil {
             AwsUtil.credentialsProvider = defaultWithPartitionSupport;
         }
 
-        // oc: not sure if this is needed, my guess is not
-        // process.env.AWS_SDK_LOAD_CONFIG = '1';
 
         // oc: lets think about this some more
         this.stsClient = new STSClient({ credentials: AwsUtil.credentialsProvider, ...(this.isPartition ? { region: this.partitionRegion } : { region: this.GetDefaultRegion(this.profile) }) });
         const caller = await this.stsClient.send(new GetCallerIdentityCommand({}));
         this.userId = caller.UserId.replace(':', '-').substring(0, 60);
+
+        // if the master accountId wasn't set before, then populate it with the current caller
+        await AwsUtil.GetMasterAccountId();
+
         this.initialized = true;
     }
 
@@ -412,6 +414,9 @@ export class AwsUtil {
      * we don't assume a role if we are running the master account AND the roleInTarget account is OrganizationAccessRoleName
      */
     private static UseCurrentPrincipal(accountId: string, roleInTargetAccount?: string): boolean {
+        // if masterAccountId is undefined, we get unexpected behaviour. This is guaranteed to be set after initialization.
+        AwsUtil.throwIfNowInitiazized();
+
         // simplest case: if there is not account given, we must use current principal
         // because we don't know where to assume and we don't make assumptions about the target account.
         if (accountId === undefined) {
@@ -455,18 +460,23 @@ export class AwsUtil {
         // fall back to default region if none is provided. for STS commercial partition we always select us-east-1 because it's a global service
         const region = (isPartition) ? this.partitionRegion : AwsUtil.GetDefaultRegion();
 
-        let tempCredsProviderOptions: FromTemporaryCredentialsOptions;
+        let viaRoleArnProvider: AwsCredentialIdentityProvider;
         if (viaRoleArn) {
-            tempCredsProviderOptions.masterCredentials = fromTemporaryCredentials({
-                clientConfig: { credentials: this.credentialsProvider, region },
-                params: { RoleArn: viaRoleArn },
+            viaRoleArnProvider = fromTemporaryCredentials({
+                masterCredentials: AwsUtil.credentialsProvider,
+                clientConfig: { region },
+                params: {
+                    RoleArn: viaRoleArn,
+                    RoleSessionName: `OFN-${AwsUtil.userId}`,
+                    DurationSeconds: 900,
+                },
             });
         }
 
         if (roleNameToAssume) {
             providerToReturn = fromTemporaryCredentials({
-                ...tempCredsProviderOptions,
-                clientConfig: { credentials: this.credentialsProvider, region },
+                masterCredentials: viaRoleArnProvider ?? AwsUtil.credentialsProvider,
+                clientConfig: { region },
                 params: {
                     RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleNameToAssume, isPartition),
                     RoleSessionName: `OFN-${AwsUtil.userId}`,
@@ -549,7 +559,7 @@ export class AwsUtil {
     private static masterPartitionId: string;
     private static partitionProfile?: string;
     private static profile?: string;
-    public static credentialsProvider: Provider<AwsCredentialIdentity>;
+    public static credentialsProvider: AwsCredentialIdentityProvider;
     private static isDevelopmentBuild = false;
     private static largeTemplateBucketName: string | undefined;
     private static partitionCredentials: AwsCredentialIdentity | undefined;
