@@ -167,7 +167,7 @@ export class CfnTaskProvider {
                         customViaRoleArn: binding.customViaRoleArn,
                     });
                 } catch (err) {
-                    if (err.code !== 'OptInRequired') {
+                    if (err.name !== 'OptInRequired') {
                         ConsoleUtil.LogError(`error updating CloudFormation stack ${stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
                     }
                     try {
@@ -269,11 +269,11 @@ export const performAndRetryIfNeeded = async <T extends unknown>(fn: () => Promi
         try {
             return await fn();
         } catch (err) {
-            if (err && (err.code === 'ThrottlingException') && retryCount < 10) {
+            if (err && (err.name === 'ThrottlingException') && retryCount < 10) {
                 retryCount = retryCount + 1;
                 shouldRetry = true;
                 const wait = retryCount + (0.5 * Math.random());
-                ConsoleUtil.LogDebug(`received retryable error ${err.code}. wait ${wait} and retry-count ${retryCount}`);
+                ConsoleUtil.LogDebug(`received retryable error ${err.name}. wait ${wait} and retry-count ${retryCount}`);
                 await sleep(wait * 1000);
                 continue;
             }

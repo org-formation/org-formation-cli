@@ -80,7 +80,7 @@ export class CfnValidateTaskProvider {
                         throw new OrgFormationError(`template expects parameter(s) ${missingParameters.join(', ')} which have not been provided`);
                     }
                 } catch (err) {
-                    if (err.code === 'AccessDenied') {
+                    if (err.name === 'AccessDenied') {
                         ConsoleUtil.LogWarning(`access denied when running validate stack: ${err}`);
                         return;
                     }

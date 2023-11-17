@@ -1,5 +1,6 @@
-import { PutEventsCommand, CloudWatchEventsClient } from '@aws-sdk/client-cloudwatch-events';
+import { PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { ConsoleUtil } from '../util/console-util';
+import { AwsUtil } from '~util/aws-util';
 
 const eventSource = 'oc.org-formation';
 const eventDetailType = 'events.org-formation.com';
@@ -48,7 +49,7 @@ export class AwsEvents {
     }
 
     public static async PutEvent(command: PutEventsCommand): Promise<void> {
-        const events = new CloudWatchEventsClient({region: 'us-east-1'});
+        const events = AwsUtil.GetEventBridgeService(undefined, 'us-east-1');
         await events.send(command);
     }
 }

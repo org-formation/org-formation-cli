@@ -31,7 +31,8 @@ describe('when calling org-formation perform tasks', () => {
         const obj = await context.s3client.send(new GetObjectCommand({ Bucket: context.stateBucketName, Key: 'state.json'}));
         expect(obj).toBeDefined();
         expect(obj.Body).toBeDefined();
-        const object = JSON.parse(obj.Body.toString()) as IState;
+        const objectString = await obj.Body.transformToString('utf-8')
+        const object = JSON.parse(objectString) as IState;
         expect(object.masterAccountId).toBe('102625093955');
         expect(object.stacks["integration-test-my-role"]).toBeDefined();
         expect(object.stacks["integration-test-my-role"]["340381375986"]).toBeDefined();

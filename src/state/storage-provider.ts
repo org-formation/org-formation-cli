@@ -51,7 +51,7 @@ export class S3StorageProvider implements IStorageProvider {
 
         const s3client = AwsUtil.GetS3Service(undefined, region);
         try {
-            await s3client.send(new S3.CreateBucketCommand(request));
+                        await s3client.send(new S3.CreateBucketCommand(request));
             await s3client.send(new S3.PutPublicAccessBlockCommand({
                 Bucket: this.bucketName, PublicAccessBlockConfiguration: {
                     BlockPublicAcls: true,
@@ -66,13 +66,13 @@ export class S3StorageProvider implements IStorageProvider {
                 },
             }));
         } catch (err) {
-            if (err && err.code === 'IllegalLocationConstraintException') {
+            if (err && err.name === 'IllegalLocationConstraintException') {
                 throw new OrgFormationError(`Unable to create bucket in region ${region}. Is the region spelled correctly?\nIf a bucket with the same name was recently deleted from a different region it could take up to a couple of hours for you to be able to create the same bucket in a different region.`);
             }
-            if (err && err.code === 'BucketAlreadyOwnedByYou') {
+            if (err && err.name === 'BucketAlreadyOwnedByYou') {
                 return;
             }
-            if (err && !throwOnAccessDenied && err.code === 'AccessDenied') {
+            if (err && !throwOnAccessDenied && err.name === 'AccessDenied') {
                 return; // assume bucket has been set up properly
             }
             throw err;
@@ -98,16 +98,16 @@ export class S3StorageProvider implements IStorageProvider {
         try {
             const response = await s3client.send(new S3.GetObjectCommand(request));
             if (!response.Body) { return undefined; }
-            const contents = response.Body.transformToString();
+            const contents = await response.Body.transformToString('utf-8');
             return contents;
         } catch (err) {
-            if (err && err.code === 'NoSuchKey') {
+            if (err && err.name === 'NoSuchKey') {
                 return undefined;
             }
-            if (err && err.code === 'NoSuchBucket') {
+            if (err && err.name === 'NoSuchBucket') {
                 return undefined;
             }
-                        throw err;
+            throw err;
         }
 
     }

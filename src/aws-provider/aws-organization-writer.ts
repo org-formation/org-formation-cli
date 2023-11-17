@@ -43,7 +43,7 @@ export class AwsOrganizationWriter {
                 await org.send(enablePolicyTypeCommand);
                 ConsoleUtil.LogDebug('enabled service control policies');
             } catch (err) {
-                if (err && err.code === 'PolicyTypeAlreadyEnabledException') {
+                if (err && err.name === 'PolicyTypeAlreadyEnabledException') {
                     // do nothing
                 } else {
                     throw err;
@@ -66,7 +66,7 @@ export class AwsOrganizationWriter {
                 ConsoleUtil.LogDebug(`SCP Created ${scpId}`);
                 return scpId;
             } catch (err) {
-                if (err.code === 'DuplicatePolicyException') {
+                if (err.name === 'DuplicatePolicyException') {
                     const existingPolicy: AWSPolicy = this.organization.policies.find(x => x.Name === resource.policyName);
                     const scpId = existingPolicy!.Id;
                     await this.updatePolicy(resource, scpId);
@@ -91,7 +91,7 @@ export class AwsOrganizationWriter {
                     await this.ensureSCPEnabled();
                     await org.send(attachPolicyCommand);
                 } catch (err) {
-                    if (err && err.code === 'PolicyTypeNotEnabledException') {
+                    if (err && err.name === 'PolicyTypeNotEnabledException') {
                         await this.ensureSCPEnabled();
                         await org.send(attachPolicyCommand);
                     } else {
@@ -99,7 +99,7 @@ export class AwsOrganizationWriter {
                     }
                 }
             } catch (err) {
-                if (err && err.code !== 'DuplicatePolicyAttachmentException') {
+                if (err && err.name !== 'DuplicatePolicyAttachmentException') {
                     throw err;
                 }
             }
@@ -115,7 +115,7 @@ export class AwsOrganizationWriter {
             try {
                 await this.organizationsService.send(detachPolicyCommand);
             } catch (err) {
-                if (err && err.code !== 'PolicyNotAttachedException' && err.code !== 'PolicyNotFoundException') {
+                if (err && err.name !== 'PolicyNotAttachedException' && err.name !== 'PolicyNotFoundException') {
                     // 'ConcurrentModificationException' ??
                     throw err;
                 }
@@ -143,7 +143,7 @@ export class AwsOrganizationWriter {
             try {
                 await this.organizationsService.send(deletePolicyCommand);
             } catch (err) {
-                if (err && err.code !== 'PolicyNotFoundException' && err.code !== 'PolicyInUseException') {
+                if (err && err.name !== 'PolicyNotFoundException' && err.name !== 'PolicyInUseException') {
                     // 'ConcurrentModificationException' ??
                     throw err;
                 }
@@ -335,7 +335,7 @@ export class AwsOrganizationWriter {
             try {
                 await this.updateAccount(resource, accountId);
             } catch (err) {
-                if (err.code === 'AccessDenied' && retryCountAccessDenied < 3) {
+                if (err.name === 'AccessDenied' && retryCountAccessDenied < 3) {
                     shouldRetry = true;
                     retryCountAccessDenied = retryCountAccessDenied + 1;
                     await sleep(3000);
@@ -374,7 +374,7 @@ export class AwsOrganizationWriter {
                 await this.updateAccount(resource, result.AccountId);
                 await partitionWriter.updateAccount(resource, result.GovCloudAccountId);
             } catch (err) {
-                if (err.code === 'AccessDenied' && retryCountAccessDenied < 3) {
+                if (err.name === 'AccessDenied' && retryCountAccessDenied < 3) {
                     shouldRetry = true;
                     retryCountAccessDenied = retryCountAccessDenied + 1;
                     await sleep(3000);
@@ -413,7 +413,7 @@ export class AwsOrganizationWriter {
                     });
                     await iam.send(deleteAccountAliasCommand);
                 } catch (err) {
-                    if (err && err.code !== 'NoSuchEntity') {
+                    if (err && err.name !== 'NoSuchEntity') {
                         throw err;
                     }
                 }
@@ -430,7 +430,7 @@ export class AwsOrganizationWriter {
                     if (current.AccountAliases.find(x => x === alias)) {
                         return;
                     }
-                    if (err && err.code === 'EntityAlreadyExists') {
+                    if (err && err.name === 'EntityAlreadyExists') {
                         throw new OrgFormationError(`The account alias ${alias} already exists. Most likely someone else already registered this alias to some other account.`);
                     }
                 }
@@ -484,7 +484,7 @@ export class AwsOrganizationWriter {
                 try {
                     await iam.send(new IAM.DeleteAccountPasswordPolicyCommand({}));
                 } catch (err) {
-                    if (err && err.code !== 'NoSuchEntity') {
+                    if (err && err.name !== 'NoSuchEntity') {
                         throw err;
                     }
                 }

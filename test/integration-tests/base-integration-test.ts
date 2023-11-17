@@ -40,7 +40,7 @@ export const baseBeforeAll = async (profileName: string = profileForIntegrationT
     const stackName = `a${Math.floor(Math.random() * 10000)}`;
     const command = { stateBucketName, stateObject: 'state.json', logicalName: 'default', stackName, profile: profileForIntegrationTests, verbose: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 } as any;
 
-    const s3ClientThatDoesntAssumeRole = new S3Client({ credentials: credentialsChain, region: 'eu-west-1' });
+    const s3ClientThatDoesntAssumeRole = new S3Client({ credentials: credentialsChain, region: 'eu-west-1', followRegionRedirects: true });
     const cfnClientThatDoesntAssumeRole = new CloudFormationClient({ credentials: credentialsChain, region: 'eu-west-1' })
 
     return {

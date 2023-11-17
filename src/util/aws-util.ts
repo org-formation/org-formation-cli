@@ -12,6 +12,7 @@ import { CreateBucketCommand, DeleteObjectCommand, PutBucketEncryptionCommand, P
 import { CloudFormationClient, CreateStackCommandInput, UpdateStackCommandInput, ValidateTemplateCommandInput, DescribeStacksCommandOutput, UpdateStackCommand, waitUntilStackUpdateComplete, DescribeStacksCommand, CreateStackCommand, waitUntilStackCreateComplete, DeleteStackCommand, waitUntilStackDeleteComplete, paginateListExports, CloudFormationServiceException, CloudFormationClientConfig } from '@aws-sdk/client-cloudformation';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import { chain } from '@smithy/property-provider';
+import { EventBridgeClient, EventBridgeClientConfig } from '@aws-sdk/client-eventbridge';
 import { OrgFormationError } from '../org-formation-error';
 import { ClientCredentialsConfig } from './aws-types';
 import { ConsoleUtil } from './console-util';
@@ -61,6 +62,7 @@ export class AwsUtil {
         AwsUtil.SupportServiceCache = {};
         AwsUtil.S3ServiceCache = {};
         AwsUtil.EC2ServiceCache = {};
+        AwsUtil.EventBridgeServiceCache = {};
     }
 
     private static organization: DescribeOrganizationCommandOutput;
@@ -410,6 +412,29 @@ export class AwsUtil {
         return this.CfnServiceCache[cacheKey];
     }
 
+    public static GetEventBridgeService(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): CloudFormationClient {
+        AwsUtil.throwIfNowInitiazized();
+        const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+            accountId,
+            region,
+            roleInTargetAccount,
+            viaRoleArn,
+            isPartition,
+        });
+        const config: EventBridgeClientConfig = {
+            region: (isPartition) ? this.partitionRegion : region ?? AwsUtil.GetDefaultRegion(),
+            credentials: provider,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+        if (this.EventBridgeServiceCache[cacheKey]) {
+            return this.EventBridgeServiceCache[cacheKey];
+        }
+        this.EventBridgeServiceCache[cacheKey] = new EventBridgeClient(config);
+        return this.EventBridgeServiceCache[cacheKey];
+    }
+
     /**
      * we don't assume a role if we are running the master account AND the roleInTarget account is OrganizationAccessRoleName
      */
@@ -570,6 +595,7 @@ export class AwsUtil {
     private static CfnServiceCache: Record<string, CloudFormationClient> = {};
     private static S3ServiceCache: Record<string, S3Client> = {};
     private static EC2ServiceCache: Record<string, EC2Client> = {};
+    private static EventBridgeServiceCache: Record<string, EventBridgeClient> = {};
     private static CfnExportsCache: Record<string, string> = {};
     private static isPartition = false;
     private static initialized = false;
@@ -661,7 +687,7 @@ export class CfnUtil {
                         })
                     );
                 } catch (err) {
-                    if (err && (err.code !== 'BucketAlreadyOwnedByYou')) {
+                    if (err && (err.name !== 'BucketAlreadyOwnedByYou')) {
                         throw new OrgFormationError(`unable to create bucket ${bucketName} in account ${binding.accountId}, error: ${err}`);
                     }
                 }
@@ -728,14 +754,14 @@ export class CfnUtil {
                 }
             } catch (err) {
                 // ConsoleUtil.LogError(`ADDITIONAL ${updateStackInput.StackName}: ${inspect(err)}`);
-                if (err && (err.code === 'OptInRequired' || err.code === 'InvalidClientTokenId')) {
+                if (err && (err.name === 'OptInRequired' || err.name === 'InvalidClientTokenId')) {
                     if (retryAccountIsBeingInitializedCount >= 20) { // 20 * 30 sec = 10 minutes
                         throw new OrgFormationError('Account seems stuck initializing.');
                     }
                     retryAccountIsBeingInitializedCount += 1;
                     await sleep(26 + (4 * Math.random()));
                     retryAccountIsBeingInitialized = true;
-                } else if (err && (err.code === 'ValidationError' && err.message) || (err.code === 'ResourceNotReady')) {
+                } else if (err && (err.name === 'ValidationError' && err.message) || (err.name === 'ResourceNotReady')) {
                     const message = err.message as string;
                     if (message.includes('ROLLBACK_COMPLETE') || message.includes('DELETE_FAILED')) {
                         // await deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
@@ -782,7 +808,7 @@ export class CfnUtil {
                         (-1 !== message.indexOf('is in CREATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) ||
                         (-1 !== message.indexOf('is in CREATE_IN_PROGRESS state and can not be updated.')) ||
                         (-1 !== message.indexOf('is in DELETE_IN_PROGRESS state and can not be updated.')) ||
-                        (err.code === 'ResourceNotReady' && err.originalError?.code === 'Throttling')) {
+                        (err.name === 'ResourceNotReady' && err.originalError?.code === 'Throttling')) {
                         if (retryStackIsBeingUpdatedCount >= 20) { // 20 * 30 sec = 10 minutes
                             throw new OrgFormationError(`Stack ${updateStackInput.StackName} seems stuck in UPDATE_IN_PROGRESS (or similar) state.`);
                         }

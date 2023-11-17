@@ -118,7 +118,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             command.state = state;
             return state;
         } catch (err) {
-            if (err && err.code === 'NoSuchBucket') {
+            if (err && err.name === 'NoSuchBucket') {
                 throw new OrgFormationError(`unable to load previously committed state, reason: bucket '${storageProvider.bucketName}' does not exist in current account.`);
             }
             throw err;
@@ -133,8 +133,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             if (err instanceof OrgFormationError) {
                 ConsoleUtil.LogError(err.message);
             } else {
-                if (err.code && err.requestId) {
-                    ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
+                if (err.name && err.requestId) {
+                    ConsoleUtil.LogError(`error: ${err.name}, aws-request-id: ${err.requestId}`);
                     ConsoleUtil.LogError(err.message);
 
                 } else {
@@ -202,7 +202,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         try {
             await storageProvider.create(region);
         } catch (err) {
-            if (err && err.code === 'BucketAlreadyOwnedByYou') {
+            if (err && err.name === 'BucketAlreadyOwnedByYou') {
                 return storageProvider;
             }
             throw err;
