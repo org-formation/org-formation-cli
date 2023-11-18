@@ -335,7 +335,7 @@ export class AwsOrganizationWriter {
             try {
                 await this.updateAccount(resource, accountId);
             } catch (err) {
-                if (err.name === 'AccessDenied' && retryCountAccessDenied < 3) {
+                if ((err.code === 'AccessDenied' || err.code === 'InvalidClientTokenId') && retryCountAccessDenied < 3) {
                     shouldRetry = true;
                     retryCountAccessDenied = retryCountAccessDenied + 1;
                     await sleep(3000);
@@ -374,7 +374,7 @@ export class AwsOrganizationWriter {
                 await this.updateAccount(resource, result.AccountId);
                 await partitionWriter.updateAccount(resource, result.GovCloudAccountId);
             } catch (err) {
-                if (err.name === 'AccessDenied' && retryCountAccessDenied < 3) {
+                if ((err.code === 'AccessDenied' || err.code === 'InvalidClientTokenId') && retryCountAccessDenied < 3) {
                     shouldRetry = true;
                     retryCountAccessDenied = retryCountAccessDenied + 1;
                     await sleep(3000);
@@ -692,7 +692,7 @@ export class AwsOrganizationWriter {
         let listAccountsOfPreviousOU: Organizations.ListAccountsForParentCommandOutput;
         do {
             listAccountsOfPreviousOU = await this.organizationsService.send(
-                new Organizations.ListAccountsForParentCommand( listAccountsOfPreviousOUCommandInput)
+                new Organizations.ListAccountsForParentCommand(listAccountsOfPreviousOUCommandInput)
             );
             for (const account of listAccountsOfPreviousOU.Accounts) {
                 ConsoleUtil.LogDebug(`moving account ${account.Name} from ou ${sourceId} to ou ${targetId}`);
