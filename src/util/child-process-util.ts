@@ -7,7 +7,7 @@ import { ErrorCode, OrgFormationError } from '~org-formation-error';
 
 export class ChildProcessUtility {
 
-    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount: string, stsRegion: string, env: Record<string, string> = {}, logVerbose: boolean | undefined = undefined): Promise<void> {
+    public static async SpawnProcessForAccount(cwd: string, command: string, accountId: string, roleInTargetAccount: string, region: string, env: Record<string, string> = {}, logVerbose: boolean | undefined = undefined): Promise<void> {
         ConsoleUtil.LogInfo(`Executing command: ${command} in account ${accountId}`);
 
         if (roleInTargetAccount === undefined) {
@@ -15,7 +15,7 @@ export class ChildProcessUtility {
         }
 
         try {
-            const credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, stsRegion);
+            const credentials = await AwsUtil.GetCredentials(accountId, roleInTargetAccount, region);
 
             const options: ExecOptions = {
                 cwd,
@@ -28,6 +28,8 @@ export class ChildProcessUtility {
                 options.env = {
                     ...options.env,
                     AWS_ACCESS_KEY_ID: credentials.accessKeyId,
+                    AWS_REGION: region,
+                    AWS_DEFAULT_REGION: region,
                     AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
                 };
                 delete env.AWS_PROFILE;
