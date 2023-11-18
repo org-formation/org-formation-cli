@@ -325,7 +325,7 @@ export class AwsUtil {
             accountId,
             roleInTargetAccount,
         });
-                const config: S3ClientConfig = {
+        const config: S3ClientConfig = {
             region: region ?? AwsUtil.GetDefaultRegion(),
             followRegionRedirects: true,
             credentials: provider,
@@ -479,12 +479,12 @@ export class AwsUtil {
 
     private static GetCredentialProviderWithRoleAssumptions(clientConfig: ServiceClientConfig): { cacheKey: ServiceCacheKey; provider: Provider<AwsCredentialIdentity> } {
         let providerToReturn = AwsUtil.credentialsProvider;
-        const { isPartition, accountId, roleInTargetAccount, viaRoleArn } = clientConfig;
+        const { isPartition, accountId, roleInTargetAccount, viaRoleArn, region: regionFromClientConfig } = clientConfig;
 
         // Determine which role to assume, if any
         const roleNameToAssume = AwsUtil.UseCurrentPrincipal(accountId, roleInTargetAccount) ? undefined : roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
         // fall back to default region if none is provided. for STS commercial partition we always select us-east-1 because it's a global service
-        const region = (isPartition) ? this.partitionRegion : AwsUtil.GetDefaultRegion();
+        const region = regionFromClientConfig ?? ((isPartition) ? this.partitionRegion : AwsUtil.GetDefaultRegion());
 
         let viaRoleArnProvider: AwsCredentialIdentityProvider;
         if (viaRoleArn) {
