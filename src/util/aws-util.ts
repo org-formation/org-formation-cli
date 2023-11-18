@@ -695,11 +695,7 @@ export class CfnUtil {
             }
             const putObjectRequest: PutObjectCommandInput = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
             await s3Service.send(new PutObjectCommand(putObjectRequest));
-            if (binding.region.includes('us-gov')) {
-                stackInput.TemplateURL = `https://${bucketName}.s3-${binding.region}.amazonaws.com/${putObjectRequest.Key}`;
-            } else {
-                stackInput.TemplateURL = `https://${bucketName}.amazonaws.com/${putObjectRequest.Key}`;
-            }
+            stackInput.TemplateURL = `https://${bucketName}.s3-${binding.region}.amazonaws.com/${putObjectRequest.Key}`;
             delete stackInput.TemplateBody;
         }
     }
