@@ -165,7 +165,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         return output.OutputValue;
     }
 
-    private getResourceRoleName(handlerPackageUrl: string, catalog: Catalog): { name: string; version: string; } {
+    private getResourceRoleName(handlerPackageUrl: string, catalog: Catalog): { name: string; version: string } {
         const packageNameWithVersion = handlerPackageUrl.replace(catalog.uri, '').replace('.zip', '');
         const packageNameWithVersionParts = packageNameWithVersion.split('-');
         const version = packageNameWithVersionParts[packageNameWithVersionParts.length - 1];
