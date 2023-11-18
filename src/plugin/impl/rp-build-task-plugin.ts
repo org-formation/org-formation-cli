@@ -87,7 +87,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
                 new CFN.ListTypeVersionsCommand({
                     Type: 'RESOURCE',
                     TypeName: binding.task.resourceType,
-                    NextToken: listVersionsResponse.NextToken,
+                    NextToken: listVersionsResponse?.NextToken,
                 }));
             for (const version of listVersionsResponse.TypeVersionSummaries) {
                 if (!version.IsDefaultVersion) {
@@ -126,7 +126,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
             roleArn = await this.ensureExecutionRole(cfn, schemaHandlerPackage, catalog);
         }
 
-        await retryTypeRegistrationWrapper(task.resourceType,  async () => {
+        await retryTypeRegistrationWrapper(task.resourceType, async () => {
             const response = await cfn.send(new CFN.RegisterTypeCommand({
                 TypeName: task.resourceType,
                 Type: 'RESOURCE',
@@ -165,7 +165,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         return output.OutputValue;
     }
 
-    private getResourceRoleName(handlerPackageUrl: string, catalog: Catalog): { name: string; version: string } {
+    private getResourceRoleName(handlerPackageUrl: string, catalog: Catalog): { name: string; version: string; } {
         const packageNameWithVersion = handlerPackageUrl.replace(catalog.uri, '').replace('.zip', '');
         const packageNameWithVersionParts = packageNameWithVersion.split('-');
         const version = packageNameWithVersionParts[packageNameWithVersionParts.length - 1];
@@ -197,18 +197,18 @@ const retryTypeRegistrationWrapper = async (type: string, fn: () => Promise<any>
         } catch (err) {
             const message = err.message as string;
             if (message && -1 !== message.indexOf('Deployment is currently in DEPLOY_STAGE of status FAILED')) {
-            if (retryCount >= 20) {
+                if (retryCount >= 20) {
+                    throw err;
+                }
+
+                ConsoleUtil.LogInfo(`Type registration ${type} is in DEPLOY_STAGE of status FAILED. waiting.... `);
+                retryCount += 1;
+                await sleep(1000 * (26 + (4 * Math.random())));
+                retryTypeRegistration = true;
+
+            } else {
                 throw err;
             }
-
-            ConsoleUtil.LogInfo(`Type registration ${type} is in DEPLOY_STAGE of status FAILED. waiting.... `);
-            retryCount += 1;
-            await sleep(1000 * (26 + (4 * Math.random())));
-            retryTypeRegistration = true;
-
-        } else {
-            throw err;
-        }
         }
     } while (retryTypeRegistration);
 };
