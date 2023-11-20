@@ -8,7 +8,7 @@ import { fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import { DescribeOrganizationCommand, DescribeOrganizationCommandOutput, OrganizationsClient, OrganizationsClientConfig } from '@aws-sdk/client-organizations';
 import { DescribeRegionsCommand, EC2Client, EC2ClientConfig } from '@aws-sdk/client-ec2';
 import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
-import { BucketLocationConstraint, CreateBucketCommand, DeleteObjectCommand, PutBucketEncryptionCommand, PutBucketOwnershipControlsCommand, PutObjectCommand, PutObjectCommandInput, PutPublicAccessBlockCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
+import { BucketLocationConstraint, CreateBucketCommand, CreateBucketCommandInput, DeleteObjectCommand, PutBucketEncryptionCommand, PutBucketOwnershipControlsCommand, PutObjectCommand, PutObjectCommandInput, PutPublicAccessBlockCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
 import { CloudFormationClient, CreateStackCommandInput, UpdateStackCommandInput, ValidateTemplateCommandInput, DescribeStacksCommandOutput, UpdateStackCommand, waitUntilStackUpdateComplete, DescribeStacksCommand, CreateStackCommand, waitUntilStackCreateComplete, DeleteStackCommand, waitUntilStackDeleteComplete, paginateListExports, CloudFormationServiceException, CloudFormationClientConfig } from '@aws-sdk/client-cloudformation';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import { chain } from '@smithy/property-provider';
@@ -669,7 +669,15 @@ export class CfnUtil {
             const bucketName = preExistingBucket ?? `org-formation-${binding.accountId}-${binding.region}-large-templates`;
             if (!preExistingBucket) {
                 try {
-                    await s3Service.send(new CreateBucketCommand({ Bucket: bucketName, CreateBucketConfiguration: { LocationConstraint: binding.region as BucketLocationConstraint } }));
+                    const createBucketInput: CreateBucketCommandInput = { Bucket: bucketName };
+                    // us-east-1 is the default and is not allowed explicitly by AWS
+                    if (binding.region !== 'us-east-1') {
+                        createBucketInput.CreateBucketConfiguration = {
+                            LocationConstraint: binding.region as BucketLocationConstraint,
+                        };
+                    }
+
+                    await s3Service.send(new CreateBucketCommand(createBucketInput));
                     await s3Service.send(
                         new PutBucketOwnershipControlsCommand({
                             Bucket: bucketName,

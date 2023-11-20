@@ -47,10 +47,14 @@ export class S3StorageProvider implements IStorageProvider {
         }
         const request: S3.CreateBucketCommandInput = {
             Bucket: this.bucketName,
-            CreateBucketConfiguration: {
-                LocationConstraint: region as S3.BucketLocationConstraint,
-            },
         };
+
+        // us-east-1 is the default and is not allowed explicitly by AWS
+        if (region !== 'us-east-1') {
+            request.CreateBucketConfiguration= {
+                LocationConstraint: region as S3.BucketLocationConstraint,
+            };
+        }
 
         const s3client = AwsUtil.GetS3Service(undefined, region);
         try {
