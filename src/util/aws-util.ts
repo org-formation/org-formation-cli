@@ -767,7 +767,7 @@ export class CfnUtil {
                 }
             } catch (err) {
                 // ConsoleUtil.LogError(`ADDITIONAL ${updateStackInput.StackName}: ${inspect(err)}`);
-                if (err && (err.name === 'OptInRequired' || err.name === 'InvalidClientTokenId')) {
+                                if (err && (err.name === 'OptInRequired' || err.name === 'InvalidClientTokenId')) {
                     if (retryAccountIsBeingInitializedCount >= 20) { // 20 * 30 sec = 10 minutes
                         throw new OrgFormationError('Account seems stuck initializing.');
                     }
@@ -789,9 +789,6 @@ export class CfnUtil {
                         }, {
                             StackName: updateStackInput.StackName,
                         });
-                        describeStack = await cfn.send(new DescribeStacksCommand({
-                            StackName: updateStackInput.StackName,
-                        }));
                         updateStackInput.ClientRequestToken = uuid();
                         await cfn.send(new CreateStackCommand(updateStackInput));
                         await waitUntilStackCreateComplete({
