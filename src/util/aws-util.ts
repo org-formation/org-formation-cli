@@ -8,7 +8,7 @@ import { fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import { DescribeOrganizationCommand, DescribeOrganizationCommandOutput, OrganizationsClient, OrganizationsClientConfig } from '@aws-sdk/client-organizations';
 import { DescribeRegionsCommand, EC2Client, EC2ClientConfig } from '@aws-sdk/client-ec2';
 import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
-import { CreateBucketCommand, DeleteObjectCommand, PutBucketEncryptionCommand, PutBucketOwnershipControlsCommand, PutObjectCommand, PutObjectCommandInput, PutPublicAccessBlockCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
+import { BucketLocationConstraint, CreateBucketCommand, DeleteObjectCommand, PutBucketEncryptionCommand, PutBucketOwnershipControlsCommand, PutObjectCommand, PutObjectCommandInput, PutPublicAccessBlockCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
 import { CloudFormationClient, CreateStackCommandInput, UpdateStackCommandInput, ValidateTemplateCommandInput, DescribeStacksCommandOutput, UpdateStackCommand, waitUntilStackUpdateComplete, DescribeStacksCommand, CreateStackCommand, waitUntilStackCreateComplete, DeleteStackCommand, waitUntilStackDeleteComplete, paginateListExports, CloudFormationServiceException, CloudFormationClientConfig } from '@aws-sdk/client-cloudformation';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import { chain } from '@smithy/property-provider';
@@ -661,7 +661,7 @@ export class CfnUtil {
             const bucketName = preExistingBucket ?? `org-formation-${binding.accountId}-${binding.region}-large-templates`;
             if (!preExistingBucket) {
                 try {
-                    await s3Service.send(new CreateBucketCommand({ Bucket: bucketName }));
+                    await s3Service.send(new CreateBucketCommand({ Bucket: bucketName, CreateBucketConfiguration: { LocationConstraint: binding.region as BucketLocationConstraint } }));
                     await s3Service.send(
                         new PutBucketOwnershipControlsCommand({
                             Bucket: bucketName,

@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 import md5 from 'md5';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { OrgFormationError } from '../org-formation-error';
 import { BuildTaskProvider } from './build-task-provider';
 import { IUpdateOrganizationTaskConfiguration } from './tasks/update-organization-task';
@@ -166,7 +166,7 @@ export class BuildConfiguration {
                 const response = await s3client.send(
                     new GetObjectCommand({ Bucket: bucketAndKeySplit[0], Key: bucketAndKeySplit[1] })
                 );
-                return response.Body.transformToString();
+                return await response.Body.transformToString('utf-8');
             } else {
                 const contents = readFileSync(organizationFileLocation).toString();
                 if (textTemplatingContext !== undefined) {

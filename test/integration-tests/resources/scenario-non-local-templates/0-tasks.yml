@@ -10,7 +10,7 @@ CopyToS3:
   LocalPath: ./buckets.yml
   OrganizationBinding:
     IncludeMasterAccount: true
-    Region: eu-central-1
+    Region: eu-west-1
 
 BucketsFromS3:
   DependsOn: CopyToS3
@@ -19,7 +19,7 @@ BucketsFromS3:
   Template: s3://scenario-non-local-templates/xyz/buckets.yml #todo: support !Sub
   OrganizationBinding:
     IncludeMasterAccount: true
-    Region: eu-central-1
+    Region: eu-west-1
 
 BucketsFromHTTP:
   DependsOn: CopyToS3
@@ -28,4 +28,4 @@ BucketsFromHTTP:
   Template: https://raw.githubusercontent.com/org-formation/org-formation-cli/master/test/integration-tests/resources/scenario-very-large-stack/buckets.yml
   OrganizationBinding:
     IncludeMasterAccount: true
-    Region: eu-central-1
+    Region: eu-west-1

@@ -42,16 +42,19 @@ export class S3StorageProvider implements IStorageProvider {
     }
 
     public async create(region: string, throwOnAccessDenied = false): Promise<void> {
-        const request: S3.CreateBucketCommandInput = {
-            Bucket: this.bucketName,
-        };
         if (!region) {
             region = AwsUtil.GetDefaultRegion();
         }
+        const request: S3.CreateBucketCommandInput = {
+            Bucket: this.bucketName,
+            CreateBucketConfiguration: {
+                LocationConstraint: region as S3.BucketLocationConstraint,
+            },
+        };
 
         const s3client = AwsUtil.GetS3Service(undefined, region);
         try {
-                        await s3client.send(new S3.CreateBucketCommand(request));
+            await s3client.send(new S3.CreateBucketCommand(request));
             await s3client.send(new S3.PutPublicAccessBlockCommand({
                 Bucket: this.bucketName, PublicAccessBlockConfiguration: {
                     BlockPublicAcls: true,

@@ -32,7 +32,7 @@ export class FileUtil {
                 bucketAndKeySplit.splice(0,1);
                 const key =  bucketAndKeySplit.join('/');
                 const response = await s3client.send(new GetObjectCommand({ Bucket:bucket, Key: key}));
-                return response.Body.toString();
+                return await response.Body.transformToString('utf-8');
             }catch(err) {
                 throw new OrgFormationError(`unable to get contents of S3 hosted file (path: ${filePath}), error: ${err.message}`);
             }
