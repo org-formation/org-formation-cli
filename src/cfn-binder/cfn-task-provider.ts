@@ -219,7 +219,7 @@ export class CfnTaskProvider {
                 const cloudFormationRoleName = await expressionResolver.resolveSingleExpression(binding.cloudFormationRoleName, 'CloudFormationRoleName');
 
                 try {
-                    const cfn = await AwsUtil.GetCloudFormationService(binding.accountId, binding.region, customRoleName, customViaRoleArn);
+                    const cfn = AwsUtil.GetCloudFormationService(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
                     await performAndRetryIfNeeded(async () => {
                         let roleArn: string;

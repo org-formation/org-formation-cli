@@ -119,6 +119,7 @@ export class AwsUtil {
         this.stsClient = new STSClient({ credentials: AwsUtil.credentialsProvider, ...(this.isPartition ? { region: this.partitionRegion } : { region: this.GetDefaultRegion(this.profile) }) });
         const caller = await this.stsClient.send(new GetCallerIdentityCommand({}));
         this.userId = caller.UserId.replace(':', '-').substring(0, 60);
+        this.currentSessionAccountId = caller.Account;
 
         // if the master accountId wasn't set before, then populate it with the current caller
         await AwsUtil.GetMasterAccountId();
@@ -439,21 +440,27 @@ export class AwsUtil {
     /**
      * we don't assume a role if we are running the master account AND the roleInTarget account is OrganizationAccessRoleName
      */
-    private static UseCurrentPrincipal(accountId: string, roleInTargetAccount?: string): boolean {
+    private static UseCurrentPrincipal(targetAccountId: string, roleInTargetAccount?: string): boolean {
         // if masterAccountId is undefined, we get unexpected behaviour. This is guaranteed to be set after initialization.
         AwsUtil.throwIfNowInitiazized();
 
         // simplest case: if there is not account given, we must use current principal
         // because we don't know where to assume and we don't make assumptions about the target account.
-        if (accountId === undefined) {
+        if (targetAccountId === undefined) {
             return true;
         }
+
+        // if our current principal is not in the master account, we always attempt an assume role
+        if (this.currentSessionAccountId !== AwsUtil.masterAccountId) {
+            return false;
+        }
+
         // if we are in the master account and we don't provide a role then we must also use the current principal
-        if (AwsUtil.masterAccountId === accountId && roleInTargetAccount === undefined) {
+        if (AwsUtil.masterAccountId === targetAccountId && roleInTargetAccount === undefined) {
             return true;
         }
         // if we are in the master account and the role is the default role, we also skip assuming. This is a special case
-        if (AwsUtil.masterAccountId === accountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(accountId)) {
+        if (AwsUtil.masterAccountId === targetAccountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(targetAccountId)) {
             return true;
         }
         return false;
@@ -582,6 +589,7 @@ export class AwsUtil {
     public static partition: string | undefined;
     private static partitionRegion = 'us-gov-west-1';
     private static masterAccountId: string;
+    private static currentSessionAccountId: string;
     private static masterPartitionId: string;
     private static partitionProfile?: string;
     private static profile?: string;
@@ -727,7 +735,7 @@ export class CfnUtil {
                         StackName: updateStackInput.StackName,
                     }));
                 } catch (innerErr) {
-                    if (innerErr instanceof CloudFormationServiceException && innerErr.name === 'ValidationError' && innerErr.message && innerErr.message.indexOf('does not exist') !== -1) {
+                    if (innerErr instanceof CloudFormationServiceException && innerErr.name === 'ValidationError' && innerErr.message.includes('does not exist')) {
                         updateStackInput.ClientRequestToken = uuid();
                         await cfn.send(new CreateStackCommand(updateStackInput));
                         await waitUntilStackCreateComplete({
@@ -741,7 +749,7 @@ export class CfnUtil {
                         describeStack = await cfn.send(new DescribeStacksCommand({
                             StackName: updateStackInput.StackName,
                         }));
-                    } else if (innerErr && innerErr.message && innerErr.message.indexOf('No updates are to be performed') !== -1) {
+                    } else if (innerErr instanceof CloudFormationServiceException && innerErr.name === 'ValidationError' && innerErr.message.includes('No updates are to be performed')) {
                         describeStack = await cfn.send(new DescribeStacksCommand({
                             StackName: updateStackInput.StackName,
                         }));
@@ -758,10 +766,9 @@ export class CfnUtil {
                     retryAccountIsBeingInitializedCount += 1;
                     await sleep(26 + (4 * Math.random()));
                     retryAccountIsBeingInitialized = true;
-                } else if (err && (err.name === 'ValidationError' && err.message) || (err.name === 'ResourceNotReady')) {
-                    const message = err.message as string;
+                } else if (err instanceof CloudFormationServiceException && (err.name === 'ValidationError' || err.name === 'ResourceNotReady')) {
+                    const message = err.message;
                     if (message.includes('ROLLBACK_COMPLETE') || message.includes('DELETE_FAILED')) {
-                        // await deleteStack({ StackName: updateStackInput.StackName, RoleARN: updateStackInput.RoleARN }).promise();
                         await cfn.send(new DeleteStackCommand({
                             StackName: updateStackInput.StackName,
                             RoleARN: updateStackInput.RoleARN,
@@ -805,7 +812,7 @@ export class CfnUtil {
                         (-1 !== message.indexOf('is in CREATE_COMPLETE_CLEANUP_IN_PROGRESS state and can not be updated.')) ||
                         (-1 !== message.indexOf('is in CREATE_IN_PROGRESS state and can not be updated.')) ||
                         (-1 !== message.indexOf('is in DELETE_IN_PROGRESS state and can not be updated.')) ||
-                        (err.name === 'ResourceNotReady' && err.originalError?.code === 'Throttling')) {
+                        (err.name === 'ResourceNotReady')) {
                         if (retryStackIsBeingUpdatedCount >= 20) { // 20 * 30 sec = 10 minutes
                             throw new OrgFormationError(`Stack ${updateStackInput.StackName} seems stuck in UPDATE_IN_PROGRESS (or similar) state.`);
                         }
