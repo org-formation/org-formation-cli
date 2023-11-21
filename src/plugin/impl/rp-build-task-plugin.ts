@@ -6,7 +6,7 @@ import { IPluginTask, IPluginBinding } from '~plugin/plugin-binder';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { Validator } from '~parser/validator';
 import { OrgFormationError } from '~org-formation-error';
-import { AwsUtil, CfnUtil } from '~util/aws-util';
+import { AwsUtil, BoundCloudFormationClient, CfnUtil } from '~util/aws-util';
 import { ConsoleUtil } from '~util/console-util';
 
 const communityResourceProviderCatalog = 'community-resource-provider-catalog';
@@ -147,7 +147,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
         });
     }
 
-    private async ensureExecutionRole(cfn: CFN.CloudFormationClient, handlerPackageUrl: string, catalog: Catalog): Promise<string> {
+    private async ensureExecutionRole(cfn: BoundCloudFormationClient, handlerPackageUrl: string, catalog: Catalog): Promise<string> {
         if (handlerPackageUrl === undefined || !handlerPackageUrl.startsWith(catalog.uri)) {
             throw new OrgFormationError('Can only automatically install ExecutionRole for resource providers hosted on community-resource-provider-catalog or community-resource-provider-catalog-gov. As a workaround, you can use the native CloudFormation resource to register the type: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudformation-resourceversion.html');
         }

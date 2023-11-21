@@ -24,7 +24,7 @@ import { ICfnBinding } from '~cfn-binder/cfn-binder';
 export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 
-interface ServiceClientConfig {
+interface ServiceClientBinding {
     accountId?: string;
     region?: string;
     roleInTargetAccount?: string;
@@ -391,9 +391,9 @@ export class AwsUtil {
      * If also a `viaRoleArn` is provided, then that roleArn is assumed first using Role Chaining
      * If partion is true, then the given region is ignored and partitionRegion is used.
      */
-    public static GetCloudFormationService(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): CloudFormationClient {
-                AwsUtil.throwIfNowInitiazized();
-        const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+    public static GetCloudFormationService(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): BoundCloudFormationClient {
+        AwsUtil.throwIfNowInitiazized();
+        const { cacheKey, provider, serviceClientBinding } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
             accountId,
             region,
             roleInTargetAccount,
@@ -401,7 +401,7 @@ export class AwsUtil {
             isPartition,
         });
         const config: CloudFormationClientConfig = {
-                        region: (isPartition) ? this.partitionRegion : region ?? AwsUtil.GetDefaultRegion(),
+            region: (isPartition) ? this.partitionRegion : region ?? AwsUtil.GetDefaultRegion(),
             credentials: provider,
             defaultsMode: 'standard',
             retryMode: 'standard',
@@ -410,7 +410,7 @@ export class AwsUtil {
         if (this.CfnServiceCache[cacheKey]) {
             return this.CfnServiceCache[cacheKey];
         }
-        this.CfnServiceCache[cacheKey] = new CloudFormationClient(config);
+        this.CfnServiceCache[cacheKey] = new BoundCloudFormationClient(config, serviceClientBinding);
         return this.CfnServiceCache[cacheKey];
     }
 
@@ -480,7 +480,7 @@ export class AwsUtil {
         return await provider();
     }
 
-    private static GetCredentialProviderWithRoleAssumptions(clientConfig: ServiceClientConfig): { cacheKey: ServiceCacheKey; provider: Provider<AwsCredentialIdentity> } {
+    private static GetCredentialProviderWithRoleAssumptions(clientConfig: ServiceClientBinding): { cacheKey: ServiceCacheKey; provider: Provider<AwsCredentialIdentity>; serviceClientBinding: ServiceClientBinding } {
         let providerToReturn = AwsUtil.credentialsProvider;
         const { isPartition, accountId, roleInTargetAccount, viaRoleArn, region: regionFromClientConfig } = clientConfig;
 
@@ -522,6 +522,13 @@ export class AwsUtil {
         return {
             cacheKey: `${accountId}/${region}/${roleNameToAssume}/${viaRoleArn}/${isPartition}`,
             provider: providerToReturn,
+            serviceClientBinding: {
+                accountId,
+                region,
+                roleInTargetAccount,
+                viaRoleArn,
+                isPartition,
+            },
         };
     }
 
@@ -551,6 +558,15 @@ export class AwsUtil {
         }
 
         return undefined;
+    }
+
+    /**
+     * Puts an export value in the exports cache. Overwrites if it was already present.
+     */
+    public static PutCloudFormationExport(exportName: string, accountId: string, region: string, exportValue: string): void {
+        const cacheKey = `${exportName}|${accountId}|${region}`;
+        this.CfnExportsCache[cacheKey] = exportValue;
+        return;
     }
 
     /**
@@ -603,7 +619,7 @@ export class AwsUtil {
     private static IamServiceCache: Record<string, IAMClient> = {};
     private static SupportServiceCache: Record<string, SupportClient> = {};
     private static OrganizationsServiceCache: Record<string, OrganizationsClient> = {};
-    private static CfnServiceCache: Record<string, CloudFormationClient> = {};
+    private static CfnServiceCache: Record<string, BoundCloudFormationClient> = {};
     private static S3ServiceCache: Record<string, S3Client> = {};
     private static EC2ServiceCache: Record<string, EC2Client> = {};
     private static EventBridgeServiceCache: Record<string, EventBridgeClient> = {};
@@ -719,7 +735,7 @@ export class CfnUtil {
     }
 
 
-    public static async UpdateOrCreateStack(cfn: CloudFormationClient, updateStackInput: UpdateStackCommandInput): Promise<DescribeStacksCommandOutput> {
+    public static async UpdateOrCreateStack(cfn: BoundCloudFormationClient, updateStackInput: UpdateStackCommandInput): Promise<DescribeStacksCommandOutput> {
         let describeStack: DescribeStacksCommandOutput;
         let retryStackIsBeingUpdated = false;
         let retryStackIsBeingUpdatedCount = 0;
@@ -769,7 +785,7 @@ export class CfnUtil {
                 }
             } catch (err) {
                 // ConsoleUtil.LogError(`ADDITIONAL ${updateStackInput.StackName}: ${inspect(err)}`);
-                                if (err && (err.name === 'OptInRequired' || err.name === 'InvalidClientTokenId')) {
+                if (err && (err.name === 'OptInRequired' || err.name === 'InvalidClientTokenId')) {
                     if (retryAccountIsBeingInitializedCount >= 20) { // 20 * 30 sec = 10 minutes
                         throw new OrgFormationError('Account seems stuck initializing.');
                     }
@@ -837,6 +853,13 @@ export class CfnUtil {
                 }
             }
         } while (retryStackIsBeingUpdated || retryAccountIsBeingInitialized);
+
+        // update the cloudformation exports cache with the exports from the stack we just UpdateCreated
+        for (const stack of describeStack.Stacks) {
+            for (const exports of stack.Outputs) {
+                AwsUtil.PutCloudFormationExport(exports.ExportName, cfn.binding.accountId, cfn.binding.region, exports.OutputValue);
+            }
+        }
         return describeStack;
     }
 }
@@ -844,3 +867,26 @@ export class CfnUtil {
 const sleep = (seconds: number): Promise<void> => {
     return new Promise(resolve => setTimeout(resolve, 1000 * seconds));
 };
+
+
+export class BoundCloudFormationClient extends CloudFormationClient {
+    constructor(config: CloudFormationClientConfig, readonly binding: ServiceClientBinding) {
+        super(config);
+
+        if (typeof binding.accountId !== 'string') {
+            throw new OrgFormationError(`Cannot create CloudFormationClient where account is not string ${binding.accountId}`);
+        }
+        if (typeof binding.region !== 'string') {
+            throw new OrgFormationError(`Cannot create CloudFormationClient where region is not string ${binding.region}`);
+        }
+        if (binding.roleInTargetAccount !== undefined && typeof binding.roleInTargetAccount !== 'string') {
+            throw new OrgFormationError(`Cannot create CloudFormationClient where roleInTargetAccoun is not string ${binding.roleInTargetAccount}`);
+        }
+        if (binding.viaRoleArn !== undefined && typeof binding.viaRoleArn !== 'string') {
+            throw new OrgFormationError(`Cannot create CloudFormationClient where viaRoleArn is not string ${binding.viaRoleArn}`);
+        }
+        if (binding.isPartition !== undefined && typeof binding.roleInTargetAccount !== 'boolean') {
+            throw new OrgFormationError(`Cannot create CloudFormationClient where isPartition is not boolean ${binding.isPartition}`);
+        }
+    }
+}
