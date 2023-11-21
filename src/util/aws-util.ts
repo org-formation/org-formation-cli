@@ -856,6 +856,9 @@ export class CfnUtil {
 
         // update the cloudformation exports cache with the exports from the stack we just UpdateCreated
         for (const stack of describeStack.Stacks) {
+            if (!stack.Outputs) {
+                continue;
+            }
             for (const exports of stack.Outputs) {
                 AwsUtil.PutCloudFormationExport(exports.ExportName, cfn.binding.accountId, cfn.binding.region, exports.OutputValue);
             }
