@@ -888,7 +888,7 @@ export class BoundCloudFormationClient extends CloudFormationClient {
         if (binding.viaRoleArn !== undefined && typeof binding.viaRoleArn !== 'string') {
             throw new OrgFormationError(`Cannot create CloudFormationClient where viaRoleArn is not string ${binding.viaRoleArn}`);
         }
-        if (binding.isPartition !== undefined && typeof binding.roleInTargetAccount !== 'boolean') {
+        if (binding.isPartition !== undefined && typeof binding.isPartition !== 'boolean') {
             throw new OrgFormationError(`Cannot create CloudFormationClient where isPartition is not boolean ${binding.isPartition}`);
         }
     }
