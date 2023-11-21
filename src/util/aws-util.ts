@@ -392,7 +392,7 @@ export class AwsUtil {
      * If partion is true, then the given region is ignored and partitionRegion is used.
      */
     public static GetCloudFormationService(accountId: string, region: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): CloudFormationClient {
-        AwsUtil.throwIfNowInitiazized();
+                AwsUtil.throwIfNowInitiazized();
         const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
             accountId,
             region,
@@ -401,7 +401,7 @@ export class AwsUtil {
             isPartition,
         });
         const config: CloudFormationClientConfig = {
-            region: (isPartition) ? this.partitionRegion : region ?? AwsUtil.GetDefaultRegion(),
+                        region: (isPartition) ? this.partitionRegion : region ?? AwsUtil.GetDefaultRegion(),
             credentials: provider,
             defaultsMode: 'standard',
             retryMode: 'standard',
@@ -440,7 +440,7 @@ export class AwsUtil {
     /**
      * we don't assume a role if we are running the master account AND the roleInTarget account is OrganizationAccessRoleName
      */
-    private static UseCurrentPrincipal(targetAccountId: string, roleInTargetAccount?: string): boolean {
+    private static UseCurrentPrincipal(targetAccountId: string, roleInTargetAccount: string): boolean {
         // if masterAccountId is undefined, we get unexpected behaviour. This is guaranteed to be set after initialization.
         AwsUtil.throwIfNowInitiazized();
 
@@ -450,16 +450,12 @@ export class AwsUtil {
             return true;
         }
 
-        // if our current principal is not in the master account, we always attempt an assume role
+        // If our current principal is not in the master account, we always attempt an assume role
         if (this.currentSessionAccountId !== AwsUtil.masterAccountId) {
             return false;
         }
 
-        // if we are in the master account and we don't provide a role then we must also use the current principal
-        if (AwsUtil.masterAccountId === targetAccountId && roleInTargetAccount === undefined) {
-            return true;
-        }
-        // if we are in the master account and the role is the default role, we also skip assuming. This is a special case
+        // This is a special case. If we are in the master account and the role is the default role, we also skip assuming.
         if (AwsUtil.masterAccountId === targetAccountId && roleInTargetAccount === GlobalState.GetOrganizationAccessRoleName(targetAccountId)) {
             return true;
         }
@@ -488,8 +484,14 @@ export class AwsUtil {
         let providerToReturn = AwsUtil.credentialsProvider;
         const { isPartition, accountId, roleInTargetAccount, viaRoleArn, region: regionFromClientConfig } = clientConfig;
 
+        // TODO: for some reason the role can be an object?! this must be a bug, but this catches it.
+        let resolvedTargetRole = roleInTargetAccount;
+        if (typeof roleInTargetAccount !== 'string') {
+            resolvedTargetRole = GlobalState.GetCrossAccountRoleName(accountId);
+        }
+
         // Determine which role to assume, if any
-        const roleNameToAssume = AwsUtil.UseCurrentPrincipal(accountId, roleInTargetAccount) ? undefined : roleInTargetAccount ?? GlobalState.GetCrossAccountRoleName(accountId);
+        const roleNameToAssume = AwsUtil.UseCurrentPrincipal(accountId, resolvedTargetRole) ? undefined : resolvedTargetRole;
         // fall back to default region if none is provided. for STS commercial partition we always select us-east-1 because it's a global service
         const region = regionFromClientConfig ?? ((isPartition) ? this.partitionRegion : AwsUtil.GetDefaultRegion());
 
