@@ -80,7 +80,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     async performRemove(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver*/): Promise<void> {
-        const cfn = AwsUtil.GetCloudFormationService(binding.target.accountId, binding.target.region, binding.task.taskRoleName, null, AwsUtil.GetIsPartition());
+        const cfn = AwsUtil.GetCloudFormationService(binding.target.accountId, binding.target.region, binding.task.taskRoleName, undefined, AwsUtil.GetIsPartition());
         let listVersionsResponse: CFN.ListTypeVersionsCommandOutput;
         do {
             listVersionsResponse = await cfn.send(
