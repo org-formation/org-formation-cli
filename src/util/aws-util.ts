@@ -4,7 +4,7 @@ import { IAMClient, IAMClientConfig } from '@aws-sdk/client-iam';
 import { v4 as uuid } from 'uuid';
 import { SupportClient, SupportClientConfig } from '@aws-sdk/client-support';
 import { AwsCredentialIdentity, AwsCredentialIdentityProvider, Provider } from '@smithy/types';
-import { fromTemporaryCredentials } from '@aws-sdk/credential-providers';
+import { fromEnv, fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import { DescribeOrganizationCommand, DescribeOrganizationCommandOutput, OrganizationsClient, OrganizationsClientConfig } from '@aws-sdk/client-organizations';
 import { DescribeRegionsCommand, EC2Client, EC2ClientConfig } from '@aws-sdk/client-ec2';
 import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
@@ -108,9 +108,22 @@ export class AwsUtil {
         if (credentials) {
             AwsUtil.credentialsProvider = credentials;
         } else {
-            const defaultWithPartitionSupport = chain(partitionFromEnv(this.isPartition), defaultProvider({
-                profile: this.isPartition ? this.partitionProfile : this.profile,
-            }));
+            /**
+             * 1. check and use GOV_AWS_*
+             * 2. check and use AWS_*
+             * 3. start the `defaultProvider`
+             *
+             * This is necessary because the `defaultProvider` prefers AWS_PROFILE/config.profile over environment
+             * variables, contrary to what is documented.
+             *
+             * See: https://github.com/aws/aws-sdk-js-v3/blob/9d28ffbf7b42ccb9fdb52857e5891fe85674a037/packages/credential-provider-node/src/defaultProvider.ts#L50C2-L64C5
+             */
+            const defaultWithPartitionSupport = chain(
+                partitionFromEnv(this.isPartition),
+                fromEnv(),
+                defaultProvider({
+                    profile: this.isPartition ? this.partitionProfile : this.profile,
+                }));
             AwsUtil.credentialsProvider = defaultWithPartitionSupport;
         }
 
