@@ -23,6 +23,7 @@ import { ICfnBinding } from '~cfn-binder/cfn-binder';
 
 export const DEFAULT_ROLE_FOR_ORG_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
 export const DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS = { RoleName: 'OrganizationAccountAccessRole' };
+const ROLE_SESSION_NAME = 'OrganizationFormationBuild';
 
 interface ServiceClientBinding {
     accountId?: string;
@@ -515,7 +516,7 @@ export class AwsUtil {
                 clientConfig: { region },
                 params: {
                     RoleArn: viaRoleArn,
-                    RoleSessionName: `OFN-${AwsUtil.userId}`,
+                    RoleSessionName: ROLE_SESSION_NAME,
                     DurationSeconds: 900,
                 },
             });
@@ -527,7 +528,7 @@ export class AwsUtil {
                 clientConfig: { region },
                 params: {
                     RoleArn: AwsUtil.GetRoleToAssumeArn(accountId, roleNameToAssume, isPartition),
-                    RoleSessionName: `OFN-${AwsUtil.userId}`,
+                    RoleSessionName: ROLE_SESSION_NAME,
                     DurationSeconds: 900,
                 },
             });
