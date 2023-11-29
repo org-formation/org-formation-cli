@@ -1,6 +1,7 @@
 import * as Organizations from '@aws-sdk/client-organizations';
 import * as IAM from '@aws-sdk/client-iam';
 import { CreateCaseCommand } from '@aws-sdk/client-support';
+import { STSServiceException } from '@aws-sdk/client-sts';
 import { AwsUtil, passwordPolicyEquals } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -335,7 +336,7 @@ export class AwsOrganizationWriter {
             try {
                 await this.updateAccount(resource, accountId);
             } catch (err) {
-                if ((err.code === 'AccessDenied' || err.code === 'InvalidClientTokenId') && retryCountAccessDenied < 3) {
+                if ((err.name === 'AccessDenied' || err.name === 'InvalidClientTokenId') && retryCountAccessDenied < 3) {
                     shouldRetry = true;
                     retryCountAccessDenied = retryCountAccessDenied + 1;
                     await sleep(3000);
@@ -374,7 +375,7 @@ export class AwsOrganizationWriter {
                 await this.updateAccount(resource, result.AccountId);
                 await partitionWriter.updateAccount(resource, result.GovCloudAccountId);
             } catch (err) {
-                if ((err.code === 'AccessDenied' || err.code === 'InvalidClientTokenId') && retryCountAccessDenied < 3) {
+                if ((err.name === 'AccessDenied' || err.name === 'InvalidClientTokenId') && retryCountAccessDenied < 3) {
                     shouldRetry = true;
                     retryCountAccessDenied = retryCountAccessDenied + 1;
                     await sleep(3000);
