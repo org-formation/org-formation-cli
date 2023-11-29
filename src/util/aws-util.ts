@@ -221,10 +221,6 @@ export class AwsUtil {
         AwsUtil.partitionRegion = partitionRegion;
     }
 
-    static SetBuildAccountId(buildAccountId: string): void {
-        AwsUtil.buildProcessAccountId = buildAccountId;
-    }
-
     public static async GetMasterAccountId(): Promise<string> {
         if (AwsUtil.masterAccountId !== undefined) {
             return AwsUtil.masterAccountId;
@@ -260,7 +256,6 @@ export class AwsUtil {
             return AwsUtil.buildProcessAccountId;
         }
         const caller = await this.stsClient.send(new GetCallerIdentityCommand({}));
-        ConsoleUtil.LogWarning('Build process account Id not set, assuming org-formation is running in the build process account');
         AwsUtil.buildProcessAccountId = caller.Account;
         return AwsUtil.buildProcessAccountId;
     }
