@@ -8,7 +8,7 @@ import { fromEnv, fromTemporaryCredentials } from '@aws-sdk/credential-providers
 import { DescribeOrganizationCommand, DescribeOrganizationCommandOutput, OrganizationsClient, OrganizationsClientConfig } from '@aws-sdk/client-organizations';
 import { DescribeRegionsCommand, EC2Client, EC2ClientConfig } from '@aws-sdk/client-ec2';
 import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
-import { BucketLocationConstraint, CreateBucketCommand, CreateBucketCommandInput, DeleteObjectCommand, PutBucketEncryptionCommand, PutBucketOwnershipControlsCommand, PutObjectCommand, PutObjectCommandInput, PutPublicAccessBlockCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
+import { BucketLocationConstraint, CreateBucketCommand, CreateBucketCommandInput, DeleteObjectCommand, GetBucketLocationCommand, PutBucketEncryptionCommand, PutBucketOwnershipControlsCommand, PutObjectCommand, PutObjectCommandInput, PutPublicAccessBlockCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
 import { CloudFormationClient, CreateStackCommandInput, UpdateStackCommandInput, ValidateTemplateCommandInput, DescribeStacksCommandOutput, UpdateStackCommand, waitUntilStackUpdateComplete, DescribeStacksCommand, CreateStackCommand, waitUntilStackCreateComplete, DeleteStackCommand, waitUntilStackDeleteComplete, paginateListExports, CloudFormationServiceException, CloudFormationClientConfig } from '@aws-sdk/client-cloudformation';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import { chain } from '@smithy/property-provider';
@@ -736,9 +736,11 @@ export class CfnUtil {
                     }
                 }
             }
+            const largeTemplateBucketRegion = await s3Service.send(new GetBucketLocationCommand({ Bucket: bucketName }));
+            const bucketRegion: string = largeTemplateBucketRegion.LocationConstraint ?? 'us-east-1';
             const putObjectRequest: PutObjectCommandInput = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
             await s3Service.send(new PutObjectCommand(putObjectRequest));
-            stackInput.TemplateURL = `https://${bucketName}.s3-${binding.region}.amazonaws.com/${putObjectRequest.Key}`;
+            stackInput.TemplateURL = `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${putObjectRequest.Key}`;
             delete stackInput.TemplateBody;
         }
     }
