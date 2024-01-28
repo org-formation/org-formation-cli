@@ -1,13 +1,14 @@
-import { Organizations } from "aws-sdk";
 import { UpdateOrganizationCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
 import { ConsoleUtil } from "~util/console-util";
+import { OrganizationsClient } from "@aws-sdk/client-organizations";
+import { AwsUtil } from "~util/aws-util";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-attach-account/';
 
 describe('when attaching and detaching account', () => {
     let context: IIntegrationTestContext;
-    let orgClient: Organizations;
+    let orgClient: OrganizationsClient;
 
     let consoleOutAfterInit: jest.MockContext<any, any>;
     let consoleOutAfterAttachAccount: jest.MockContext<any, any>;
@@ -19,7 +20,7 @@ describe('when attaching and detaching account', () => {
         logOut = jest.spyOn(ConsoleUtil, 'Out');
 
         context = await baseBeforeAll();
-        orgClient = new Organizations({ region: 'us-east-1' });
+        orgClient = AwsUtil.GetOrganizationsService()
         await context.prepareStateBucket(basePathForScenario + 'state.json');
         const { command } = context;
 

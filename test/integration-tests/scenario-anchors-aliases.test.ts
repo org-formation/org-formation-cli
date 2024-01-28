@@ -1,13 +1,13 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll } from './base-integration-test';
-import { DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
 import { PrintTasksCommand } from '~commands/print-tasks';
+import { DescribeStacksCommand, DescribeStacksCommandOutput } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-anchors-aliases/';
 
 describe('when calling org-formation perform tasks', () => {
   let context: IIntegrationTestContext;
-  let anchorsAndAliases: DescribeStacksOutput;
+  let anchorsAndAliases: DescribeStacksCommandOutput;
 
   beforeAll(async () => {
 
@@ -21,7 +21,7 @@ describe('when calling org-formation perform tasks', () => {
       await PrintTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy.yml' })
       await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy.yml' });
 
-      anchorsAndAliases = await cfnClient.describeStacks({ StackName: 'anchors-and-aliases' }).promise();
+      anchorsAndAliases = await cfnClient.send(new DescribeStacksCommand({ StackName: 'anchors-and-aliases' }));
 
 
       await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup.yml', performCleanup: true });

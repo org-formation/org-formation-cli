@@ -1,4 +1,4 @@
-import { Organization } from 'aws-sdk/clients/organizations';
+import { Organization } from '@aws-sdk/client-organizations';
 import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot } from './aws-organization-reader';
 
 export class AwsOrganization {

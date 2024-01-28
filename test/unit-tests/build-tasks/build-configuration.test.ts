@@ -7,8 +7,6 @@ import { IUpdateStackTaskConfiguration } from '~build-tasks/tasks/update-stacks-
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 
-
-
 describe('when resolving tasks from configuration', () => {
     let buildFile: any | IBuildFile;
     let filePath = './tasks.yml';

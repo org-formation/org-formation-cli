@@ -1,4 +1,3 @@
-import { bool } from 'aws-sdk/clients/signer';
 import { OrgFormationError } from '../../org-formation-error';
 import { IOrganization, IResource, TemplateRoot } from '../parser';
 import { ConsoleUtil } from '../../util/console-util';
@@ -129,7 +128,7 @@ export class OrganizationSection {
         }
     }
 
-    public findAccount(fn: (x: AccountResource) => bool): AccountResource | undefined {
+    public findAccount(fn: (x: AccountResource) => boolean): AccountResource | undefined {
         if (this.masterAccount && fn(this.masterAccount)) {
             return this.masterAccount;
         }
@@ -137,11 +136,11 @@ export class OrganizationSection {
         return this.accounts.find(fn);
     }
 
-    public findResource(fn: (x: Resource) => bool): Resource | undefined {
+    public findResource(fn: (x: Resource) => boolean): Resource | undefined {
         return this.resources.find(fn);
     }
 
-    public findAccounts(fn: (x: AccountResource) => bool): AccountResource[] {
+    public findAccounts(fn: (x: AccountResource) => boolean): AccountResource[] {
         const list: AccountResource[] = this.accounts;
         if (this.masterAccount) {
             list.push(this.masterAccount);

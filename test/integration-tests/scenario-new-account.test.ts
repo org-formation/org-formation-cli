@@ -1,4 +1,4 @@
-import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
+import { ValidateTasksCommand } from '~commands/index';
 import { PrintTasksCommand } from '~commands/print-tasks';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
 

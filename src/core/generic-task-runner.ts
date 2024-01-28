@@ -172,7 +172,7 @@ export class GenericTaskRunner {
                 task.running = false;
                 ConsoleUtil.LogInfo(`${delegate.getName(task)} ${delegate.getVerb(task)} successful.`);
             } catch (err) {
-                if ((err.code === 'Throttling' || err.code === 'OptInRequired') && retryAttemptRateLimited < 5) {
+                if ((err.name === 'Throttling' || err.name === 'OptInRequired') && retryAttemptRateLimited < 5) {
                     retryWhenRateLimited = true;
                     retryAttemptRateLimited = retryAttemptRateLimited + 1;
                     await sleep(Math.pow(retryAttemptRateLimited, 2) + Math.random());

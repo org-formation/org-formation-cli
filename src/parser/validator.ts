@@ -9,7 +9,7 @@ import { ICfnSubExpression } from '~core/cfn-expression';
 export class Validator {
 
     static validateRC(rc: IRCObject): void {
-        if (rc === undefined) { return; };
+        if (rc === undefined) { return; }
 
         const clone = { ...rc };
 

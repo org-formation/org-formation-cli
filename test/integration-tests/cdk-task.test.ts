@@ -1,8 +1,8 @@
 import { PerformTasksCommand, ValidateTasksCommand, RemoveCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
 import { ChildProcessUtility } from '~util/child-process-util';
-import { GetObjectOutput } from 'aws-sdk/clients/s3';
 import { ExecOptions } from 'child_process';
+import { GetObjectCommand, GetObjectCommandOutput } from '@aws-sdk/client-s3';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cdk-task/';
 
@@ -10,15 +10,15 @@ describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
 
     let spawnProcessAfterDeploy2Targets: jest.MockContext<any, any>;
-    let stateAfterDeploy2Targets: GetObjectOutput;
+    let stateAfterDeploy2Targets: GetObjectCommandOutput;
     let spawnProcessAfterDeploy1Target: jest.MockContext<any, any>;
-    let stateAfterDeploy1Target: GetObjectOutput;
-    let stateAfterRemoveTask: GetObjectOutput;
+    let stateAfterDeploy1Target: GetObjectCommandOutput;
+    let stateAfterRemoveTask: GetObjectCommandOutput;
     let spawnProcessAfterRemoveTask: jest.MockContext<any, any>;
     let spawnProcessMock: jest.SpyInstance;
     let spawnProcessAfterUpdateWithParameters: jest.MockContext<any, any>;
-    let stateAfterUpdateWithParameters: GetObjectOutput;
-    let stateAfterCleanup: GetObjectOutput;
+    let stateAfterUpdateWithParameters: GetObjectCommandOutput;
+    let stateAfterCleanup: GetObjectCommandOutput;
     let spawnProcessAfterCleanup: jest.MockContext<any, any>;
 
     beforeAll(async () => {
@@ -33,27 +33,27 @@ describe('when calling org-formation perform tasks', () => {
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-cdk-workload-2targets.yml' });
         spawnProcessAfterDeploy2Targets = spawnProcessMock.mock;
-        stateAfterDeploy2Targets = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+        stateAfterDeploy2Targets = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '2-update-cdk-workload-with-parameters.yml' })
         spawnProcessAfterUpdateWithParameters = spawnProcessMock.mock;
-        stateAfterUpdateWithParameters = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+        stateAfterUpdateWithParameters = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '3-deploy-cdk-workload-1target.yml' })
         spawnProcessAfterDeploy1Target = spawnProcessMock.mock;
-        stateAfterDeploy1Target = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+        stateAfterDeploy1Target = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '4-remove-cdk-workload-task.yml', performCleanup: false })
         spawnProcessAfterRemoveTask = spawnProcessMock.mock;
-        stateAfterRemoveTask = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+        stateAfterRemoveTask = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
 
         spawnProcessMock.mockReset();
         await RemoveCommand.Perform({ ...command, type: 'cdk', name: 'CdkWorkload' });
         spawnProcessAfterCleanup = spawnProcessMock.mock;
-        stateAfterCleanup = await s3client.getObject({ Bucket: stateBucketName, Key: command.stateObject }).promise();
+        stateAfterCleanup = await s3client.send(new GetObjectCommand({ Bucket: stateBucketName, Key: command.stateObject }));
     });
 
     test('after deploy 2 targets npm ci was called twice', () => {
@@ -111,8 +111,8 @@ describe('when calling org-formation perform tasks', () => {
     });
 
 
-    test('after deploy 2 targets state contains both deployed workload', () => {
-        const stateAsString = stateAfterDeploy2Targets.Body.toString();
+    test('after deploy 2 targets state contains both deployed workload', async () => {
+        const stateAsString =  await stateAfterDeploy2Targets.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
@@ -125,7 +125,7 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     // test('after deploy workload state contains tracked task', () => {
-    //     const stateAsString = stateAfterDeploy2Targets.Body.toString();
+    //     const stateAsString =  await stateAfterDeploy2Targets.Body.transformToString('utf-8');
     //     const state = JSON.parse(stateAsString);
     //     expect(state).toBeDefined();
     //     expect(state.trackedTasks).toBeDefined();
@@ -136,8 +136,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterDeploy1Target.calls[0][0]).toEqual(expect.stringContaining('npx cdk destroy'));
     })
 
-    test('after deploy 1 targets state does not contain removed target workload', () => {
-        const stateAsString = stateAfterDeploy1Target.Body.toString();
+    test('after deploy 1 targets state does not contain removed target workload', async () => {
+        const stateAsString =  await stateAfterDeploy1Target.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
@@ -148,8 +148,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterRemoveTask.calls.length).toBe(0);
     })
 
-    test('after removing task state does contain removed target workload', () => {
-        const stateAsString = stateAfterRemoveTask.Body.toString();
+    test('after removing task state does contain removed target workload', async () => {
+        const stateAsString =  await stateAfterRemoveTask.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
@@ -161,8 +161,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterCleanup.calls[0][0]).toEqual(expect.stringContaining('npx cdk destroy'));
     })
 
-    test('after cleanup state does not contain removed target workload', () => {
-        const stateAsString = stateAfterCleanup.Body.toString();
+    test('after cleanup state does not contain removed target workload', async () => {
+        const stateAsString =  await stateAfterCleanup.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();

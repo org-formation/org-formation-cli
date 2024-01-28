@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from 'fs';
 import { Command } from 'commander';
 import minimatch from 'minimatch';
 import RC from 'rc';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -23,6 +22,7 @@ import { Validator } from '~parser/validator';
 import { CfnExpressionResolver } from '~core/cfn-expression-resolver';
 import { NunjucksDebugSettings } from '~yaml-cfn/index';
 import { IBuildTask } from '~build-tasks/build-configuration';
+import { ClientCredentialsConfig } from '~util/aws-types';
 
 const DEFAULT_STATE_OBJECT = 'state.json';
 
@@ -93,7 +93,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     }
 
     public async generateDefaultTemplate(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
-       return DefaultTemplateWriter.CreateDefaultTemplateFromAws(defaultBuildAccessRoleName, templateGenerationSettings);
+        return DefaultTemplateWriter.CreateDefaultTemplateFromAws(defaultBuildAccessRoleName, templateGenerationSettings);
     }
 
     public async getState(command: ICommandArgs): Promise<PersistedState> {
@@ -118,7 +118,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             command.state = state;
             return state;
         } catch (err) {
-            if (err && err.code === 'NoSuchBucket') {
+            if (err && err.name === 'NoSuchBucket') {
                 throw new OrgFormationError(`unable to load previously committed state, reason: bucket '${storageProvider.bucketName}' does not exist in current account.`);
             }
             throw err;
@@ -133,8 +133,8 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             if (err instanceof OrgFormationError) {
                 ConsoleUtil.LogError(err.message);
             } else {
-                if (err.code && err.requestId) {
-                    ConsoleUtil.LogError(`error: ${err.code}, aws-request-id: ${err.requestId}`);
+                if (err.name && err.requestId) {
+                    ConsoleUtil.LogError(`error: ${err.name}, aws-request-id: ${err.requestId}`);
                     ConsoleUtil.LogError(err.message);
 
                 } else {
@@ -168,7 +168,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             roleInMasterAccount = template.organizationSection.masterAccount.buildAccessRoleName;
         }
         const masterAccountId = await AwsUtil.GetMasterAccountId();
-        const organizations = await AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
+        const organizations = AwsUtil.GetOrganizationsService(masterAccountId, roleInMasterAccount);
         const partitionCredentials = await AwsUtil.GetPartitionCredentials();
         const crossAccountConfig = { masterAccountId, masterAccountRoleName: roleInMasterAccount };
 
@@ -185,7 +185,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (partitionCredentials) {
             const partitionMasterAccountId = await AwsUtil.GetPartitionMasterAccountId();
             const partitionCrossAccountConfig = { masterAccountId: partitionMasterAccountId, masterAccountRoleName: roleInMasterAccount };
-            const partitionOrgService = await AwsUtil.GetOrganizationsService(partitionMasterAccountId, roleInMasterAccount, null, true);
+            const partitionOrgService = AwsUtil.GetOrganizationsService(partitionMasterAccountId, roleInMasterAccount, null, true);
             partitionReader = new AwsOrganizationReader(partitionOrgService, partitionCrossAccountConfig);
             partitionOrganization = new AwsOrganization(partitionReader);
             await partitionOrganization.initialize();
@@ -197,12 +197,12 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return binder;
     }
 
-    protected async createOrGetStateBucket(command: ICommandArgs, region: string, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
-        const storageProvider = await this.getStateStorageProvider(command, accountId, credentials);
+    protected async createOrGetStateBucket(command: ICommandArgs, region: string, accountId?: string, credentials?: ClientCredentialsConfig): Promise<S3StorageProvider> {
+        const storageProvider = await this.getStateStorageProvider(command, accountId, credentials, region);
         try {
             await storageProvider.create(region);
         } catch (err) {
-            if (err && err.code === 'BucketAlreadyOwnedByYou') {
+            if (err && err.name === 'BucketAlreadyOwnedByYou') {
                 return storageProvider;
             }
             throw err;
@@ -210,14 +210,14 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         return storageProvider;
     }
 
-    protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: CredentialsOptions): Promise<S3StorageProvider> {
+    protected async getStateStorageProvider(command: ICommandArgs, accountId?: string, credentials?: ClientCredentialsConfig, region?: string): Promise<S3StorageProvider> {
         const objectKey = command.stateObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName, accountId);
         let storageProvider;
         if (command.isPartition) {
             storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials, AwsUtil.GetPartitionRegion());
         } else {
-            storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials);
+            storageProvider = S3StorageProvider.Create(stateBucketName, objectKey, credentials, region);
         }
         if (BaseCliCommand.CliCommandArgs && (BaseCliCommand.CliCommandArgs as IPerformTasksCommandArgs).skipStoringState) {
             storageProvider.dontPut = true;
@@ -228,14 +228,14 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected async getOrganizationStateStorageProvider(command: ICommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.organizationStateObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.organizationStateBucketName || command.stateBucketName);
-        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+        const storageProvider = S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 
     protected async getOrganizationFileStorageProvider(command: IPerformTasksCommandArgs): Promise<S3StorageProvider> {
         const objectKey = command.organizationObject;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
-        const storageProvider = await S3StorageProvider.Create(stateBucketName, objectKey);
+        const storageProvider = S3StorageProvider.Create(stateBucketName, objectKey);
         return storageProvider;
     }
 
@@ -253,7 +253,7 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected parseCfnParameters(commandParameters?: string | undefined | {}): Record<string, string> {
 
         if (typeof commandParameters === 'object') {
-            return commandParameters;
+            return commandParameters as Record<string, string>;
         }
         if (typeof commandParameters === 'string') {
             return CfnParameters.ParseParameterValues(commandParameters);
@@ -307,13 +307,14 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         this.loadRuntimeConfiguration(command);
 
         if (command.excludeAccounts) {
-            const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x => x.trim());;
+            const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x => x.trim());
             ConsoleUtil.LogInfo(`excluding the following accounts: ${exclude.join(', ')}`);
             AwsOrganizationReader.excludeAccountIds = exclude;
         }
 
         if (command.printStack === true) {
             ConsoleUtil.printStacktraces = true;
+            Error.stackTraceLimit = 50;
         }
         if (command.verbose === true) {
             ConsoleUtil.verbose = true;
@@ -322,34 +323,31 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             ConsoleUtil.colorizeLogs = false;
         }
 
-        if (command.partitionProfile !== undefined) {
-            AwsUtil.SetPartitionProfile(command.partitionProfile);
-            await AwsUtil.SetPartitionCredentials(command.partitionProfile);
+        if (command.masterAccountId !== undefined) {
+            AwsUtil.SetMasterAccountId(command.masterAccountId);
         }
 
         if (command.isPartition) {
             AwsUtil.SetIsPartition(true);
+            if (command.partitionProfile !== undefined) {
+                AwsUtil.SetPartitionProfile(command.partitionProfile);
+            }
+            if (command.partitionRegion) {
+                AwsUtil.SetPartitionRegion(command.partitionRegion);
+            }
+            if (command.partitionKeys) {
+                AwsUtil.SetPartitionCredentials();
+            }
         }
 
-        if (command.partitionRegion) {
-            AwsUtil.SetPartitionRegion(command.partitionRegion);
-        }
-
-        if (command.partitionKeys) {
-            await AwsUtil.SetPartitionCredentials();
-        }
-
-        await AwsUtil.InitializeWithProfile(command.profile, command.isPartition);
-
-        if (command.masterAccountId !== undefined) {
-            AwsUtil.SetMasterAccountId(command.masterAccountId);
-        }
+        AwsUtil.SetProfile(command.profile);
 
         if (command.debugTemplating) {
             NunjucksDebugSettings.debug = true;
         }
 
-        await Promise.all([AwsUtil.InitializeWithCurrentPartition(), AwsUtil.SetEnabledRegions()]);
+        await AwsUtil.Initialize();
+        await Promise.all([AwsUtil.GetPartitionFromCurrentSession(), AwsUtil.SetEnabledRegions()]);
 
         command.initialized = true;
     }

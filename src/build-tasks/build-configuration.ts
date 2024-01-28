@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 import md5 from 'md5';
-import { S3 } from 'aws-sdk';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { OrgFormationError } from '../org-formation-error';
 import { BuildTaskProvider } from './build-task-provider';
 import { IUpdateOrganizationTaskConfiguration } from './tasks/update-organization-task';
@@ -160,11 +160,13 @@ export class BuildConfiguration {
         try {
             if (organizationFileLocation.startsWith('s3://')) {
                 if (textTemplatingContext) { throw new Error('Text templating context is not supported on s3 hosted organization files'); }
-                const s3client = new S3(); // we don't know which role to assume yet....
+                const s3client = AwsUtil.GetS3Service(); // we don't know which role to assume yet....
                 const bucketAndKey = organizationFileLocation.substring(5);
                 const bucketAndKeySplit = bucketAndKey.split('/');
-                const response = await s3client.getObject({ Bucket: bucketAndKeySplit[0], Key: bucketAndKeySplit[1] }).promise();
-                return response.Body.toString();
+                const response = await s3client.send(
+                    new GetObjectCommand({ Bucket: bucketAndKeySplit[0], Key: bucketAndKeySplit[1] })
+                );
+                return await response.Body.transformToString('utf-8');
             } else {
                 const contents = readFileSync(organizationFileLocation).toString();
                 if (textTemplatingContext !== undefined) {

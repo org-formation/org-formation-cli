@@ -22,7 +22,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: my-lambda
-      Runtime: nodejs12.x
+      Runtime: nodejs18.x
       Role: !GetAtt LambdaRole.Arn
       Handler: index.handler
       Code:

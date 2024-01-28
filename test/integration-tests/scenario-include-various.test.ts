@@ -1,14 +1,14 @@
 import { PerformTasksCommand, ValidateTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
 import { PrintTasksCommand } from "~commands/print-tasks";
-import { DescribeStacksOutput } from "aws-sdk/clients/cloudformation";
+import { DescribeStacksCommand, DescribeStacksCommandOutput } from "@aws-sdk/client-cloudformation";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-include-various/';
 
 
 describe('when cleaning up stacks', () => {
     let context: IIntegrationTestContext;
-    let tetsIncludes: DescribeStacksOutput;
+    let tetsIncludes: DescribeStacksCommandOutput;
 
     beforeAll(async () => {
         try {
@@ -20,7 +20,7 @@ describe('when cleaning up stacks', () => {
             await PrintTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy.yml' })
             await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy.yml' });
 
-            tetsIncludes = await cfnClient.describeStacks({ StackName: 'test-includes' }).promise();
+            tetsIncludes = await cfnClient.send(new DescribeStacksCommand({ StackName: 'test-includes' }));
 
 
             await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup.yml', performCleanup: true });
