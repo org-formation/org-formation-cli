@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import fetch from 'node-fetch';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { AwsUtil } from './aws-util';
 import { OrgFormationError } from '~org-formation-error';
 
@@ -23,15 +24,15 @@ export class FileUtil {
         if (this.IsS3Object(filePath)) {
             try{
                 const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
-                const s3client = await AwsUtil.GetS3Service(buildAccountId, undefined);
+                const s3client = AwsUtil.GetS3Service(buildAccountId, undefined);
 
                 const bucketAndKey = filePath.substring(5);
                 const bucketAndKeySplit = bucketAndKey.split('/');
                 const bucket = bucketAndKeySplit[0];
                 bucketAndKeySplit.splice(0,1);
                 const key =  bucketAndKeySplit.join('/');
-                const response = await s3client.getObject({ Bucket:bucket, Key: key}).promise();
-                return response.Body.toString();
+                const response = await s3client.send(new GetObjectCommand({ Bucket:bucket, Key: key}));
+                return await response.Body.transformToString('utf-8');
             }catch(err) {
                 throw new OrgFormationError(`unable to get contents of S3 hosted file (path: ${filePath}), error: ${err.message}`);
             }

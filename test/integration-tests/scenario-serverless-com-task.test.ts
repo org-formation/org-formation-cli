@@ -1,8 +1,8 @@
 import { PerformTasksCommand, ValidateTasksCommand, RemoveCommand } from '~commands/index';
-import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, profileForIntegrationTests, sleepForTest } from './base-integration-test';
+import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from './base-integration-test';
 
 import { ChildProcessUtility } from '~util/child-process-util';
-import { GetObjectOutput } from 'aws-sdk/clients/s3';
+import { GetObjectCommand, GetObjectCommandOutput } from '@aws-sdk/client-s3';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-serverless-com-task/';
 
@@ -10,17 +10,17 @@ describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
 
     let spawnProcessAfterDeploy2Targets: jest.MockContext<any, any>;
-    let stateAfterDeploy2Targets: GetObjectOutput;
+    let stateAfterDeploy2Targets: GetObjectCommandOutput;
     let spawnProcessAfterDeploy1Target: jest.MockContext<any, any>;
-    let stateAfterDeploy1Target: GetObjectOutput;
+    let stateAfterDeploy1Target: GetObjectCommandOutput;
     let spawnProcessAfterRerunFileWithoutChanges: jest.MockContext<any, any>;
     let spawnProcessAfterRerunFileWithForceDeploy: jest.MockContext<any, any>;
     let spawnProcessAfterUpdateWithParams: jest.MockContext<any, any>;
-    let stateAfterUpdateWithParams: GetObjectOutput;
-    let stateAfterRemoveTask: GetObjectOutput;
+    let stateAfterUpdateWithParams: GetObjectCommandOutput;
+    let stateAfterRemoveTask: GetObjectCommandOutput;
     let spawnProcessAfterRemoveTask: jest.MockContext<any, any>;
     let spawnProcessMock: jest.SpyInstance;
-    let stateAfterCleanup: GetObjectOutput;
+    let stateAfterCleanup: GetObjectCommandOutput;
     let spawnProcessAfterCleanup: jest.MockContext<any, any>;
 
     beforeAll(async () => {
@@ -34,7 +34,7 @@ describe('when calling org-formation perform tasks', () => {
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '1-deploy-serverless-workload-2targets.yml' });
         spawnProcessAfterDeploy2Targets = spawnProcessMock.mock;
-        stateAfterDeploy2Targets = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+        stateAfterDeploy2Targets = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
         spawnProcessMock = jest.spyOn(ChildProcessUtility, 'SpawnProcess');
 
         spawnProcessMock.mockReset();
@@ -49,24 +49,24 @@ describe('when calling org-formation perform tasks', () => {
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '2-update-serverless-workload-with-parameters.yml' })
         spawnProcessAfterUpdateWithParams = spawnProcessMock.mock;
         await sleepForTest(200);
-        stateAfterUpdateWithParams = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
+        stateAfterUpdateWithParams = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: context.command.stateObject}));
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '3-deploy-serverless-workload-1target.yml' })
         spawnProcessAfterDeploy1Target = spawnProcessMock.mock;
         await sleepForTest(200);
-        stateAfterDeploy1Target = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
+        stateAfterDeploy1Target = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: context.command.stateObject}));
 
         spawnProcessMock.mockReset();
         await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + '4-remove-serverless-workload-task.yml', performCleanup: false })
         spawnProcessAfterRemoveTask = spawnProcessMock.mock;
         await sleepForTest(200);
-        stateAfterRemoveTask = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
+        stateAfterRemoveTask = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: context.command.stateObject}));
 
         spawnProcessMock.mockReset();
         await RemoveCommand.Perform({...command, type: 'serverless.com', name: 'ServerlessWorkload' });
         spawnProcessAfterCleanup = spawnProcessMock.mock;
-        stateAfterCleanup = await s3client.getObject({Bucket: stateBucketName, Key: context.command.stateObject}).promise();
+        stateAfterCleanup = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: context.command.stateObject}));
     });
 
     test('after deploy 2 targets npm ci was called twice', () => {
@@ -84,8 +84,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterDeploy2Targets.calls[1][0]).toEqual(expect.stringContaining('--region eu-central-1'));
     });
 
-    test('after deploy 2 targets state contains both deployed workload', () => {
-        const stateAsString = stateAfterDeploy2Targets.Body.toString();
+    test('after deploy 2 targets state contains both deployed workload', async () => {
+        const stateAsString = await stateAfterDeploy2Targets.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
@@ -98,7 +98,7 @@ describe('when calling org-formation perform tasks', () => {
     });
 
     // test('after deploy workload state contains tracked task', () => {
-    //     const stateAsString = stateAfterDeploy2Targets.Body.toString();
+    //     const stateAsString = stateAfterDeploy2Targets.Body.transformToString('utf-8');
     //     const state = JSON.parse(stateAsString);
     //     expect(state).toBeDefined();
     //     expect(state.trackedTasks).toBeDefined();
@@ -132,8 +132,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterDeploy1Target.calls[0][0]).toEqual(expect.stringContaining('--region eu-central-1'));
     })
 
-    test('after deploy 1 targets state does not contain removed target workload', () => {
-        const stateAsString = stateAfterDeploy1Target.Body.toString();
+    test('after deploy 1 targets state does not contain removed target workload', async () => {
+        const stateAsString = await stateAfterDeploy1Target.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
@@ -144,8 +144,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterRemoveTask.calls.length).toBe(0);
     })
 
-    test('after removing task state does contain removed target workload', () => {
-        const stateAsString = stateAfterRemoveTask.Body.toString();
+    test('after removing task state does contain removed target workload', async () => {
+        const stateAsString = await stateAfterRemoveTask.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();
@@ -157,8 +157,8 @@ describe('when calling org-formation perform tasks', () => {
         expect(spawnProcessAfterCleanup.calls[0][0]).toEqual(expect.stringContaining('npx sls remove'));
     })
 
-    test('after cleanup state does not contain removed target workload', () => {
-        const stateAsString = stateAfterCleanup.Body.toString();
+    test('after cleanup state does not contain removed target workload', async () => {
+        const stateAsString = await stateAfterCleanup.Body.transformToString('utf-8');
         const state = JSON.parse(stateAsString);
         expect(state).toBeDefined();
         expect(state.targets).toBeDefined();

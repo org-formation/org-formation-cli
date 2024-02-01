@@ -1,16 +1,16 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll } from './base-integration-test';
-import { DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
 import { NunjucksDebugSettings } from '~yaml-cfn/index';
 import { PrintTasksCommand } from '~commands/print-tasks';
+import { DescribeStacksCommand, DescribeStacksCommandOutput } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-text-template-all/';
 
 describe('when calling org-formation perform tasks', () => {
   let context: IIntegrationTestContext;
-  let stackA: DescribeStacksOutput;
-  let stackB: DescribeStacksOutput;
-  let stackC: DescribeStacksOutput;
+  let stackA: DescribeStacksCommandOutput;
+  let stackB: DescribeStacksCommandOutput;
+  let stackC: DescribeStacksCommandOutput;
 
   beforeAll(async () => {
     try {
@@ -24,9 +24,9 @@ describe('when calling org-formation perform tasks', () => {
       await PrintTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-text-templated-things.yml' })
       await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-text-templated-things.yml' });
 
-      stackA = await cfnClient.describeStacks({ StackName: 'buckets-a' }).promise();
-      stackB = await cfnClient.describeStacks({ StackName: 'buckets-b' }).promise();
-      stackC = await cfnClient.describeStacks({ StackName: 'buckets-c' }).promise();
+      stackA = await cfnClient.send(new DescribeStacksCommand({ StackName: 'buckets-a' }));
+      stackB = await cfnClient.send(new DescribeStacksCommand({ StackName: 'buckets-b' }));
+      stackC = await cfnClient.send(new DescribeStacksCommand({ StackName: 'buckets-c' }));
 
       await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup-text-templated-things.yml', performCleanup: true });
     } catch (err) {

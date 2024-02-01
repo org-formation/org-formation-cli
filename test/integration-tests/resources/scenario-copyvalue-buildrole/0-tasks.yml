@@ -1,0 +1,48 @@
+
+Parameters:
+
+  stackPrefix:
+    Description:
+    Type: String
+    Default: scenario-copyvalue-buildrole
+
+  region1:
+    Type: String
+    Default: eu-west-1
+
+  region2:
+    Type: String
+    Default: eu-central-1
+
+  buildTaskRoleName:
+    Type: String
+    Default: !GetAtt CurrentAccount.BuildAccessRoleName
+
+OrganizationUpdate:
+  Type: update-organization
+  Template: ./organization.yml
+  TaskRoleName: 'OrganizationFormationBuildRole'
+
+BucketOne:
+  TaskRoleName: !Ref buildTaskRoleName
+  DependsOn:
+    - OrganizationUpdate
+  Type: update-stacks
+  Template: ./bucket.yml
+  StackName: !Sub ${stackPrefix}-source
+  DefaultOrganizationBindingRegion: !Ref region1
+  DefaultOrganizationBinding:
+    Account: !Ref AccountB
+
+DependentBucket:
+  TaskRoleName: !Ref buildTaskRoleName
+  DependsOn:
+    - BucketOne
+  Type: update-stacks
+  Template: ./bucket2.yml
+  StackName: !Sub ${stackPrefix}-target
+  DefaultOrganizationBindingRegion: !Ref region2
+  DefaultOrganizationBinding:
+    IncludeMasterAccount: true
+  Parameters:
+    bucketName: !CopyValue [ !Sub "${stackPrefix}-source-bucket-name", !Ref AccountB, !Ref region1 ]

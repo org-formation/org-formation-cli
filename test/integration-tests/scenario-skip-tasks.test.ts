@@ -1,12 +1,12 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from "./base-integration-test";
-import { GetObjectOutput } from "aws-sdk/clients/s3";
+import { GetObjectCommandOutput, GetObjectCommand } from "@aws-sdk/client-s3";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-skip-tasks/';
 
 describe('when using parameters in template', () => {
     let context: IIntegrationTestContext;
-    let stateAfterSkipTasks: GetObjectOutput;
+    let stateAfterSkipTasks: GetObjectCommandOutput;
     beforeAll(async () => {
 
         try{
@@ -18,15 +18,15 @@ describe('when using parameters in template', () => {
             await ValidateTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'skip-tasks.yml' })
             await PerformTasksCommand.Perform({...command, tasksFile: basePathForScenario + 'skip-tasks.yml' });
 
-            stateAfterSkipTasks = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+            stateAfterSkipTasks = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
         }
         catch(err) {
             expect(err.message).toBe('');
         }
     });
 
-    test('state is not updated', () => {
-        const stateJSON = stateAfterSkipTasks.Body.toString();
+    test('state is not updated', async () => {
+        const stateJSON = await stateAfterSkipTasks.Body.transformToString('utf-8');
         const state = JSON.parse(stateJSON);
         expect(state).toBeDefined();
         expect(state.stacks).toBeDefined();

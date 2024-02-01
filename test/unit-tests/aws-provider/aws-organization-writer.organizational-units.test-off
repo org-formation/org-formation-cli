@@ -1,11 +1,9 @@
-import * as AWS from 'aws-sdk';
 import * as AWSMock from 'aws-sdk-mock';
 import { CreateOrganizationalUnitRequest } from 'aws-sdk/clients/organizations';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AwsOrganizationWriter } from '~aws-provider/aws-organization-writer';
 import { TestOrganizations } from '../test-organizations';
 
-AWSMock.setSDKInstance(AWS);
 
 describe('when creating a new organizational unit using writer', () => {
     let organizationService: AWS.Organizations;

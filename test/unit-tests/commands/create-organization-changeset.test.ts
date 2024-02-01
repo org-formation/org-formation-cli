@@ -4,7 +4,7 @@ import Sinon = require('sinon');
 import { ConsoleUtil } from '~util/console-util';
 import { AwsUtil } from '~util/aws-util';
 import { TemplateRoot } from '~parser/parser';
-import { ChangeSetProvider, IStoredChangeSet, IOrganizationChange, IOrganizationChangeSet } from '~change-set/change-set-provider';
+import { ChangeSetProvider, IStoredChangeSet, IOrganizationChangeSet } from '~change-set/change-set-provider';
 import { OrgResourceTypes } from '~parser/model/resource-types';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { PersistedState } from '~state/persisted-state';
@@ -22,6 +22,8 @@ describe('when creating create change set command', () => {
         commanderCommand = new Command('root');
         command = new CreateChangeSetCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
+        // @ts-ignore
+        AwsUtil.initialized = true
     });
 
     test('create change set command is created', () => {
@@ -74,6 +76,8 @@ describe('when executing execute change set command', () => {
         command = new CreateChangeSetCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
 
+        // @ts-ignore
+        AwsUtil.initialized = true
         sandbox.stub(AwsUtil, 'GetMasterAccountId').returns(Promise.resolve('123456789012'));
         sandbox.stub(AwsUtil, 'GetBuildProcessAccountId').returns(Promise.resolve('123456789012'));
 

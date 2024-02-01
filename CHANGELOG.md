@@ -5,7 +5,9 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
-**unreleased**
+**version: 1.0.13**
+- fix: cdk tasks use `--force` when deleting stacks
+- chore: usage of AWS SDK v3 (upgrade from V2)
 - fix: deleting stacks without explicit concurrency settings will default to settings passed to the CLI (instead of 1)
 
 **version 1.0.11**

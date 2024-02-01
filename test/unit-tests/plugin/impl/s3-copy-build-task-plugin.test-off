@@ -3,13 +3,13 @@ import { IPluginBinding, PluginBinder } from "~plugin/plugin-binder";
 import { PersistedState } from "~state/persisted-state";
 import { TemplateRoot } from "~parser/parser";
 import { TestTemplates } from "../../test-templates";
-import { S3 } from "aws-sdk";
-import { on } from '@jurijzahn8019/aws-promise-jest-mock';
 import { AwsUtil } from "~util/aws-util";
 import { OrgFormationError } from "~org-formation-error";
 import fs from "fs"
+import { S3Client } from "@aws-sdk/client-s3";
+import Sinon from "sinon";
+import sinon from "sinon";
 
-jest.mock('aws-sdk');
 jest.mock('fs');
 
 describe('when creating s3 copy plugin', () => {
@@ -19,17 +19,17 @@ describe('when creating s3 copy plugin', () => {
         plugin = new CopyToS3TaskPlugin();
     });
 
-    test('plugin has the right type',() => {
+    test('plugin has the right type', () => {
         expect(plugin.type).toBe('copy-to-s3');
     });
 
 
-    test('plugin has the right type for tasks',() => {
+    test('plugin has the right type for tasks', () => {
         expect(plugin.typeForTask).toBe('copy-to-s3');
     });
 
-    test('plugin can translate config to command args',() => {
-        const commandArgs = plugin.convertToCommandArgs( {
+    test('plugin can translate config to command args', () => {
+        const commandArgs = plugin.convertToCommandArgs({
             FilePath: './tasks.yaml',
             Type: 'cdk',
             LogicalName: 'test-task',
@@ -39,8 +39,9 @@ describe('when creating s3 copy plugin', () => {
             TemplatingContext: {
                 testAttribute: "testValue"
             },
-            OrganizationBinding: { IncludeMasterAccount: true}},
-            { organizationFile: './organization.yml'} as any);
+            OrganizationBinding: { IncludeMasterAccount: true }
+        },
+            { organizationFile: './organization.yml' } as any);
         expect(commandArgs.name).toBe('test-task');
         expect(commandArgs.localPath).toBe('file.ext');
         expect(commandArgs.remotePath).toBe('s3://bucket/path');
@@ -54,18 +55,18 @@ describe('when creating s3 copy plugin', () => {
         expect(commandArgs.organizationBinding).toBeDefined();
         expect(commandArgs.organizationBinding.IncludeMasterAccount).toBe(true);
     });
-    
+
     test('exception is thrown when templatingContext and zipBeforePut:true are used together', async () => {
-        
+
         jest.spyOn(fs, "existsSync").mockReturnValueOnce(true)
-        
+
         const commandArgs = {
             localPath: './file.ext',
-            organizationBinding: { IncludeMasterAccount: true},
+            organizationBinding: { IncludeMasterAccount: true },
             zipBeforePut: true,
             templatingContext: {},
         } as IS3CopyCommandArgs;
-        
+
         expect(() => plugin.validateCommandArgs(commandArgs)).toThrow(
             new OrgFormationError(`task ${commandArgs.name} can not use zipBeforePut and templatingContext together.`)
         )
@@ -85,13 +86,13 @@ describe('when performing copy to s3', () => {
         template = TestTemplates.createBasicTemplate();
         state = TestTemplates.createState(template);
         plugin = new CopyToS3TaskPlugin();
+        let s3send: sinon.SinonStub;
+        const sandbox = Sinon.createSandbox();
 
-        jest.spyOn(AwsUtil, 'GetS3Service').mockResolvedValue(new S3());
+        jest.spyOn(AwsUtil, 'GetS3Service').mockReturnValue(new S3Client());
 
-        const s3mock = on(S3, { snapshot: false });
-        s3putObjectSpy = s3mock
-            .mock('putObject')
-            .resolve({});
+        s3send = sandbox.stub(S3Client.prototype, 'send');
+        s3send.resolves({})
 
         task = {
             name: 'taskName',
@@ -162,12 +163,13 @@ describe('when removing copy-to-s3', () => {
         state = TestTemplates.createState(template);
         plugin = new CopyToS3TaskPlugin();
 
-        jest.spyOn(AwsUtil, 'GetS3Service').mockResolvedValue(new S3());
+        let s3send: sinon.SinonStub;
+        const sandbox = Sinon.createSandbox();
 
-        const s3mock = on(S3, { snapshot: false });
-        s3deleteObjectSpy = s3mock
-            .mock('deleteObject')
-            .resolve({});
+        jest.spyOn(AwsUtil, 'GetS3Service').mockReturnValue(new S3Client());
+
+        s3send = sandbox.stub(S3Client.prototype, 'send');
+        s3send.resolves({})
 
         task = {
             name: 'taskName',

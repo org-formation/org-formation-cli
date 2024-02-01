@@ -1,17 +1,17 @@
 import { PerformTasksCommand, RemoveCommand, ValidateTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
-import { GetObjectOutput } from "aws-sdk/clients/s3";
 import { PersistedState } from "~state/persisted-state";
 import { CopyToS3TaskPlugin } from "~plugin/impl/s3-copy-build-task-plugin";
+import { GetObjectCommand, GetObjectCommandOutput } from "@aws-sdk/client-s3";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-include-file-twice/';
 
 
 describe('when cleaning up stacks', () => {
     let context: IIntegrationTestContext;
-    let stateAfterPerformTask2Includes: GetObjectOutput;
-    let stateAfterPerformTask1Includes: GetObjectOutput;
-    let stateAfterRemove: GetObjectOutput;
+    let stateAfterPerformTask2Includes: string;
+    let stateAfterPerformTask1Includes: string;
+    let stateAfterRemove: string;
     let performRemoveSpy: jest.SpyInstance;
     let errorValidateIncludeMissingParameter: Error;
 
@@ -23,16 +23,19 @@ describe('when cleaning up stacks', () => {
 
             await PerformTasksCommand.Perform({...command, parameters: 'bucketName=' + stateBucketName,  tasksFile: basePathForScenario + '0-organization-tasks.yml', performCleanup: false});
             await sleepForTest(500);
-            stateAfterPerformTask2Includes = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+            const stateAfterPerformTask2IncludesResponse = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
+            stateAfterPerformTask2Includes = await stateAfterPerformTask2IncludesResponse.Body.transformToString('utf-8');
 
             await PerformTasksCommand.Perform({...command, parameters: 'bucketName=' + stateBucketName,  tasksFile: basePathForScenario + '0-organization-tasks-1include.yml', performCleanup: false});
             await sleepForTest(500);
-            stateAfterPerformTask1Includes = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+            const stateAfterPerformTask1IncludesResponse = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
+            stateAfterPerformTask1Includes = await stateAfterPerformTask1IncludesResponse.Body.transformToString('utf-8');
 
             performRemoveSpy = jest.spyOn(CopyToS3TaskPlugin.prototype, 'performRemove');
             await RemoveCommand.Perform({...command, type: 'copy-to-s3', namespace: 'Include2', name: 'CopyS3File' });
             await sleepForTest(500);
-            stateAfterRemove = await s3client.getObject({Bucket: stateBucketName, Key: command.stateObject}).promise();
+            const stateAfterRemoveResponse = await s3client.send(new GetObjectCommand({Bucket: stateBucketName, Key: command.stateObject}));
+            stateAfterRemove = await stateAfterRemoveResponse.Body.transformToString('utf-8');
 
             try{
                 await ValidateTasksCommand.Perform({...command,  tasksFile: basePathForScenario + '1-organization-tasks-missing-param.yml', performCleanup: false});
@@ -45,9 +48,8 @@ describe('when cleaning up stacks', () => {
         }
     });
 
-    test('expect state to contain stacks from both includes', () => {
-        const str = stateAfterPerformTask2Includes.Body.toString();
-        const obj = JSON.parse(str);
+    test('expect state to contain stacks from both includes', async () => {
+        const obj = JSON.parse(stateAfterPerformTask2Includes);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
         expect(state.getTarget('include1-my-stack-name', '102625093955', 'eu-west-1')).toBeDefined();
@@ -56,9 +58,8 @@ describe('when cleaning up stacks', () => {
         expect(state.getTrackedTasks('default').find(x=>x.physicalIdForCleanup === 'include2-my-stack-name')).toBeDefined();
     });
 
-    test('expect state to contain targets for both s3 deploys', () => {
-        const str = stateAfterPerformTask2Includes.Body.toString();
-        const obj = JSON.parse(str);
+    test('expect state to contain targets for both s3 deploys', async () => {
+        const obj = JSON.parse(stateAfterPerformTask2Includes);
         const copyToS3 = obj.targets['copy-to-s3']['default'];
         expect(Object.keys(copyToS3).length).toBe(2);
         expect(copyToS3.Include1).toBeDefined();
@@ -66,9 +67,8 @@ describe('when cleaning up stacks', () => {
 
     });
 
-    test('after removing include contained stacks have last committed hash set to deleted', () => {
-        const str = stateAfterPerformTask1Includes.Body.toString();
-        const obj = JSON.parse(str);
+    test('after removing include contained stacks have last committed hash set to deleted', async () => {
+        const obj = JSON.parse(stateAfterPerformTask1Includes);
         const state = new PersistedState(obj);
         expect(state).toBeDefined();
         expect(state.getTarget('include1-my-stack-name', '102625093955', 'eu-west-1')).toBeDefined();
@@ -83,9 +83,8 @@ describe('when cleaning up stacks', () => {
         expect(performRemoveSpy).toBeCalledTimes(1);
     });
 
-    test('after removing previously deleted plugin state was also removed', () => {
-        const str = stateAfterRemove.Body.toString();
-        const obj = JSON.parse(str);
+    test('after removing previously deleted plugin state was also removed', async () => {
+        const obj = JSON.parse(stateAfterRemove);
         const copyToS3 = obj.targets['copy-to-s3']['default'];
         expect(Object.keys(copyToS3).length).toBe(1);
         expect(copyToS3.Include2).toBeUndefined();

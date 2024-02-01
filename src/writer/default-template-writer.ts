@@ -1,7 +1,6 @@
-import { Organizations } from 'aws-sdk/clients/all';
-import { Organization } from 'aws-sdk/clients/organizations';
 import * as Yaml from 'yamljs';
 import { pascalCase } from 'pascal-case';
+import { Organization, OrganizationsClient } from '@aws-sdk/client-organizations';
 import { OrgFormationError } from '../org-formation-error';
 import { AwsOrganization } from '~aws-provider/aws-organization';
 import { AWSAccount, AWSOrganizationalUnit, AwsOrganizationReader, AWSPolicy, AWSRoot, IAWSObject } from '~aws-provider/aws-organization-reader';
@@ -9,7 +8,6 @@ import { IAccountProperties, IOrganizationalUnitProperties, OrgResourceTypes, Re
 import { TemplateRoot } from '~parser/parser';
 import { IBinding, PersistedState } from '~state/persisted-state';
 import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS, DEFAULT_ROLE_FOR_ORG_ACCESS } from '~util/aws-util';
-
 
 export class DefaultTemplateWriter {
     public organizationModel: AwsOrganization;
@@ -21,7 +19,7 @@ export class DefaultTemplateWriter {
         if (organizationModel) {
             this.organizationModel = organizationModel;
         } else {
-            const org = new Organizations({ region: 'us-east-1' });
+            const org = AwsUtil.GetOrganizationsService();
             const reader = new AwsOrganizationReader(org);
             this.organizationModel = new AwsOrganization(reader);
         }
@@ -31,7 +29,7 @@ export class DefaultTemplateWriter {
     }
 
     public static async CreateDefaultTemplateFromAws(defaultBuildAccessRoleName?: string, templateGenerationSettings?: ITemplateGenerationSettings): Promise<DefaultTemplate> {
-        const organizations = new Organizations({ region: 'us-east-1' });
+        const organizations = AwsUtil.GetOrganizationsService();
         const partitionCredentials = await AwsUtil.GetPartitionCredentials();
 
         // configure default Organization/Reader
@@ -46,7 +44,7 @@ export class DefaultTemplateWriter {
             const masterAccountId = await AwsUtil.GetPartitionMasterAccountId();
             const accessRoleName = (defaultBuildAccessRoleName) ? defaultBuildAccessRoleName : DEFAULT_ROLE_FOR_ORG_ACCESS.RoleName;
             const crossAccountConfig = { masterAccountId, masterAccountRoleName: accessRoleName, isPartition: true };
-            const partitionOrgService = new Organizations({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
+            const partitionOrgService = new OrganizationsClient({ credentials: partitionCredentials, region: AwsUtil.GetPartitionRegion() });
             partitionReader = new AwsOrganizationReader(partitionOrgService, crossAccountConfig);
             partitionOrganization = new AwsOrganization(partitionReader);
             await partitionOrganization.initialize();

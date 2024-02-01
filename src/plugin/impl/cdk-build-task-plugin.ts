@@ -24,7 +24,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
         Validator.ThrowForUnknownAttribute(config, config.LogicalName, ...CommonTaskAttributeNames, 'Path',
             'FilePath', 'RunNpmInstall', 'RunNpmBuild', 'FailedTaskTolerance', 'MaxConcurrentTasks',
-            'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters','IgnoreFileChanges');
+            'AdditionalCdkArguments', 'InstallCommand', 'CustomDeployCommand', 'CustomRemoveCommand', 'Parameters', 'IgnoreFileChanges');
 
         if (!config.Path) {
             throw new OrgFormationError(`task ${config.LogicalName} does not have required attribute Path`);
@@ -109,7 +109,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
 
     async performCreateOrUpdate(binding: IPluginBinding<ICdkTask>, resolver: CfnExpressionResolver): Promise<void> {
 
-        const {task, target, previousBindingLocalHash } = binding;
+        const { task, target, previousBindingLocalHash } = binding;
         if (task.forceDeploy !== true &&
             task.taskLocalHash !== undefined &&
             task.taskLocalHash === previousBindingLocalHash) {
@@ -154,7 +154,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
             Validator.throwForUnresolvedExpressions(task.customRemoveCommand, 'CustomRemoveCommand');
             command = task.customRemoveCommand as string;
         } else {
-            const commandExpression = { 'Fn::Sub': 'npx cdk destroy --all --require-approval=never ${CurrentTask.Parameters}' } as ICfnSubExpression;
+            const commandExpression = { 'Fn::Sub': 'npx cdk destroy --all --force ${CurrentTask.Parameters}' } as ICfnSubExpression;
             command = await resolver.resolveSingleExpression(commandExpression, 'CustomRemoveCommand');
 
             if (task.runNpmBuild) {
@@ -181,7 +181,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
         const p = await resolver.resolve(task.parameters);
         const collapsed = await resolver.collapse(p);
         const parametersAsString = CdkBuildTaskPlugin.GetParametersAsArgument(collapsed);
-        resolver.addResourceWithAttributes('CurrentTask',  { Parameters : parametersAsString, AccountId : binding.target.accountId });
+        resolver.addResourceWithAttributes('CurrentTask', { Parameters: parametersAsString, AccountId: binding.target.accountId });
     }
 
     static GetEnvironmentVariables(target: IGenericTarget<ICdkTask>): Record<string, string> {
@@ -201,7 +201,7 @@ export class CdkBuildTaskPlugin implements IBuildTaskPlugin<ICdkBuildTaskConfig,
     }
 
     static GetParametersAsArgument(parameters: Record<string, any>): string {
-        if (!parameters) {return '';}
+        if (!parameters) { return ''; }
         const entries = Object.entries(parameters);
         return entries.reduce((prev, curr) => prev + ` -c '${curr[0]}=${curr[1]}'`, '');
     }

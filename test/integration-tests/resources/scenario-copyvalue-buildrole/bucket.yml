@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub
+        - "scenario-copyvalue-buildrole-${fourPseudoRandom}"
+        - fourPseudoRandom: !Select [3, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
+
+Outputs:
+
+  BucketName:
+    Description: The Bucket name
+    Value: !Ref Bucket
+    Export:
+      Name: !Sub "${AWS::StackName}-bucket-name"

@@ -1,15 +1,15 @@
 import { ValidateTasksCommand, PerformTasksCommand } from "~commands/index";
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll, sleepForTest } from "./base-integration-test";
-import { DescribeStacksOutput, ListStacksOutput } from "aws-sdk/clients/cloudformation";
 import { PrintTasksCommand } from "~commands/print-tasks";
+import { DescribeStacksCommand, DescribeStacksCommandOutput, ListStacksCommand, ListStacksCommandOutput } from "@aws-sdk/client-cloudformation";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-cfn-parameter-expressions/';
 
 describe('when importing value from another stack', () => {
     let context: IIntegrationTestContext;
-    let describedBucketStack: DescribeStacksOutput;
-    let describeBucketRoleStack: DescribeStacksOutput;
-    let stacksAfterCleanup: ListStacksOutput;
+    let describedBucketStack: DescribeStacksCommandOutput;
+    let describeBucketRoleStack: DescribeStacksCommandOutput;
+    let stacksAfterCleanup: ListStacksCommandOutput;
 
     beforeAll(async () => {
         try {
@@ -18,17 +18,17 @@ describe('when importing value from another stack', () => {
             await context.prepareStateBucket(basePathForScenario + '../state.json');
             const { command, cfnClient } = context;
 
-            await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' })
-            await PrintTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' })
+            await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' });
+            await PrintTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' });
             await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-update-stacks-with-param-expressions.yml' });
 
-            describedBucketStack = await cfnClient.describeStacks({ StackName: 'my-scenario-export-bucket' }).promise();
-            describeBucketRoleStack = await cfnClient.describeStacks({ StackName: 'my-scenario-export-bucket-role' }).promise();
+            describedBucketStack = await cfnClient.send(new DescribeStacksCommand({ StackName: 'my-scenario-export-bucket' }));
+            describeBucketRoleStack = await cfnClient.send(new DescribeStacksCommand({ StackName: 'my-scenario-export-bucket-role' }));
 
             await sleepForTest(2000);
 
             await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '2-cleanup-update-stacks-with-param-expressions.yml', performCleanup: true });
-            stacksAfterCleanup = await cfnClient.listStacks({ StackStatusFilter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE'] }).promise();
+            stacksAfterCleanup = await cfnClient.send(new ListStacksCommand({ StackStatusFilter: ['CREATE_COMPLETE', 'UPDATE_COMPLETE'] }));
         } catch (err) {
             expect(err.message).toBeUndefined();
         }
@@ -39,7 +39,8 @@ describe('when importing value from another stack', () => {
 
         const description = describeBucketRoleStack.Stacks[0].Description;
         expect(description).toBe('something current account "Organizational Master Account" also account by name "Account A"');
-    })
+    });
+
     test('Stack parameter with CopyValue has value of Output', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
@@ -47,7 +48,7 @@ describe('when importing value from another stack', () => {
         const output = describedBucketStack.Stacks[0].Outputs[0];
         expect(output.ExportName).toBe('BucketArn');
         expect(parameter.ParameterValue).toBe(output.OutputValue);
-    })
+    });
 
     test('Stack parameter with explicit accountId has value of Output', () => {
         expect(describeBucketRoleStack).toBeDefined();
@@ -56,14 +57,14 @@ describe('when importing value from another stack', () => {
         const output = describedBucketStack.Stacks[0].Outputs[0];
         expect(output.ExportName).toBe('BucketArn');
         expect(parameter.ParameterValue).toBe(output.OutputValue);
-    })
+    });
 
     test('Stack parameter with arr has value', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'paramArray');
         expect(parameter.ParameterValue).toBe('val1,val2');
-    })
+    });
 
     test('Stack parameter with explicit accountId and region has value of Output', () => {
         expect(describeBucketRoleStack).toBeDefined();
@@ -72,7 +73,7 @@ describe('when importing value from another stack', () => {
         const output = describedBucketStack.Stacks[0].Outputs[0];
         expect(output.ExportName).toBe('BucketArn');
         expect(parameter.ParameterValue).toBe(output.OutputValue);
-    })
+    });
 
     test('Stack parameter with logical account Id and region has value of Output', () => {
         expect(describeBucketRoleStack).toBeDefined();
@@ -81,63 +82,63 @@ describe('when importing value from another stack', () => {
         const output = describedBucketStack.Stacks[0].Outputs[0];
         expect(output.ExportName).toBe('BucketArn');
         expect(parameter.ParameterValue).toBe(output.OutputValue);
-    })
+    });
 
     test('Stack parameter with !Ref gets resolved ', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'masterAccountId');
         expect(parameter.ParameterValue).toBe('102625093955');
-    })
+    });
 
     test('Stack parameter with numeric value gets converted to a string ', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'numericValue');
         expect(parameter.ParameterValue).toBe('123');
-    })
+    });
 
     test('Stack parameter with !GetAtt gets resolved ', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'tagVal');
         expect(parameter.ParameterValue).toBe('tag-value');
-    })
+    });
 
     test('Stack parameter with !GetAtt and CurrentAccount gets resolved ', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'tagVal2');
         expect(parameter.ParameterValue).toBe('tag-value');
-    })
+    });
 
     test('Stack parameter with !GetAtt and AWSAccount gets resolved ', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'tagVal3');
         expect(parameter.ParameterValue).toBe('tag-value');
-    })
+    });
 
     test('Stack parameter with !Ref and AWSAccount gets resolved ', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'tagVal4');
         expect(parameter.ParameterValue).toBe('102625093955');
-    })
+    });
 
     test('Stack parameter with !Sub gets resolved ', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'someSubExpression');
         expect(parameter.ParameterValue).toBe('--102625093955--102625093955');
-    })
+    });
 
     test('Stack parameter Ref on CurrentAccount gets resolved ', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'currentAccount');
         expect(parameter.ParameterValue).toBe('102625093955');
-    })
+    });
 
     test('CopyValue within Join gets resolved properly', () => {
         expect(describeBucketRoleStack).toBeDefined();
@@ -146,104 +147,104 @@ describe('when importing value from another stack', () => {
         const output = describedBucketStack.Stacks[0].Outputs[0];
         expect(output.ExportName).toBe('BucketArn');
         expect(parameter.ParameterValue).toBe(output.OutputValue + '-postfix');
-    })
+    });
 
     test('FindInMap gets resolved properly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'findInMap1');
         expect(parameter.ParameterValue).toBe('MyVal1');
-    })
+    });
 
     test('FindInMap with parameter gets resolved properly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'findInMap1');
         expect(parameter.ParameterValue).toBe('MyVal1');
-    })
+    });
 
     test('md5 gets resolved properly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'md5');
         expect(parameter.ParameterValue).toBe('5377a3405f914e569220a5a65e318f9a');
-    })
+    });
 
     test('readFile gets resolved properly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'readFile');
         expect(parameter.ParameterValue).toBe('contents of file');
-    })
+    });
 
     test('md5 and readFile gets resolved properly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'md5readFile');
         expect(parameter.ParameterValue).toBe('4d06f8349b277ddc4cd33dc192bfccf3');
-    })
+    });
 
     test('cmd gets resolved properly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'cmd');
         expect(parameter.ParameterValue).toBe('check command');
-    })
+    });
 
     test('find in map can be used with !Ref CurrentAccount', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'ip');
         expect(parameter.ParameterValue).toBe('10.201.30');
-    })
+    });
     test('select gets resolved properly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'select');
         expect(parameter.ParameterValue).toBe('three');
-    })
+    });
 
     test('select combined with find-in-map gets resolved properly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'selectFindInMap');
         expect(parameter.ParameterValue).toBe('MyVal1');
-    })
+    });
 
     test('ref to OrganizationRoot resolves to physical id of root', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'refToRoot');
         expect(parameter.ParameterValue).toBe('r-kvte');
-    })
+    });
 
     test('JsonString resolves to minimized json string', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'jsonString1');
         expect(parameter.ParameterValue).toBe('{"att":1,"otherAtt":"2"}');
-    })
+    });
 
     test('JsonString can be used with ReadFile', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'jsonString2');
         expect(parameter.ParameterValue).toBe('{"key":"val"}');
-    })
+    });
 
     test('ref to orgPrincipalId resolves correctly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'orgPrincipalId');
         expect(parameter.ParameterValue).toBe('o-82c6hlhsvp');
-    })
+    });
 
     test('ref to orgStateBucket resolves correctly', () => {
         expect(describeBucketRoleStack).toBeDefined();
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'orgStateBucketName');
         expect(parameter.ParameterValue).toBe(context.stateBucketName);
-    })
+    });
 
 
     test('refToAccountBinding resolves correctly', () => {
@@ -251,7 +252,7 @@ describe('when importing value from another stack', () => {
 
         const parameter = describeBucketRoleStack.Stacks[0].Parameters.find(x => x.ParameterKey === 'refToAccountBinding');
         expect(parameter.ParameterValue).toBe('account binding: 340381375986');
-    })
+    });
 
 
 
@@ -262,5 +263,5 @@ describe('when importing value from another stack', () => {
 
     afterAll(async () => {
         await baseAfterAll(context);
-    })
+    });
 });

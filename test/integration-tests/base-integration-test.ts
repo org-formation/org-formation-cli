@@ -1,40 +1,47 @@
-import AWS, { SharedIniFileCredentials, S3, EnvironmentCredentials, CloudFormation } from "aws-sdk";
 import { v4 } from "uuid";
 import { AwsUtil } from "~util/aws-util";
 import { ConsoleUtil } from "~util/console-util";
-import { IPerformTasksCommandArgs, IDescribeStackCommandArgs, IUpdateStacksCommandArgs } from "~commands/index";
+import { IPerformTasksCommandArgs, IUpdateStacksCommandArgs } from "~commands/index";
 import { readFileSync } from "fs";
 import { GenericTaskRunner } from "~core/generic-task-runner";
+import { fromCustomEnv } from "~util/credentials-provider-custom-env";
+import { fromIni } from "@aws-sdk/credential-providers";
+import { chain } from "@smithy/property-provider";
+import { CreateBucketCommand, DeleteBucketCommand, DeleteObjectsCommand, ListObjectsCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { CloudFormationClient, ListStacksCommand } from "@aws-sdk/client-cloudformation";
+import { GlobalState } from "~util/global-state";
 
-export const profileForIntegrationTests = 'org-formation-test-v2'
+export const profileForIntegrationTests = 'org-formation-test-v2';
 
-export const baseBeforeAll = async (profileName: string = profileForIntegrationTests, environmentCredentials: string = 'TST_AWS'): Promise<IIntegrationTestContext> => {
+export const baseBeforeAll = async (profileName: string = profileForIntegrationTests, environmentCredentials = 'TST_AWS'): Promise<IIntegrationTestContext> => {
     jest.setTimeout(99999999);
 
     AwsUtil.SetMasterAccountId(undefined);
     GenericTaskRunner.RethrowTaskErrors = true;
     ConsoleUtil.verbose = false;
     ConsoleUtil.printStacktraces = true;
+    Error.stackTraceLimit = 50;
     process.on('unhandledRejection', error => {
         // Will print "unhandledRejection err is not defined"
         expect(`${error}`).toBeUndefined();
     });
 
-    //const logDebugMock = jest.spyOn(ConsoleUtil, 'LogDebug').mockImplementation();
+    // const logDebugMock = jest.spyOn(ConsoleUtil, 'LogDebug').mockImplementation();
     const logInfoMock = jest.spyOn(ConsoleUtil, 'LogInfo').mockImplementation();
     const logWarningMock = jest.spyOn(ConsoleUtil, 'LogWarning').mockImplementation();
 
-    await AwsUtil.Initialize([
-        () => new EnvironmentCredentials(environmentCredentials),
-        () => new SharedIniFileCredentials({ profile: profileName }),
-    ]);
-    await AwsUtil.SetEnabledRegions();
+    // this tests get their credentials from either prefixed environment variables or from a profile with a specific name
+    const credentialsChain = chain(fromCustomEnv(environmentCredentials), fromIni({ profile: profileName }));
 
+    await AwsUtil.Initialize(credentialsChain);
+    await AwsUtil.SetEnabledRegions();
 
     const stateBucketName = `${v4()}`;
     const stackName = `a${Math.floor(Math.random() * 10000)}`;
-    const command = {stateBucketName: stateBucketName, stateObject: 'state.json', logicalName: 'default', stackName: stackName, profile: profileForIntegrationTests, verbose: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 } as any;
-    const s3client = new S3({credentialProvider: AWS.config.credentialProvider});
+    const command = { stateBucketName, stateObject: 'state.json', logicalName: 'default', stackName, profile: profileForIntegrationTests, verbose: true, maxConcurrentStacks: 10, failedStacksTolerance: 0, maxConcurrentTasks: 10, failedTasksTolerance: 0 } as any;
+
+    const s3ClientThatDoesntAssumeRole = new S3Client({ credentials: credentialsChain, region: 'eu-west-1', followRegionRedirects: true });
+    const cfnClientThatDoesntAssumeRole = new CloudFormationClient({ credentials: credentialsChain, region: 'eu-west-1' })
 
     return {
         logDebugMock: {} as any,
@@ -43,23 +50,23 @@ export const baseBeforeAll = async (profileName: string = profileForIntegrationT
         stateBucketName,
         stackName,
         command,
-        s3client,
-        cfnClient: new CloudFormation({credentialProvider: AWS.config.credentialProvider, region: 'eu-west-1'}),
-        prepareStateBucket: async (stateFilePath: string) : Promise<void> => {
-            await s3client.createBucket({ Bucket: stateBucketName }).promise();
+        s3client: s3ClientThatDoesntAssumeRole,
+        cfnClient: cfnClientThatDoesntAssumeRole,
+        prepareStateBucket: async (stateFilePath: string): Promise<void> => {
+            await s3ClientThatDoesntAssumeRole.send(new CreateBucketCommand({ Bucket: stateBucketName }));
             await sleepForTest(200);
-            await s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(stateFilePath) }).promise();
+            await s3ClientThatDoesntAssumeRole.send(new PutObjectCommand({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(stateFilePath) }));
         }
-    }
-}
+    };
+};
 
 
-export const baseAfterAll = async(context: IIntegrationTestContext): Promise<void> => {
-    const response = await context.s3client.listObjects({ Bucket: context.stateBucketName }).promise();
+export const baseAfterAll = async (context: IIntegrationTestContext): Promise<void> => {
+    const response = await context.s3client.send(new ListObjectsCommand({ Bucket: context.stateBucketName }));
     const objectIdentifiers = response.Contents.map((x) => ({ Key: x.Key }));
-    await context.s3client.deleteObjects({ Bucket:  context.stateBucketName, Delete: { Objects: objectIdentifiers } }).promise();
-    await context.s3client.deleteBucket({ Bucket:  context.stateBucketName }).promise();
-}
+    await context.s3client.send(new DeleteObjectsCommand({ Bucket: context.stateBucketName, Delete: { Objects: objectIdentifiers } }));
+    await context.s3client.send(new DeleteBucketCommand({ Bucket: context.stateBucketName }));
+};
 
 
 export const sleepForTest = (time: number): Promise<void> => {
@@ -73,8 +80,8 @@ export interface IIntegrationTestContext {
     logWarningMock: jest.SpyInstance;
     stateBucketName: string;
     stackName: string;
-    s3client: S3;
-    cfnClient: CloudFormation;
-    command: IPerformTasksCommandArgs & IUpdateStacksCommandArgs ;
-    prepareStateBucket: (stateFilePath: string) => Promise<void>
+    s3client: S3Client;
+    cfnClient: CloudFormationClient;
+    command: IPerformTasksCommandArgs & IUpdateStacksCommandArgs;
+    prepareStateBucket: (stateFilePath: string) => Promise<void>;
 }
