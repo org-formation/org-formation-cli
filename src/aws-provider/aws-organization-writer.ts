@@ -60,7 +60,7 @@ export class AwsOrganizationWriter {
                     Name: resource.policyName,
                     Description: resource.description!,
                     Type: 'SERVICE_CONTROL_POLICY',
-                    Content: JSON.stringify(resource.policyDocument, null, 2),
+                    Content: JSON.stringify(resource.policyDocument, null, 0),
                 });
                 const response = await this.organizationsService.send(createPolicyCommand);
                 const scpId = response.Policy!.PolicySummary!.Id!;
@@ -130,7 +130,7 @@ export class AwsOrganizationWriter {
                 PolicyId: physicalId,
                 Name: resource.policyName,
                 Description: resource.description,
-                Content: JSON.stringify(resource.policyDocument, null, 2),
+                Content: JSON.stringify(resource.policyDocument, null, 0),
             });
             await this.organizationsService.send(updatePolicyCommand);
         });
