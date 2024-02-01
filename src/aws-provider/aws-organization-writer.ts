@@ -61,8 +61,8 @@ export class AwsOrganizationWriter {
                     Description: resource.description!,
                     Type: 'SERVICE_CONTROL_POLICY',
                     Content: JSON.stringify(resource.policyDocument, null, 0),
-                };
-                const response = await this.organizationService.createPolicy(createPolicyRequest).promise();
+                });
+                const response = await this.organizationsService.send(createPolicyCommand);
                 const scpId = response.Policy!.PolicySummary!.Id!;
                 ConsoleUtil.LogDebug(`SCP Created ${scpId}`);
                 return scpId;
@@ -131,8 +131,8 @@ export class AwsOrganizationWriter {
                 Name: resource.policyName,
                 Description: resource.description,
                 Content: JSON.stringify(resource.policyDocument, null, 0),
-            };
-            await this.organizationService.updatePolicy(updatePolicyRequest).promise();
+            });
+            await this.organizationsService.send(updatePolicyCommand);
         });
     }
 
