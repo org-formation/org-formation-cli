@@ -17,6 +17,7 @@ Typing ``help`` after any command in the commandline will print documentation.
     - [``org-formation update``](#org-formation-update)
     - [``org-formation create-change-set``](#org-formation-create-change-set)
     - [``org-formation execute-change-set``](#org-formation-execute-change-set)
+    - [``org-formation print-change-set``](#org-formation-print-change-set)
   - [Operations on stacks](#operations-on-stacks)
     - [``org-formation update-stacks``](#org-formation-update-stacks)
     - [``org-formation validate-stacks``](#org-formation-validate-stacks)
@@ -91,6 +92,12 @@ output will contain the changeset as well as the changeset name.
 Execute a changeset by name of  *changeSetName*.
 
 ``> org-formation execute-change-set change-set-name``
+
+### ``org-formation print-change-set``
+
+Display a changeset by name of  *changeSetName*.
+
+``> org-formation print-change-set change-set-name``
 
 ## Operations on stacks
 
