@@ -1,9 +1,7 @@
 import { Command } from 'commander';
 import { ConsoleUtil } from '../util/console-util';
 import { BaseCliCommand, ICommandArgs } from './base-command';
-import { TemplateRoot } from '~parser/parser';
 import { ChangeSetProvider } from '~change-set/change-set-provider';
-import { GlobalState } from '~util/global-state';
 import { yamlDump } from '~yaml-cfn/index';
 
 const commandName = 'print-change-set <change-set-name>';
