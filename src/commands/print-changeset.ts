@@ -22,10 +22,15 @@ export class PrintChangeSetCommand extends BaseCliCommand<IPrintChangeSetCommand
 
     public addOptions(command: Command): void {
         super.addOptions(command);
-        command.option('--output <output>', 'the serialization format used when printing change set. Either json or yaml.', 'yaml');
+        command.option('--change-set-name [change-set-name]', 'change set name');
+        command.option('--output <output>', 'serialization format used when printing change set. Either json or yaml.', 'json');
     }
 
     public async performCommand(command: IPrintChangeSetCommandArgs): Promise<void> {
+        if (!['json', 'yaml'].includes(command.output)) {
+            ConsoleUtil.LogError(`Invalid output format '${command.output}'. Must be either 'json' or 'yaml'.`);
+            return;
+        }
         const changeSetName = command.changeSetName;
         const stateBucketName = await BaseCliCommand.GetStateBucketName(command.stateBucketName);
         const provider = new ChangeSetProvider(stateBucketName);
@@ -34,18 +39,11 @@ export class PrintChangeSetCommand extends BaseCliCommand<IPrintChangeSetCommand
             ConsoleUtil.LogError(`change set '${changeSetName}' not found.`);
             return;
         }
-        const template = new TemplateRoot(changeSetObj.template, './');
-        const state = await this.getState(command);
-
-        GlobalState.Init(state, template);
-
-        const binder = await this.getOrganizationBinder(template, state);
-        const tasks = binder.enumBuildTasks();
-        const changeSet = ChangeSetProvider.CreateChangeSet(tasks, changeSetName);
+        const changeSet = changeSetObj.changeSet;
 
         if (command.output === 'json') {
             ConsoleUtil.Out(JSON.stringify(changeSet, null, 2));
-        } else {
+        } else if (command.output === 'yaml') {
             ConsoleUtil.Out(yamlDump(changeSet));
         }
 
