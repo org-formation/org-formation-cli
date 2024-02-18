@@ -7,6 +7,7 @@ import {
     InitOrganizationCommand,
     InitPipelineCommand,
     PerformTasksCommand,
+    PrintChangeSetCommand,
     PrintOrganizationCommand,
     PrintStacksCommand,
     UpdateOrganizationCommand,
@@ -50,6 +51,7 @@ export class CliProgram {
         new InitPipelineCommand(this.program);
         new InitOrganizationCommand(this.program);
         new PerformTasksCommand(this.program);
+        new PrintChangeSetCommand(this.program);
         new PrintOrganizationCommand(this.program);
         new PrintTasksCommand(this.program);
         new PrintStacksCommand(this.program);
