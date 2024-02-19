@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { ConsoleUtil } from '../util/console-util';
+import { OrgFormationError } from '../org-formation-error';
 import { BaseCliCommand, ICommandArgs } from './base-command';
 import { ChangeSetProvider } from '~change-set/change-set-provider';
 import { yamlDump } from '~yaml-cfn/index';
@@ -34,8 +35,7 @@ export class PrintChangeSetCommand extends BaseCliCommand<IPrintChangeSetCommand
         const provider = new ChangeSetProvider(stateBucketName);
         const changeSetObj = await provider.getChangeSet(changeSetName);
         if (!changeSetObj) {
-            ConsoleUtil.LogError(`change set '${changeSetName}' not found.`);
-            return;
+            throw new OrgFormationError(`change set '${changeSetName}' not found.`);
         }
         const changeSet = changeSetObj.changeSet;
 
