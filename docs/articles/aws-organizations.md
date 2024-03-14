@@ -14,11 +14,11 @@ In the diagram above you see an example account structure split up in 3 organiza
 
 Using multiple accounts has a number of benefits:
 
--	**Data governance**: Storing data in different accounts makes it easy to control who has access to what data. Think of, for example, GDPR governed data: By only providing access to only those people that need access it easy to stay *- and demonstrate you are -* in control.
+-	**Data governance**: Storing data in different accounts makes it easy to control who has access to what data. Think of, for example, GDPR governed data: By only providing access to only those people that need access it is easy to stay *- and demonstrate you are -* in control.
 
 -	**Security boundaries**: Security controls (e.g. IAM permissions) typically only apply to specific types of resources. Creating and maintaining specific permissions for those resources can be a difficult task. By moving more critical resources to different accounts you can apply these controls to an entire account (or group of accounts). For more information read about: Service Control Policies
 
--	**Scalability**: If you have a number of development teams working on the same AWS Account, you might run into AWS Service limits faster. Example: the maximum number of buckets that can be contained within an account is 100. If every team has their own AWS account you have a 100 buckets per team. Also, the team will be able to make good decisions on which buckets can be removed if needed.
+-	**Scalability**: If you have a number of development teams working on the same AWS Account, you might run into AWS Service limits faster. Example: the maximum number of buckets that can be contained within an account is 100. If every team has their own AWS account you have 100 buckets per team. Also, the team will be able to make good decisions on which buckets can be removed if needed.
 
 -	**Limited blast radius**: Every once in a while, change might come with unwanted side-effects. Limiting these side effects is what we call limiting your blast radius. Resources that reside inside the same account are a lot more likely to get confused for one another or otherwise technically impact each other. Dividing your system over several accounts greatly reduces your blast radius.
 
@@ -32,6 +32,7 @@ Even if you do not have a large number of accounts, it might still make sense to
 We just learned about benefits from having a multi account setup. Though, specifically the hard security boundary also comes with a drawback: When accessing resources across accounts you now explicitly need to allow other accounts to access these resources.
 
 ![cross account resource access](aws-organizations/cross-account-resource.png "cross account resource access")
+
 In this example Account B allows Account A to a resource
 
 
@@ -44,7 +45,7 @@ More information about IAM policies and permissions can be found here: https://d
 
 ## Coming up with a multi account strategy
 
-As we learned having multiple accounts can help us be in control of our AWS resources, but also comes with draw backs. Therefore, it is important to come up with a rationale as to when to separate resources into different accounts.
+As we learned having multiple accounts can help us be in control of our AWS resources, but also comes with drawbacks. Therefore, it is important to come up with a rationale as to when to separate resources into different accounts.
 
 ### Development and production accounts
 
@@ -60,7 +61,7 @@ When creating development accounts in a development OU it makes sense to have 1 
 
 ##### Production account per system
 
-When creating production accounts try to design these around (sub) systems in which the resources highly depend on each other and likely need to changed and deployed together. Much like one would design microservices. When having dependencies across these systems you can use API Gateway and HTTP endpoints as a generic way of decoupling these services.
+When creating production accounts try to design these around (sub) systems in which the resources highly depend on each other and likely need to be changed and deployed together. Much like one would design microservices. When having dependencies across these systems you can use API Gateway and HTTP endpoints as a generic way of decoupling these services.
 
 ![cross account service using http](aws-organizations/cross-account-service.png "cross account service using http")
 
@@ -89,7 +90,7 @@ Contains centralized logging and metrics data for all applications.
 
 Benefit:
 - Storing logging and metrics for all applications features makes it easy to access, correlate and forward logs.
-- A single place toset up alarms and alert the devops engineer on duty.
+- A single place to set up alarms and alert the devops engineer on duty.
 
 **Users Account**
 Contains IAM Users or integration with SSO solution.
