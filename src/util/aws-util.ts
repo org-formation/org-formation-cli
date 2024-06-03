@@ -851,7 +851,7 @@ export class CfnUtil {
                             throw new OrgFormationError(`Stack ${updateStackInput.StackName} seems stuck in UPDATE_IN_PROGRESS (or similar) state.`);
                         }
 
-                        ConsoleUtil.LogInfo(`Stack ${updateStackInput.StackName} is already being updated. waiting.... `);
+                        ConsoleUtil.LogInfo(`Stack ${updateStackInput.StackName} in ${cfn.binding.accountId}/${cfn.binding.region} is already being updated. waiting.... `);
                         retryStackIsBeingUpdatedCount += 1;
                         await sleep(26 + (4 * Math.random()));
                         retryStackIsBeingUpdated = true;
