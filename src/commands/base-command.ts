@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'fs';
 import { Command } from 'commander';
 import minimatch from 'minimatch';
 import RC from 'rc';
+import { fromIni } from '@aws-sdk/credential-provider-ini';
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../org-formation-error';
@@ -345,8 +346,11 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
         if (command.debugTemplating) {
             NunjucksDebugSettings.debug = true;
         }
-
-        await AwsUtil.Initialize();
+        if (command.profile !== undefined) {
+            await AwsUtil.Initialize(fromIni({ profile: command.profile }));
+        } else {
+            await AwsUtil.Initialize();
+        }
         await Promise.all([AwsUtil.GetPartitionFromCurrentSession(), AwsUtil.SetEnabledRegions()]);
 
         command.initialized = true;

@@ -5,7 +5,7 @@ import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin, CommonTaskAttributeNames
 import { IPluginTask, IPluginBinding } from '~plugin/plugin-binder';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { Validator } from '~parser/validator';
-import { OrgFormationError } from '~org-formation-error';
+import { ErrorCode, OrgFormationError } from '~org-formation-error';
 import { AwsUtil, BoundCloudFormationClient, CfnUtil } from '~util/aws-util';
 import { ConsoleUtil } from '~util/console-util';
 
@@ -80,28 +80,34 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     async performRemove(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver*/): Promise<void> {
-        const cfn = AwsUtil.GetCloudFormationService(binding.target.accountId, binding.target.region, binding.task.taskRoleName, undefined, AwsUtil.GetIsPartition());
-        let listVersionsResponse: CFN.ListTypeVersionsCommandOutput;
-        do {
-            listVersionsResponse = await cfn.send(
-                new CFN.ListTypeVersionsCommand({
-                    Type: 'RESOURCE',
-                    TypeName: binding.task.resourceType,
-                    NextToken: listVersionsResponse?.NextToken,
-                }));
-            for (const version of listVersionsResponse.TypeVersionSummaries) {
-                if (!version.IsDefaultVersion) {
-                    await cfn.send(
-                        new CFN.DeregisterTypeCommand({
-                            Type: 'RESOURCE',
-                            TypeName: binding.task.resourceType,
-                            VersionId: version.VersionId,
-                        }),
-                    );
+        try{
+            const cfn = AwsUtil.GetCloudFormationService(binding.target.accountId, binding.target.region, binding.task.taskRoleName, undefined, AwsUtil.GetIsPartition());
+            let listVersionsResponse: CFN.ListTypeVersionsCommandOutput;
+            do {
+                listVersionsResponse = await cfn.send(
+                    new CFN.ListTypeVersionsCommand({
+                        Type: 'RESOURCE',
+                        TypeName: binding.task.resourceType,
+                        NextToken: listVersionsResponse?.NextToken,
+                    }));
+                for (const version of listVersionsResponse.TypeVersionSummaries) {
+                    if (!version.IsDefaultVersion) {
+                        await cfn.send(
+                            new CFN.DeregisterTypeCommand({
+                                Type: 'RESOURCE',
+                                TypeName: binding.task.resourceType,
+                                VersionId: version.VersionId,
+                            }),
+                        );
+                    }
                 }
-            }
-        } while (listVersionsResponse.NextToken);
-        await cfn.send(new CFN.DeregisterTypeCommand({ Type: 'RESOURCE', TypeName: binding.task.resourceType }));
+            } while (listVersionsResponse.NextToken);
+            await cfn.send(new CFN.DeregisterTypeCommand({ Type: 'RESOURCE', TypeName: binding.task.resourceType }));
+
+
+        } catch(err) {
+            throw new OrgFormationError(`error removing resource provider ${binding.target.accountId}/${binding.target.region} ${binding.task.resourceType}.\n error: ${err}`, ErrorCode.FailureToRemove);
+        }
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver */): Promise<void> {
