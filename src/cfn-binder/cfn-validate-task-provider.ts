@@ -1,5 +1,5 @@
-import { ValidateTemplateInput } from 'aws-sdk/clients/cloudformation';
 import { v4 as uuid } from 'uuid';
+import { ValidateTemplateCommand, ValidateTemplateCommandInput } from '@aws-sdk/client-cloudformation';
 import { OrgFormationError } from '../org-formation-error';
 import { ICfnBinding } from './cfn-binder';
 import { ICfnTask } from './cfn-task-provider';
@@ -52,16 +52,16 @@ export class CfnValidateTaskProvider {
                     const customViaRoleArn = await expressionResolver.resolveSingleExpression(binding.customViaRoleArn, 'CustomViaRoleArn');
 
                     const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver, true);
-                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
+                    const cfn = AwsUtil.GetCloudFormationService(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
-                    const validateInput: ValidateTemplateInput = {
+                    const validateInput: ValidateTemplateCommandInput = {
                         TemplateBody: templateBody,
                     };
 
                     await CfnUtil.UploadTemplateToS3IfTooLarge(validateInput, binding, stackName, this.template.hash);
 
 
-                    const result = await cfn.validateTemplate(validateInput).promise();
+                    const result = await cfn.send(new ValidateTemplateCommand(validateInput));
                     const missingParameters: string[] = [];
                     for (const param of result.Parameters) {
 
@@ -80,7 +80,7 @@ export class CfnValidateTaskProvider {
                         throw new OrgFormationError(`template expects parameter(s) ${missingParameters.join(', ')} which have not been provided`);
                     }
                 } catch (err) {
-                    if (err.code === 'AccessDenied') {
+                    if (err.name === 'AccessDenied') {
                         ConsoleUtil.LogWarning(`access denied when running validate stack: ${err}`);
                         return;
                     }

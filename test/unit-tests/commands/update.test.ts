@@ -22,6 +22,8 @@ describe('when creating update command', () => {
         commanderCommand = new Command('root');
         command = new UpdateOrganizationCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
+        // @ts-ignore
+        AwsUtil.initialized = true
     });
 
     test('update command is created', () => {
@@ -72,6 +74,8 @@ describe('when executing update command', () => {
         command = new UpdateOrganizationCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
 
+        // @ts-ignore
+        AwsUtil.initialized = true
         sandbox.stub(AwsUtil, 'GetMasterAccountId').returns(Promise.resolve('123456789012'));
         sandbox.stub(AwsUtil, 'GetBuildProcessAccountId').returns(Promise.resolve('123456789012'));
 

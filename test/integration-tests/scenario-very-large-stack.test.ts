@@ -1,12 +1,12 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll } from './base-integration-test';
-import { DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
+import { DescribeStacksCommand, DescribeStacksCommandOutput } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-very-large-stack/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let veryLargeStack: DescribeStacksOutput;
+    let veryLargeStack: DescribeStacksCommandOutput;
 
     beforeAll(async () => {
 
@@ -18,7 +18,7 @@ describe('when calling org-formation perform tasks', () => {
         await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-very-large-stack.yml' })
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-very-large-stack.yml' });
 
-        veryLargeStack = await cfnClient.describeStacks({ StackName: 'test-with-very-large-stack' }).promise();
+        veryLargeStack = await cfnClient.send(new DescribeStacksCommand({ StackName: 'test-with-very-large-stack' }));
 
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup-very-large-stack.yml', performCleanup: true });

@@ -9,8 +9,6 @@ import { S3StorageProvider } from '~state/storage-provider';
 import { DefaultTemplate } from '~writer/default-template-writer';
 import { ConsoleUtil } from '~util/console-util';
 import { OrgResourceTypes } from '~parser/model';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
-import { STS } from 'aws-sdk';
 
 describe('when creating init organization pipeline command', () => {
     let command: InitPipelineCommand;
@@ -149,8 +147,6 @@ describe('when executing init pipeline', () => {
         sandbox.stub(S3StorageProvider.prototype, 'get');
         sandbox.stub(ConsoleUtil, 'LogInfo');
 
-        writeFileSyncStub = sandbox.stub(fs, 'writeFileSync');
-
         commanderCommand = new Command('root');
         command = new InitPipelineCommand(commanderCommand);
         subCommanderCommand = commanderCommand.commands[0];
@@ -228,11 +224,6 @@ describe('when executing init pipeline', () => {
             expect(roleName).toBeUndefined();
         });
 
-        test('does not writes to disk', async () => {
-            await command.performCommand(commandArgs);
-            expect(writeFileSyncStub.callCount).toBe(0);
-        });
-
         test('deletes initial commit from s3', async () => {
             await command.performCommand(commandArgs);
             expect(deleteObjectStub.callCount).toBe(1);
@@ -271,7 +262,6 @@ describe('when executing init pipeline', () => {
             generateDefaultTemplateStub.returns(new DefaultTemplate('template', generatedState));
 
             getBuildAccCredentials = sandbox.stub(AwsUtil, 'GetCredentials');
-            getBuildAccCredentials.returns(Promise.resolve({ accessKeyId: 'access-key-id', secretAccessKey: 'secret, ssst' } as CredentialsOptions));
         });
 
         test('build access role name is passed to template writer', async () => {

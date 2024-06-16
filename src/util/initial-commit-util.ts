@@ -7,16 +7,16 @@ import fetch from 'node-fetch';
 import unzipper from 'unzipper';
 import tmp from 'tmp';
 import { renderString } from 'nunjucks';
-import { S3 } from 'aws-sdk';
+import * as S3 from '@aws-sdk/client-s3';
 import archiver from 'archiver';
-import { CredentialsOptions } from 'aws-sdk/lib/credentials';
+import { Upload } from '@aws-sdk/lib-storage';
 import { DefaultTemplate, ITemplateGenerationSettings } from '~writer/default-template-writer';
 
 interface TemplateDefinition {
   parameters: { name: string; required: boolean }[];
   organizationFilePath: string;
   templateGenerationSettings?: ITemplateGenerationSettings;
-};
+}
 
 export interface ExtractedTemplate {
   definition: TemplateDefinition;
@@ -46,7 +46,7 @@ export class InitialCommitUtil {
   }
 
 
-  static async parameterizeAndUpload(extractedTemplate: ExtractedTemplate, params: Record<string, any>, template: DefaultTemplate, stateBucketName: string, s3credentials?: CredentialsOptions): Promise<void> {
+  static async parameterizeAndUpload(extractedTemplate: ExtractedTemplate, params: Record<string, any>, template: DefaultTemplate, stateBucketName: string, s3client: S3.S3Client): Promise<void> {
     const { definition: templateDefinition, tempDir } = extractedTemplate;
     for (const declaredParam of templateDefinition.parameters) {
       if ((declaredParam.required) && (params[declaredParam.name] === undefined)) {
@@ -54,7 +54,7 @@ export class InitialCommitUtil {
       }
     }
     const archive = archiver('zip');
-    const upload = uploadStream(stateBucketName, 'initial-commit.zip', s3credentials);
+    const upload = uploadStream(stateBucketName, 'initial-commit.zip', s3client);
     archive.pipe(upload.writeStream);
     this.replaceFiles(tempDir, params, archive, '');
     const renderedTemplateContents = renderString(template.template, params);
@@ -83,11 +83,13 @@ export class InitialCommitUtil {
 
 }
 
-const uploadStream = (bucket: string, key: string, credentials?: CredentialsOptions): { writeStream: stream.PassThrough; promise: Promise<any> } => {
-  const s3 = new S3(credentials);
+const uploadStream = (bucket: string, key: string, s3: S3.S3Client): { writeStream: stream.PassThrough; promise: Promise<any> } => {
   const pass = new stream.PassThrough();
   return {
     writeStream: pass,
-    promise: s3.upload({ Bucket: bucket, Key: key, Body: pass }).promise(),
+    promise: new Upload({
+      client: s3,
+      params: { Bucket: bucket, Key: key, Body: pass },
+    }).done(),
   };
 };

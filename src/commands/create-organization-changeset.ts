@@ -5,6 +5,7 @@ import { ChangeSetProvider } from '~change-set/change-set-provider';
 import { TemplateRoot } from '~parser/parser';
 import { GlobalState } from '~util/global-state';
 import { AwsUtil } from '~util/aws-util';
+import { yamlDump } from '~yaml-cfn/index';
 
 const commandName = 'create-change-set <templateFile>';
 const commandDescription = 'create change set that can be reviewed and executed later';
@@ -18,9 +19,15 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
     public addOptions(command: Command): void {
         super.addOptions(command);
         command.option('--change-set-name [change-set-name]', 'change set name');
+        command.option('--output <output>', 'serialization format used when printing change set. Either json or yaml.', 'json');
     }
 
     public async performCommand(command: ICreateChangeSetCommandArgs): Promise<void> {
+
+        if (!['json', 'yaml'].includes(command.output)) {
+            ConsoleUtil.LogError(`Invalid output format '${command.output}'. Must be either 'json' or 'yaml'.`);
+            return;
+        }
 
         const template = await TemplateRoot.create(command.templateFile);
         const state = await this.getState(command);
@@ -42,8 +49,11 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
 
         }
 
-        const contents = JSON.stringify(changeSet, null, 2);
-        ConsoleUtil.Out(contents);
+        if (command.output === 'json') {
+            ConsoleUtil.Out(JSON.stringify(changeSet, null, 2));
+        } else if (command.output === 'yaml') {
+            ConsoleUtil.Out(yamlDump(changeSet));
+        }
     }
 }
 
@@ -51,4 +61,5 @@ export interface ICreateChangeSetCommandArgs extends ICommandArgs {
     masterAccountId?: any;
     templateFile: string;
     changeSetName?: string;
+    output?: 'json' | 'yaml';
 }

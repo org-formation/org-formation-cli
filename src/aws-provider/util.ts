@@ -8,11 +8,11 @@ export const performAndRetryIfNeeded = async <T extends unknown>(fn: () => Promi
     try {
       return await fn();
     } catch (err) {
-      if (err && (err.code === 'ConcurrentModificationException' || err.code === 'TooManyRequestsException') && retryCount < 30) {
+      if (err && (err.name === 'ConcurrentModificationException' || err.name === 'TooManyRequestsException') && retryCount < 30) {
         retryCount = retryCount + 1;
         shouldRetry = true;
         const wait = retryCount + (0.5 * Math.random());
-        ConsoleUtil.LogDebug(`received retryable error ${err.code}. wait ${wait} and retry-count ${retryCount}`);
+        ConsoleUtil.LogDebug(`received retryable error ${err.name}. wait ${wait} and retry-count ${retryCount}`);
         await sleep(wait * 1000);
         continue;
       }

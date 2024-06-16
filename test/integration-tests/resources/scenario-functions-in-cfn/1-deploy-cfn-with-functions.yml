@@ -1,4 +1,3 @@
-
 OrganizationUpdate:
   Type: update-organization
   Skip: true
@@ -10,20 +9,24 @@ LambdaUsingReadFile:
   Template: ./lambda-using-read-file.yml
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
-      IncludeMasterAccount: true
+    IncludeMasterAccount: true
 
-PermissionSetWithInlinePolicy1:
+BucketPolicyInline1:
   Type: update-stacks
-  StackName: permission-set-using-json-string-1
-  Template: ./permission-set-using-json-string-1.yml
+  StackName: bucket-with-policy1
+  Template: ./bucket-with-policy1.yml
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
-      IncludeMasterAccount: true
+    IncludeMasterAccount: true
+  Parameters:
+    currentAccount: !Ref CurrentAccount
 
-PermissionSetWithInlinePolicy2:
+BucketPolicyInline2:
   Type: update-stacks
-  StackName: permission-set-using-json-string-2
-  Template: ./permission-set-using-json-string-2.yml
+  StackName: bucket-with-policy2
+  Template: ./bucket-with-policy2.yml
   DefaultOrganizationBindingRegion: eu-west-1
   DefaultOrganizationBinding:
-      IncludeMasterAccount: true
+    IncludeMasterAccount: true
+  Parameters:
+    currentAccount: !Ref CurrentAccount

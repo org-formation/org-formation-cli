@@ -1,12 +1,12 @@
-import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
+import {  PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll } from './base-integration-test';
-import { DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
+import { DescribeStacksCommandOutput, DescribeStacksCommand } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-json-template/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let jsonStack: DescribeStacksOutput;
+    let jsonStack: DescribeStacksCommandOutput;
 
     beforeAll(async () => {
 
@@ -18,7 +18,7 @@ describe('when calling org-formation perform tasks', () => {
         await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-json-stack.yml' })
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-json-stack.yml' });
 
-        jsonStack = await cfnClient.describeStacks({ StackName: 'test-with-json' }).promise();
+        jsonStack = await cfnClient.send(new DescribeStacksCommand({ StackName: 'test-with-json' }));
 
 
         await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup-json-stack.yml', performCleanup: true });

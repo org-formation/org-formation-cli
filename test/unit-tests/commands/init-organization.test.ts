@@ -159,7 +159,7 @@ describe('when executing init organization command', () => {
     });
 
     test('if bucket already exists process continues', async () => {
-        storageProviderCreateStub.throws({ code: 'BucketAlreadyOwnedByYou'});
+        storageProviderCreateStub.throws({ name: 'BucketAlreadyOwnedByYou'});
 
         await command.performCommand(commandArgs);
         expect(writeFileSyncStub.callCount).toBe(1);

@@ -1,5 +1,4 @@
 import * as path from 'path';
-import { Organizations } from 'aws-sdk';
 import * as AWSMock from 'aws-sdk-mock';
 import { ListOrganizationalUnitsForParentRequest, Organization } from 'aws-sdk/clients/organizations';
 import { examples as organizationExamples } from 'aws-sdk/apis/organizations-2016-11-28.examples.json';
@@ -12,7 +11,6 @@ const mockResult = (output: any): jest.Mock => {
     return jest.fn().mockResolvedValue(output);
 };
 
-AWSMock.setSDK(path.resolve('node_modules/aws-sdk'));
 
 describe('when reading a organizational unit using reader', () => {
     let organizationService: Organizations;

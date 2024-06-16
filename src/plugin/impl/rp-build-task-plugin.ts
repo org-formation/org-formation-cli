@@ -1,4 +1,4 @@
-import CloudFormation, { DescribeTypeRegistrationOutput, ListTypeVersionsOutput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
+import * as CFN from '@aws-sdk/client-cloudformation';
 import { IOrganizationBinding } from '~parser/parser';
 import { IBuildTaskConfiguration } from '~build-tasks/build-configuration';
 import { IBuildTaskPluginCommandArgs, IBuildTaskPlugin, CommonTaskAttributeNames } from '~plugin/plugin';
@@ -6,7 +6,7 @@ import { IPluginTask, IPluginBinding } from '~plugin/plugin-binder';
 import { IPerformTasksCommandArgs } from '~commands/index';
 import { Validator } from '~parser/validator';
 import { OrgFormationError } from '~org-formation-error';
-import { AwsUtil, CfnUtil } from '~util/aws-util';
+import { AwsUtil, BoundCloudFormationClient, CfnUtil } from '~util/aws-util';
 import { ConsoleUtil } from '~util/console-util';
 
 const communityResourceProviderCatalog = 'community-resource-provider-catalog';
@@ -80,17 +80,28 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     async performRemove(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver*/): Promise<void> {
-        const cfn = await AwsUtil.GetCloudFormation(binding.target.accountId, binding.target.region, binding.task.taskRoleName, null, AwsUtil.GetIsPartition());
-        let listVersionsResponse: ListTypeVersionsOutput = {};
+        const cfn = AwsUtil.GetCloudFormationService(binding.target.accountId, binding.target.region, binding.task.taskRoleName, undefined, AwsUtil.GetIsPartition());
+        let listVersionsResponse: CFN.ListTypeVersionsCommandOutput;
         do {
-            listVersionsResponse = await cfn.listTypeVersions({ Type: 'RESOURCE', TypeName: binding.task.resourceType, NextToken: listVersionsResponse.NextToken }).promise();
+            listVersionsResponse = await cfn.send(
+                new CFN.ListTypeVersionsCommand({
+                    Type: 'RESOURCE',
+                    TypeName: binding.task.resourceType,
+                    NextToken: listVersionsResponse?.NextToken,
+                }));
             for (const version of listVersionsResponse.TypeVersionSummaries) {
                 if (!version.IsDefaultVersion) {
-                    await cfn.deregisterType({ Type: 'RESOURCE', TypeName: binding.task.resourceType, VersionId: version.VersionId }).promise();
+                    await cfn.send(
+                        new CFN.DeregisterTypeCommand({
+                            Type: 'RESOURCE',
+                            TypeName: binding.task.resourceType,
+                            VersionId: version.VersionId,
+                        }),
+                    );
                 }
             }
         } while (listVersionsResponse.NextToken);
-        await cfn.deregisterType({ Type: 'RESOURCE', TypeName: binding.task.resourceType }).promise();
+        await cfn.send(new CFN.DeregisterTypeCommand({ Type: 'RESOURCE', TypeName: binding.task.resourceType }));
     }
 
     async performCreateOrUpdate(binding: IPluginBinding<IRpTask> /* , resolver: CfnExpressionResolver */): Promise<void> {
@@ -106,7 +117,7 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
 
         const catalog = this.getCatalogBucket(AwsUtil.GetIsPartition());
 
-        const cfn = await AwsUtil.GetCloudFormation(target.accountId, target.region, task.taskRoleName, task.taskViaRoleArn, AwsUtil.GetIsPartition());
+        const cfn = AwsUtil.GetCloudFormationService(target.accountId, target.region, task.taskRoleName, task.taskViaRoleArn, AwsUtil.GetIsPartition());
 
         let roleArn = task.executionRole;
         const schemaHandlerPackage = task.schemaHandlerPackage;
@@ -115,34 +126,34 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
             roleArn = await this.ensureExecutionRole(cfn, schemaHandlerPackage, catalog);
         }
 
-        await retryTypeRegistrationWrapper(task.resourceType,  async () => {
-            const response = await cfn.registerType({
+        await retryTypeRegistrationWrapper(task.resourceType, async () => {
+            const response = await cfn.send(new CFN.RegisterTypeCommand({
                 TypeName: task.resourceType,
                 Type: 'RESOURCE',
                 SchemaHandlerPackage: task.schemaHandlerPackage,
                 ExecutionRoleArn: roleArn,
-            }).promise();
+            }));
 
-            let registrationStatus: DescribeTypeRegistrationOutput = {};
+            let registrationStatus: CFN.DescribeTypeRegistrationCommandOutput;
             do {
                 await sleep(3000);
-                registrationStatus = await cfn.describeTypeRegistration({ RegistrationToken: response.RegistrationToken }).promise();
+                registrationStatus = await cfn.send(new CFN.DescribeTypeRegistrationCommand({ RegistrationToken: response.RegistrationToken }));
             } while (registrationStatus.ProgressStatus === 'IN_PROGRESS');
 
             if (registrationStatus.ProgressStatus !== 'COMPLETE') {
                 throw new OrgFormationError(`Registration of Resource Type ${task.resourceType} failed. ${registrationStatus.Description}`);
             }
-            await cfn.setTypeDefaultVersion({ Arn: registrationStatus.TypeVersionArn }).promise();
+            await cfn.send(new CFN.SetTypeDefaultVersionCommand({ Arn: registrationStatus.TypeVersionArn }));
         });
     }
 
-    private async ensureExecutionRole(cfn: CloudFormation, handlerPackageUrl: string, catalog: Catalog): Promise<string> {
+    private async ensureExecutionRole(cfn: BoundCloudFormationClient, handlerPackageUrl: string, catalog: Catalog): Promise<string> {
         if (handlerPackageUrl === undefined || !handlerPackageUrl.startsWith(catalog.uri)) {
             throw new OrgFormationError('Can only automatically install ExecutionRole for resource providers hosted on community-resource-provider-catalog or community-resource-provider-catalog-gov. As a workaround, you can use the native CloudFormation resource to register the type: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudformation-resourceversion.html');
         }
 
         const { name, version } = this.getResourceRoleName(handlerPackageUrl, catalog);
-        const updateStackInput: UpdateStackInput = {
+        const updateStackInput: CFN.UpdateStackCommandInput = {
             StackName: name,
             TemplateURL: `${catalog.path}${name}-${version}.yml`,
             Capabilities: ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
@@ -186,18 +197,18 @@ const retryTypeRegistrationWrapper = async (type: string, fn: () => Promise<any>
         } catch (err) {
             const message = err.message as string;
             if (message && -1 !== message.indexOf('Deployment is currently in DEPLOY_STAGE of status FAILED')) {
-            if (retryCount >= 20) {
+                if (retryCount >= 20) {
+                    throw err;
+                }
+
+                ConsoleUtil.LogInfo(`Type registration ${type} is in DEPLOY_STAGE of status FAILED. waiting.... `);
+                retryCount += 1;
+                await sleep(1000 * (26 + (4 * Math.random())));
+                retryTypeRegistration = true;
+
+            } else {
                 throw err;
             }
-
-            ConsoleUtil.LogInfo(`Type registration ${type} is in DEPLOY_STAGE of status FAILED. waiting.... `);
-            retryCount += 1;
-            await sleep(1000 * (26 + (4 * Math.random())));
-            retryTypeRegistration = true;
-
-        } else {
-            throw err;
-        }
         }
     } while (retryTypeRegistration);
 };

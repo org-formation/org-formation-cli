@@ -1,14 +1,14 @@
 import { PerformTasksCommand, ValidateTasksCommand } from '~commands/index';
 import { IIntegrationTestContext, baseBeforeAll, baseAfterAll } from './base-integration-test';
-import { ListStacksOutput, GetStackPolicyOutput, DescribeStacksOutput } from 'aws-sdk/clients/cloudformation';
 import { ConsoleUtil } from '~util/console-util';
+import { DescribeStacksCommand, DescribeStacksCommandOutput } from '@aws-sdk/client-cloudformation';
 
 const basePathForScenario = './test/integration-tests/resources/scenario-update-stacks-tags/';
 
 describe('when calling org-formation perform tasks', () => {
     let context: IIntegrationTestContext;
-    let stackWithTags: DescribeStacksOutput;
-    let stackWithoutTags: DescribeStacksOutput;
+    let stackWithTags: DescribeStacksCommandOutput;
+    let stackWithoutTags: DescribeStacksCommandOutput;
 
     beforeAll(async () => {
         try {
@@ -20,10 +20,10 @@ describe('when calling org-formation perform tasks', () => {
 
             await ValidateTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-stacks-with-tags.yml' })
             await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '1-deploy-stacks-with-tags.yml' });
-            stackWithTags = await cfnClient.describeStacks({ StackName: 'test-with-stack-tags' }).promise();
+            stackWithTags = await cfnClient.send(new DescribeStacksCommand({ StackName: 'test-with-stack-tags' }));
 
             await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '2-deploy-stacks-without-tags.yml' });
-            stackWithoutTags = await cfnClient.describeStacks({ StackName: 'test-with-stack-tags' }).promise();
+            stackWithoutTags = await cfnClient.send(new DescribeStacksCommand({ StackName: 'test-with-stack-tags' }));
             //
             await PerformTasksCommand.Perform({ ...command, tasksFile: basePathForScenario + '9-cleanup-stacks-with-tags.yml', performCleanup: true });
         } catch (err) {

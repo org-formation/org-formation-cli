@@ -1,4 +1,4 @@
-import CloudFormation, { CreateStackInput, DeleteStackInput, UpdateStackInput } from 'aws-sdk/clients/cloudformation';
+import { CreateStackCommandInput, DeleteStackCommand, DeleteStackCommandInput, DescribeStackEventsCommand, Tag, UpdateStackCommandInput, UpdateTerminationProtectionCommand, waitUntilStackDeleteComplete } from '@aws-sdk/client-cloudformation';
 import { AwsUtil, CfnUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { OrgFormationError } from '../../src/org-formation-error';
@@ -59,19 +59,18 @@ export class CfnTaskProvider {
                 const customViaRoleArn = await expressionResolver.resolveSingleExpression(binding.customViaRoleArn, 'CustomViaRoleArn');
 
                 const templateBody = await binding.template.createTemplateBodyAndResolve(expressionResolver);
-                const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
+                const cfn = AwsUtil.GetCloudFormationService(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
                 let roleArn: string;
                 if (cloudFormationRoleName) {
                     roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                 }
-                const stackInput: CreateStackInput | UpdateStackInput = {
+                const stackInput: CreateStackCommandInput | UpdateStackCommandInput = {
                     StackName: stackName,
                     TemplateBody: templateBody,
                     Capabilities: ['CAPABILITY_NAMED_IAM', 'CAPABILITY_IAM', 'CAPABILITY_AUTO_EXPAND'],
                     RoleARN: roleArn,
                     Parameters: [],
-
                 };
 
                 await CfnUtil.UploadTemplateToS3IfTooLarge(stackInput, binding, stackName, this.template.hash);
@@ -81,7 +80,7 @@ export class CfnTaskProvider {
                 }
 
                 const entries = Object.entries(binding.tags ?? {});
-                stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as CloudFormation.Tag));
+                stackInput.Tags = entries.map(x => ({ Key: x[0], Value: x[1] } as Tag));
                 stackInput.DisableRollback = !!binding.disableStackRollbacks;
                 for (const dependency of dependencies) {
 
@@ -135,17 +134,23 @@ export class CfnTaskProvider {
                     await CfnUtil.UpdateOrCreateStack(cfn, stackInput);
                     if (binding.state === undefined && binding.terminationProtection === true) {
                         ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
-                        await cfn.updateTerminationProtection({ StackName: stackName, EnableTerminationProtection: true }).promise();
+                        await cfn.send(
+                            new UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: true })
+                        );
                     } else if (binding.state !== undefined) {
                         if (binding.terminationProtection) {
                             if (!binding.state.terminationProtection) {
                                 ConsoleUtil.LogDebug(`Enabling termination protection for stack ${stackName}`, this.logVerbose);
-                                await cfn.updateTerminationProtection({ StackName: stackName, EnableTerminationProtection: true }).promise();
+                                await cfn.send(
+                                    new UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: true })
+                                );
                             }
                         } else {
                             if (binding.state.terminationProtection) {
                                 ConsoleUtil.LogDebug(`Disabling termination protection for stack ${stackName}`, this.logVerbose);
-                                await cfn.updateTerminationProtection({ StackName: stackName, EnableTerminationProtection: false }).promise();
+                                await cfn.send(
+                                    new UpdateTerminationProtectionCommand({ StackName: stackName, EnableTerminationProtection: false })
+                                );
                             }
                         }
                     }
@@ -162,11 +167,11 @@ export class CfnTaskProvider {
                         customViaRoleArn: binding.customViaRoleArn,
                     });
                 } catch (err) {
-                    if (err.code !== 'OptInRequired') {
+                    if (err.name !== 'OptInRequired') {
                         ConsoleUtil.LogError(`error updating CloudFormation stack ${stackName} in account ${binding.accountId} (${binding.region}). \n${err.message}`);
                     }
                     try {
-                        const stackEvents = await cfn.describeStackEvents({ StackName: stackName }).promise();
+                        const stackEvents = await cfn.send(new DescribeStackEventsCommand({ StackName: stackName }));
                         for (const event of stackEvents.StackEvents) {
                             const failureStates = ['CREATE_FAILED', 'DELETE_FAILED', 'UPDATE_FAILED'];
                             if (event.ClientRequestToken === stackInput.ClientRequestToken) {
@@ -214,7 +219,7 @@ export class CfnTaskProvider {
                 const cloudFormationRoleName = await expressionResolver.resolveSingleExpression(binding.cloudFormationRoleName, 'CloudFormationRoleName');
 
                 try {
-                    const cfn = await AwsUtil.GetCloudFormation(binding.accountId, binding.region, customRoleName, customViaRoleArn);
+                    const cfn = AwsUtil.GetCloudFormationService(binding.accountId, binding.region, customRoleName, customViaRoleArn);
 
                     await performAndRetryIfNeeded(async () => {
                         let roleArn: string;
@@ -222,12 +227,21 @@ export class CfnTaskProvider {
                             roleArn = AwsUtil.GetRoleArn(binding.accountId, cloudFormationRoleName);
                         }
 
-                        const deleteStackInput: DeleteStackInput = {
+                        const deleteStackInput: DeleteStackCommandInput = {
                             StackName: stackName,
                             RoleARN: roleArn,
                         };
-                        await cfn.deleteStack(deleteStackInput).promise();
-                        await cfn.waitFor('stackDeleteComplete', { StackName: stackName, $waiter: { delay: 1, maxAttempts: 60 * 30 } }).promise();
+                        await cfn.send(new DeleteStackCommand(deleteStackInput));
+
+                        await waitUntilStackDeleteComplete({
+                            client: cfn,
+                            maxDelay: 1,
+                            maxWaitTime: 60 * 30,
+                            minDelay: 1,
+                        }, {
+                            NextToken: undefined,
+                            StackName: stackName,
+                        });
                     });
                 } catch (err) {
                     const message = err.message as string;
@@ -255,11 +269,11 @@ export const performAndRetryIfNeeded = async <T extends unknown>(fn: () => Promi
         try {
             return await fn();
         } catch (err) {
-            if (err && (err.code === 'ThrottlingException') && retryCount < 10) {
+            if (err && (err.name === 'ThrottlingException') && retryCount < 10) {
                 retryCount = retryCount + 1;
                 shouldRetry = true;
                 const wait = retryCount + (0.5 * Math.random());
-                ConsoleUtil.LogDebug(`received retryable error ${err.code}. wait ${wait} and retry-count ${retryCount}`);
+                ConsoleUtil.LogDebug(`received retryable error ${err.name}. wait ${wait} and retry-count ${retryCount}`);
                 await sleep(wait * 1000);
                 continue;
             }

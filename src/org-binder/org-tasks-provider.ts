@@ -391,7 +391,7 @@ export class TaskProvider {
                     task.result = await that.writer.updateOrganizationalUnit(resource, physicalId);
                 },
             });
-        };
+        }
         const previousSCPs = this.resolveIDs(previousResource === undefined ? [] : previousResource.serviceControlPolicies);
         const currentSCPS = this.resolveIDs(resource.serviceControlPolicies);
         const previousAccounts = this.resolveIDs(previousResource === undefined ? [] : previousResource.accounts);
@@ -989,7 +989,7 @@ export class TaskProvider {
             return false;
         }
         return left.TemplateResource!.calculateHash() === right.TemplateResource!.calculateHash();
-    };
+    }
 }
 
 

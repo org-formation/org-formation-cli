@@ -128,7 +128,7 @@ export class ResourceUtil {
                             exportName: val[0],
                         };
                         if (val.length >= 2) {
-                            expression.accountId = val[1];
+                            expression.accountId = String(val[1]);
                         }
                         if (val.length >= 3) {
                             expression.region = val[2];

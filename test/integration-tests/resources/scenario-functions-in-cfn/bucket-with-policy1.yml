@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: 2010-09-09-OC
+
+Parameters:
+  currentAccount:
+    Type: String
+
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Fn::Sub:
+          - !JsonString
+              Version: 2012-10-17
+              Statement:
+                - Action:
+                    - "s3:GetObject"
+                  Effect: Allow
+                  Resource: "arn:aws:s3:::${bucket}/*"
+                  Principal:
+                    AWS: ${account}
+          - bucket: !Ref Bucket
+            account: !Ref currentAccount

@@ -1,16 +1,18 @@
-import { Organizations } from "aws-sdk";
 import { UpdateOrganizationCommand } from "~commands/index";
 import { readFileSync } from "fs";
 import { AwsOrganizationReader } from "~aws-provider/aws-organization-reader";
 import { AwsOrganization } from "~aws-provider/aws-organization";
 import { IIntegrationTestContext, baseBeforeAll, profileForIntegrationTests, baseAfterAll, sleepForTest } from "./base-integration-test";
+import { AwsUtil } from "~util/aws-util";
+import { OrganizationsClient } from "@aws-sdk/client-organizations";
+import { CreateBucketCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const basePathForScenario = './test/integration-tests/resources/scenario-nested-ou/';
 
 
 describe('when nesting ou\'s', () => {
     let context: IIntegrationTestContext;
-    let orgClient: Organizations;
+    let orgClient: OrganizationsClient;
 
     let organizationAfterInit: AwsOrganization;
     let organizationAfterCreateParentChild: AwsOrganization;
@@ -22,13 +24,13 @@ describe('when nesting ou\'s', () => {
 
     beforeAll(async () => {
         context = await baseBeforeAll();
-        orgClient = new Organizations({ region: 'us-east-1' });
+        orgClient = AwsUtil.GetOrganizationsService()
         const command = {stateBucketName: context.stateBucketName, stateObject: 'state.json', profile: profileForIntegrationTests, verbose: true };
 
         try {
-            await context.s3client.createBucket({ Bucket: context.stateBucketName }).promise();
+            await context.s3client.send(new CreateBucketCommand({ Bucket: context.stateBucketName }));
             await sleepForTest(200);
-            await context.s3client.upload({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }).promise();
+            await context.s3client.send(new PutObjectCommand({ Bucket: command.stateBucketName, Key: command.stateObject, Body: readFileSync(basePathForScenario + '0-state.json') }));
 
             await UpdateOrganizationCommand.Perform({...command, templateFile: basePathForScenario + '1-init-organization.yml'});
             await sleepForTest(500);
