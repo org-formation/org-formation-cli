@@ -29,7 +29,7 @@ jobs:
       - name: Add Coverage Report
         if: github.event_name == 'pull_request'
         id: coverage-report
-        uses: 5monkeys/cobertura-action@v13
+        uses: 5monkeys/cobertura-action@v14
         continue-on-error: true
         with:
           path: coverage/cobertura-coverage.xml
