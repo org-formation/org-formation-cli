@@ -16,23 +16,6 @@ Parameters:
 
 Resources:
 
-  StateBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref stateBucketName
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: AccessFromAccount
-            Principal:
-              AWS: !Ref 'AWS::AccountId'
-            Effect: Allow
-            Action:
-              - s3:*
-            Resource:
-              - !Sub 'arn:aws:s3:::${stateBucketName}'
-              - !Sub 'arn:aws:s3:::${stateBucketName}/*'
-
   OrgBuildLogGroup:
     Type: 'AWS::Logs::LogGroup'
     Properties:
@@ -51,6 +34,9 @@ Resources:
               Service: codebuild.amazonaws.com
             Action:
               - sts:AssumeRole
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${resourcePrefix}-build"
       Path: /
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AdministratorAccess' # see: https://github.com/org-formation/org-formation-cli/blob/master/docs/least-priviledge.md
@@ -59,6 +45,21 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
+            - Effect: Allow
+              Action:
+                - "ec2:DescribeRegions"
+              Resource:
+                - "*"
+            - Effect: Allow
+              Action:
+                - "events:PutEvents"
+              Resource:
+                - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default'
+            - Effect: Allow
+              Action:
+                - "sts:AssumeRole"
+              Resource:
+                - "arn:aws:iam::*:role/OrganizationFormationBuildAccessRole"
             - Effect: Allow
               Resource:
               - !GetAtt OrgBuildLogGroup.Arn
@@ -295,6 +296,9 @@ Resources:
                 - events.amazonaws.com
             Action:
               - sts:AssumeRole
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${resourcePrefix}-pipeline-event-rule"
       Description: !Sub Used to trigger the pipeline attached to the ${OrgRepo.Name} repository
       Path: /
       Policies:
