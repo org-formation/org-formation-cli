@@ -56,7 +56,8 @@ export class S3StorageProvider implements IStorageProvider {
             };
         }
 
-        const s3client = AwsUtil.GetS3Service(undefined, region);
+        const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
+        const s3client = AwsUtil.GetS3Service(buildAccountId, region);
         try {
             await s3client.send(new S3.CreateBucketCommand(request));
             await s3client.send(new S3.PutPublicAccessBlockCommand({
@@ -131,7 +132,8 @@ export class S3StorageProvider implements IStorageProvider {
         }
 
         try {
-            const s3client = AwsUtil.GetS3Service(undefined, this.region);
+            const buildAccountId = await AwsUtil.GetBuildProcessAccountId();
+            const s3client = AwsUtil.GetS3Service(buildAccountId, this.region);
 
             const putObjectRequest: S3.PutObjectCommandInput = {
                 Bucket: this.bucketName,

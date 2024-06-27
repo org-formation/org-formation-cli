@@ -146,6 +146,10 @@ export class AwsUtil {
         AwsUtil.masterAccountId = masterAccountId;
     }
 
+    public static SetBuildProcessAccountId(buildAccountId: string): void {
+        AwsUtil.buildProcessAccountId = buildAccountId;
+    }
+
     public static SetProfile(profile: string): void {
         AwsUtil.profile = profile;
     }
