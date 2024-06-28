@@ -5,6 +5,9 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
+**version: 1.0.16**
+- fix: access denied issue when running init-pipeline passing --build-account-id as an argument
+
 **version: 1.0.15**
 - fix: loading credentials from ~/.aws/configuration using the `--profile` flag
 
