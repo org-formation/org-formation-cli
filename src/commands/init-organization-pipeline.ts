@@ -53,6 +53,7 @@ export class InitPipelineCommand extends BaseCliCommand<IInitPipelineCommandArgs
             command.buildProcessRoleName = 'OrganizationFormationBuildAccessRole';
             this.buildAccountId = command.buildAccountId;
             this.s3credentials = await AwsUtil.GetCredentials(command.buildAccountId, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName, AwsUtil.GetDefaultRegion());
+            AwsUtil.SetBuildProcessAccountId(command.buildAccountId);
         }
         if (command.crossAccountRoleName) {
             DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS.RoleName = command.crossAccountRoleName;

@@ -295,6 +295,18 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
     protected async initialize(command: ICommandArgs): Promise<void> {
         if (command.initialized) { return; }
 
+        if (command.printStack === true) {
+            ConsoleUtil.printStacktraces = true;
+            Error.stackTraceLimit = 50;
+        }
+        if (command.verbose === true) {
+            ConsoleUtil.verbose = true;
+        }
+
+        if (command.color === false) {
+            ConsoleUtil.colorizeLogs = false;
+        }
+
         // create a copy of `command` to ensure no circular references
         ConsoleUtil.LogDebug(`initializing, arguments: \n${JSON.stringify({
             stateBucketName: command.stateBucketName,
@@ -311,17 +323,6 @@ export abstract class BaseCliCommand<T extends ICommandArgs> {
             const exclude = !command.excludeAccounts ? [] : command.excludeAccounts.split(',').map(x => x.trim());
             ConsoleUtil.LogInfo(`excluding the following accounts: ${exclude.join(', ')}`);
             AwsOrganizationReader.excludeAccountIds = exclude;
-        }
-
-        if (command.printStack === true) {
-            ConsoleUtil.printStacktraces = true;
-            Error.stackTraceLimit = 50;
-        }
-        if (command.verbose === true) {
-            ConsoleUtil.verbose = true;
-        }
-        if (command.color === false) {
-            ConsoleUtil.colorizeLogs = false;
         }
 
         if (command.masterAccountId !== undefined) {
