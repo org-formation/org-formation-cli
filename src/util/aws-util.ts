@@ -337,6 +337,7 @@ export class AwsUtil {
         AwsUtil.throwIfNowInitiazized();
         const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
             accountId,
+            region,
             roleInTargetAccount,
         });
         const config: S3ClientConfig = {
