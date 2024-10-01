@@ -191,7 +191,6 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
         }, '');
     }
     
-
     static GetBackendConfigAsArgument(backendConfig: Record<string, any>): string {
         if (!backendConfig) { return ''; }
         const entries = Object.entries(backendConfig);
