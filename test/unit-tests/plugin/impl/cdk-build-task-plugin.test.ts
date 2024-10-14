@@ -48,24 +48,24 @@ describe('when creating cdk plugin', () => {
 
 });
 
-describe('when validating task', () => {
-    let plugin: CdkBuildTaskPlugin;
-    let commandArgs: ICdkCommandArgs;
+// describe('when validating task', () => {
+//     let plugin: CdkBuildTaskPlugin;
+//     let commandArgs: ICdkCommandArgs;
 
-    beforeEach(() => {
-        plugin = new CdkBuildTaskPlugin();
-        commandArgs = plugin.convertToCommandArgs( {
-            FilePath: './tasks.yaml',
-            Type: 'cdk',
-            MaxConcurrentTasks: 1,
-            FailedTaskTolerance: 4,
-            LogicalName: 'test-task',
-            Path: './',
-            TaskRoleName: 'TaskRole',
-            OrganizationBinding: { IncludeMasterAccount: true}},
-            { organizationFile: './organization.yml'} as any);
-    });
-});
+//     beforeEach(() => {
+//         plugin = new CdkBuildTaskPlugin();
+//         commandArgs = plugin.convertToCommandArgs( {
+//             FilePath: './tasks.yaml',
+//             Type: 'cdk',
+//             MaxConcurrentTasks: 1,
+//             FailedTaskTolerance: 4,
+//             LogicalName: 'test-task',
+//             Path: './',
+//             TaskRoleName: 'TaskRole',
+//             OrganizationBinding: { IncludeMasterAccount: true}},
+//             { organizationFile: './organization.yml'} as any);
+//     });
+// });
 
 describe('when resolving attribute expressions on update', () => {
     let spawnProcessForAccountSpy: jest.SpyInstance;

@@ -20,6 +20,7 @@ export interface IAccountProperties {
     SupportLevel?: string;
     OrganizationAccessRoleName?: string;
     BuildAccessRoleName?: string;
+    OptInRegions?: any;
 }
 
 export class AccountResource extends Resource {
@@ -36,6 +37,7 @@ export class AccountResource extends Resource {
     public supportLevel?: string;
     public organizationAccessRoleName?: string;
     public buildAccessRoleName?: string;
+    public optInRegions?:any;
     private props?: IAccountProperties;
 
     constructor(root: TemplateRoot, id: string, resource: IResource) {
@@ -60,12 +62,20 @@ export class AccountResource extends Resource {
         this.supportLevel = this.props.SupportLevel;
         this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
         this.buildAccessRoleName = this.props.BuildAccessRoleName;
+        this.optInRegions = this.props.OptInRegions;
 
         if (this.supportLevel !== undefined) {
             if (!['basic', 'developer', 'business', 'enterprise'].includes(this.supportLevel)) {
                 throw new OrgFormationError(`Unexpected value for SupportLevel on account ${id}. Found: ${this.supportLevel}, Exported one of 'basic', 'developer', 'business', 'enterprise'.`);
             }
         }
+
+        // add this later so existing regions do not get "enabled"
+        // if (this.optInRegions !== undefined) {
+        //     if (!['us-east-1', 'us-east-2', 'us-west-1', 'us-west-2', 'ap-south-1',  ].includes(this.optInRegions)) {
+        //         throw new OrgFormationError(`Unexpected value for SupportLevel on account ${id}. Found: ${this.optInRegions}, Exported one of 'basic', 'developer', 'business', 'enterprise'.`);
+        //     }
+        // }        
 
         if (typeof this.accountId === 'number') {
             this.accountId = '' + this.accountId;
@@ -79,7 +89,7 @@ export class AccountResource extends Resource {
         this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'PartitionAlias', 'PartitionAccountId', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName', 'BuildAccessRoleName');
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'PartitionAlias', 'PartitionAccountId', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName', 'BuildAccessRoleName', 'OptInRegions');
     }
 
     public calculateHash(): string {
