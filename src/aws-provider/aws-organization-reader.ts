@@ -2,12 +2,18 @@ import * as IAM from '@aws-sdk/client-iam';
 import * as Organizations from '@aws-sdk/client-organizations';
 import * as Support from '@aws-sdk/client-support';
 import * as STS from '@aws-sdk/client-sts';
+import * as Account from "@aws-sdk/client-account";
 import { AwsUtil } from '../util/aws-util';
 import { ConsoleUtil } from '../util/console-util';
 import { GetOrganizationAccessRoleInTargetAccount, ICrossAccountConfig } from './aws-account-access';
 import { performAndRetryIfNeeded } from './util';
 
 export type AWSObjectType = 'Account' | 'OrganizationalUnit' | 'Policy' | string;
+export interface OptInRegion {
+    RegionName?: string;
+}
+
+export type OptInRegions = OptInRegion[];
 
 export type SupportLevel = 'enterprise' | 'business' | 'developer' | 'basic' | string;
 interface IAWSTags {
@@ -31,6 +37,11 @@ interface IAWSAccountWithIAMAttributes {
 interface IAWSAccountWithSupportLevel {
     SupportLevel?: SupportLevel;
 }
+
+interface IAWSAccountWithOptinRegions {
+    OptInRegions?: OptInRegions;
+}
+
 interface IObjectWithParentId {
     ParentId: string;
 }
@@ -57,7 +68,7 @@ interface IPolicyTargets {
 }
 
 export type AWSPolicy = Organizations.Policy & IPolicyTargets & IAWSObject;
-export type AWSAccount = Organizations.Account & IAWSAccountWithTags & IAWSAccountWithSupportLevel & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject & IAWSObjectWithPartition;
+export type AWSAccount = Organizations.Account & IAWSAccountWithTags & IAWSAccountWithSupportLevel & IAWSAccountWithOptinRegions & IAWSAccountWithIAMAttributes & IObjectWithParentId & IObjectWithPolicies & IAWSObject & IAWSObjectWithPartition;
 export type AWSOrganizationalUnit = Organizations.OrganizationalUnit & IObjectWithParentId & IObjectWithPolicies & IObjectWithAccounts & IAWSObject & IObjectWitOrganizationalUnits & IAWSObjectWithPartition;
 export type AWSRoot = Organizations.Root & IObjectWithPolicies & IObjectWitOrganizationalUnits;
 
@@ -247,13 +258,15 @@ export class AwsOrganizationReader {
                         let alias: string;
                         let passwordPolicy: IAM.PasswordPolicy;
                         let supportLevel = 'basic';
+                        let optInRegions: OptInRegions;
 
                         try {
-                            [tags, alias, passwordPolicy, supportLevel] = await Promise.all([
+                            [tags, alias, passwordPolicy, supportLevel, optInRegions] = await Promise.all([
                                 AwsOrganizationReader.getTagsForAccount(that, acc.Id),
                                 AwsOrganizationReader.getIamAliasForAccount(that, acc.Id),
                                 AwsOrganizationReader.getIamPasswordPolicyForAccount(that, acc.Id),
                                 AwsOrganizationReader.getSupportLevelForAccount(that, acc.Id),
+                                AwsOrganizationReader.getOptInRegionsForAccount(that, acc.Id),
                             ]);
 
                         } catch (err) {
@@ -276,6 +289,7 @@ export class AwsOrganizationReader {
                             Alias: alias,
                             PasswordPolicy: passwordPolicy,
                             SupportLevel: supportLevel,
+                            OptInRegions: optInRegions,
                         };
 
                         const parentOU = organizationalUnits.find(x => x.Id === req.ParentId);
@@ -296,6 +310,22 @@ export class AwsOrganizationReader {
             throw err;
         }
     }
+
+    private static async getOptInRegionsForAccount(that: AwsOrganizationReader, accountId: string): Promise<OptInRegions> {
+        try {
+            await that.organization.getValue();
+            const targetRoleConfig = await GetOrganizationAccessRoleInTargetAccount(that.crossAccountConfig, accountId);
+            const accountClient: Account.AccountClient = AwsUtil.GetAccountService(accountId, targetRoleConfig.role, targetRoleConfig.viaRole, that.isPartition);
+
+            const command = await accountClient.send( new Account.ListRegionsCommand({RegionOptStatusContains: ["ENABLED"],}));
+            return command.Regions;
+        } catch (err) {
+            if (err instanceof Account.AccountServiceException) {
+                return undefined;
+            }
+            throw err;
+        }
+    }    
 
     private static async getSupportLevelForAccount(that: AwsOrganizationReader, accountId: string): Promise<SupportLevel> {
         try {

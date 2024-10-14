@@ -35,6 +35,7 @@
   "author": "Olaf Conijn",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-account": "^3.637.0",    
     "@aws-sdk/client-cloudformation": "^3.637.0",
     "@aws-sdk/client-ec2": "^3.637.0",
     "@aws-sdk/client-eventbridge": "^3.637.0",

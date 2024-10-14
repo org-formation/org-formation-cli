@@ -3,6 +3,7 @@ import * as ini from 'ini';
 import { IAMClient, IAMClientConfig } from '@aws-sdk/client-iam';
 import { v4 as uuid } from 'uuid';
 import { SupportClient, SupportClientConfig } from '@aws-sdk/client-support';
+import { AccountClient, AccountClientConfig } from "@aws-sdk/client-account";
 import { AwsCredentialIdentity, AwsCredentialIdentityProvider, Provider } from '@smithy/types';
 import { fromEnv, fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import { DescribeOrganizationCommand, DescribeOrganizationCommandOutput, OrganizationsClient, OrganizationsClientConfig } from '@aws-sdk/client-organizations';
@@ -399,6 +400,28 @@ export class AwsUtil {
         return this.IamServiceCache[cacheKey];
     }
 
+    public static GetAccountService(accountId: string, roleInTargetAccount?: string, viaRoleArn?: string, isPartition?: boolean): AccountClient {
+        AwsUtil.throwIfNowInitiazized();
+        const { cacheKey, provider } = AwsUtil.GetCredentialProviderWithRoleAssumptions({
+            accountId,
+            roleInTargetAccount,
+            viaRoleArn,
+            isPartition,
+        });
+        const config: AccountClientConfig = {
+            region: (isPartition) ? this.partitionRegion : AwsUtil.GetDefaultRegion(),
+            credentials: provider,
+            defaultsMode: 'standard',
+            retryMode: 'standard',
+            maxAttempts: 6,
+        };
+        if (this.AccountServiceCache[cacheKey]) {
+            return this.AccountServiceCache[cacheKey];
+        }
+        this.AccountServiceCache[cacheKey] = new AccountClient(config);
+        return this.AccountServiceCache[cacheKey];
+    }
+
     /**
      * Returns an authenticated CloudFormationClient in the provided accountId and region assuming the role provided.
      *
@@ -630,6 +653,7 @@ export class AwsUtil {
     private static largeTemplateBucketName: string | undefined;
     private static partitionCredentials: AwsCredentialIdentity | undefined;
     private static buildProcessAccountId: string;
+    private static AccountServiceCache: Record<string, AccountClient> = {};
     private static IamServiceCache: Record<string, IAMClient> = {};
     private static SupportServiceCache: Record<string, SupportClient> = {};
     private static OrganizationsServiceCache: Record<string, OrganizationsClient> = {};
