@@ -186,6 +186,8 @@ An easy way to speed things up is by specifying the command-line argument `--max
 
 Another way to speed things up is to run tasks in parallel this can be done with the argument `--max-concurrent-tasks 10`. This, however, has the side-effect that the logging might be somewhat harder to relate to a specific task (as it might be out of order).
 
+One can add `MaxConcurrentTasks: 10` to the task directly; for example, for type registration, adding this to the `Type: include` task called `Types` will ensure multiple types can be registered in parallel.
+
 &nbsp;
 </details>
 
