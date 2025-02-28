@@ -1,5 +1,6 @@
 import * as Organizations from '@aws-sdk/client-organizations';
 import * as IAM from '@aws-sdk/client-iam';
+import * as Account from "@aws-sdk/client-account";
 import { CreateCaseCommand } from '@aws-sdk/client-support';
 import { STSServiceException } from '@aws-sdk/client-sts';
 import { AwsUtil, passwordPolicyEquals } from '../util/aws-util';

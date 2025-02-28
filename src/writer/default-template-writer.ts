@@ -343,6 +343,16 @@ export class DefaultTemplateWriter {
             }
         }
 
+        if (account.OptInRegions) {
+            const regions = account.OptInRegions;
+            if (regions.length > 0) {
+                const regionList = regions
+                    .filter(region => region.RegionName)
+                    .map(region => region.RegionName);
+                lines.push(new ListLine('OptInRegions', regionList, 6));
+            }
+        }
+
         lines.push(new ListLine('ServiceControlPolicies', policiesList, 6));
 
         lines.push(new EmptyLine());
