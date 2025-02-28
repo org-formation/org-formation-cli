@@ -29,7 +29,7 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
             return;
         }
 
-        const template = await TemplateRoot.create(command.templateFile);
+        const template = await TemplateRoot.create(command.templateFile, { TemplatingContext: command.TemplatingContext });
         const state = await this.getState(command);
 
         GlobalState.Init(state, template);
@@ -60,6 +60,7 @@ export class CreateChangeSetCommand extends BaseCliCommand<ICreateChangeSetComma
 export interface ICreateChangeSetCommandArgs extends ICommandArgs {
     masterAccountId?: any;
     templateFile: string;
+    TemplatingContext?: {};
     changeSetName?: string;
     output?: 'json' | 'yaml';
 }
