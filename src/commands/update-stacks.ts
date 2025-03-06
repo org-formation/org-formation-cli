@@ -70,6 +70,7 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         command.option('--max-concurrent-stacks <max-concurrent-stacks>', 'maximum number of stacks to be executed concurrently', 1);
         command.option('--failed-stacks-tolerance <failed-stacks-tolerance>', 'the number of failed stacks after which execution stops', 0);
         command.option('--large-template-bucket-name [large-template-bucket-name]', 'bucket used when uploading large templates. default is to create a bucket just-in-time in the target account');
+        command.option('--templating-context [templating-context]', 'JSON string representing the templating context', undefined);
         super.addOptions(command);
     }
 
@@ -134,7 +135,20 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
                 },
             };
         }
-        const template = await UpdateStacksCommand.createTemplateUsingOverrides(command, templateFile);
+        let templatingContext;
+        if (command.TemplatingContext && typeof command.TemplatingContext === 'string') {
+            try {
+                templatingContext = JSON.parse(command.TemplatingContext);
+            } catch (e) {
+                throw new OrgFormationError('Invalid templating context JSON provided');
+            }
+        } else {
+            templatingContext = command.TemplatingContext;
+        }
+        const template = await UpdateStacksCommand.createTemplateUsingOverrides(
+            { ...command, TemplatingContext: templatingContext } as IUpdateStacksCommandArgs,
+            command.templateFile
+        );
         const parameters = this.parseCfnParameters(command.parameters);
         const state = await this.getState(command);
         GlobalState.Init(state, template);
@@ -180,4 +194,5 @@ export interface IUpdateStacksCommandArgs extends ICommandArgs {
     disableStackRollbacks?: boolean;
     stackPolicy?: {};
     tags?: {};
+    TemplatingContext?: {};
 }
