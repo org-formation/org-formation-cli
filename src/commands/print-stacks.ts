@@ -58,7 +58,7 @@ export class PrintStacksCommand extends BaseCliCommand<IPrintStacksCommandArgs> 
         const template = await UpdateStacksCommand.createTemplateUsingOverrides(
             { ...command, TemplatingContext: templatingContext } as IUpdateStacksCommandArgs,
             command.templateFile
-        );        
+        );
         const state = await this.getState(command);
         GlobalState.Init(state, template);
         const parameters = this.parseCfnParameters(command.parameters);
