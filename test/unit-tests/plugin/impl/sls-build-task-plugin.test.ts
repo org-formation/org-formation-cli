@@ -49,26 +49,27 @@ describe('when creating sls plugin', () => {
     });
 });
 
+// There are no tests here so this just errors out
+// TODO: If you like Serverless, you should add tests here :D
+// describe('when validating task', () => {
+//     let plugin: SlsBuildTaskPlugin;
+//     let commandArgs: ISlsCommandArgs;
 
-describe('when validating task', () => {
-    let plugin: SlsBuildTaskPlugin;
-    let commandArgs: ISlsCommandArgs;
-
-    beforeEach(() => {
-        plugin = new SlsBuildTaskPlugin();
-        commandArgs = plugin.convertToCommandArgs( {
-            FilePath: './tasks.yaml',
-            Type: 'update-serverless.com',
-            MaxConcurrentTasks: 1,
-            FailedTaskTolerance: 4,
-            LogicalName: 'test-task',
-            Path: './',
-            Config: './README.md',
-            TaskRoleName: 'TaskRole',
-            OrganizationBinding: { IncludeMasterAccount: true}},
-            { organizationFile: './organization.yml'} as any);
-    });
-});
+//     beforeEach(() => {
+//         plugin = new SlsBuildTaskPlugin();
+//         commandArgs = plugin.convertToCommandArgs( {
+//             FilePath: './tasks.yaml',
+//             Type: 'update-serverless.com',
+//             MaxConcurrentTasks: 1,
+//             FailedTaskTolerance: 4,
+//             LogicalName: 'test-task',
+//             Path: './',
+//             Config: './README.md',
+//             TaskRoleName: 'TaskRole',
+//             OrganizationBinding: { IncludeMasterAccount: true}},
+//             { organizationFile: './organization.yml'} as any);
+//     });
+// });
 
 
 describe('when resolving attribute expressions on update', () => {
