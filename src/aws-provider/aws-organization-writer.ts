@@ -336,10 +336,10 @@ export class AwsOrganizationWriter {
             try {
                 await this.updateAccount(resource, accountId);
             } catch (err) {
-                if ((err.name === 'AccessDenied' || err.name === 'InvalidClientTokenId') && retryCountAccessDenied < 3) {
+                if ((err.name === 'AccessDenied' || err.name === 'InvalidClientTokenId' || err.name === 'RegionDisabledException') && retryCountAccessDenied < 3) {
                     shouldRetry = true;
                     retryCountAccessDenied = retryCountAccessDenied + 1;
-                    await sleep(3000);
+                    await sleep(6000);
                     continue;
                 }
                 throw err;

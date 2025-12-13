@@ -202,12 +202,12 @@ const retryTypeRegistrationWrapper = async (type: string, fn: () => Promise<any>
             await fn();
         } catch (err) {
             const message = err.message as string;
-            if (message && -1 !== message.indexOf('Deployment is currently in DEPLOY_STAGE of status FAILED')) {
+            if (message && -1 !== message.indexOf('Rate exceeded on Registry APIs')) {
                 if (retryCount >= 20) {
                     throw err;
                 }
 
-                ConsoleUtil.LogInfo(`Type registration ${type} is in DEPLOY_STAGE of status FAILED. waiting.... `);
+                ConsoleUtil.LogInfo(`Type registration ${type} Rate exceeded on Registry APIs. waiting.... `);
                 retryCount += 1;
                 await sleep(1000 * (26 + (4 * Math.random())));
                 retryTypeRegistration = true;
