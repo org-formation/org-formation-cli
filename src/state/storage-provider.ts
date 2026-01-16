@@ -3,7 +3,6 @@ import * as S3 from '@aws-sdk/client-s3';
 import { OrgFormationError } from '../org-formation-error';
 import { ConsoleUtil } from '../util/console-util';
 import { AwsUtil } from '~util/aws-util';
-import { BaseCliCommand } from '~commands/base-command';
 import { ClientCredentialsConfig } from '~util/aws-types';
 
 export interface IStorageProvider {
