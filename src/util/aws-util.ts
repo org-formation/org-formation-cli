@@ -35,14 +35,6 @@ interface ServiceClientBinding {
 
 type ServiceCacheKey = string;
 
-interface AwsUtilConfig {
-    isPartition: boolean;
-    partitionProfile?: string;
-    partitionRegion?: string;
-    profile?: string;
-    masterAccountId: string;
-}
-
 /**
  * Singleton utility class that is used througout this project to obtain, hold and serve AWS service clients in a cache.
  *

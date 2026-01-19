@@ -1,7 +1,7 @@
 {
     "compileOnSave": true,
     "ts-node": {
-        "compiler": "ttypescript"
+        "compiler": "typescript"
     },
     "compilerOptions": {
         "allowJs": true,
@@ -64,15 +64,7 @@
             "~org-formation-error": [
                 "src/org-formation-error"
             ]
-        },
-        "plugins": [
-            {
-                "transform": "@zerollup/ts-transform-paths",
-                "exclude": [
-                    "*"
-                ]
-            }
-        ]
+        }
     },
     "include": [
         "src/**/*",

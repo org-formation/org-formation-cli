@@ -95,7 +95,6 @@ export class UpdateStacksCommand extends BaseCliCommand<IUpdateStacksCommandArgs
         const partition = command.isPartition === true;
         const taskViaRoleArn = command.taskViaRoleArn;
         const stackName = command.stackName;
-        const templateFile = command.templateFile;
         let stackPolicy = command.stackPolicy;
         const tags = command.tags;
         if (updateProtection !== undefined) {
