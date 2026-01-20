@@ -86,7 +86,7 @@
     "@types/uuid": "^8.3.1",
     "@types/yamljs": "^0.2.30",
     "@typescript-eslint/eslint-plugin": "^4",
-    "@typescript-eslint/parser": "^4",
+    "@typescript-eslint/parser": "^8",
     "@zerollup/ts-transform-paths": "^1.7.12",
     "aws-sdk-client-mock": "^3.0.0",
     "aws-sdk-client-mock-jest": "^3.0.0",
