@@ -182,7 +182,13 @@ export class TfBuildTaskPlugin implements IBuildTaskPlugin<ITfBuildTaskConfig, I
     static GetParametersAsArgument(parameters: Record<string, any>): string {
         if (!parameters) { return ''; }
         const entries = Object.entries(parameters);
-        return entries.reduce((prev, curr) => prev + ` -var "${curr[0]}=${curr[1]}"`, '');
+
+        return entries.reduce((prev, [key, value]) => {
+            if (Array.isArray(value)) {
+                value = JSON.stringify(value);
+            }
+            return prev + ` -var '${key}=${value}'`;
+        }, '');
     }
 
     static GetBackendConfigAsArgument(backendConfig: Record<string, any>): string {
