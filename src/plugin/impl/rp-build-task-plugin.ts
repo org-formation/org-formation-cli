@@ -181,10 +181,39 @@ export class RpBuildTaskPlugin implements IBuildTaskPlugin<IRpBuildTaskConfig, I
     }
 
     private getCatalogBucket(isPartition: boolean): Catalog {
+        const partition = AwsUtil.partition || 'aws';
+        
+        if (isPartition) {
+            // Determine S3 domain and region based on partition
+            let s3Domain = 'amazonaws.com';
+            let s3Region = 'us-gov-west-1';
+            
+            switch (partition) {
+                case 'aws-us-gov':
+                    s3Domain = 'amazonaws.com';
+                    s3Region = 'us-gov-west-1';
+                    break;
+                case 'aws-eusc':
+                    s3Domain = 'amazonaws.eu';
+                    s3Region = 'eusc-de-east-1';
+                    break;
+                case 'aws-cn':
+                    s3Domain = 'amazonaws.com.cn';
+                    s3Region = 'cn-north-1';
+                    break;
+            }
+            
+            return {
+                bucket: communityResourceProviderCatalogGov,
+                uri: `s3://${communityResourceProviderCatalogGov}/`,
+                path: `https://${communityResourceProviderCatalogGov}.s3-${s3Region}.${s3Domain}/`,
+            };
+        }
+        
         return {
-            bucket: (isPartition) ? communityResourceProviderCatalogGov : communityResourceProviderCatalog,
-            uri: (isPartition) ? `s3://${communityResourceProviderCatalogGov}/` : `s3://${communityResourceProviderCatalog}/`,
-            path: (isPartition) ? `https://${communityResourceProviderCatalogGov}.s3-us-gov-west-1.amazonaws.com/` : `https://${communityResourceProviderCatalog}.s3.amazonaws.com/`,
+            bucket: communityResourceProviderCatalog,
+            uri: `s3://${communityResourceProviderCatalog}/`,
+            path: `https://${communityResourceProviderCatalog}.s3.amazonaws.com/`,
         };
     }
 

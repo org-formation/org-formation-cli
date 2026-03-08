@@ -3,8 +3,8 @@ import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from '@smithy/ty
 
 export function partitionFromEnv(isPartition: boolean): AwsCredentialIdentityProvider {
   return async () => {
-    const accessKeyId = process.env.GOV_AWS_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.GOV_AWS_SECRET_ACCESS_KEY;
+    const accessKeyId = process.env.GOV_AWS_ACCESS_KEY_ID || process.env.EUSC_AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.GOV_AWS_SECRET_ACCESS_KEY || process.env.EUSC_AWS_SECRET_ACCESS_KEY;
 
     if (isPartition && accessKeyId && secretAccessKey) {
       const identity: AwsCredentialIdentity = {
@@ -13,6 +13,7 @@ export function partitionFromEnv(isPartition: boolean): AwsCredentialIdentityPro
       };
       return identity;
     }
-    throw new CredentialsProviderError('GOV_AWS_ACCESS_KEY_ID or GOV_AWS_SECRET_ACCESS_KEY missing', true);
+    throw new CredentialsProviderError('GOV_AWS_ACCESS_KEY_ID/GOV_AWS_SECRET_ACCESS_KEY or EUSC_AWS_ACCESS_KEY_ID/EUSC_AWS_SECRET_ACCESS_KEY missing', true);
   };
 }
+

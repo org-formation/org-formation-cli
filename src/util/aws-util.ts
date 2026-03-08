@@ -175,20 +175,24 @@ export class AwsUtil {
     }
 
     /**
-     * Look for GOV_AWS_ACCESS_KEY_ID and GOV_AWS_SECRET_ACCESS_KEY from the environment to set
-     * the credentials for the GovCloud partition.
+     * Look for GOV_AWS_ACCESS_KEY_ID/GOV_AWS_SECRET_ACCESS_KEY or 
+     * EUSC_AWS_ACCESS_KEY_ID/EUSC_AWS_SECRET_ACCESS_KEY from the environment to set
+     * the credentials for the GovCloud or EUSC partition.
      */
     public static SetPartitionCredentials(): void {
-        if (process.env.GOV_AWS_ACCESS_KEY_ID && process.env.GOV_AWS_SECRET_ACCESS_KEY) {
+        const accessKeyId = process.env.GOV_AWS_ACCESS_KEY_ID || process.env.EUSC_AWS_ACCESS_KEY_ID;
+        const secretAccessKey = process.env.GOV_AWS_SECRET_ACCESS_KEY || process.env.EUSC_AWS_SECRET_ACCESS_KEY;
+        
+        if (accessKeyId && secretAccessKey) {
             AwsUtil.partitionCredentials = {
-                accessKeyId: process.env.GOV_AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.GOV_AWS_SECRET_ACCESS_KEY,
+                accessKeyId,
+                secretAccessKey,
             };
             // this is a bit of a hack - leaving it up to the SDK to pick these up and give precedence
-            process.env.AWS_ACCESS_KEY_ID = process.env.GOV_AWS_ACCESS_KEY_ID;
-            process.env.AWS_SECRET_ACCESS_KEY = process.env.GOV_AWS_SECRET_ACCESS_KEY;
+            process.env.AWS_ACCESS_KEY_ID = accessKeyId;
+            process.env.AWS_SECRET_ACCESS_KEY = secretAccessKey;
         } else {
-            throw new OrgFormationError('Expected GOV_AWS_ACCESS_KEY_ID and GOV_AWS_SECRET_ACCESS_KEY to be set on the environment');
+            throw new OrgFormationError('Expected GOV_AWS_ACCESS_KEY_ID/GOV_AWS_SECRET_ACCESS_KEY or EUSC_AWS_ACCESS_KEY_ID/EUSC_AWS_SECRET_ACCESS_KEY to be set on the environment');
         }
     }
 
@@ -202,8 +206,11 @@ export class AwsUtil {
 
     public static SetIsPartition(isPartition: boolean, partitionProfile?: string): void {
         if (isPartition === true && !partitionProfile && !AwsUtil.GetPartitionProfile()) {
-            if (!process.env.GOV_AWS_ACCESS_KEY_ID || !process.env.GOV_AWS_SECRET_ACCESS_KEY) {
-                throw new OrgFormationError('GOV_AWS_ACCESS_KEY_ID and GOV_AWS_SECRET_ACCESS_KEY must be set on the environment or a `partitionProfile` must be provided');
+            const hasGovCreds = process.env.GOV_AWS_ACCESS_KEY_ID && process.env.GOV_AWS_SECRET_ACCESS_KEY;
+            const hasEuscCreds = process.env.EUSC_AWS_ACCESS_KEY_ID && process.env.EUSC_AWS_SECRET_ACCESS_KEY;
+            
+            if (!hasGovCreds && !hasEuscCreds) {
+                throw new OrgFormationError('GOV_AWS_ACCESS_KEY_ID/GOV_AWS_SECRET_ACCESS_KEY or EUSC_AWS_ACCESS_KEY_ID/EUSC_AWS_SECRET_ACCESS_KEY must be set on the environment or a `partitionProfile` must be provided');
             }
         }
         AwsUtil.isPartition = isPartition;
@@ -223,6 +230,20 @@ export class AwsUtil {
 
     public static SetPartitionRegion(partitionRegion: string): void {
         AwsUtil.partitionRegion = partitionRegion;
+    }
+
+    public static GetS3DomainForPartition(): string {
+        const partition = AwsUtil.partition || 'aws';
+        switch (partition) {
+            case 'aws-cn':
+                return 'amazonaws.com.cn';
+            case 'aws-us-gov':
+                return 'amazonaws.com';
+            case 'aws-eusc':
+                return 'amazonaws.eu';
+            default:
+                return 'amazonaws.com';
+        }
     }
 
     public static async GetMasterAccountId(): Promise<string> {
@@ -280,7 +301,8 @@ export class AwsUtil {
     }
 
     private static GetPartitionRoleArn(accountId: string, roleInTargetAccount: string): string {
-        return 'arn:aws-us-gov:iam::' + accountId + ':role/' + roleInTargetAccount;
+        const partition = AwsUtil.partition || 'aws-us-gov';
+        return `arn:${partition}:iam::${accountId}:role/${roleInTargetAccount}`;
     }
 
     private static throwIfNowInitiazized() {
@@ -745,7 +767,8 @@ export class CfnUtil {
             const bucketRegion: string = largeTemplateBucketRegion.LocationConstraint ?? 'us-east-1';
             const putObjectRequest: PutObjectCommandInput = { Bucket: bucketName, Key: `${stackName}-${templateHash}.json`, Body: stackInput.TemplateBody, ACL: 'bucket-owner-full-control' };
             await s3Service.send(new PutObjectCommand(putObjectRequest));
-            stackInput.TemplateURL = `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${putObjectRequest.Key}`;
+            const s3Domain = AwsUtil.GetS3DomainForPartition();
+            stackInput.TemplateURL = `https://${bucketName}.s3.${bucketRegion}.${s3Domain}/${putObjectRequest.Key}`;
             delete stackInput.TemplateBody;
         }
     }

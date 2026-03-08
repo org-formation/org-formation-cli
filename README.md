@@ -397,6 +397,8 @@ Really happy to implement this based on someone elses use-case.
 - [Automating deployments](docs/task-files.md)
 - [Custom Account Creation Workflow](examples/automation/create-account/readme.md)
 - [CLI reference](docs/cli-reference.md)
+- [AWS GovCloud Partition Support](docs/us-govcloud-partition.md)
+- [AWS European Sovereign Cloud (EUSC) Partition Support](docs/aws-eusc-partition.md)
 - [Changelog](CHANGELOG.md)
 - [Contributing](CONTRIBUTING.md)
 
