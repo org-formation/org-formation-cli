@@ -120,19 +120,23 @@ describe('when writing template for organization', () => {
             expect(ou.accounts[0].TemplateResource.logicalId).toBe(root.organizationSection.accounts[0].logicalId);
         });
 
-        test('generated template contains organizational unit to scp relationship', async () => {
+        test('generated template contains organizational unit to policy relationship', async () => {
             const defaultTemplate = await templateWriter.generateDefaultTemplate();
             const root = TemplateRoot.createFromContents(defaultTemplate.template);
             const ou = root.organizationSection.organizationalUnits[0];
             expect(ou.serviceControlPolicies?.length).toBe(1);
-            expect(ou.serviceControlPolicies[0].TemplateResource.logicalId).toBe(root.organizationSection.serviceControlPolicies[0].logicalId);
+            // Policy is now in the policies array
+            const policyLogicalId = ou.serviceControlPolicies[0].TemplateResource.logicalId;
+            const policy = root.organizationSection.policies.find(p => p.logicalId === policyLogicalId);
+            expect(policy).toBeDefined();
         });
 
-        test('generated template only contains non AWS managed service control policy', async () => {
+        test('generated template only contains non AWS managed policies', async () => {
             const defaultTemplate = await templateWriter.generateDefaultTemplate();
             const root = TemplateRoot.createFromContents(defaultTemplate.template);
-            expect(root.organizationSection.serviceControlPolicies?.length).toBe(1);
-            expect(root.organizationSection.serviceControlPolicies[0].policyName).toBe('scp');
+            // Policies are now in the policies array, not serviceControlPolicies
+            expect(root.organizationSection.policies?.length).toBe(1);
+            expect(root.organizationSection.policies[0].policyName).toBe('scp');
         });
 
         test('generated template does not contain dashes in account names', async () => {

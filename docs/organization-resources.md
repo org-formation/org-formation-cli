@@ -7,6 +7,7 @@
     - [OrganizationRoot](#organizationroot)
     - [OrganizationalUnit](#organizationalunit)
     - [ServiceControlPolicy](#servicecontrolpolicy)
+    - [Policy](#policy)
     - [PasswordPolicy](#passwordpolicy)
 
 ## Managing your AWS Organization as code
@@ -112,7 +113,8 @@ MasterAccount is the AWS Account that functions as the master account within you
 |AccountName|Name of the master account |This property is required.<br/><br/>Changing the name of the AWS MasterAccount resource is not possible, this requires the root account to log in to the master account and change this manually.<br/><br/>However, it is possible to change the AccountName of the MasterAccount in the template and this change will be reflected when doing a !GetAtt on the resource from within a template.|
 |AccountId|AccountId of the master account|This property is required.<br/><br/>Changing the AccountId of the master account is not supported.|
 |RootEmail|RootEmail of the master account|This property is optional.<br/><br/>Changing the RootEmail of the MasterAccount AWS resource is not possible, this requires the root account to log in to the master account and change this manually. <br/><br/>However, it is possible to change the RootEmail of the MasterAccount in the template and this change will be reflected when doing a !GetAtt on the resource from within a template.|
-|ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on the MasterAccount|
+|ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) or [Policy](#policy) resources that must be enforced on the MasterAccount<br/><br/>**Note:** Despite the name, this property accepts all policy types (SCPs, RCPs, Tag Policies, Backup Policies, etc.).|
+|Policies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [Policy](#policy) resources that must be enforced on the MasterAccount.<br/><br/>**Note:** This is an alias for ServiceControlPolicies with a clearer name. Both properties can be used together and will be merged.|
 |PasswordPolicy|Reference|This property is optional.<br/><br/>Reference to the [PasswordPolicy](#passwordpolicy) resource that must be  enforced on the MasterAccount.|
 |Alias|IAM alias|This property is optional.<br/><br/>The [IAM Alias](https://docs.aws.amazon.com/IAM/latest/UserGuide/console_account-alias.html) associated with the account. Organization Formation supports a maximum of 1 IAM alias per account|
 |Tags|Dictionary|This property is optional.<br/><br/>Dictionary that contains the tags on the MasterAccount resource|
@@ -157,7 +159,8 @@ Account is an AWS Account within your organization.
 |AccountName|Name of the account |This property is required.<br/><br/>Changing the name of the AWS Account resource is not possible, this requires the root account to log in to the account and change this manually. <br/><br/>However, it is possible to change the AccountName of the Account in the template and this change will be reflected when doing a !GetAtt on the resource from within a template.|
 |AccountId|AccountId of account|This property is optional.<br/><br/>Changing the AccountId of the account is not supported|
 |RootEmail|RootEmail of the account|This property is optional (only if AccountId is specified)<br/><br/>Changing the RootEmail of the Account AWS resource is not possible, this requires the root account to log in to the master account and change this manually. <br/><br/>However, it is possible to change the RootEmail of the MasterAccount in the template and this change will be reflected when doing a !GetAtt on the resource from within a template.|
-|ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on the Account.|
+|ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) or [Policy](#policy) resources that must be enforced on the Account.<br/><br/>**Note:** Despite the name, this property accepts all policy types (SCPs, RCPs, Tag Policies, Backup Policies, etc.).|
+|Policies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [Policy](#policy) resources that must be enforced on the Account.<br/><br/>**Note:** This is an alias for ServiceControlPolicies with a clearer name. Both properties can be used together and will be merged.|
 |PasswordPolicy|Reference|This property is optional.<br/><br/>Reference to the [PasswordPolicy](#passwordpolicy) resource that must be  enforced on the Account.|
 |Alias|IAM alias|This property is optional.<br/><br/>The [IAM Alias](https://docs.aws.amazon.com/IAM/latest/UserGuide/console_account-alias.html) associated with the account. Organization Formation supports a maximum of 1 IAM alias per account|
 |Tags|Dictionary|This property is optional.<br/><br/>Dictionary that contains the tags on the Account resource|
@@ -206,7 +209,8 @@ OrganizationRoot is the AWS Root Resource that functions like a top-level Organi
 
 |Property |Value|Remarks|
 |:---|:---|:---|
-|ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on all accounts (including master account) within the AWS Organization.|
+|ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) or [Policy](#policy) resources that must be enforced on all accounts (including master account) within the AWS Organization.<br/><br/>**Note:** Despite the name, this property accepts all policy types (SCPs, RCPs, Tag Policies, Backup Policies, etc.).|
+|Policies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [Policy](#policy) resources that must be enforced on all accounts within the AWS Organization.<br/><br/>**Note:** This is an alias for ServiceControlPolicies with a clearer name. Both properties can be used together and will be merged.|
 |DefaultOrganizationAccessRoleName| String | Default value for the OrganizationAccessRoleName attributes of accounts within the organization.<br/><br/>For more information see the [Account](#account) resources|
 |DefaultBuildAccessRoleName| String | Default value for the TaskRoleName of tasks, this value can be different from the DefaultOrganizationAccessRoleName value. OrganizationAccess is used to set up the account, BuildProcessAccess is used to deploy resources to these accounts.
 |CloseAccountsOnRemoval| boolean | If set to true, [Account](#account) resources removed from `organization.yml` will be closed.
@@ -240,7 +244,8 @@ OrganizationalUnit is an AWS Organizational Unit within your organization and ca
 |:---|:---|:---|
 |OrganizationalUnitName|Name of the organizational unit|This property is required.
 |Accounts|Reference or list of References|This property is optional.<br/><br/>Reference or list of References to [Account](#account) resources that need to be part of the Organizational Unit.
-|ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) resources that must be enforced on all accounts (including master account) within the AWS Organization.|
+|ServiceControlPolicies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [ServiceControlPolicy](#servicecontrolpolicy) or [Policy](#policy) resources that must be enforced on all accounts within the Organizational Unit.<br/><br/>**Note:** Despite the name, this property accepts all policy types (SCPs, RCPs, Tag Policies, Backup Policies, etc.).|
+|Policies|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [Policy](#policy) resources that must be enforced on all accounts within the Organizational Unit.<br/><br/>**Note:** This is an alias for ServiceControlPolicies with a clearer name. Both properties can be used together and will be merged.|
 |OrganizationalUnits|Reference or list of References |This property is optional. <br/><br/>Reference or list of References to [OrganizationalUnit](#OrganizationalUnit) resources that must be nested within the current OrganizationalUnit.|
 
 
@@ -264,6 +269,8 @@ OrganizationalUnit is an AWS Organizational Unit within your organization and ca
 #### ServiceControlPolicy
 
 ServiceControlPolicy is an [AWS Service Control Policy](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scp.html) that can be used to manage permissions within the accounts contained in your organization.
+
+**Note:** This resource type is maintained for backwards compatibility. For new implementations, consider using the [Policy](#policy) resource type which supports all AWS Organizations policy types.
 
 **Type** OC::ORG::ServiceControlPolicy
 
@@ -302,6 +309,129 @@ ServiceControlPolicy is an [AWS Service Control Policy](https://docs.aws.amazon.
                   - eu-west-1
                   - us-east-1
                   - eu-central-1
+```
+
+
+#### Policy
+
+Policy is a generic [AWS Organizations Policy](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies.html) resource that supports all policy types available in AWS Organizations, including authorization policies (SCPs, RCPs) and management policies (Tag, Backup, AI Services Opt-Out, Chatbot, Declarative, Security Hub, Inspector, Bedrock, Upgrade Rollout, S3, and Network Security Director policies).
+
+**Type** OC::ORG::Policy
+
+**Properties**
+
+|Property |Value|Remarks|
+|:---|:---|:---|
+|PolicyName|Name of the Policy|This property is required.
+|Description|Description of the Policy|This property is optional.
+|PolicyType|Type of the Policy|This property is required. Must be one of: `SERVICE_CONTROL_POLICY`, `RESOURCE_CONTROL_POLICY`, `TAG_POLICY`, `BACKUP_POLICY`, `AISERVICES_OPT_OUT_POLICY`, `CHATBOT_POLICY`, `DECLARATIVE_POLICY_EC2`, `SECURITYHUB_POLICY`, `INSPECTOR_POLICY`, `UPGRADE_ROLLOUT_POLICY`, `BEDROCK_POLICY`, `S3_POLICY`, `NETWORK_SECURITY_DIRECTOR_POLICY`
+|PolicyDocument|Policy Document|This property is required. The structure depends on the PolicyType.
+
+**!Ref** Returns the physical id of the Policy resource.
+
+**Policy Type Details**
+
+- **SERVICE_CONTROL_POLICY**: Controls maximum available permissions for IAM principals in member accounts
+- **RESOURCE_CONTROL_POLICY**: Controls maximum available permissions for resources in member accounts
+- **TAG_POLICY**: Standardizes tags attached to AWS resources
+- **BACKUP_POLICY**: Centrally manages backup plans for AWS resources
+- **AISERVICES_OPT_OUT_POLICY**: Controls data collection for AWS AI services
+- **CHATBOT_POLICY**: Controls access from chat applications like Slack and Microsoft Teams
+- **DECLARATIVE_POLICY_EC2**: Declares and enforces desired EC2 configurations
+- **SECURITYHUB_POLICY**: Centrally manages Security Hub configurations
+- **INSPECTOR_POLICY**: Centrally enables and manages Amazon Inspector
+- **BEDROCK_POLICY**: Enforces Amazon Bedrock Guardrails for model inference calls
+- **UPGRADE_ROLLOUT_POLICY**: Manages automatic upgrades across AWS resources
+- **S3_POLICY**: Centrally manages S3 configurations
+- **NETWORK_SECURITY_DIRECTOR_POLICY**: Manages network security configurations
+
+For detailed information about each policy type, see the [AWS Organizations Policy Types documentation](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies.html).
+
+**Example - Resource Control Policy**
+
+```yaml
+  RestrictPublicS3BucketsRCP:
+    Type: OC::ORG::Policy
+    Properties:
+      PolicyName: RestrictPublicS3Buckets
+      PolicyType: RESOURCE_CONTROL_POLICY
+      Description: Prevent S3 buckets from being made public
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyPublicS3Buckets
+            Effect: Deny
+            Principal: '*'
+            Action:
+              - 's3:PutBucketPublicAccessBlock'
+            Resource: '*'
+            Condition:
+              StringNotEquals:
+                's3:ResourceAccount': '${aws:PrincipalAccount}'
+```
+
+**Example - Tag Policy**
+
+```yaml
+  RequireEnvironmentTagPolicy:
+    Type: OC::ORG::Policy
+    Properties:
+      PolicyName: RequireEnvironmentTag
+      PolicyType: TAG_POLICY
+      Description: Require Environment tag on all resources
+      PolicyDocument:
+        tags:
+          Environment:
+            tag_key:
+              '@@assign': Environment
+            tag_value:
+              '@@assign':
+                - Production
+                - Development
+                - Staging
+            enforced_for:
+              '@@assign':
+                - 's3:bucket'
+                - 'ec2:instance'
+```
+
+**Example - Backup Policy**
+
+```yaml
+  DailyBackupPolicy:
+    Type: OC::ORG::Policy
+    Properties:
+      PolicyName: DailyBackups
+      PolicyType: BACKUP_POLICY
+      Description: Daily backup policy for critical resources
+      PolicyDocument:
+        plans:
+          DailyBackupPlan:
+            regions:
+              '@@assign':
+                - us-east-1
+                - eu-west-1
+            rules:
+              DailyBackupRule:
+                schedule_expression:
+                  '@@assign': 'cron(0 5 ? * * *)'
+                start_backup_window_minutes:
+                  '@@assign': '60'
+                complete_backup_window_minutes:
+                  '@@assign': '120'
+                lifecycle:
+                  delete_after_days:
+                    '@@assign': '30'
+            selections:
+              tags:
+                BackupDaily:
+                  iam_role_arn:
+                    '@@assign': 'arn:aws:iam::$account:role/BackupRole'
+                  tag_key:
+                    '@@assign': 'Backup'
+                  tag_value:
+                    '@@assign':
+                      - 'Daily'
 ```
 
 

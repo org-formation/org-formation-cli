@@ -6,6 +6,7 @@ import {
     OrganizationalUnitResource,
     OrgResourceTypes,
     PasswordPolicyResource,
+    PolicyResource,
     Reference,
     Resource,
     ServiceControlPolicyResource,
@@ -151,7 +152,7 @@ export class TaskProvider {
         return [...tasks, createOrganizationalUnitCommitHashTask];
     }
 
-    public createPolicyCreateTasks(resource: ServiceControlPolicyResource, hash: string, mirror?: boolean): IBuildTask[] {
+    public createPolicyCreateTasks(resource: ServiceControlPolicyResource | PolicyResource, hash: string, mirror?: boolean): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
         let createPartitionPolicyTask: IBuildTask;
@@ -160,7 +161,11 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action: 'Create',
             perform: async (task): Promise<void> => {
-                task.result = await that.writer.createPolicy(resource);
+                if (resource instanceof PolicyResource) {
+                    task.result = await that.writer.createGenericPolicy(resource);
+                } else {
+                    task.result = await that.writer.createPolicy(resource);
+                }
             },
         };
         tasks.push(createPolicyTask);
@@ -171,7 +176,11 @@ export class TaskProvider {
                 logicalId: resource.logicalId,
                 action: 'Create',
                 perform: async (task): Promise<void> => {
-                    task.result = await that.partitionWriter.createPolicy(resource);
+                    if (resource instanceof PolicyResource) {
+                        task.result = await that.partitionWriter.createGenericPolicy(resource);
+                    } else {
+                        task.result = await that.partitionWriter.createPolicy(resource);
+                    }
                 },
             };
             tasks.push(createPartitionPolicyTask);
@@ -197,7 +206,7 @@ export class TaskProvider {
 
     }
 
-    public createPolicyUpdateTasks(resource: ServiceControlPolicyResource, state: IBinding, hash: string, mirror?: boolean): IBuildTask[] {
+    public createPolicyUpdateTasks(resource: ServiceControlPolicyResource | PolicyResource, state: IBinding, hash: string, mirror?: boolean): IBuildTask[] {
         const that = this;
         const tasks: IBuildTask[] = [];
         const physicalId: string = state.physicalId;
@@ -207,7 +216,11 @@ export class TaskProvider {
             logicalId: resource.logicalId,
             action: 'Update',
             perform: async (): Promise<void> => {
-                await that.writer.updatePolicy(resource, physicalId);
+                if (resource instanceof PolicyResource) {
+                    await that.writer.updateGenericPolicy(resource, physicalId);
+                } else {
+                    await that.writer.updatePolicy(resource, physicalId);
+                }
             },
         });
         if (mirror) {
@@ -216,7 +229,11 @@ export class TaskProvider {
                 logicalId: resource.logicalId,
                 action: 'Update',
                 perform: async (): Promise<void> => {
-                    await that.partitionWriter.updatePolicy(resource, partitionId);
+                    if (resource instanceof PolicyResource) {
+                        await that.partitionWriter.updateGenericPolicy(resource, partitionId);
+                    } else {
+                        await that.partitionWriter.updatePolicy(resource, partitionId);
+                    }
                 },
             });
         }
@@ -819,7 +836,7 @@ export class TaskProvider {
         }];
     }
 
-    private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource | OrganizationRootResource, policy: Reference<ServiceControlPolicyResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
+    private createDetachSCPTask(resource: OrganizationalUnitResource | AccountResource | OrganizationRootResource, policy: Reference<ServiceControlPolicyResource | PolicyResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
         const writer = (isPartition) ? that.partitionWriter : that.writer;
         let policyId = (isPartition) ? policy.PartitionId : policy.PhysicalId;
         return {
@@ -828,7 +845,8 @@ export class TaskProvider {
             action: `Detach Policy (${(policy.TemplateResource) ? policy.TemplateResource.logicalId : policyId})`,
             perform: async (task): Promise<void> => {
                 if (policyId === undefined) {
-                    const binding = that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId);
+                    const resourceType = policy.TemplateResource.type;
+                    const binding = that.state.getBinding(resourceType, policy.TemplateResource.logicalId);
                     policyId = (isPartition) ? binding.partitionId : binding.physicalId;
                 }
                 const targetId = getTargetId();
@@ -837,7 +855,7 @@ export class TaskProvider {
         };
     }
 
-    private createAttachSCPTask(resource: Resource, policy: Reference<ServiceControlPolicyResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
+    private createAttachSCPTask(resource: Resource, policy: Reference<ServiceControlPolicyResource | PolicyResource>, that: this, getTargetId: () => string, isPartition?: boolean): IBuildTask {
         const writer = (isPartition) ? that.partitionWriter : that.writer;
         let policyId = (isPartition) ? policy.PartitionId : policy.PhysicalId;
         const attachSCPTask: IBuildTask = {
@@ -846,18 +864,28 @@ export class TaskProvider {
             action: `Attach Policy (${(policy.TemplateResource) ? policy.TemplateResource.logicalId : policyId})`,
             perform: async (task): Promise<void> => {
                 if (policyId === undefined) {
-                    const binding = that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId);
+                    const resourceType = policy.TemplateResource.type;
+                    const binding = that.state.getBinding(resourceType, policy.TemplateResource.logicalId);
                     policyId = (isPartition) ? binding.partitionId : binding.physicalId;
                 }
                 const targetId = getTargetId();
-                task.result = await writer.attachPolicy(targetId, policyId);
+                // Use generic attach for Policy resources, regular attach for ServiceControlPolicy
+                if (policy.TemplateResource instanceof PolicyResource) {
+                    task.result = await writer.attachGenericPolicy(targetId, policyId, policy.TemplateResource.policyType);
+                } else {
+                    task.result = await writer.attachPolicy(targetId, policyId);
+                }
             },
         };
-        if (policy.TemplateResource && undefined === that.state.getBinding(OrgResourceTypes.ServiceControlPolicy, policy.TemplateResource.logicalId)) {
-            attachSCPTask.dependentTaskFilter = (task): boolean => {
-                return (task.logicalId === policy.TemplateResource.logicalId && task.action === 'Create' && task.type === OrgResourceTypes.ServiceControlPolicy)
-                || (task.action.indexOf('Detach Policy') >= 0);
-            };
+        if (policy.TemplateResource) {
+            const resourceType = policy.TemplateResource.type;
+            const binding = that.state.getBinding(resourceType, policy.TemplateResource.logicalId);
+            if (undefined === binding) {
+                attachSCPTask.dependentTaskFilter = (task): boolean => {
+                    return (task.logicalId === policy.TemplateResource.logicalId && task.action === 'Create' && (task.type === OrgResourceTypes.ServiceControlPolicy || task.type === OrgResourceTypes.Policy))
+                    || (task.action.indexOf('Detach Policy') >= 0);
+                };
+            }
         }
         return attachSCPTask;
     }

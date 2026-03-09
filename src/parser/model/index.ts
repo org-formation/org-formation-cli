@@ -6,6 +6,7 @@ export * from './organization-root-resource';
 export * from './organization-section';
 export * from './organizational-unit-resource';
 export * from './password-policy-resource';
+export * from './policy-resource';
 export * from './resource-types';
 export * from './resource';
 export * from './resources-section';

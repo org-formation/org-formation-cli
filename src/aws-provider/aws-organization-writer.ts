@@ -13,6 +13,7 @@ import { performAndRetryIfNeeded, sleep } from './util';
 import {
     AccountResource,
     OrganizationalUnitResource,
+    PolicyResource,
     ServiceControlPolicyResource,
 } from '~parser/model';
 
@@ -149,6 +150,94 @@ export class AwsOrganizationWriter {
                     throw err;
                 }
             }
+        });
+    }
+
+    public async ensurePolicyTypeEnabled(policyType: string): Promise<void> {
+        return await performAndRetryIfNeeded(async () => {
+            const org: Organizations.OrganizationsClient = this.organizationsService;
+
+            const enablePolicyTypeCommand = new Organizations.EnablePolicyTypeCommand({
+                RootId: this.organization.roots[0].Id!,
+                PolicyType: policyType as any,
+            });
+
+            try {
+                await org.send(enablePolicyTypeCommand);
+                ConsoleUtil.LogDebug(`enabled policy type: ${policyType}`);
+            } catch (err) {
+                if (err && err.name === 'PolicyTypeAlreadyEnabledException') {
+                    // do nothing
+                } else {
+                    throw err;
+                }
+            }
+        });
+    }
+
+    public async createGenericPolicy(resource: PolicyResource): Promise<string> {
+        return await performAndRetryIfNeeded(async () => {
+            try {
+                const createPolicyCommand = new Organizations.CreatePolicyCommand({
+                    Name: resource.policyName,
+                    Description: resource.description!,
+                    Type: resource.policyType as any,
+                    Content: JSON.stringify(resource.policyDocument, null, 0),
+                });
+                const response = await this.organizationsService.send(createPolicyCommand);
+                const policyId = response.Policy!.PolicySummary!.Id!;
+                ConsoleUtil.LogDebug(`Policy Created ${policyId} (${resource.policyType})`);
+                return policyId;
+            } catch (err) {
+                if (err.name === 'DuplicatePolicyException') {
+                    const existingPolicy: AWSPolicy = this.organization.policies.find(x => x.Name === resource.policyName);
+                    const policyId = existingPolicy!.Id;
+                    await this.updateGenericPolicy(resource, policyId);
+                    ConsoleUtil.LogDebug(`Policy found ${policyId} (${resource.policyType})`);
+                    return policyId;
+                }
+
+                throw err;
+            }
+        });
+    }
+
+    public async attachGenericPolicy(targetPhysicalId: string, policyPhysicalId: string, policyType: string): Promise<void> {
+        return await performAndRetryIfNeeded(async () => {
+            const org: Organizations.OrganizationsClient = this.organizationsService;
+            const attachPolicyCommand = new Organizations.AttachPolicyCommand({
+                PolicyId: policyPhysicalId,
+                TargetId: targetPhysicalId,
+            });
+            try {
+                try {
+                    await this.ensurePolicyTypeEnabled(policyType);
+                    await org.send(attachPolicyCommand);
+                } catch (err) {
+                    if (err && err.name === 'PolicyTypeNotEnabledException') {
+                        await this.ensurePolicyTypeEnabled(policyType);
+                        await org.send(attachPolicyCommand);
+                    } else {
+                        throw err;
+                    }
+                }
+            } catch (err) {
+                if (err && err.name !== 'DuplicatePolicyAttachmentException') {
+                    throw err;
+                }
+            }
+        });
+    }
+
+    public async updateGenericPolicy(resource: PolicyResource, physicalId: string): Promise<void> {
+        return await performAndRetryIfNeeded(async () => {
+            const updatePolicyCommand = new Organizations.UpdatePolicyCommand({
+                PolicyId: physicalId,
+                Name: resource.policyName,
+                Description: resource.description,
+                Content: JSON.stringify(resource.policyDocument, null, 0),
+            });
+            await this.organizationsService.send(updatePolicyCommand);
         });
     }
 

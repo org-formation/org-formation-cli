@@ -2,6 +2,7 @@ import md5 = require('md5');
 import { OrgFormationError } from '../../org-formation-error';
 import { IResource, IResourceRef, TemplateRoot } from '../parser';
 import { PasswordPolicyResource } from './password-policy-resource';
+import { PolicyResource } from './policy-resource';
 import { Reference, Resource } from './resource';
 import { ServiceControlPolicyResource } from './service-control-policy-resource';
 import { AwsUtil, DEFAULT_ROLE_FOR_CROSS_ACCOUNT_ACCESS } from '~util/aws-util';
@@ -12,6 +13,7 @@ export interface IAccountProperties {
     AccountName: string;
     AccountId?: string;
     ServiceControlPolicies?: IResourceRef | IResourceRef[];
+    Policies?: IResourceRef | IResourceRef[];
     PasswordPolicy?: IResourceRef;
     Alias?: string;
     PartitionAccountId?: string;
@@ -30,7 +32,7 @@ export class AccountResource extends Resource {
     public alias?: string;
     public partitionAlias?: string;
     public tags?: Record<string, string>;
-    public serviceControlPolicies?: Reference<ServiceControlPolicyResource>[];
+    public serviceControlPolicies?: Reference<ServiceControlPolicyResource | PolicyResource>[];
     public passwordPolicy?: Reference<PasswordPolicyResource>;
     public organizationalUnitName?: string;
     public supportLevel?: string;
@@ -79,7 +81,7 @@ export class AccountResource extends Resource {
         this.organizationAccessRoleName = this.props.OrganizationAccessRoleName;
 
         super.throwForUnknownAttributes(resource, id, 'Type', 'Properties');
-        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'PartitionAlias', 'PartitionAccountId', 'ServiceControlPolicies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName', 'BuildAccessRoleName');
+        super.throwForUnknownAttributes(this.props, id, 'RootEmail', 'AccountName', 'AccountId', 'Alias', 'PartitionAlias', 'PartitionAccountId', 'ServiceControlPolicies', 'Policies', 'Tags', 'PasswordPolicy', 'SupportLevel', 'OrganizationAccessRoleName', 'BuildAccessRoleName');
     }
 
     public calculateHash(): string {
@@ -94,7 +96,25 @@ export class AccountResource extends Resource {
 
     public resolveRefs(): void {
         if (this.props) {
-            this.serviceControlPolicies = super.resolve(this.props.ServiceControlPolicies, this.root.organizationSection.serviceControlPolicies);
+            const allPolicies = [...this.root.organizationSection.serviceControlPolicies, ...this.root.organizationSection.policies];
+
+            // Resolve both ServiceControlPolicies and Policies properties
+            const scpRefs = super.resolve(this.props.ServiceControlPolicies, allPolicies);
+            const policyRefs = super.resolve(this.props.Policies, allPolicies);
+
+            // Merge both lists, removing duplicates
+            const mergedPolicies = [...scpRefs];
+            for (const policyRef of policyRefs) {
+                const isDuplicate = mergedPolicies.some(existing =>
+                    existing.TemplateResource?.logicalId === policyRef.TemplateResource?.logicalId ||
+                    existing.PhysicalId === policyRef.PhysicalId
+                );
+                if (!isDuplicate) {
+                    mergedPolicies.push(policyRef);
+                }
+            }
+            this.serviceControlPolicies = mergedPolicies;
+
             const passwordPolicies = super.resolve(this.props.PasswordPolicy, this.root.organizationSection.passwordPolicies);
             if (passwordPolicies.length !== 0) {
                 this.passwordPolicy = passwordPolicies[0];

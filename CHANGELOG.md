@@ -5,6 +5,8 @@ All notable changes to aws organization formation will be documented in this fil
 **BREAKING CHANGES**:
 - v1.0.0: execution role under which org-formation is ran requires the ec2:describeRegions permission 
 
+**version: 1.0.25**
+- feat: support for additional service control policies
 
 **version: 1.0.17**
 - fix: improved backoff for account creation and type registration

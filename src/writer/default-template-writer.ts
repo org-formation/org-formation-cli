@@ -166,7 +166,7 @@ export class DefaultTemplateWriter {
         }
         for (const scp of this.organizationModel.policies.sort((a, b) => a.Name < b.Name ? -1 : 1)) {
             if (scp.PolicySummary && scp.PolicySummary.AwsManaged) { continue; }
-            const policyResource = this.generateSCP(lines, scp);
+            const policyResource = this.generatePolicy(lines, scp);
             const partitionPolicy: AWSPolicy = this.partitionOrganizationModel?.policies?.find(x => x.Name === scp.Name);
             bindings.push({
                 type: policyResource.type,
@@ -200,6 +200,9 @@ export class DefaultTemplateWriter {
                 case OrgResourceTypes.ServiceControlPolicy:
                     foundResource = templateRoot.organizationSection.serviceControlPolicies.find(x => x.logicalId === binding.logicalId);
                     break;
+                case OrgResourceTypes.Policy:
+                    foundResource = templateRoot.organizationSection.policies.find(x => x.logicalId === binding.logicalId);
+                    break;
             }
             if (foundResource) {
                 binding.lastCommittedHash = foundResource.calculateHash();
@@ -226,13 +229,23 @@ export class DefaultTemplateWriter {
         lines.push(new EmptyLine());
     }
 
-    private generateSCP(lines: YamlLine[], policy: AWSPolicy): WriterResource {
+    private generatePolicy(lines: YamlLine[], policy: AWSPolicy): WriterResource {
         const logicalName = this.logicalNames.getName(policy);
+        const policyType = policy.PolicySummary?.Type;
 
         lines.push(new Line(logicalName, '', 2));
-        lines.push(new Line('Type', OrgResourceTypes.ServiceControlPolicy, 4));
+        lines.push(new Line('Type', OrgResourceTypes.Policy, 4));
         lines.push(new Line('Properties', '', 4));
         lines.push(new Line('PolicyName', policy.Name, 6));
+
+        // Always include PolicyType for all policies
+        if (policyType) {
+            lines.push(new Line('PolicyType', policyType, 6));
+        } else {
+            // Default to SERVICE_CONTROL_POLICY if type is not specified
+            lines.push(new Line('PolicyType', 'SERVICE_CONTROL_POLICY', 6));
+        }
+
         if (policy.PolicySummary && policy.PolicySummary.Description) {
             lines.push(new Line('Description', policy.PolicySummary.Description, 6));
         } else {
@@ -244,7 +257,7 @@ export class DefaultTemplateWriter {
         lines.push(new EmptyLine());
 
         return {
-            type: OrgResourceTypes.ServiceControlPolicy,
+            type: OrgResourceTypes.Policy,
             logicalName,
         };
     }
@@ -512,7 +525,38 @@ class LogicalNames {
                 return 'OU';
 
             case 'Policy':
-                return 'SCP';
+                // Use policy type to determine appropriate abbreviation
+                const policyType = element.PolicySummary?.Type;
+                switch (policyType) {
+                    case 'SERVICE_CONTROL_POLICY':
+                        return 'SCP';
+                    case 'RESOURCE_CONTROL_POLICY':
+                        return 'RCP';
+                    case 'TAG_POLICY':
+                        return 'TP';
+                    case 'BACKUP_POLICY':
+                        return 'BP';
+                    case 'AISERVICES_OPT_OUT_POLICY':
+                        return 'AISOP';
+                    case 'CHATBOT_POLICY':
+                        return 'CBP';
+                    case 'DECLARATIVE_POLICY_EC2':
+                        return 'DPEC2';
+                    case 'SECURITYHUB_POLICY':
+                        return 'SHP';
+                    case 'INSPECTOR_POLICY':
+                        return 'IP';
+                    case 'BEDROCK_POLICY':
+                        return 'BRP';
+                    case 'UPGRADE_ROLLOUT_POLICY':
+                        return 'URP';
+                    case 'S3_POLICY':
+                        return 'S3P';
+                    case 'NETWORK_SECURITY_DIRECTOR_POLICY':
+                        return 'NSDP';
+                    default:
+                        return 'SCP'; // Default to SCP for backwards compatibility
+                }
         }
 
         throw new OrgFormationError('not implemented');

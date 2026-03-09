@@ -81,45 +81,74 @@ export class AwsOrganizationReader {
         try {
             const result: AWSPolicy[] = [];
 
-            const listPoliciesReq: Organizations.ListPoliciesCommandInput = {
-                Filter: 'SERVICE_CONTROL_POLICY',
-            };
+            // List of all policy types to fetch
+            const policyTypes: Organizations.PolicyType[] = [
+                'SERVICE_CONTROL_POLICY',
+                'RESOURCE_CONTROL_POLICY',
+                'TAG_POLICY',
+                'BACKUP_POLICY',
+                'AISERVICES_OPT_OUT_POLICY',
+                'CHATBOT_POLICY',
+                'DECLARATIVE_POLICY_EC2',
+                'SECURITYHUB_POLICY',
+                'INSPECTOR_POLICY',
+                'BEDROCK_POLICY',
+                'UPGRADE_ROLLOUT_POLICY',
+                'S3_POLICY',
+                'NETWORK_SECURITY_DIRECTOR_POLICY',
+            ];
 
-            let resp: Organizations.ListPoliciesCommandOutput;
-            do {
-                const listPoliciesCommand = new Organizations.ListPoliciesCommand(listPoliciesReq);
-                resp = await performAndRetryIfNeeded(() => that.organizationsService.send(listPoliciesCommand));
-                for (const policy of resp.Policies) {
-
-                    const describePolicyCommand = new Organizations.DescribePolicyCommand({
-                        PolicyId: policy.Id,
-                    });
-
-                    const describedPolicy = await performAndRetryIfNeeded(() => that.organizationsService.send(describePolicyCommand));
-
-                    const awsPolicy = {
-                        ...describedPolicy.Policy,
-                        Type: 'Policy',
-                        Name: policy.Name,
-                        Id: policy.Id,
-                        Targets: [] as Organizations.PolicyTargetSummary[],
+            for (const policyType of policyTypes) {
+                try {
+                    ConsoleUtil.LogDebug(`Fetching policies of type: ${policyType}`);
+                    const listPoliciesReq: Organizations.ListPoliciesCommandInput = {
+                        Filter: policyType,
                     };
 
-                    result.push(awsPolicy);
-
-                    const listTargetsReq: Organizations.ListTargetsForPolicyCommandInput ={
-                        PolicyId: policy.Id,
-                    };
-                    let listTargetsResp: Organizations.ListTargetsForPolicyCommandOutput;
+                    let resp: Organizations.ListPoliciesCommandOutput;
                     do {
-                        const listTargetsCommand = new Organizations.ListTargetsForPolicyCommand(listTargetsReq);
-                        listTargetsResp = await performAndRetryIfNeeded(() => that.organizationsService.send(listTargetsCommand));
-                        awsPolicy.Targets.push(...listTargetsResp.Targets);
-                        listTargetsReq.NextToken = listTargetsResp.NextToken;
-                    } while (listTargetsReq.NextToken);
+                        const listPoliciesCommand = new Organizations.ListPoliciesCommand(listPoliciesReq);
+                        resp = await performAndRetryIfNeeded(() => that.organizationsService.send(listPoliciesCommand));
+                        for (const policy of resp.Policies) {
+
+                            const describePolicyCommand = new Organizations.DescribePolicyCommand({
+                                PolicyId: policy.Id,
+                            });
+
+                            const describedPolicy = await performAndRetryIfNeeded(() => that.organizationsService.send(describePolicyCommand));
+
+                            const awsPolicy = {
+                                ...describedPolicy.Policy,
+                                Type: 'Policy',
+                                Name: policy.Name,
+                                Id: policy.Id,
+                                Targets: [] as Organizations.PolicyTargetSummary[],
+                            };
+
+                            result.push(awsPolicy);
+
+                            const listTargetsReq: Organizations.ListTargetsForPolicyCommandInput ={
+                                PolicyId: policy.Id,
+                            };
+                            let listTargetsResp: Organizations.ListTargetsForPolicyCommandOutput;
+                            do {
+                                const listTargetsCommand = new Organizations.ListTargetsForPolicyCommand(listTargetsReq);
+                                listTargetsResp = await performAndRetryIfNeeded(() => that.organizationsService.send(listTargetsCommand));
+                                awsPolicy.Targets.push(...listTargetsResp.Targets);
+                                listTargetsReq.NextToken = listTargetsResp.NextToken;
+                            } while (listTargetsReq.NextToken);
+                        }
+                        listPoliciesReq.NextToken = resp.NextToken;
+                    } while (resp.NextToken);
+                } catch (err) {
+                    // Policy type might not be enabled, skip it
+                    if (err && (err.name === 'PolicyTypeNotEnabledException' || err.name === 'InvalidInputException')) {
+                        ConsoleUtil.LogDebug(`Policy type ${policyType} not enabled or not available, skipping`);
+                    } else {
+                        ConsoleUtil.LogWarning(`Error fetching ${policyType} policies: ${err.message}`);
+                    }
                 }
-                listPoliciesReq.NextToken = resp.NextToken;
-            } while (resp.NextToken);
+            }
 
             return result;
         } catch (err) {

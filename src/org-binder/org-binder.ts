@@ -6,6 +6,7 @@ import {
     OrganizationRootResource,
     OrganizationalUnitResource,
     OrgResourceTypes,
+    PolicyResource,
     Resource,
     ServiceControlPolicyResource,
 } from '~parser/model';
@@ -36,7 +37,10 @@ export class OrganizationBinder {
     }
 
     public getOrganizationBinding(): OrganizationBinding {
-        const policies = Array.from(ServiceControlPolicyBinding.enumerateServiceControlBindings(this.template, this.state));
+        const policies = [
+            ...Array.from(ServiceControlPolicyBinding.enumerateServiceControlBindings(this.template, this.state)),
+            ...Array.from(PolicyBinding.enumeratePolicyBindings(this.template, this.state)),
+        ];
         const organizationalUnits = Array.from(OrganizationalUnitBinding.enumerateOrganizationalUnitBindings(this.template, this.state));
         const accounts = Array.from(AccountBinding.enumerateAccountBindings(this.template, this.state));
         const masterAccount = Binding.getBindingOnType<MasterAccountResource>(this.state, this.template.organizationSection.masterAccount);
@@ -270,6 +274,17 @@ class ServiceControlPolicyBinding extends Binding<ServiceControlPolicyResource> 
         return Binding.enumerateBindings<ServiceControlPolicyResource>(
             OrgResourceTypes.ServiceControlPolicy,
             template.organizationSection.serviceControlPolicies,
+            state);
+
+    }
+}
+
+class PolicyBinding extends Binding<PolicyResource> {
+
+    public static enumeratePolicyBindings(template: TemplateRoot, state: PersistedState): PolicyBinding[] {
+        return Binding.enumerateBindings<PolicyResource>(
+            OrgResourceTypes.Policy,
+            template.organizationSection.policies,
             state);
 
     }
