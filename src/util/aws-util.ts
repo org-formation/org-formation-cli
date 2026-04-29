@@ -276,7 +276,14 @@ export class AwsUtil {
     }
 
     public static GetRoleArn(accountId: string, roleInTargetAccount: string): string {
-        return 'arn:aws:iam::' + accountId + ':role/' + roleInTargetAccount;
+        // Use the current session's partition (cached during Initialize via
+        // GetPartitionFromCurrentSession). Falls back to 'aws' so the
+        // commercial-partition path is unchanged. Without this, partitions
+        // like aws-eusc (European Sovereign Cloud) or aws-cn produce ARNs
+        // that fail cross-account AssumeRole because they reference the
+        // commercial partition instead of the running one.
+        const partition = AwsUtil.partition ?? 'aws';
+        return `arn:${partition}:iam::${accountId}:role/${roleInTargetAccount}`;
     }
 
     private static GetPartitionRoleArn(accountId: string, roleInTargetAccount: string): string {
